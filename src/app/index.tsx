@@ -2,7 +2,7 @@ import { AuthFooter } from "@/components/ui/AuthFooter";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoHeader } from "../components/ui/LogoHeader";
 import PrimaryButton from "../components/ui/PrimaryButton";
@@ -11,52 +11,57 @@ import { paletaColores } from "../paletaColores";
 export default function PantallaBienvenida() {
   return (
     <SafeAreaView style={styles.pantalla}>
-      <LogoHeader />
+      <ScrollView
+        contentContainerStyle={styles.contenido}
+        showsVerticalScrollIndicator={false}
+      >
+        <LogoHeader />
 
-      <PageHeader
-        title={"Tu mototaxi,\n"}
-        highlightedTitle="cuando lo necesites."
-        description={"Pide un viaje en Bagua de forma \nrapida y sencilla."}
-      />
+        <PageHeader
+          title={"Tu mototaxi,\n"}
+          highlightedTitle="cuando lo necesites."
+          description={"Pide un viaje en Bagua de forma \nrapida y sencilla."}
+        />
 
-      <Image
-        source={require("../../assets/images/img-central.png")}
-        style={styles.ilustracion}
-        resizeMode="contain"
-      />
+        <Image
+          source={require("../../assets/images/img-central.png")}
+          style={styles.ilustracion}
+          resizeMode="contain"
+        />
 
-      <PrimaryButton
-        title={"Continuar"}
-        onPress={() => {
-          router.push("/");
-        }}
-        style={{ marginBottom: 15 }}
-      />
+        <PrimaryButton
+          title={"Continuar"}
+          onPress={() => {
+            router.push("/");
+          }}
+          style={{ marginBottom: 15 }}
+        />
 
-      <AuthFooter
-        questionText="¿Tienes una cuenta?"
-        href={"/login"}
-        linkText="Iniciar Sesión"
-      />
+        <AuthFooter
+          questionText="¿Tienes una cuenta?"
+          href={"/login"}
+          linkText="Iniciar Sesión"
+        />
 
-      <View style={styles.rolesContainer}>
-        <View style={styles.linea} />
+        <View style={styles.rolesContainer}>
+          <View style={styles.linea} />
 
-        <View style={styles.rolesContenido}>
-          <Ionicons
-            name="people-outline"
-            size={21}
-            color={paletaColores.textoSecundario}
-          />
+          <View style={styles.rolesContenido}>
+            <Ionicons
+              name="people-outline"
+              size={21}
+              color={paletaColores.textoSecundario}
+            />
 
-          <Text style={styles.indicadorRoles}>
-            Puedes ser pasajero o conductor{"\n"}
-            en el siguiente paso
-          </Text>
+            <Text style={styles.indicadorRoles}>
+              Puedes ser pasajero o conductor{"\n"}
+              en el siguiente paso
+            </Text>
+          </View>
+
+          <View style={styles.linea} />
         </View>
-
-        <View style={styles.linea} />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -65,8 +70,12 @@ const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
     backgroundColor: paletaColores.fondo,
+  },
+  contenido: {
+    flexGrow: 1,
     paddingHorizontal: 22,
     paddingTop: 8,
+    paddingBottom: 20,
     alignItems: "center",
   },
   ilustracion: {
@@ -79,7 +88,8 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 30,
+    marginTop: 18,
+    marginBottom: 8,
   },
   linea: {
     flex: 1,
@@ -95,7 +105,7 @@ const styles = StyleSheet.create({
   },
   indicadorRoles: {
     fontSize: 16,
-    lineHeight: 16,
+    lineHeight: 22,
     color: paletaColores.textoSecundario,
     textAlign: "center",
   },
