@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "altokke_movil",
-    "slug": "altokke_movil",
+    "slug": "altokke-movil",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,6 +37,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c8160c06-87ff-47e6-a092-6aca40801f0b"
+      }
+    },
+    "owner": "altokke-team"
   }
 }
