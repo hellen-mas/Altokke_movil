@@ -1,7 +1,13 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import { paletaColores } from "../../paletaColores";
 
-export const LogoHeader = () => {
+interface Props {
+  variant?: "dark" | "light";
+}
+
+export const LogoHeader = ({variant = "dark"}: Props) => {
+  const isLight = variant === "light";
+
   return (
     <View style={styles.logoContainer}>
       <Image
@@ -10,7 +16,10 @@ export const LogoHeader = () => {
         resizeMode="contain"
       />
 
-      <Text style={styles.logo}>Altokke</Text>
+      <Text style={[
+        styles.logo,
+        isLight && styles.logoLight,
+      ]}>Altokke</Text>
     </View>
   );
 };
@@ -38,4 +47,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: paletaColores.texto,
   },
+
+  logoLight: {
+    color: paletaColores.textoClaro,
+  }
 });

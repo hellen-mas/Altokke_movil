@@ -5,17 +5,26 @@ interface Props {
   title: string;
   highlightedTitle: string;
   description: string;
+  variant?: "dark" | "light";
 }
 
-export const PageHeader = ({ title, highlightedTitle, description }: Props) => {
+export const PageHeader = ({ title, highlightedTitle, description, variant = "dark" }: Props) => {
+  const isLight = variant === "light";
+
   return (
     <>
-      <Text style={styles.encabezado}>
+      <Text style={[
+        styles.encabezado,
+        isLight && styles.encabezadoLight,
+      ]}>
         {title}
         <Text style={styles.resaltado}>{highlightedTitle}</Text>
       </Text>
 
-      <Text style={styles.descripcion}>{description}</Text>
+      <Text style={[
+        styles.descripcion,
+        isLight && styles.descripcionLight,
+      ]}>{description}</Text>
     </>
   );
 };
@@ -31,6 +40,10 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 
+  encabezadoLight: {
+    color: paletaColores.textoClaro,
+  },
+
   resaltado: {
     color: paletaColores.verde,
   },
@@ -41,5 +54,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: paletaColores.textoSecundario,
     marginBottom: 0,
+  },
+
+  descripcionLight: {
+    color: paletaColores.textoSecundarioClaro,
   },
 });

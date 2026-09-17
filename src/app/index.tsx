@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoHeader } from "../components/ui/LogoHeader";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import { paletaColores } from "../paletaColores";
+import { Link } from "expo-router";
 
 export default function PantallaBienvenida() {
   return (
@@ -63,6 +64,17 @@ export default function PantallaBienvenida() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    // <View
+    //   style={{
+    //     flex: 1,
+    //     justifyContent: "center",
+    //     alignItems: "center",
+    //   }}
+    // >
+    //   <Link href="/registro-conductor/datos-personales">
+    //     <Text>Probar registro conductor</Text>
+    //   </Link>
+    // </View>
   );
 }
 

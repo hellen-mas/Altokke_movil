@@ -8,6 +8,7 @@ interface Props {
   href: Href;
   align?: "left" | "center" | "right";
   showBorder?: boolean;
+  variant?: "dark" | "light";
 }
 
 export const AuthFooter = ({
@@ -16,16 +17,21 @@ export const AuthFooter = ({
   href,
   align = "center",
   showBorder = true,
+  variant = "dark",
 }: Props) => {
+  const isLight = variant === "light";
+
   return (
     <Text
       style={[
         styles.accesoCuenta,
         { textAlign: align },
+        isLight && styles.accesoCuentaLight,
         !showBorder && { borderWidth: 0 },
       ]}
     >
       {questionText}{" "}
+
       <Link href={href} style={styles.enlaceAcceso}>
         {linkText}
       </Link>
@@ -53,4 +59,9 @@ const styles = StyleSheet.create({
     color: paletaColores.verde,
     fontWeight: "600",
   },
+
+  accesoCuentaLight: {
+    color: paletaColores.textoSecundarioClaro,
+    borderColor: paletaColores.bordeClaro,
+  }
 });
