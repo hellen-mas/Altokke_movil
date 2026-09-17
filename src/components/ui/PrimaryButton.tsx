@@ -14,18 +14,28 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-export default function PrimaryButton({ title, onPress, style }: Props) {
+export default function PrimaryButton({ 
+  title, 
+  onPress, 
+  style 
+}: Props) {
   return (
     <Pressable
       style={({ pressed }) => [
         styles.button,
         style,
-        pressed && { backgroundColor: paletaColores.botonPresionado },
+        pressed && { 
+          backgroundColor: paletaColores.botonPresionado 
+        },
       ]}
       onPress={onPress}
     >
       <Text style={styles.text}>{title}</Text>
-      <Ionicons name="arrow-forward" size={26} color="black" />
+
+      <Ionicons 
+        name="arrow-forward" 
+        size={26} 
+        color={paletaColores.textoOscuro} />
     </Pressable>
   );
 }
@@ -42,5 +52,10 @@ const styles = StyleSheet.create({
     marginTop: 3,
     gap: 35,
   },
-  text: { fontSize: 19, lineHeight: 24, fontWeight: "700", color: "#000000" },
+  text: { 
+    fontSize: 19, 
+    lineHeight: 24, 
+    fontWeight: "700", 
+    color:paletaColores.textoOscuro, 
+  },
 });
