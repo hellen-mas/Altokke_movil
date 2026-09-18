@@ -1,80 +1,73 @@
-import { AuthFooter } from "@/components/ui/AuthFooter";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { LogoHeader } from "../components/ui/LogoHeader";
-import PrimaryButton from "../components/ui/PrimaryButton";
-import { paletaColores } from "../paletaColores";
 import { Link } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
+import { paletaColores } from "../paletaColores";
 
 export default function PantallaBienvenida() {
   return (
-    <SafeAreaView style={styles.pantalla}>
-      <ScrollView
-        contentContainerStyle={styles.contenido}
-        showsVerticalScrollIndicator={false}
-      >
-        <LogoHeader />
+    // <SafeAreaView style={styles.pantalla}>
+    //   <ScrollView
+    //     contentContainerStyle={styles.contenido}
+    //     showsVerticalScrollIndicator={false}
+    //   >
+    //     <LogoHeader />
 
-        <PageHeader
-          title={"Tu mototaxi,\n"}
-          highlightedTitle="cuando lo necesites."
-          description={"Pide un viaje en Bagua de forma \nrapida y sencilla."}
-        />
+    //     <PageHeader
+    //       title={"Tu mototaxi,\n"}
+    //       highlightedTitle="cuando lo necesites."
+    //       description={"Pide un viaje en Bagua de forma \nrapida y sencilla."}
+    //     />
 
-        <Image
-          source={require("../../assets/images/img-central.png")}
-          style={styles.ilustracion}
-          resizeMode="contain"
-        />
+    //     <Image
+    //       source={require("../../assets/images/img-central.png")}
+    //       style={styles.ilustracion}
+    //       resizeMode="contain"
+    //     />
 
-        <PrimaryButton
-          title={"Continuar"}
-          onPress={() => {
-            router.push("/");
-          }}
-          style={{ marginBottom: 15 }}
-        />
+    //     <PrimaryButton
+    //       title={"Continuar"}
+    //       onPress={() => {
+    //         router.push("/");
+    //       }}
+    //       style={{ marginBottom: 15 }}
+    //     />
 
-        <AuthFooter
-          questionText="¿Tienes una cuenta?"
-          href={"/login"}
-          linkText="Iniciar Sesión"
-        />
+    //     <AuthFooter
+    //       questionText="¿Tienes una cuenta?"
+    //       href={"/login"}
+    //       linkText="Iniciar Sesión"
+    //     />
 
-        <View style={styles.rolesContainer}>
-          <View style={styles.linea} />
+    //     <View style={styles.rolesContainer}>
+    //       <View style={styles.linea} />
 
-          <View style={styles.rolesContenido}>
-            <Ionicons
-              name="people-outline"
-              size={21}
-              color={paletaColores.textoSecundario}
-            />
+    //       <View style={styles.rolesContenido}>
+    //         <Ionicons
+    //           name="people-outline"
+    //           size={21}
+    //           color={paletaColores.textoSecundario}
+    //         />
 
-            <Text style={styles.indicadorRoles}>
-              Puedes ser pasajero o conductor{"\n"}
-              en el siguiente paso
-            </Text>
-          </View>
+    //         <Text style={styles.indicadorRoles}>
+    //           Puedes ser pasajero o conductor{"\n"}
+    //           en el siguiente paso
+    //         </Text>
+    //       </View>
 
-          <View style={styles.linea} />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-    // <View
-    //   style={{
-    //     flex: 1,
-    //     justifyContent: "center",
-    //     alignItems: "center",
-    //   }}
-    // >
-    //   <Link href="/registro-conductor/datos-personales">
-    //     <Text>Probar registro conductor</Text>
-    //   </Link>
-    // </View>
+    //       <View style={styles.linea} />
+    //     </View>
+    //   </ScrollView>
+    // </SafeAreaView>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Link href="/registro-conductor/datos-personales">
+        <Text>Probar registro conductor</Text>
+      </Link>
+    </View>
   );
 }
 

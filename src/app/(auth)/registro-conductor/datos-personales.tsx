@@ -17,6 +17,7 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import DateTimePicker, {DateTimePickerEvent,} from "@react-native-community/datetimepicker";
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export default function DatosPersonalesConductor() {
     const [nombre, setNombre] = useState("");
@@ -82,10 +83,7 @@ export default function DatosPersonalesConductor() {
             return;
         }
 
-        Alert.alert(
-            "Datos correctos",
-            "El paso 1 se completó correctamente."
-        );
+        router.push("/registro-conductor/verificacion-contacto");
     };
 
     return (
