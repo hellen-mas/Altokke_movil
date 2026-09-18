@@ -18,16 +18,27 @@ import DateTimePicker, {DateTimePickerEvent,} from "@react-native-community/date
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useRegistroConductor } from "@/context/RegistroConductorContext";
 
 export default function DatosPersonalesConductor() {
-    const [nombre, setNombre] = useState("");
-    const [apellidos, setApellidos] = useState("");
-    const [dni, setDni] = useState("");
-    const [fechaNacimiento, setFechaNacimiento] = useState<Date | null>(null);
+    const {
+        nombre,
+        setNombre, 
+        apellidos, 
+        setApellidos,
+        dni,
+        setDni,
+        fechaNacimiento,
+        setFechaNacimiento,
+        correo,
+        setCorreo,
+        contrasena,
+        setContrasena,
+        confirmarContrasena,
+        setConfirmarContrasena,
+    } = useRegistroConductor();
+    
     const [mostrarCalendario, setMostarCalendario] = useState(false);
-    const [correo, setCorreo] = useState("");
-    const [contrasena, setContrasena] = useState("");
-    const [confirmarContrasena, setConfirmarContrasena] = useState("");
     const hoy = new Date();
     const fechaMaximaNacimiento = new Date(
         hoy.getFullYear() - 18,

@@ -6,7 +6,6 @@ import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { useState } from "react";
 import {
     Alert,
     Image,
@@ -19,13 +18,21 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { useRegistroConductor } from "@/context/RegistroConductorContext";
 
 export default function VerificacionContactoConductor() {
-  const [telefono, setTelefono] = useState("");
-  const [codigo, setCodigo] = useState("");
-  const [correoRespaldo, setCorreoRespaldo] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [foto, setFoto] = useState<string | null>(null);
+  const {
+    telefono,
+    setTelefono,
+    codigo,
+    setCodigo,
+    correoRespaldo,
+    setCorreoRespaldo,
+    direccion,
+    setDireccion,
+    foto,
+    setFoto,
+  } = useRegistroConductor();
 
   const enviarCodigo = () => {
     if (!/^\d{9}$/.test(telefono)) {
@@ -94,6 +101,8 @@ export default function VerificacionContactoConductor() {
       Alert.alert("Correo inválido", "Ingresa un correo de respaldo válido.");
       return;
     }
+
+    router.push("/registro-conductor/identidad-oficial");
   };
 
   return (
@@ -258,7 +267,7 @@ export default function VerificacionContactoConductor() {
         <PrimaryButton title="Continuar" onPress={continuar} />
         <Pressable
           style={styles.atras}
-          onPress={() => router.back}
+          onPress={() => router.back()}
         >
           <Ionicons
             name="arrow-back"
