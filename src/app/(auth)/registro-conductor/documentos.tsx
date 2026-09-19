@@ -7,14 +7,12 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import { router } from "expo-router";
 import {
     Alert,
-    Image,
     KeyboardAvoidingView,
     Platform,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     View,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
@@ -73,7 +71,7 @@ export default function DocumentosConductor() {
             return;
         }
 
-        // router.push("/registro-conductor/vehiculo")
+        router.push("/registro-conductor/vehiculo")
     };
 
     return (

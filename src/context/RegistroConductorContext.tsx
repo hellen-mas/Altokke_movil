@@ -55,6 +55,22 @@ type RegistroConductorContextType = {
     setSoat: React.Dispatch<React.SetStateAction<ArchivoDocumento | null>>;
     antecedentesPenales: ArchivoDocumento | null;
     setAntecedentesPenales: React.Dispatch<React.SetStateAction<ArchivoDocumento | null>>;
+
+    // Para el paso 5
+    placa: string;
+    setPlaca: React.Dispatch<React.SetStateAction<string>>;
+    marca: string;
+    setMarca: React.Dispatch<React.SetStateAction<string>>;
+    modelo: string;
+    setModelo: React.Dispatch<React.SetStateAction<string>>;
+    anio: string;
+    setAnio: React.Dispatch<React.SetStateAction<string>>;
+    color: string;
+    setColor: React.Dispatch<React.SetStateAction<string>>;
+    capacidad: string;
+    setCapacidad: React.Dispatch<React.SetStateAction<string>>;
+    confirmacionVeracidad: boolean;
+    setConfirmacionVeracidad: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const RegistroConductorContext = createContext<RegistroConductorContextType | undefined>(undefined);
@@ -89,7 +105,16 @@ export function RegistroConductorProvider({
     const [licenciaConducir, setLicenciaConducir] = useState<ArchivoDocumento | null>(null);
     const [soat, setSoat] = useState<ArchivoDocumento | null>(null);
     const [antecedentesPenales, setAntecedentesPenales] = useState<ArchivoDocumento | null>(null);
-    
+
+    // Vehículo
+    const [placa, setPlaca] = useState("");
+    const [marca, setMarca] = useState("");
+    const [modelo, setModelo] = useState("");
+    const [anio, setAnio] = useState("");
+    const [color, setColor] = useState("");
+    const [capacidad, setCapacidad] = useState("");
+    const [confirmacionVeracidad, setConfirmacionVeracidad] = useState(false);
+
     return (
         <RegistroConductorContext.Provider
             value={{
@@ -129,6 +154,20 @@ export function RegistroConductorProvider({
                 setSoat,
                 antecedentesPenales,
                 setAntecedentesPenales,
+                placa,
+                setPlaca,
+                marca,
+                setMarca,
+                modelo,
+                setModelo,
+                anio,
+                setAnio,
+                color,
+                setColor,
+                capacidad,
+                setCapacidad,
+                confirmacionVeracidad,
+                setConfirmacionVeracidad,
             }}
         >
             {children}
