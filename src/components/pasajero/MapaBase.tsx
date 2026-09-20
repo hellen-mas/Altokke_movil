@@ -59,9 +59,6 @@ export function MapaBase({
           latitudeDelta: ZOOM_INICIAL,
           longitudeDelta: ZOOM_INICIAL,
         }}
-        // TEMPORAL: diagnóstico del mapa negro (borrar cuando se resuelva)
-        onMapReady={() => console.log("[MapaBase] mapa listo")}
-        onMapLoaded={() => console.log("[MapaBase] mosaicos cargados")}
         // Sube el logo del mapa y centra el contenido en la parte que sí se ve
         mapPadding={{ top: 0, left: 0, right: 0, bottom: margenInferior }}
         mapType={USAR_MOSAICOS_OSM ? "none" : "standard"}
