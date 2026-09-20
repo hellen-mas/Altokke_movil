@@ -11,6 +11,7 @@ import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
   CONDUCTORES_CERCANOS,
+  ORIGEN_EJEMPLO,
   USUARIO_EJEMPLO,
 } from "@/constants/pasajero";
 import { TipoServicio, useViaje } from "@/context/ViajeContext";
@@ -52,10 +53,15 @@ const DESTINOS_FRECUENTES: {
 ];
 
 export default function PantallaMapa() {
-  const { tipoServicio, setTipoServicio } = useViaje();
+  const { tipoServicio, setTipoServicio, destino, setDestino } = useViaje();
 
   const irADestino = () => {
     router.push("/destino");
+  };
+
+  // Si ya hay un destino elegido se sigue directo a confirmar el viaje
+  const solicitarMototaxi = () => {
+    router.push(destino ? "/confirmar-viaje" : "/destino");
   };
 
   return (
@@ -102,15 +108,39 @@ export default function PantallaMapa() {
             <Ionicons
               name="location-sharp"
               size={20}
-              color={paletaColores.textoSecundarioClaro}
+              color={
+                destino
+                  ? paletaColores.error
+                  : paletaColores.textoSecundarioClaro
+              }
             />
-            <Text style={styles.campoDestinoTexto}>¿A dónde vamos?</Text>
+            <Text
+              style={[
+                styles.campoDestinoTexto,
+                destino && styles.campoDestinoElegido,
+              ]}
+              numberOfLines={1}
+            >
+              {destino ? destino.nombre : "¿A dónde vamos?"}
+            </Text>
+
+            {destino && (
+              <Pressable onPress={() => setDestino(null)} hitSlop={10}>
+                <Ionicons
+                  name="close-circle"
+                  size={22}
+                  color={paletaColores.textoSecundarioClaro}
+                />
+              </Pressable>
+            )}
           </Pressable>
         </View>
 
         {/* Mapa */}
         <MapaBase
           centro={CENTRO_BAGUA}
+          origen={destino ? ORIGEN_EJEMPLO.coordenadas : undefined}
+          destino={destino?.coordenadas}
           conductores={CONDUCTORES_CERCANOS}
           interactivo={false}
           style={styles.mapa}
@@ -185,7 +215,7 @@ export default function PantallaMapa() {
 
         <PrimaryButton
           title="Solicitar mototaxi"
-          onPress={irADestino}
+          onPress={solicitarMototaxi}
           style={styles.botonSolicitar}
         />
       </ScrollView>
@@ -271,8 +301,14 @@ const styles = StyleSheet.create({
   },
 
   campoDestinoTexto: {
+    flex: 1,
     fontSize: 16,
     color: paletaColores.textoSecundarioClaro,
+  },
+
+  campoDestinoElegido: {
+    fontWeight: "700",
+    color: paletaColores.textoClaro,
   },
 
   mapa: {

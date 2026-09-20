@@ -1,6 +1,7 @@
 import { BarraInferior } from "@/components/pasajero/BarraInferior";
 import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { MapaBase } from "@/components/pasajero/MapaBase";
+import PrimaryButton from "@/components/ui/PrimaryButton";
 import {
   CENTRO_BAGUA,
   Lugar,
@@ -95,6 +96,9 @@ export default function PantallaDestino() {
     setDestino(lugar);
     setBusqueda(lugar.nombre);
     Keyboard.dismiss();
+  };
+
+  const confirmarDestino = () => {
     router.push("/confirmar-viaje");
   };
 
@@ -219,6 +223,12 @@ export default function PantallaDestino() {
             );
           })}
         </ScrollView>
+
+        {destino && (
+          <View style={styles.pie}>
+            <PrimaryButton title="Confirmar destino" onPress={confirmarDestino} />
+          </View>
+        )}
       </View>
 
       {!tecladoVisible && <BarraInferior activa="inicio" />}
@@ -317,6 +327,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: paletaColores.textoClaro,
+  },
+
+  pie: {
+    paddingTop: 8,
+    paddingBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: paletaColores.bordeClaro,
+    backgroundColor: paletaColores.superficieClara,
   },
 
   lista: {
