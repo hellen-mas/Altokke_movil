@@ -1,7 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { ReactNode } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BarraInferior } from "@/components/pasajero/BarraInferior";
+import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
+import { IconoMototaxi } from "@/components/pasajero/IconoMototaxi";
 import { MapaBase } from "@/components/pasajero/MapaBase";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import {
@@ -17,11 +20,26 @@ const SERVICIOS: {
   id: TipoServicio;
   titulo: string;
   descripcion: string;
-  icono: keyof typeof Ionicons.glyphMap;
+  icono: (color: string) => ReactNode;
 }[] = [
-  { id: "normal", titulo: "Normal", descripcion: "Económico y confiable", icono: "car-sport" },
-  { id: "express", titulo: "Express", descripcion: "Llegas más rápido", icono: "flash" },
-  { id: "reserva", titulo: "Reserva", descripcion: "Programa tu viaje", icono: "calendar-outline" },
+  {
+    id: "normal",
+    titulo: "Normal",
+    descripcion: "Económico y confiable",
+    icono: (color) => <IconoMototaxi size={28} color={color} />,
+  },
+  {
+    id: "express",
+    titulo: "Express",
+    descripcion: "Llegas más rápido",
+    icono: (color) => <Ionicons name="flash" size={26} color={color} />,
+  },
+  {
+    id: "reserva",
+    titulo: "Reserva",
+    descripcion: "Programa tu viaje",
+    icono: (color) => <Ionicons name="calendar-outline" size={26} color={color} />,
+  },
 ];
 
 const DESTINOS_FRECUENTES: {
@@ -34,11 +52,10 @@ const DESTINOS_FRECUENTES: {
 ];
 
 export default function PantallaMapa() {
-  const insets = useSafeAreaInsets();
   const { tipoServicio, setTipoServicio } = useViaje();
 
   const irADestino = () => {
-    // router.push("/destino");
+    router.push("/destino");
   };
 
   return (
@@ -48,24 +65,11 @@ export default function PantallaMapa() {
         contentContainerStyle={styles.contenido}
       >
         {/* Cabecera */}
-        <View style={[styles.cabecera, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.filaLogo}>
-            <Image
-              source={require("../../../assets/images/logo-altokke-v2.png")}
-              style={styles.logoImagen}
-              resizeMode="contain"
-            />
-            <Text style={styles.logoTexto}>Altokke</Text>
-
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={22} color={paletaColores.textoSecundario} />
-              <View style={styles.avatarEnLinea} />
-            </View>
-          </View>
-
-          <Text style={styles.saludo}>Hola, {USUARIO_EJEMPLO.nombre} 👋</Text>
-          <Text style={styles.subtitulo}>¿A dónde te llevamos hoy?</Text>
-        </View>
+        <CabeceraPasajero
+          titulo={`Hola, ${USUARIO_EJEMPLO.nombre} 👋`}
+          subtitulo="¿A dónde te llevamos hoy?"
+          paddingInferior={72}
+        />
 
         {/* Origen y destino */}
         <View style={styles.tarjetaRuta}>
@@ -126,11 +130,7 @@ export default function PantallaMapa() {
                   seleccionado && styles.servicioSeleccionado,
                 ]}
               >
-                <Ionicons
-                  name={servicio.icono}
-                  size={26}
-                  color={paletaColores.boton}
-                />
+                {servicio.icono(paletaColores.boton)}
                 <Text style={styles.servicioTitulo}>{servicio.titulo}</Text>
                 <Text style={styles.servicioDescripcion}>
                   {servicio.descripcion}
@@ -195,66 +195,6 @@ const styles = StyleSheet.create({
 
   contenido: {
     paddingBottom: 20,
-  },
-
-  cabecera: {
-    paddingHorizontal: 20,
-    paddingBottom: 72,
-    backgroundColor: COLOR_CABECERA,
-  },
-
-  filaLogo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 14,
-  },
-
-  logoImagen: {
-    width: 30,
-    height: 30,
-  },
-
-  logoTexto: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: "700",
-    color: paletaColores.texto,
-  },
-
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: paletaColores.superficie,
-    borderWidth: 2,
-    borderColor: paletaColores.borde,
-  },
-
-  avatarEnLinea: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: paletaColores.verde,
-    borderWidth: 2,
-    borderColor: COLOR_CABECERA,
-  },
-
-  saludo: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: paletaColores.texto,
-  },
-
-  subtitulo: {
-    fontSize: 14,
-    marginTop: 2,
-    color: paletaColores.textoSecundario,
   },
 
   tarjetaRuta: {

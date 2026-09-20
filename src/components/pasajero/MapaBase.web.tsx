@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 import { paletaColores } from "@/paletaColores";
+import { IconoMototaxi } from "./IconoMototaxi";
 import type { MapaBaseProps } from "./tiposMapa";
 
 // react-native-maps no funciona en el navegador, así que aquí se dibuja un
@@ -35,11 +36,7 @@ export function MapaBase({ conductores = [], destino, style }: MapaBaseProps) {
           key={indice}
           style={[styles.conductor, POSICIONES_CONDUCTORES[indice]]}
         >
-          <Ionicons
-            name="car-sport"
-            size={15}
-            color={paletaColores.textoOscuro}
-          />
+          <IconoMototaxi size={18} color={paletaColores.textoOscuro} />
         </View>
       ))}
 

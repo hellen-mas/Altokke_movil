@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { paletaColores } from "@/paletaColores";
+import { IconoMototaxi } from "./IconoMototaxi";
 import type { MapaBaseProps } from "./tiposMapa";
 
 const ZOOM_INICIAL = 0.012;
@@ -73,11 +74,7 @@ export function MapaBase({
             anchor={{ x: 0.5, y: 0.5 }}
           >
             <View style={styles.conductor}>
-              <Ionicons
-                name="car-sport"
-                size={15}
-                color={paletaColores.textoOscuro}
-              />
+              <IconoMototaxi size={18} color={paletaColores.textoOscuro} />
             </View>
           </Marker>
         ))}

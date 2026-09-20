@@ -4,12 +4,15 @@ import {
     useContext,
     useState,
 } from "react";
+import type { Lugar } from "@/constants/pasajero";
 
 export type TipoServicio = "normal" | "express" | "reserva";
 
 type ViajeContextType = {
     tipoServicio: TipoServicio;
     setTipoServicio: React.Dispatch<React.SetStateAction<TipoServicio>>;
+    destino: Lugar | null;
+    setDestino: React.Dispatch<React.SetStateAction<Lugar | null>>;
 };
 
 const ViajeContext = createContext<ViajeContextType | undefined>(undefined);
@@ -20,12 +23,15 @@ export function ViajeProvider({
     children: ReactNode;
 }) {
     const [tipoServicio, setTipoServicio] = useState<TipoServicio>("normal");
+    const [destino, setDestino] = useState<Lugar | null>(null);
 
     return (
         <ViajeContext.Provider
             value={{
                 tipoServicio,
                 setTipoServicio,
+                destino,
+                setDestino,
             }}
         >
             {children}
