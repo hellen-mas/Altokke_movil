@@ -107,6 +107,7 @@ export default function PantallaCalificacion() {
     registrarViaje({
       origen: ORIGEN_EJEMPLO.nombre,
       destino: destino.nombre,
+      lugarDestino: destino,
       tarifa,
       estado: "completado",
       calificacion,

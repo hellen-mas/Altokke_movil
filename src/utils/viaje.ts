@@ -61,6 +61,20 @@ export function formatearHora(fecha: Date) {
   return `${horas % 12 || 12}:${minutos} ${sufijo}`;
 }
 
+const DIAS_SEMANA = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const MESES = [
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
+];
+
+// Fecha y hora en formato "Lun, 12 may 2025 • 10:24 a. m."
+export function formatearFechaHora(fecha: Date) {
+  const dia = DIAS_SEMANA[fecha.getDay()];
+  const mes = MESES[fecha.getMonth()];
+
+  return `${dia}, ${fecha.getDate()} ${mes} ${fecha.getFullYear()} • ${formatearHora(fecha)}`;
+}
+
 // Punto de la ruta al que se llegó tras recorrer `avance` (0 a 1) del camino
 export function interpolarRuta(ruta: PuntoMapa[], avance: number): PuntoMapa {
   const proporcion = Math.min(1, Math.max(0, avance));

@@ -37,6 +37,8 @@ export interface ViajeHistorial {
   fecha: Date;
   origen: string;
   destino: string;
+  /** Lugar de destino, para poder pedir el mismo viaje otra vez */
+  lugarDestino?: Lugar;
   tarifa: number;
   estado: "completado" | "cancelado";
   /** Estrellas que el pasajero le dio al conductor (1 a 5), si calificó */

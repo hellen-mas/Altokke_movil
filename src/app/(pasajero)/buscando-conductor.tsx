@@ -59,6 +59,7 @@ export default function PantallaBuscandoConductor() {
     registrarViaje({
       origen: ORIGEN_EJEMPLO.nombre,
       destino: destino.nombre,
+      lugarDestino: destino,
       tarifa,
       estado: "cancelado",
     });
