@@ -1,14 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import {
-  Keyboard,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import { BarraInferior } from "@/components/pasajero/BarraInferior";
 import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { MapaBase } from "@/components/pasajero/MapaBase";
@@ -20,14 +9,31 @@ import {
 } from "@/constants/pasajero";
 import { useViaje } from "@/context/ViajeContext";
 import { paletaColores } from "@/paletaColores";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+
+const PANEL_SOBRE_MAPA = 20;
+
+// El mapa ocupa esta parte de la pantalla; con el teclado abierto se encoge
+const PROPORCION_MAPA = 0.3;
+const ALTO_MAPA_CON_TECLADO = 110;
 
 // Quita tildes y mayúsculas para que "helices" encuentre "Héroes"
 function normalizar(texto: string) {
-  return texto
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
+  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
 function filtrarLugares(busqueda: string) {
@@ -45,6 +51,26 @@ function filtrarLugares(busqueda: string) {
 export default function PantallaDestino() {
   const { destino, setDestino } = useViaje();
   const [busqueda, setBusqueda] = useState(destino?.nombre ?? "");
+  const [tecladoVisible, setTecladoVisible] = useState(false);
+  const { height: altoPantalla } = useWindowDimensions();
+
+  useEffect(() => {
+    const alMostrar = Keyboard.addListener("keyboardDidShow", () =>
+      setTecladoVisible(true),
+    );
+    const alOcultar = Keyboard.addListener("keyboardDidHide", () =>
+      setTecladoVisible(false),
+    );
+
+    return () => {
+      alMostrar.remove();
+      alOcultar.remove();
+    };
+  }, []);
+
+  const altoMapa = tecladoVisible
+    ? ALTO_MAPA_CON_TECLADO
+    : Math.round(altoPantalla * PROPORCION_MAPA);
 
   // Si ya hay un destino elegido, se muestra la lista completa para poder cambiarlo
   const resultados =
@@ -69,18 +95,22 @@ export default function PantallaDestino() {
     setDestino(lugar);
     setBusqueda(lugar.nombre);
     Keyboard.dismiss();
-    // router.push("/confirmar-viaje");
+    router.push("/confirmar-viaje");
   };
 
   return (
-    <View style={styles.pantalla}>
+    <KeyboardAvoidingView
+      style={styles.pantalla}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       <CabeceraPasajero subtitulo="¿A dónde te llevamos hoy?" />
 
       <MapaBase
         centro={CENTRO_BAGUA}
         origen={ORIGEN_EJEMPLO.coordenadas}
         destino={destino?.coordenadas}
-        style={styles.mapa}
+        margenInferior={PANEL_SOBRE_MAPA + 6}
+        style={{ height: altoMapa }}
       />
 
       <View style={styles.panel}>
@@ -89,7 +119,11 @@ export default function PantallaDestino() {
         {/* Origen */}
         <View style={styles.filaOrigen}>
           <View style={styles.iconoOrigen}>
-            <Ionicons name="radio-button-on" size={20} color={paletaColores.boton} />
+            <Ionicons
+              name="radio-button-on"
+              size={20}
+              color={paletaColores.boton}
+            />
           </View>
 
           <View style={styles.textoOrigen}>
@@ -108,7 +142,11 @@ export default function PantallaDestino() {
 
         {/* Destino */}
         <View style={styles.campoDestino}>
-          <Ionicons name="location-sharp" size={20} color={paletaColores.boton} />
+          <Ionicons
+            name="location-sharp"
+            size={20}
+            color={paletaColores.boton}
+          />
 
           <View style={styles.campoDestinoTexto}>
             <Text style={styles.etiqueta}>Destino</Text>
@@ -183,8 +221,8 @@ export default function PantallaDestino() {
         </ScrollView>
       </View>
 
-      <BarraInferior activa="inicio" />
-    </View>
+      {!tecladoVisible && <BarraInferior activa="inicio" />}
+    </KeyboardAvoidingView>
   );
 }
 
@@ -194,13 +232,9 @@ const styles = StyleSheet.create({
     backgroundColor: paletaColores.fondoClaro,
   },
 
-  mapa: {
-    height: 200,
-  },
-
   panel: {
     flex: 1,
-    marginTop: -22,
+    marginTop: -PANEL_SOBRE_MAPA,
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopLeftRadius: 24,

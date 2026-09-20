@@ -156,9 +156,17 @@ export default function PantallaMapa() {
               style={styles.frecuente}
             >
               <Ionicons name={destino.icono} size={22} color={paletaColores.boton} />
-              <View>
-                <Text style={styles.frecuenteNombre}>{destino.nombre}</Text>
-                <Text style={styles.frecuenteDetalle}>Agregar dirección</Text>
+              <View style={styles.frecuenteTextos}>
+                <Text
+                  style={styles.frecuenteNombre}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {destino.nombre}
+                </Text>
+                <Text style={styles.frecuenteDetalle} numberOfLines={2}>
+                  Agregar dirección
+                </Text>
               </View>
             </Pressable>
           ))}
@@ -338,14 +346,17 @@ const styles = StyleSheet.create({
 
   frecuente: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    alignItems: "flex-start",
+    gap: 6,
     padding: 10,
     borderRadius: 14,
     backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
     borderColor: paletaColores.bordeClaro,
+  },
+
+  frecuenteTextos: {
+    alignSelf: "stretch",
   },
 
   frecuenteNombre: {

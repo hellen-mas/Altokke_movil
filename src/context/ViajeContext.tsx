@@ -7,10 +7,13 @@ import {
 import type { Lugar } from "@/constants/pasajero";
 
 export type TipoServicio = "normal" | "express" | "reserva";
+export type MetodoPago = "efectivo" | "yape" | "plin";
 
 type ViajeContextType = {
     tipoServicio: TipoServicio;
     setTipoServicio: React.Dispatch<React.SetStateAction<TipoServicio>>;
+    metodoPago: MetodoPago;
+    setMetodoPago: React.Dispatch<React.SetStateAction<MetodoPago>>;
     destino: Lugar | null;
     setDestino: React.Dispatch<React.SetStateAction<Lugar | null>>;
 };
@@ -23,6 +26,7 @@ export function ViajeProvider({
     children: ReactNode;
 }) {
     const [tipoServicio, setTipoServicio] = useState<TipoServicio>("normal");
+    const [metodoPago, setMetodoPago] = useState<MetodoPago>("efectivo");
     const [destino, setDestino] = useState<Lugar | null>(null);
 
     return (
@@ -30,6 +34,8 @@ export function ViajeProvider({
             value={{
                 tipoServicio,
                 setTipoServicio,
+                metodoPago,
+                setMetodoPago,
                 destino,
                 setDestino,
             }}

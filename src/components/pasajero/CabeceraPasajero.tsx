@@ -7,7 +7,7 @@ import { paletaColores } from "@/paletaColores";
 interface Props {
   /** Texto grande bajo el logo (por ejemplo el saludo) */
   titulo?: string;
-  subtitulo: string;
+  subtitulo?: string;
   /** Espacio extra abajo, para pantallas donde una tarjeta se monta sobre la cabecera */
   paddingInferior?: number;
 }
@@ -41,7 +41,7 @@ export function CabeceraPasajero({
       </View>
 
       {titulo && <Text style={styles.titulo}>{titulo}</Text>}
-      <Text style={styles.subtitulo}>{subtitulo}</Text>
+      {subtitulo && <Text style={styles.subtitulo}>{subtitulo}</Text>}
     </View>
   );
 }

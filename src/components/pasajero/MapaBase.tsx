@@ -1,13 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import MapView, { Marker, Polyline, UrlTile } from "react-native-maps";
 import { paletaColores } from "@/paletaColores";
 import { IconoMototaxi } from "./IconoMototaxi";
 import type { MapaBaseProps } from "./tiposMapa";
 
 const ZOOM_INICIAL = 0.012;
 const RELLENO_AJUSTE = { top: 70, right: 60, bottom: 70, left: 60 };
+
+// En Android con Expo Go los mosaicos de Google Maps no cargan (el mapa sale
+// negro), así que allí se dibujan mosaicos de OpenStreetMap. En iOS se usa el
+// mapa normal. En una app compilada con clave de Google se puede quitar esto.
+const USAR_MOSAICOS_OSM = Platform.OS === "android";
+const URL_MOSAICOS_OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 export function MapaBase({
   centro,
@@ -16,6 +22,7 @@ export function MapaBase({
   ruta,
   conductores = [],
   interactivo = true,
+  margenInferior = 0,
   style,
 }: MapaBaseProps) {
   const mapaRef = useRef<MapView>(null);
@@ -52,6 +59,12 @@ export function MapaBase({
           latitudeDelta: ZOOM_INICIAL,
           longitudeDelta: ZOOM_INICIAL,
         }}
+        // TEMPORAL: diagnóstico del mapa negro (borrar cuando se resuelva)
+        onMapReady={() => console.log("[MapaBase] mapa listo")}
+        onMapLoaded={() => console.log("[MapaBase] mosaicos cargados")}
+        // Sube el logo del mapa y centra el contenido en la parte que sí se ve
+        mapPadding={{ top: 0, left: 0, right: 0, bottom: margenInferior }}
+        mapType={USAR_MOSAICOS_OSM ? "none" : "standard"}
         scrollEnabled={interactivo}
         zoomEnabled={interactivo}
         rotateEnabled={false}
@@ -59,6 +72,10 @@ export function MapaBase({
         toolbarEnabled={false}
         showsCompass={false}
       >
+        {USAR_MOSAICOS_OSM && (
+          <UrlTile urlTemplate={URL_MOSAICOS_OSM} maximumZ={19} tileSize={256} />
+        )}
+
         {ruta && ruta.length > 1 && (
           <Polyline
             coordinates={ruta}
@@ -93,6 +110,12 @@ export function MapaBase({
       <Pressable style={styles.botonCentrar} onPress={centrarEnPasajero}>
         <Ionicons name="locate" size={22} color={paletaColores.boton} />
       </Pressable>
+
+      {USAR_MOSAICOS_OSM && (
+        <Text style={[styles.atribucion, { bottom: 4 + margenInferior }]}>
+          © OpenStreetMap
+        </Text>
+      )}
     </View>
   );
 }
@@ -135,6 +158,17 @@ const styles = StyleSheet.create({
     backgroundColor: paletaColores.verde,
     borderWidth: 2,
     borderColor: paletaColores.superficieClara,
+  },
+
+  atribucion: {
+    position: "absolute",
+    left: 6,
+    bottom: 4,
+    fontSize: 10,
+    color: "#3D4A44",
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    paddingHorizontal: 4,
+    borderRadius: 3,
   },
 
   botonCentrar: {

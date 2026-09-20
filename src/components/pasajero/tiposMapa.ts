@@ -16,5 +16,7 @@ export interface MapaBaseProps {
   conductores?: PuntoMapa[];
   /** false = el mapa es solo de vista (por ejemplo dentro de un ScrollView) */
   interactivo?: boolean;
+  /** Espacio de abajo que tapa otro elemento (por ejemplo un panel), para que los pines no queden detrás */
+  margenInferior?: number;
   style?: StyleProp<ViewStyle>;
 }
