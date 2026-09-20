@@ -45,3 +45,41 @@ export function calcularMinutos(km: number, servicio: TipoServicio) {
 export function formatearSoles(monto: number) {
   return `S/ ${monto.toFixed(2)}`;
 }
+
+// Hora en formato "9:44 a. m."
+export function formatearHora(fecha: Date) {
+  const horas = fecha.getHours();
+  const minutos = fecha.getMinutes().toString().padStart(2, "0");
+  const sufijo = horas >= 12 ? "p. m." : "a. m.";
+
+  return `${horas % 12 || 12}:${minutos} ${sufijo}`;
+}
+
+// Punto de la ruta al que se llegó tras recorrer `avance` (0 a 1) del camino
+export function interpolarRuta(ruta: PuntoMapa[], avance: number): PuntoMapa {
+  const proporcion = Math.min(1, Math.max(0, avance));
+  const tramos = ruta.slice(1).map((punto, i) => distanciaKm(ruta[i], punto));
+  const total = tramos.reduce((suma, tramo) => suma + tramo, 0);
+
+  if (total === 0) return ruta[0];
+
+  let restante = proporcion * total;
+
+  for (let i = 0; i < tramos.length; i++) {
+    if (restante <= tramos[i] || i === tramos.length - 1) {
+      const fraccion = tramos[i] === 0 ? 0 : Math.min(1, restante / tramos[i]);
+      const desde = ruta[i];
+      const hasta = ruta[i + 1];
+
+      return {
+        latitude: desde.latitude + (hasta.latitude - desde.latitude) * fraccion,
+        longitude:
+          desde.longitude + (hasta.longitude - desde.longitude) * fraccion,
+      };
+    }
+
+    restante -= tramos[i];
+  }
+
+  return ruta[ruta.length - 1];
+}

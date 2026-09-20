@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { ReactNode } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLOR_CABECERA } from "@/constants/pasajero";
@@ -10,12 +11,15 @@ interface Props {
   subtitulo?: string;
   /** Espacio extra abajo, para pantallas donde una tarjeta se monta sobre la cabecera */
   paddingInferior?: number;
+  /** Contenido extra bajo el subtítulo (por ejemplo la barra de progreso del viaje) */
+  children?: ReactNode;
 }
 
 export function CabeceraPasajero({
   titulo,
   subtitulo,
   paddingInferior = 14,
+  children,
 }: Props) {
   const insets = useSafeAreaInsets();
 
@@ -42,6 +46,8 @@ export function CabeceraPasajero({
 
       {titulo && <Text style={styles.titulo}>{titulo}</Text>}
       {subtitulo && <Text style={styles.subtitulo}>{subtitulo}</Text>}
+
+      {children}
     </View>
   );
 }
