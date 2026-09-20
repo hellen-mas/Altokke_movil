@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Pressable,
@@ -93,7 +93,7 @@ export default function PantallaViajeActivo() {
   };
 
   const calificarViaje = () => {
-    // router.replace("/calificacion");
+    router.replace("/calificacion");
   };
 
   return (

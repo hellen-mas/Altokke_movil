@@ -4,7 +4,11 @@ import {
     useContext,
     useState,
 } from "react";
-import type { Lugar } from "@/constants/pasajero";
+import {
+    HISTORIAL_EJEMPLO,
+    type Lugar,
+    type ViajeHistorial,
+} from "@/constants/pasajero";
 
 export type TipoServicio = "normal" | "express" | "reserva";
 export type MetodoPago = "efectivo" | "yape" | "plin";
@@ -16,6 +20,8 @@ type ViajeContextType = {
     setMetodoPago: React.Dispatch<React.SetStateAction<MetodoPago>>;
     destino: Lugar | null;
     setDestino: React.Dispatch<React.SetStateAction<Lugar | null>>;
+    historial: ViajeHistorial[];
+    registrarViaje: (viaje: Omit<ViajeHistorial, "id" | "fecha">) => void;
 };
 
 const ViajeContext = createContext<ViajeContextType | undefined>(undefined);
@@ -28,6 +34,18 @@ export function ViajeProvider({
     const [tipoServicio, setTipoServicio] = useState<TipoServicio>("normal");
     const [metodoPago, setMetodoPago] = useState<MetodoPago>("efectivo");
     const [destino, setDestino] = useState<Lugar | null>(null);
+    const [historial, setHistorial] =
+        useState<ViajeHistorial[]>(HISTORIAL_EJEMPLO);
+
+    // Guarda el viaje al principio de la lista, con la fecha y hora actuales
+    const registrarViaje = (viaje: Omit<ViajeHistorial, "id" | "fecha">) => {
+        const fecha = new Date();
+
+        setHistorial((actual) => [
+            { ...viaje, id: `viaje-${fecha.getTime()}`, fecha },
+            ...actual,
+        ]);
+    };
 
     return (
         <ViajeContext.Provider
@@ -38,6 +56,8 @@ export function ViajeProvider({
                 setMetodoPago,
                 destino,
                 setDestino,
+                historial,
+                registrarViaje,
             }}
         >
             {children}

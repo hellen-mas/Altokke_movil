@@ -1,5 +1,11 @@
 import type { PuntoMapa } from "@/components/pasajero/tiposMapa";
-import type { TipoServicio } from "@/context/ViajeContext";
+import type { MetodoPago, TipoServicio } from "@/context/ViajeContext";
+
+export const NOMBRE_METODO_PAGO: Record<MetodoPago, string> = {
+  efectivo: "Efectivo",
+  yape: "Yape",
+  plin: "Plin",
+};
 
 // TEMPORAL: tarifas de ejemplo (más adelante las calculará el backend).
 // Con 1.3 km en servicio Normal da S/ 4.94, igual que el mockup.

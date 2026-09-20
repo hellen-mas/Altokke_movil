@@ -32,6 +32,17 @@ export const CONDUCTOR_EJEMPLO = {
   color: "Verde con amarillo",
 };
 
+export interface ViajeHistorial {
+  id: string;
+  fecha: Date;
+  origen: string;
+  destino: string;
+  tarifa: number;
+  estado: "completado" | "cancelado";
+  /** Estrellas que el pasajero le dio al conductor (1 a 5), si calificó */
+  calificacion?: number;
+}
+
 export interface Lugar {
   id: string;
   nombre: string;
@@ -94,5 +105,54 @@ export const LUGARES_BAGUA: Lugar[] = [
     nombre: "UNTRM Bagua",
     detalle: "Av. Universidad, Bagua",
     coordenadas: { latitude: -5.626, longitude: -78.5195 },
+  },
+];
+
+// TEMPORAL: viajes anteriores de ejemplo, tomados del mockup de Actividad
+// (más adelante vendrán del backend)
+export const HISTORIAL_EJEMPLO: ViajeHistorial[] = [
+  {
+    id: "ejemplo-1",
+    fecha: new Date(2025, 4, 12, 10, 24),
+    origen: "Mercado Central, Bagua",
+    destino: "Hospital Regional, Bagua",
+    tarifa: 4.94,
+    estado: "completado",
+    calificacion: 5,
+  },
+  {
+    id: "ejemplo-2",
+    fecha: new Date(2025, 4, 10, 18, 15),
+    origen: "Jr. Miraflores 1010",
+    destino: "Plaza de Armas Héroes del Cenepa",
+    tarifa: 5.2,
+    estado: "completado",
+    calificacion: 4,
+  },
+  {
+    id: "ejemplo-3",
+    fecha: new Date(2025, 4, 9, 8, 42),
+    origen: "UNTRM Bagua",
+    destino: "Av. Héroes del Cenepa",
+    tarifa: 4.5,
+    estado: "completado",
+    calificacion: 5,
+  },
+  {
+    id: "ejemplo-4",
+    fecha: new Date(2025, 4, 7, 20, 5),
+    origen: "Terminal Terrestre de Bagua",
+    destino: "Jr. Miraflores 1010",
+    tarifa: 3.8,
+    estado: "cancelado",
+  },
+  {
+    id: "ejemplo-5",
+    fecha: new Date(2025, 4, 6, 16, 30),
+    origen: "Bagua Grande Terminal",
+    destino: "Mercado Central, Bagua",
+    tarifa: 6.8,
+    estado: "completado",
+    calificacion: 5,
   },
 ];

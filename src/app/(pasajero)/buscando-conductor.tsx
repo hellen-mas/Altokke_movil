@@ -20,10 +20,10 @@ import {
   CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
 } from "@/constants/pasajero";
-import { MetodoPago, useViaje } from "@/context/ViajeContext";
+import { useViaje } from "@/context/ViajeContext";
 import { useResumenViaje } from "@/hooks/use-resumen-viaje";
 import { paletaColores } from "@/paletaColores";
-import { formatearSoles } from "@/utils/viaje";
+import { formatearSoles, NOMBRE_METODO_PAGO } from "@/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
@@ -31,14 +31,8 @@ const PROPORCION_MAPA = 0.3;
 // TEMPORAL: mientras no haya backend, el conductor "aparece" después de unos segundos
 const TIEMPO_BUSQUEDA_MS = 5000;
 
-const NOMBRE_METODO_PAGO: Record<MetodoPago, string> = {
-  efectivo: "Efectivo",
-  yape: "Yape",
-  plin: "Plin",
-};
-
 export default function PantallaBuscandoConductor() {
-  const { setDestino } = useViaje();
+  const { setDestino, registrarViaje } = useViaje();
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const { height: altoPantalla } = useWindowDimensions();
@@ -62,6 +56,12 @@ export default function PantallaBuscandoConductor() {
     resumen;
 
   const cancelarViaje = () => {
+    registrarViaje({
+      origen: ORIGEN_EJEMPLO.nombre,
+      destino: destino.nombre,
+      tarifa,
+      estado: "cancelado",
+    });
     setDestino(null);
     router.replace("/mapa");
   };
