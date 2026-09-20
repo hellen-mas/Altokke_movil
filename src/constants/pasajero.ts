@@ -3,22 +3,33 @@ import type { PuntoMapa } from "@/components/pasajero/tiposMapa";
 // Verde oscuro de las cabeceras del flujo de pasajero (según los mockups)
 export const COLOR_CABECERA = "#0B3B2A";
 
-// TEMPORAL: coordenadas aproximadas de Bagua (más adelante vendrán del GPS)
+// TEMPORAL: ubicación de ejemplo del pasajero, sobre el Jirón Miraflores de
+// Bagua (más adelante vendrá del GPS del teléfono)
 export const CENTRO_BAGUA: PuntoMapa = {
-  latitude: -5.6389,
-  longitude: -78.5318,
+  latitude: -5.63966,
+  longitude: -78.52748,
 };
 
 // TEMPORAL: mototaxis de ejemplo cerca del pasajero (más adelante vendrán del backend)
 export const CONDUCTORES_CERCANOS: PuntoMapa[] = [
-  { latitude: -5.6376, longitude: -78.5334 },
-  { latitude: -5.6402, longitude: -78.5297 },
-  { latitude: -5.6381, longitude: -78.5289 },
+  { latitude: -5.63806, longitude: -78.52913 },
+  { latitude: -5.64159, longitude: -78.52545 },
+  { latitude: -5.63893, longitude: -78.53022 },
 ];
 
 // TEMPORAL: usuario de ejemplo (más adelante vendrá del login)
 export const USUARIO_EJEMPLO = {
   nombre: "Hellen",
+};
+
+// TEMPORAL: conductor de ejemplo (más adelante vendrá del backend)
+export const CONDUCTOR_EJEMPLO = {
+  nombre: "Juan Carlos Flores",
+  calificacion: 4.9,
+  viajes: 312,
+  vehiculo: "Mototaxi",
+  placa: "Sin placa",
+  color: "Verde con amarillo",
 };
 
 export interface Lugar {
@@ -36,44 +47,47 @@ export const ORIGEN_EJEMPLO: Lugar = {
   coordenadas: CENTRO_BAGUA,
 };
 
-// TEMPORAL: lugares de ejemplo de Bagua con coordenadas aproximadas
-// (más adelante vendrán de un servicio de búsqueda de direcciones)
+// TEMPORAL: lugares de ejemplo de Bagua (más adelante vendrán de un servicio
+// de búsqueda de direcciones). Las coordenadas de la Plaza de Armas, el
+// terminal, el hospital y la plaza Bolognesi salen de OpenStreetMap; las de
+// Plaza Grau y Plazuela Bolívar están puestas sobre la calle de su dirección,
+// y la de UNTRM es aproximada.
 export const LUGARES_BAGUA: Lugar[] = [
   {
     id: "plaza-heroes-cenepa",
     nombre: "Plaza de Armas Héroes del Cenepa",
     detalle: "Jirón Ortiz Arrieta, Bagua",
-    coordenadas: { latitude: -5.632, longitude: -78.5225 },
+    coordenadas: { latitude: -5.63661, longitude: -78.53236 },
   },
   {
     id: "plaza-armas-bagua",
     nombre: "Plaza de Armas de Bagua",
     detalle: "Centro de Bagua, Bagua",
-    coordenadas: { latitude: -5.6398, longitude: -78.533 },
+    coordenadas: { latitude: -5.64311, longitude: -78.5257 },
   },
   {
     id: "plaza-grau",
     nombre: "Plaza Grau",
     detalle: "Jirón 28 de Julio, Bagua",
-    coordenadas: { latitude: -5.6425, longitude: -78.528 },
+    coordenadas: { latitude: -5.63477, longitude: -78.53939 },
   },
   {
     id: "plazuela-bolivar",
     nombre: "Plazuela Simón Bolívar",
     detalle: "Jirón Miraflores, Bagua",
-    coordenadas: { latitude: -5.636, longitude: -78.534 },
+    coordenadas: { latitude: -5.64292, longitude: -78.524 },
   },
   {
     id: "terminal-terrestre",
     nombre: "Terminal Terrestre de Bagua",
-    detalle: "Av. Amazonas, Bagua",
-    coordenadas: { latitude: -5.645, longitude: -78.521 },
+    detalle: "Av. Héroes del Cenepa, Bagua",
+    coordenadas: { latitude: -5.63893, longitude: -78.53022 },
   },
   {
-    id: "hospital-santiago-apostol",
-    nombre: "Hospital Santiago Apóstol",
-    detalle: "Av. Circunvalación, Bagua",
-    coordenadas: { latitude: -5.63, longitude: -78.535 },
+    id: "hospital-gustavo-lanatta",
+    nombre: "Hospital de Apoyo Gustavo Lanatta Luján",
+    detalle: "Av. Héroes del Cenepa, Bagua",
+    coordenadas: { latitude: -5.64296, longitude: -78.52683 },
   },
   {
     id: "untrm-bagua",

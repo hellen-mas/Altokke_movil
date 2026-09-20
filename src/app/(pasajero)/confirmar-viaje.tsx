@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { ReactNode } from "react";
 import {
   Pressable,
@@ -15,20 +15,16 @@ import { IconoMototaxi } from "@/components/pasajero/IconoMototaxi";
 import { MapaBase } from "@/components/pasajero/MapaBase";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { CENTRO_BAGUA, ORIGEN_EJEMPLO } from "@/constants/pasajero";
-import { MetodoPago, TipoServicio, useViaje } from "@/context/ViajeContext";
+import { MetodoPago, useViaje } from "@/context/ViajeContext";
+import { ServicioViaje, useResumenViaje } from "@/hooks/use-resumen-viaje";
 import { paletaColores } from "@/paletaColores";
-import {
-  calcularMinutos,
-  calcularTarifa,
-  distanciaKm,
-  formatearSoles,
-} from "@/utils/viaje";
+import { formatearSoles } from "@/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
 
 const SERVICIOS: {
-  id: Exclude<TipoServicio, "reserva">;
+  id: ServicioViaje;
   titulo: string;
   descripcion: string;
   icono: (color: string) => ReactNode;
@@ -84,40 +80,20 @@ const METODOS_PAGO: {
 ];
 
 export default function PantallaConfirmarViaje() {
-  const {
-    destino,
-    tipoServicio,
-    setTipoServicio,
-    metodoPago,
-    setMetodoPago,
-  } = useViaje();
+  const { setTipoServicio, metodoPago, setMetodoPago } = useViaje();
+  const resumen = useResumenViaje();
   const { height: altoPantalla } = useWindowDimensions();
 
   // Si se entra sin haber elegido destino, se vuelve a pedirlo
-  if (!destino) {
+  if (!resumen) {
     return <Redirect href="/destino" />;
   }
 
-  // "Reserva" todavía no se puede programar, así que se muestra como Normal
-  const servicio = tipoServicio === "reserva" ? "normal" : tipoServicio;
-
-  const origen = ORIGEN_EJEMPLO.coordenadas;
-  const kilometros = distanciaKm(origen, destino.coordenadas);
-  const tarifa = calcularTarifa(kilometros, servicio);
-  const minutos = calcularMinutos(kilometros, servicio);
-
-  // Ruta de ejemplo en forma de "L" siguiendo la cuadrícula de calles
-  const ruta = [
-    origen,
-    {
-      latitude: destino.coordenadas.latitude,
-      longitude: origen.longitude,
-    },
-    destino.coordenadas,
-  ];
+  const { origen, destino, servicio, kilometros, tarifa, minutos, ruta } =
+    resumen;
 
   const confirmarViaje = () => {
-    // router.push("/buscando-conductor");
+    router.push("/buscando-conductor");
   };
 
   return (
