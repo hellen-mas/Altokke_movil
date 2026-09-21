@@ -1,8 +1,8 @@
+import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { paletaColores } from "@/paletaColores";
 
 type Seccion = "inicio" | "actividad" | "ayuda" | "cuenta";
 
@@ -34,6 +34,15 @@ export function BarraInferior({ activa }: Props) {
       router.replace("/actividad");
     }
     // Ayuda y Cuenta las desarrollan otros integrantes del equipo
+       if (seccion === "inicio") {
+     router.replace("/mapa");
+   } else if (seccion === "actividad") {
+     router.replace("/actividad");
+   } else if (seccion === "ayuda") {
+     router.replace("/ayuda");
+   } else if (seccion === "cuenta") {
+     router.replace("/cuenta");
+   }
   };
 
   return (
