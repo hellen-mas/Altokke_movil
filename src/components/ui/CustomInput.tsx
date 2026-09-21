@@ -1,74 +1,76 @@
+import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { Pressable, StyleSheet, TextInput, TextInputProps, View } from "react-native";
-import { paletaColores } from "../../paletaColores";
+import { forwardRef, useState } from "react";
+import {
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TextInputProps,
+  View,
+} from "react-native";
 
-interface CustomInputProps extends TextInputProps {
-  placeholder: string;
+export interface CustomInputProps extends TextInputProps {
   iconName: keyof typeof Ionicons.glyphMap;
   isPassword?: boolean;
   variant?: "dark" | "light";
 }
 
-export default function CustomInput({
-  placeholder,
-  iconName,
-  isPassword = false,
-  variant = "dark",
-  ...inputProps // value, onChangeText, keyboardType, maxLenght
-}: CustomInputProps) {
-  const [visible, setVisible] = useState(false);
+export const CustomInput = forwardRef<TextInput, CustomInputProps>(
+  ({ iconName, isPassword, variant = "dark", style, ...rest }, ref) => {
+    const [visible, setVisible] = useState(false);
+    
+    const isLight = variant === "light";
+    const colorSecundario = isLight
+      ? paletaColores.textoSecundarioClaro
+      : paletaColores.textoSecundario;
 
-  const isLight = variant === "light";
-
-  const colorSecundario = isLight
-    ? paletaColores.textoSecundarioClaro
-    : paletaColores.textoSecundario;
-
-  return (
-    <View 
-      style={[
-        styles.container,
-        isLight && styles.containerLight,
-      ]}
-    >
-      <Ionicons
-        name={iconName}
-        size={21}
-        color={colorSecundario}
-      />
-
-      <TextInput
-        {...inputProps}
+    return (
+      <View 
         style={[
-          styles.input, 
-          isLight && styles.inputLight,
-          inputProps.style,
+          styles.container,
+          isLight && styles.containerLight,
         ]}
-        placeholder={placeholder}
-        placeholderTextColor={colorSecundario}
-        secureTextEntry={
-          isPassword ? !visible : inputProps.secureTextEntry
-        }
-      />
+      >
+        <Ionicons
+          name={iconName}
+          size={21}
+          color={colorSecundario}
+        />
 
-      {isPassword && (
-        <Pressable
-          onPress={() => {
-            setVisible((visible) => !visible);
-          }}
-          style={styles.botonOjo}
-        >
-          <Ionicons
-            name={visible ? "eye-outline" : "eye-off-outline"}
-            size={21}
-            color={colorSecundario}
-          />
-        </Pressable>
-      )}
-    </View>
-  );
-}
+        <TextInput
+          ref={ref}
+          style={[
+            styles.input, 
+            isLight && styles.inputLight,
+            style,
+          ]}
+          placeholderTextColor={colorSecundario}
+          secureTextEntry={isPassword ? !visible : rest.secureTextEntry}
+          {...rest}
+        />
+        {isPassword && (
+          <Pressable
+            onPress={() => setVisible((prev) => !prev)}
+            style={styles.botonOjo}
+            accessibilityRole="button"
+            accessibilityLabel={
+              visible ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+          >
+            <Ionicons
+              name={visible ? "eye-outline" : "eye-off-outline"}
+              size={21}
+              color={colorSecundario}
+            />
+          </Pressable>
+        )}
+      </View>
+    );
+  },
+);
+
+CustomInput.displayName = "CustomInput";
+export default CustomInput;
 
 const styles = StyleSheet.create({
   container: {
@@ -83,23 +85,19 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: paletaColores.input,
   },
-
   containerLight: {
     backgroundColor: paletaColores.inputClaro,
     borderColor: paletaColores.bordeClaro,
   },
-
   input: {
     flex: 1,
     height: "100%",
     fontSize: 16,
     color: paletaColores.texto,
   },
-
   inputLight: {
     color: paletaColores.textoClaro,
   },
-
   botonOjo: {
     padding: 4,
   },

@@ -38,7 +38,7 @@ export default function PantallaBienvenida() {
         <PrimaryButton
           title={"Continuar"}
           onPress={() => {
-            router.push("/");
+            router.push("/crear-cuenta");
           }}
           style={{ marginBottom: 15 }}
         />

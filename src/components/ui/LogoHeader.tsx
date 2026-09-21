@@ -25,7 +25,6 @@ export const LogoHeader = ({variant = "dark"}: Props) => {
 };
 
 const styles = StyleSheet.create({
-  /* LOGO */
   logoContainer: {
     width: "100%",
     flexDirection: "row",
