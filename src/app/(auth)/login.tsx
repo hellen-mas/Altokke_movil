@@ -32,7 +32,6 @@ export default function LoginScreen() {
       return;
     }
     
-    // TODO: Lógica de inicio de sesión real
     Alert.alert("Éxito", "Iniciando sesión...");
   };
 
