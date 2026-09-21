@@ -1,11 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
-import { Pressable, StyleSheet, Text, View, KeyboardAvoidingView, ScrollView, Platform } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View, KeyboardAvoidingView, ScrollView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoHeader, OTPCodeField, PrimaryButton } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 
 export default function VerificacionCodigoScreen() {
+  const [codigo, setCodigo] = useState("");
+
+  const handleVerificar = () => {
+    if (codigo.length < 6) {
+      Alert.alert(
+        "Código incompleto",
+        "Por favor, ingresa el código completo de 6 dígitos."
+      );
+      return;
+    }
+    router.push("/recuperar-password/nuevo" as any);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -23,7 +37,10 @@ export default function VerificacionCodigoScreen() {
             <Text style={styles.subtitle}>
               Se ha enviado un código de 6 dígitos a{"\n"}jperez@email.com
             </Text>
-            <OTPCodeField numberOfDigits={6} />
+            <OTPCodeField 
+              numberOfDigits={6} 
+              onTextChange={setCodigo} 
+            />
             <View style={styles.timerContainer}>
               <Ionicons
                 name="time-outline"
@@ -34,7 +51,7 @@ export default function VerificacionCodigoScreen() {
             </View>
             <PrimaryButton
               title="Verificar"
-              onPress={() => router.push("/recuperar-password/nuevo" as any)}
+              onPress={handleVerificar}
               style={styles.verifyButton}
             />
             <View style={styles.resendContainer}>

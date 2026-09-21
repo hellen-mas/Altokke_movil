@@ -1,7 +1,7 @@
 import { paletaColores } from "@/paletaColores";
 import { Link, router } from "expo-router";
-import React from "react";
-import { StyleSheet, View, KeyboardAvoidingView, ScrollView, Platform } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, View, KeyboardAvoidingView, ScrollView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CustomInput } from "@/components/ui/CustomInput";
 import { LogoHeader } from "@/components/ui/LogoHeader";
@@ -9,6 +9,19 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 
 export default function RecuperarPasswordScreen() {
+  const [correo, setCorreo] = useState("");
+
+  const handleContinuar = () => {
+    if (!correo.trim()) {
+      Alert.alert(
+        "Campo incompleto",
+        "Por favor, ingresa tu correo electrónico o teléfono."
+      );
+      return;
+    }
+    router.push("/recuperar-password/verificar" as any);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -35,12 +48,14 @@ export default function RecuperarPasswordScreen() {
                 placeholder="Correo electrónico o teléfono"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={correo}
+                onChangeText={setCorreo}
               />
             </View>
 
             <PrimaryButton
               title="Continuar"
-              onPress={() => router.push("/recuperar-password/verificar" as any)}
+              onPress={handleContinuar}
               style={styles.button}
             />
 

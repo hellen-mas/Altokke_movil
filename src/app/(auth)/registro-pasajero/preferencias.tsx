@@ -152,7 +152,15 @@ export default function PasajeroPreferenciasScreen() {
 
         <PrimaryButton
           title="Crear cuenta"
-          onPress={() => router.push("/login" as any)}
+          onPress={() => {
+            if (!terminos) {
+              import("react-native").then(({ Alert }) => {
+                Alert.alert("Términos incompletos", "Debes aceptar los términos y condiciones para crear tu cuenta.");
+              });
+              return;
+            }
+            router.push("/login" as any);
+          }}
           style={styles.botonCrear}
         />
 

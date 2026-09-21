@@ -8,7 +8,9 @@ import {
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
+import { useState } from "react";
 import {
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -18,6 +20,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function LoginScreen() {
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
+
+  const handleLogin = () => {
+    if (!correo.trim() || !contrasena.trim()) {
+      Alert.alert(
+        "Campos incompletos",
+        "Por favor, ingresa tu correo y contraseña para continuar."
+      );
+      return;
+    }
+    
+    // TODO: Lógica de inicio de sesión real
+    Alert.alert("Éxito", "Iniciando sesión...");
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAwareScrollView
@@ -44,12 +62,16 @@ export default function LoginScreen() {
             placeholder="Correo electrónico o teléfono"
             keyboardType="email-address"
             autoCapitalize="none"
+            value={correo}
+            onChangeText={setCorreo}
           />
 
           <CustomInput
             iconName="lock-closed-outline"
             placeholder="Contraseña"
             isPassword
+            value={contrasena}
+            onChangeText={setContrasena}
           />
 
           <Link
@@ -59,7 +81,7 @@ export default function LoginScreen() {
             ¿Olvidaste tu contraseña?
           </Link>
 
-          <PrimaryButton title="Entrar" onPress={() => {}} />
+          <PrimaryButton title="Entrar" onPress={handleLogin} />
         </View>
 
         <View style={styles.dividerContainer}>

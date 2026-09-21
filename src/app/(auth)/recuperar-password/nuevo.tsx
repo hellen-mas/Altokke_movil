@@ -3,12 +3,30 @@ import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { StyleSheet, Text, View, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NuevoPasswordScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleGuardar = () => {
+    if (!password.trim() || !confirmPassword.trim()) {
+      Alert.alert(
+        "Campos incompletos",
+        "Por favor, ingresa y confirma tu nueva contraseña."
+      );
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert(
+        "Contraseñas no coinciden",
+        "Las contraseñas ingresadas no son iguales."
+      );
+      return;
+    }
+    router.push("/login" as any);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -54,7 +72,7 @@ export default function NuevoPasswordScreen() {
 
             <PrimaryButton
               title="Guardar contraseña"
-              onPress={() => router.push("/login" as any)}
+              onPress={handleGuardar}
               style={styles.submitButton}
             />
           </View>

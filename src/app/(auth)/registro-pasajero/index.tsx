@@ -22,6 +22,28 @@ export default function PasajeroDatosPersonalesScreen() {
   const [direccion, setDireccion] = useState('');
   const [correo, setCorreo] = useState('');
 
+  const handleSiguiente = () => {
+    if (
+      !nombres.trim() ||
+      !apellidos.trim() ||
+      !tipoDocumento ||
+      !numeroDocumento.trim() ||
+      !fechaNacimiento ||
+      !genero ||
+      !direccion.trim() ||
+      !correo.trim()
+    ) {
+      import("react-native").then(({ Alert }) => {
+        Alert.alert(
+          "Campos incompletos",
+          "Por favor, completa todos los datos para continuar."
+        );
+      });
+      return;
+    }
+    router.push("/registro-pasajero/verificacion" as any);
+  };
+
   return (
     <View style={styles.container}>
       <KeyboardAwareScrollView 
@@ -130,7 +152,7 @@ export default function PasajeroDatosPersonalesScreen() {
         <View style={styles.buttonContainer}>
           <PrimaryButton 
             title="Siguiente" 
-            onPress={() => router.push("/registro-pasajero/verificacion" as any)} 
+            onPress={handleSiguiente} 
           />
         </View>
 

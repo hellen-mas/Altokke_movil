@@ -156,7 +156,18 @@ export default function PasajeroVerificacionScreen() {
         </View>
 
         <View style={styles.footer}>
-          <PrimaryButton title="Siguiente" onPress={() => router.push("/registro-pasajero/preferencias" as any)} />
+          <PrimaryButton 
+            title="Siguiente" 
+            onPress={() => {
+              if ((emergencyName.trim() && !emergencyPhone.trim()) || (!emergencyName.trim() && emergencyPhone.trim())) {
+                import("react-native").then(({ Alert }) => {
+                  Alert.alert("Campos incompletos", "Si deseas agregar un contacto de emergencia, debes proveer tanto el nombre como el teléfono.");
+                });
+                return;
+              }
+              router.push("/registro-pasajero/preferencias" as any);
+            }} 
+          />
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Atrás</Text>
           </Pressable>
