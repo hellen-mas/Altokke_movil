@@ -19,6 +19,8 @@ import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
+import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
+import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
 
 export default function DatosPersonalesConductor() {
     const {
@@ -54,7 +56,7 @@ export default function DatosPersonalesConductor() {
             !fechaNacimiento ||
             !correo.trim() ||
             !contrasena ||
-            !confirmarContrasena
+            !confirmarContrasena.trim()
         ) {
             Alert.alert(
                 "Campos incompletos",
@@ -116,50 +118,7 @@ export default function DatosPersonalesConductor() {
                     variant="light"
                 />
 
-                <View
-                    style={styles.progressSection}
-                >
-                    <Text style={styles.pasos}>
-                        Paso 1 de 5
-                    </Text>
-
-                    <View style={styles.progressContainer}>
-                        <View
-                            style={[
-                                styles.pasoCirculo,
-                                styles.pasoCirculoActivo,
-                            ]}
-                        >
-                            <Text style={styles.pasoNumeroActivo}>
-                                1
-                            </Text>
-                        </View>
-
-                        <View style={styles.linea}/>
-
-                        <View style={styles.pasoCirculo}>
-                            <Text style={styles.pasoNumero}>2</Text>
-                        </View>
-
-                        <View style={styles.linea} />
-
-                        <View style={styles.pasoCirculo}>
-                            <Text style={styles.pasoNumero}>3</Text>
-                        </View>
-
-                        <View style={styles.linea} />
-
-                        <View style={styles.pasoCirculo}>
-                            <Text style={styles.pasoNumero}>4</Text>
-                        </View>
-
-                        <View style={styles.linea} />
-
-                        <View style={styles.pasoCirculo}>
-                            <Text style={styles.pasoNumero}>5</Text>
-                        </View>
-                    </View>
-                </View>
+                <ProgresoRegistro pasoActual={1}/>
 
                 {/* Formulario */}
                 <View style={styles.formulario}>
@@ -218,7 +177,7 @@ export default function DatosPersonalesConductor() {
                         <DateTimePicker
                             value={fechaNacimiento ?? fechaMaximaNacimiento}
                             mode="date"
-                            maximumDate={new Date()}
+                            maximumDate={fechaMaximaNacimiento}
                             onChange={(
                                 event: DateTimePickerEvent,
                                 selectDate?: Date
@@ -262,16 +221,10 @@ export default function DatosPersonalesConductor() {
                 </View>
 
                 {/* Requisito de edad */}
-                <View style={styles.noticiaEdad}>
-                    <View style={styles.checkCirculo}>
-                        <Text style={styles.check}>✓</Text>
-                    </View>
-
-                    <Text style={styles.textoEdad}>
-                        La edad mínima para conducir con Altokke es
-                        de 18 años.
-                    </Text>
-                </View>
+                <AvisoInformativo
+                    icono="checkmark-circle-outline"
+                    texto="La edad minima para conducir con Altokke es de 18 años."
+                />
 
                 <PrimaryButton
                     title="Continuar"
@@ -357,41 +310,6 @@ const styles = StyleSheet.create({
     formulario: {
         width: "100%",
         gap: 12,
-    },
-
-    noticiaEdad: {
-        width: "100%",
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 18,
-        marginBottom: 20,
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        borderRadius: 12,
-        backgroundColor: "#EAF8F1",
-    },
-
-    checkCirculo: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        alignItems: "center",
-        justifyContent: "center",
-        marginRight: 10,
-        backgroundColor: paletaColores.verde,
-    },
-
-    check: {
-        color: paletaColores.textoOscuro,
-        fontSize: 14,
-        fontWeight: "800",
-    },
-
-    textoEdad: {
-        flex: 1,
-        color: paletaColores.textoClaro,
-        fontSize: 13,
-        lineHeight: 18,
     },
 
     dateInput: {

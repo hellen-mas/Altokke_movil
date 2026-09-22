@@ -1,5 +1,4 @@
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,12 +24,18 @@ export default function SolicitudEnviada() {
 
     const manejarBoton = () => {
         if (estadoSolicitud === "APROBADA") {
+            // Más adelante
             // router.replace("/conductor");
             return;
         } 
 
         if (estadoSolicitud === "RECHAZADA") {
             router.replace("/registro-conductor/datos-personales");
+            return;
+        }
+
+        if (estadoSolicitud === "PENDIENTE") {
+            router.replace("/");
             return;
         }
     };
