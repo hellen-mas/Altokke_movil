@@ -1,31 +1,34 @@
 export const paletaColores = {
-  // Tema oscuro 
-  fondo: "#0E1412",
-  superficie: "#151D1A",
-  tarjeta: "#18211E",
-
-  boton: "#2FAE73",
-  botonPresionado: "#24895A",
-  verde: "#39C887",
-
+  // Modo oscuro
+  fondo: "#0E1713",
+  superficie: "#151F1A",
+  tarjeta: "#19241F",
   texto: "#F5F7F6",
-  textoSecundario: "#A7B2AC",
+  textoSecundario: "#9DAAA3",
+  borde: "#304039",
+  input: "#19261F",
+
+  // Colores principales
+  boton: "#2A9B64",
+  botonPresionado: "#207C50",
+
+  // Verde principal de Altokke
+  verde: "#228E5B",
+
+  // Texto auxiliar
   textoOscuro: "#0B0E0D",
 
-  borde: "#2B3933",
-  input: "#18221E",
-
-  // Tema claro
-  fondoClaro: "#F8FAF9",
+  // Modo claro
+  fondoClaro: "#F7F9F8",
   superficieClara: "#FFFFFF",
   textoClaro: "#16221D",
   textoSecundarioClaro: "#66756E",
   bordeClaro: "#D8E0DC",
   inputClaro: "#FFFFFF",
 
-  error: "#E05D5D",
-  advertencia: "#D8A94C",
-  exito: "#39C887",
+  // Estados
+  error: "#D95757",
+  advertencia: "#C99738",
+  exito: "#319967",
   deshabilitado: "#55615B",
-  overlay: "rgba(0, 0, 0, 0.55)",
 };

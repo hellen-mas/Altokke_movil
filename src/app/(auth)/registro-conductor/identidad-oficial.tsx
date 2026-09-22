@@ -8,7 +8,6 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import { router } from "expo-router";
 import {
     Alert,
-    Image,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -17,6 +16,9 @@ import {
     Text,
     View,
 } from "react-native";
+import { DocumentoFoto } from "@/components/conductor/DocumentoFoto";
+import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
+import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
 
 export default function IdentidadOficialConductor() {
     const {
@@ -91,35 +93,7 @@ export default function IdentidadOficialConductor() {
                     variant="light"
                 />
 
-                <View style={styles.progressSection}>
-                    <Text style={styles.pasos}>Paso 3 de 5</Text>
-
-                    <View style={styles.progressContainer}>
-                        <View style={[styles.pasoCirculo, styles.pasoCompletado]}>
-                            <Text style={styles.pasoNumeroActivo}>1</Text>
-                        </View>
-                        <View style={styles.lineaActiva}/>
-
-                        <View style={[styles.pasoCirculo, styles.pasoCompletado]}>
-                            <Text style={styles.pasoNumeroActivo}>2</Text>
-                        </View>
-                        <View style={styles.lineaActiva}/>
-
-                        <View style={[styles.pasoCirculo, styles.pasoCirculoActivo]}>
-                            <Text style={styles.pasoNumeroActivo}>3</Text>
-                        </View>
-                        <View style={styles.linea}/>
-
-                        <View style={styles.pasoCirculo}>
-                            <Text style={styles.pasoNumero}>4</Text>
-                        </View>
-                        <View style={styles.linea} />
-
-                        <View style={styles.pasoCirculo}>
-                            <Text style={styles.pasoNumero}>5</Text>
-                        </View>
-                    </View>
-                </View>
+                <ProgresoRegistro pasoActual={3}/>
 
                 {/* Documentos */}
                 <View style={styles.documentosContainer}>
@@ -144,19 +118,9 @@ export default function IdentidadOficialConductor() {
                 </View>
 
                 {/* Aviso */}
-                <View style={styles.aviso}>
-                    <View style={styles.avisoIcono}>
-                        <Ionicons
-                            name="shield-checkmark-outline"
-                            size={19}
-                            color={paletaColores.verde}
-                        />
-                    </View>
-
-                    <Text style={styles.avisoTexto}>
-                        Asegúrate de que las fotos sean claras y legibles.
-                    </Text>
-                </View>
+                <AvisoInformativo
+                    texto="Asegúrate de que las fotografías sean claras y legibles."
+                />
 
                 <PrimaryButton
                     title="Continuar"
@@ -182,66 +146,6 @@ export default function IdentidadOficialConductor() {
     );
 }
 
-interface DocumentoFotoProps {
-    titulo: string;
-    descripcion: string;
-    foto: string | null;
-    onPress: () => void;
-}
-
-function DocumentoFoto({
-    titulo, 
-    descripcion,
-    foto,
-    onPress,
-} : DocumentoFotoProps) {
-    return (
-        <View style={styles.documentoCard}>
-            <View style={styles.previewContainer}>
-                {foto ? (
-                    <Image 
-                        source={{ uri: foto }}
-                        style={styles.preview}
-                    />
-                ) : (
-                    <Ionicons
-                        name="image-outline"
-                        size={28}
-                        color={paletaColores.textoSecundarioClaro}
-                    />
-                )}
-            </View>
-
-            <View style={styles.documentoInformacion}>
-                <Text style={styles.documentoTitulo}>
-                    {titulo}
-                </Text>
-
-                <Text style={styles.documentoDescripcion}>
-                    {foto 
-                        ? "Fotografía registada"
-                        : descripcion}
-                </Text>
-            </View>
-
-            <Pressable
-                style={styles.botonFoto}
-                onPress={onPress}
-            >
-                <Ionicons
-                    name="camera-outline"
-                    size={17}
-                    color={paletaColores.textoClaro}
-                />
-
-                <Text style={styles.botonFotoTexto}>
-                    {foto ? "Repetir" : "Tomar foto"}
-                </Text>
-            </Pressable>
-        </View>
-    );
-}
-
 const styles = StyleSheet.create ({
   container: {
     flex: 1,
@@ -251,171 +155,10 @@ const styles = StyleSheet.create ({
     paddingHorizontal: 24,
     paddingBottom: 40,
   },
-  progressSection: {
-    width: "100%",
-    marginTop: 25,
-    marginBottom: 25,
-  },
-
-  pasos: {
-    color: paletaColores.textoClaro,
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 13,
-  },
-
-  progressContainer: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  pasoCirculo: {
-    width: 27,
-    height: 27,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    backgroundColor: "#EEF2F0",
-  },
-
-  pasoCompletado: {
-    backgroundColor: paletaColores.verde,
-    borderColor: paletaColores.verde,
-  },
-
-  pasoCirculoActivo: {
-    backgroundColor: "#A5EEC9",
-    borderColor: paletaColores.verde,
-  },
-
-  pasoNumero: {
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-
-  pasoNumeroActivo: {
-    color: paletaColores.textoClaro,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  linea: {
-    flex: 1,
-    height: 1,
-    backgroundColor: paletaColores.bordeClaro,
-  },
-
-  lineaActiva: {
-    flex: 1,
-    height: 2,
-    backgroundColor: paletaColores.verde,
-  },
 
   documentosContainer: {
     width: "100%",
     gap: 12,
-  },
-
-  documentoCard: {
-    width: "100%",
-    minHeight: 82,
-
-    flexDirection: "row",
-    alignItems: "center",
-
-    padding: 12,
-
-    borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    borderRadius: 14,
-
-    backgroundColor: paletaColores.inputClaro,
-
-    gap: 12,
-  },
-
-  previewContainer: {
-    width: 58,
-    height: 58,
-
-    borderRadius: 10,
-
-    alignItems: "center",
-    justifyContent: "center",
-
-    backgroundColor: "#EEF2F0",
-    overflow: "hidden",
-  },
-
-  preview: {
-    width: "100%",
-    height: "100%",
-  },
-
-  documentoInformacion: {
-    flex: 1,
-  },
-
-  documentoTitulo: {
-    color: paletaColores.textoClaro,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  documentoDescripcion: {
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 11,
-    lineHeight: 15,
-    marginTop: 3,
-  },
-
-  botonFoto: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 9,
-    borderRadius: 18,
-    backgroundColor: "#DDF7EA",
-  },
-
-  botonFotoTexto: {
-    color: paletaColores.textoClaro,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-
-  aviso: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 14,
-    marginBottom: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    backgroundColor: "#EAF8F1",
-    gap: 10,
-  },
-
-  avisoIcono: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#DDF7EA",
-  },
-
-  avisoTexto: {
-    flex: 1,
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 12,
-    lineHeight: 17,
   },
 
   atras: {

@@ -4,12 +4,7 @@ import {
     useContext,
     useState,
 } from "react";
-
-type ArchivoDocumento = {
-    uri: string;
-    nombre: string;
-    tipo?: string;
-};
+import { ArchivoDocumento } from "@/types/conductor";
 
 type RegistroConductorContextType = {
     // Para el paso 1

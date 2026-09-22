@@ -19,6 +19,8 @@ import {
     View,
 } from "react-native";
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
+import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
+import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
 
 export default function VerificacionContactoConductor() {
   const {
@@ -124,37 +126,7 @@ export default function VerificacionContactoConductor() {
           variant="light"
         />
 
-        <View style={styles.progressSection}>
-          <Text style={styles.pasos}>Paso 2 de 5</Text>
-
-          <View style={styles.progressContainer}>
-            <View style={[styles.pasoCirculo, styles.pasoCompletado]}>
-              <Text style={styles.pasoNumeroActivo}>1</Text>
-            </View>
-            <View style={styles.lineaActiva} />
-
-            <View style={[styles.pasoCirculo, styles.pasoCirculoActivo]}>
-              <Text style={styles.pasoNumeroActivo}>2</Text>
-            </View>
-            <View style={styles.linea} />
-
-            <View style={styles.pasoCirculo}>
-              <Text style={styles.pasoNumero}>3</Text>
-            </View>
-
-            <View style={styles.linea} />
-
-            <View style={styles.pasoCirculo}>
-              <Text style={styles.pasoNumero}>4</Text>
-            </View>
-
-            <View style={styles.linea} />
-
-            <View style={styles.pasoCirculo}>
-              <Text style={styles.pasoNumero}>5</Text>
-            </View>
-          </View>
-        </View>
+        <ProgresoRegistro pasoActual={2}/>
 
         {/* Formulario */}
         <View style={styles.formulario}>
@@ -249,20 +221,10 @@ export default function VerificacionContactoConductor() {
         </View>
 
         {/* Información */}
-        <View style={styles.info}>
-          <View style={styles.checkCirculo}>
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={18}
-              color={paletaColores.verde}
-            />
-          </View>
-
-          <Text style={styles.infoTexto}>
-            Usaremos esta información para comunicarnos contigo y verificar tu
-            cuenta.
-          </Text>
-        </View>
+        <AvisoInformativo
+          icono="shield-checkmark-outline"
+          texto="Usaremos esta información para comunicarnos contigo y verificar tu cuenta."
+        />
 
         <PrimaryButton title="Continuar" onPress={continuar} />
         <Pressable
@@ -290,70 +252,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingBottom: 40,
-  },
-
-  progressSection: {
-    width: "100%",
-    marginTop: 25,
-    marginBottom: 25,
-  },
-
-  pasos: {
-    color: paletaColores.textoClaro,
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 13,
-  },
-
-  progressContainer: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  pasoCirculo: {
-    width: 27,
-    height: 27,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    backgroundColor: "#EEF2F0",
-  },
-
-  pasoCompletado: {
-    backgroundColor: paletaColores.verde,
-    borderColor: paletaColores.verde,
-  },
-
-  pasoCirculoActivo: {
-    backgroundColor: "#A5EEC9",
-    borderColor: paletaColores.verde,
-  },
-
-  pasoNumero: {
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-
-  pasoNumeroActivo: {
-    color: paletaColores.textoOscuro,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  linea: {
-    flex: 1,
-    height: 1,
-    backgroundColor: paletaColores.bordeClaro,
-  },
-
-  lineaActiva: {
-    flex: 1,
-    height: 2,
-    backgroundColor: paletaColores.verde,
   },
 
   formulario: {
@@ -498,30 +396,6 @@ const styles = StyleSheet.create({
     color: paletaColores.textoClaro,
     fontSize: 12,
     fontWeight: "600",
-  },
-
-  info: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 14,
-    marginBottom: 20,
-    gap: 10,
-  },
-
-  checkCirculo: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#EAF8F1",
-  },
-
-  infoTexto: {
-    flex: 1,
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 12,
-    lineHeight: 17,
   },
 
   atras: {
