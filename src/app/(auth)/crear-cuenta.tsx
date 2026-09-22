@@ -17,7 +17,7 @@ export default function CrearCuentaScreen() {
     if (selectedRole === "pasajero") {
       router.push("/registro-pasajero" as any);
     } else if (selectedRole === "conductor") {
-      router.push("/registro-conductor" as any);
+      router.push("/registro-conductor/datos-personales" as any);
     }
   };
 
