@@ -32,17 +32,11 @@ export function BarraInferior({ activa }: Props) {
       router.replace("/mapa");
     } else if (seccion === "actividad") {
       router.replace("/actividad");
-    }
-    // Ayuda y Cuenta las desarrollan otros integrantes del equipo
-       if (seccion === "inicio") {
-     router.replace("/mapa");
-   } else if (seccion === "actividad") {
-     router.replace("/actividad");
-   } else if (seccion === "ayuda") {
+     } else if (seccion === "ayuda") {
      router.replace("/ayuda");
-   } else if (seccion === "cuenta") {
+    } else if (seccion === "cuenta") {
      router.replace("/cuenta");
-   }
+    }
   };
 
   return (
