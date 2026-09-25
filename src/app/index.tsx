@@ -87,7 +87,7 @@ export default function PantallaBienvenida() {
         <PrimaryButton
           title={"Probar conductor"}
           onPress={() => {
-            router.push("/cuenta/");
+            router.push("/cuenta");
           }}
           style={{ marginBottom: 15 }}
         /> 
