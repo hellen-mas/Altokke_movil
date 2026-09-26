@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
 
     nombre: {
         color: paletaColores.textoClaro,
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: "700",
     },
 

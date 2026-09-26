@@ -86,17 +86,18 @@ export default function ReportarIncidenteConductor() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <CabeceraConductor
+      <CabeceraConductor
           titulo="Reportar incidente"
           subtitulo="Cuéntanos qué ocurrió"
           mostrarAtras
           compacta
         />
 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        
         <View style={styles.contenido}>
           <Text style={styles.tituloSeccion}>
             Tipo de incidente
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     marginBottom: 9,
     color: paletaColores.textoClaro,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
   },
 
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   opcionTexto: {
     flex: 1,
     color: paletaColores.textoClaro,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: "600",
   },
 
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 9,
     color: paletaColores.textoClaro,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
   },
 
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     borderColor: paletaColores.bordeClaro,
     backgroundColor: paletaColores.superficieClara,
     color: paletaColores.textoClaro,
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
   },
 
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: "right",
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 9,
+    fontSize: 10,
   },
 
   botonEnviar: {
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
 
   botonTexto: {
     color: paletaColores.textoOscuro,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "700",
   },
 });

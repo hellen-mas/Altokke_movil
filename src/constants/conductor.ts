@@ -45,13 +45,13 @@ export const CONDUCTOR_EJEMPLO = {
             estado: "VERIFICADO",
         },
         soat: {
-            estado: "EN_REVISION",
+            estado: "VERIFICADO",
         },
         tarjetaPropiedad: {
             estado: "VERIFICADO",
         },
         antecedentesPenales: {
-            estado: "PENDIENTE",
+            estado: "VERIFICADO",
         },
     },
 

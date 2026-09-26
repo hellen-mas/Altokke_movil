@@ -97,20 +97,20 @@ const styles = StyleSheet.create({
 
     titulo: {
         color: paletaColores.textoClaro,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: "700",
     },
 
     valor: {
         marginTop: 2,
         color: paletaColores.textoSecundarioClaro,
-        fontSize: 10,
+        fontSize: 12,
         lineHeight: 14,
     },
 
     valorSecundario: {
         color: paletaColores.textoSecundarioClaro,
-        fontSize: 9,
+        fontSize: 10,
         lineHeight: 13,
     },
 

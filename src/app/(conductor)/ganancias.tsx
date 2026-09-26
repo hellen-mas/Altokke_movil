@@ -1,9 +1,10 @@
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
+
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { RESUMEN_GANANCIAS, VIAJES_EJEMPLO } from "@/constants/conductor";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
 
 const ALTURA_MAXIMA_BARRA = 90;
 
@@ -24,17 +25,20 @@ export default function GananciasConductor() {
 
   return (
     <View style={styles.container}>
+      
       <CabeceraConductor
-        titulo="Tus ganancias"
+        titulo="Ganancias"
         subtitulo="Esta semana"
-        mostrarAtras
+        mostrarMarca
+        mostrarAtras={false}
         compacta
       />
-
+      
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+
         {/* Resumen de la semana */}
         <View style={styles.tarjeta}>
           <View style={styles.filaResumen}>
@@ -167,12 +171,13 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 16,
     paddingBottom: 30,
   },
 
   tarjeta: {
-    marginHorizontal: 20,
-    marginTop: 16,
+    marginBottom: 16,
     padding: 18,
     borderRadius: 18,
     backgroundColor: paletaColores.superficieClara,
@@ -328,6 +333,22 @@ const styles = StyleSheet.create({
 
   saldoTexto: {
     fontSize: 12,
+    color: paletaColores.textoSecundarioClaro,
+  },
+
+  header: {
+    marginBottom: 20,
+  },
+
+  tituloPagina: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: paletaColores.textoClaro,
+  },
+
+  subtituloPagina: {
+    marginTop: 4,
+    fontSize: 13,
     color: paletaColores.textoSecundarioClaro,
   },
 });

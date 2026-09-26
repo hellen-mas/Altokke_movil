@@ -4,10 +4,8 @@ import {
   ThemeProvider,
   Slot,
 } from 'expo-router';
-
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
-
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 
 SplashScreen.preventAutoHideAsync();

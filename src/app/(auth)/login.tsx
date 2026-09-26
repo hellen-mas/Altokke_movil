@@ -7,7 +7,7 @@ import {
 } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { USUARIOS_DEMO } from "@/constants/usuarios";
 
 export default function LoginScreen() {
   const [correo, setCorreo] = useState("");
@@ -32,7 +33,29 @@ export default function LoginScreen() {
       return;
     }
     
-    Alert.alert("Éxito", "Iniciando sesión...");
+    const usuario = USUARIOS_DEMO.find(
+      (u) => 
+        u.correo.toLowerCase() === correo.trim().toLowerCase() &&
+        u.password === contrasena
+    );
+
+    if (!usuario) {
+      Alert.alert(
+        "Credenciales incorrectas",
+        "El correo o la contraseña no son correctos."
+      );
+      return;
+    }
+
+    if (usuario.rol === "conductor") {
+      router.replace("/inicio" as any);
+      return;
+    }
+
+    if (usuario.rol === "pasajero") {
+      router.replace("/mapa" as any);
+      return;
+    }
   };
 
   return (

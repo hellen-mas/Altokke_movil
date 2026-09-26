@@ -110,11 +110,7 @@ export default function SeguridadConductor() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Cabecera */}
+      {/* Cabecera */}
         <CabeceraConductor
           titulo="Seguridad"
           subtitulo="Tu seguridad es nuestra prioridad"
@@ -122,6 +118,11 @@ export default function SeguridadConductor() {
           compacta
         />
 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        
         {/* Tarjeta principal */}
         <View style={styles.confianzaCard}>
           <View style={styles.confianzaIcono}>
@@ -287,14 +288,14 @@ const styles = StyleSheet.create({
 
   confianzaTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "800",
   },
 
   confianzaDescripcion: {
     marginTop: 3,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 15,
   },
 
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     marginBottom: 8,
     color: paletaColores.textoClaro,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
   },
 
@@ -352,14 +353,14 @@ const styles = StyleSheet.create({
 
   filaTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
   },
 
   filaDescripcion: {
     marginTop: 2,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 9,
+    fontSize: 10,
     lineHeight: 13,
   },
 
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
 
   estadoTexto: {
     color: paletaColores.verde,
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: "700",
   },
 

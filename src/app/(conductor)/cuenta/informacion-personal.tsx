@@ -26,17 +26,18 @@ export default function InformacionPersonalConductor() {
 
     return (
         <View style={styles.container}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                <CabeceraConductor
+            <CabeceraConductor
                     titulo="Información personal"
                     subtitulo="Mantén tus datos actualizados para una mejor experiencia en Altokke"
                     mostrarAtras
                     compacta
                 />
 
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                
                 <View style={styles.perfilContainer}>
                     <TarjetaPerfilConductor
                         nombre={CONDUCTOR_EJEMPLO.nombre}
@@ -53,8 +54,7 @@ export default function InformacionPersonalConductor() {
                         icono="person"
                         titulo="Nombre completo"
                         valor={CONDUCTOR_EJEMPLO.nombre}
-                        editable={modoEdicion}
-                        onEditar={() => editarDato("tu nombre completo")}
+                        editable={false}
                     />
                     <DatoPersonal
                         icono="card"
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
 
     botonTexto: {
         color: paletaColores.textoOscuro,
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: "700",
     },
 });
