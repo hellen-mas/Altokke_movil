@@ -89,7 +89,7 @@ export default function GananciasConductor() {
               return (
                 <View key={dia.dia} style={styles.columnaBarra}>
                   <Text style={styles.montoBarra}>
-                    {dia.monto > 0 ? dia.monto.toFixed(0) : ""}
+                    {dia.monto > 0 ? dia.monto.toFixed(2) : ""}
                   </Text>
 
                   <View
