@@ -68,31 +68,31 @@ export const RESUMEN_GANANCIAS = {
     variacionSemana: 12,
     totalHoy: 74.20,
     viajesCompletadosHoy: 18,
-    promedioPorViaje: 15.91,
+    promedioPorViaje: 4.12,
     saldoDisponible: 286.40,
     porDia: [
-        { dia: "Lun", monto: 63.20 },
-        { dia: "Mar", monto: 41.30 },
-        { dia: "Mié", monto: 77.80 },
-        { dia: "Jue", monto: 91.10 },
-        { dia: "Vie", monto: 46.60 },
-        { dia: "Sáb", monto: 62.10 },
+        { dia: "Lun", monto: 38.20 },
+        { dia: "Mar", monto: 32.50 },
+        { dia: "Mié", monto: 45.80 },
+        { dia: "Jue", monto: 74.20 },
+        { dia: "Vie", monto: 41.30 },
+        { dia: "Sáb", monto: 54.40 },
         { dia: "Dom", monto: 0 },
     ],
 };
 
 // Viajes
 export const VIAJES_EJEMPLO: Viaje[] = [
-    { id: "v1", fecha: "Hoy", hora: "08:24 a. m.", origen: "Plaza de Armas, Bagua", destino: "Hospital Santiago Apóstol", monto: 15.00, estado: "Completado" },
-    { id: "v2", fecha: "Hoy", hora: "11:37 a. m.", origen: "Terminal Terrestre de Bagua", destino: "Jr. Amazonas 620, Bagua", monto: 12.50, estado: "Completado" },
-    { id: "v3", fecha: "Ayer", hora: "07:58 a. m.", origen: "Mercado Central de Bagua", destino: "Barrio 8 de Mayo, Bagua", monto: 14.00, estado: "Completado" },
-    { id: "v4", fecha: "Ayer", hora: "01:22 p. m.", origen: "Universidad Nacional de Jaén", destino: "Plaza de Armas, Bagua", monto: 11.00, estado: "Completado" },
-    { id: "v5", fecha: "10 Mar", hora: "06:39 a. m.", origen: "Jr. Ucubamba, Bagua", destino: "Hospital Santiago Apóstol", monto: 13.50, estado: "Completado" },
-    { id: "v6", fecha: "10 Mar", hora: "09:17 a. m.", origen: "Mercado Central de Bagua", destino: "Terminal Terrestre de Bagua", monto: 9.50, estado: "Completado" },
+    { id: "v1", fecha: "Hoy", hora: "08:24 a. m.", origen: "Jr. Tacna 876", destino: "Hospital de Apoyo Gustavo Lanatta Luján", monto: 5.00, estado: "Completado" },
+    { id: "v2", fecha: "Hoy", hora: "11:37 a. m.", origen: "Terminal Terrestre", destino: "Jr. Amazonas 620", monto: 3.00, estado: "Completado" },
+    { id: "v3", fecha: "Ayer", hora: "07:58 a. m.", origen: "Mercado Municipal", destino: "Parque Seoane Corrales", monto: 5.00, estado: "Completado" },
+    { id: "v4", fecha: "Ayer", hora: "01:22 p. m.", origen: "Av. 29 de Agosto (Cuadra 8)", destino: "Plaza de Armas", monto: 3.00, estado: "Completado" },
+    { id: "v5", fecha: "10 Mar", hora: "06:39 a. m.", origen: "Jr. Ayacucho 1225, Bagua", destino: "Hospital de Apoyo Gustavo Lanatta Luján", monto: 3.00, estado: "Completado" },
+    { id: "v6", fecha: "10 Mar", hora: "09:17 a. m.", origen: "Mercado Municipal", destino: "Terminal Terrestre", monto: 5.00, estado: "Completado" },
 ];
 
 // Historial
 export const RESUMEN_HISTORIAL = {
     totalViajes: 32,
-    totalGanado: 428.50,
+    totalGanado: 131.84,
 };
