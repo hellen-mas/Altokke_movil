@@ -5,10 +5,14 @@ export const COLORES_CUENTA = {
 };
 
 export const PASAJERO_DEMO = {
+  id: "pasajero-001",
+  rol: "pasajero",
+
   nombre: "Jhunior Cercado",
   iniciales: "JC",
   calificacion: 4.9,
   viajes: 127,
+
   correo: "cercadojhunior@gmail.com",
   telefono: "+51 982 735 946",
   fechaNacimiento: "31 de octubre de 2003",

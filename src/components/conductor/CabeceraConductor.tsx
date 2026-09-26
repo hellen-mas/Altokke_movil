@@ -102,7 +102,10 @@ export function CabeceraConductor({
                         </View>
                     ): (
                         <View style={styles.tituloContainer}>
-                            <Text style={styles.titulo}>{titulo}</Text>
+                            <Text style={[
+                                styles.titulo,
+                                compacta && styles.tituloCompacto,
+                            ]}>{titulo}</Text>
 
                             {subtitulo && (
                                 <Text style={styles.subtitulo}>{subtitulo}</Text>
@@ -131,8 +134,8 @@ const styles = StyleSheet.create({
     },
 
     headerCompacto: {
-        paddingHorizontal: 18,
-        paddingBottom: 14,
+        paddingHorizontal: 20,
+        paddingBottom: 16,
     },
 
     safeArea: {
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
 
     logoTexto: {
         color: "#FFFFFF",
-        fontSize: 20,
+        fontSize: 19,
         fontWeight: "800",
     },
 
@@ -213,18 +216,18 @@ const styles = StyleSheet.create({
 
     titulo: {
         color: "#FFFFFF",
-        fontSize: 27,
+        fontSize: 30,
         fontWeight: "800",
     },
 
     tituloCompacto: {
-        fontSize: 19,
+        fontSize: 25,
     },
 
     subtitulo: {
         marginTop: 4,
         color: "rgba(255,255,255,0.78)",
-        fontSize: 13,
+        fontSize: 15,
         lineHeight: 18,
     },
 
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
         maxWidth: 270,
         marginTop: 3,
         color: "rgba(255,255,255,0.76)",
-        fontSize: 10,
+        fontSize: 12,
         lineHeight: 14,
         textAlign: "center",
     },

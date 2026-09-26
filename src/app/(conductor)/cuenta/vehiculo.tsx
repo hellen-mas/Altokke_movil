@@ -26,11 +26,7 @@ export default function VehiculoConductor() {
 
     return (
         <View style={styles.container}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                {/* Cabecera */}
+            {/* Cabecera */}
                 <CabeceraConductor
                     titulo="Vehículo"
                     subtitulo="Información de tu mototaxi"
@@ -38,6 +34,11 @@ export default function VehiculoConductor() {
                     compacta
                 />
 
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                
                 {/* Tarjeta del vehículo */}
                 <View style={styles.vehiculoCard}>
                     <View style={styles.vehiculoIcono}>
@@ -196,14 +197,14 @@ const styles = StyleSheet.create({
 
     vehiculoNombre: {
         color: paletaColores.textoClaro,
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: "800",
     },
 
     vehiculoPlaca: {
         marginTop: 3,
         color: paletaColores.textoSecundarioClaro,
-        fontSize: 11,
+        fontSize: 12,
     },
 
     verificadoContainer: {
@@ -220,14 +221,14 @@ const styles = StyleSheet.create({
 
     verificadoTexto: {
         color: paletaColores.verde,
-        fontSize: 9,
+        fontSize: 10,
         fontWeight: "700",
     },
 
     vehiculoDescripcion: {
         marginTop: 7,
         color: paletaColores.textoSecundarioClaro,
-        fontSize: 9,
+        fontSize: 10,
         lineHeight: 13,
     },
 
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     tituloSeccion: {
         marginBottom: 9,
         color: paletaColores.textoClaro,
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: "800",
     },
 
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
 
     botonTexto: {
         color: paletaColores.textoOscuro,
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: "700",
     },
 

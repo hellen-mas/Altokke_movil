@@ -124,17 +124,19 @@ export default function CambiarContrasena() {
 
   return (
     <View style={styles.container}>
+
+      <CabeceraConductor
+          titulo="Cambiar contraseña"
+          subtitulo="Actualiza tu contraseña de acceso"
+          mostrarAtras
+          compacta
+      />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <CabeceraConductor
-          titulo="Cambiar contraseña"
-          subtitulo="Actualiza tu contraseña de acceso"
-          mostrarAtras
-          compacta
-        />
 
         <View style={styles.contenido}>
           <View style={styles.introCard}>
@@ -279,14 +281,14 @@ const styles = StyleSheet.create({
 
   introTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "800",
   },
 
   introDescripcion: {
     marginTop: 3,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 10,
+    fontSize: 13,
     lineHeight: 15,
   },
 
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
 
   label: {
     color: paletaColores.textoClaro,
-    fontSize: 11,
+    fontSize: 17,
     fontWeight: "700",
   },
 
@@ -320,7 +322,7 @@ const styles = StyleSheet.create({
     height: "100%",
     paddingHorizontal: 13,
     color: paletaColores.textoClaro,
-    fontSize: 12,
+    fontSize: 15,
   },
 
   verBoton: {
@@ -340,7 +342,7 @@ const styles = StyleSheet.create({
   requisitosTitulo: {
     marginBottom: 8,
     color: paletaColores.textoClaro,
-    fontSize: 11,
+    fontSize: 16,
     fontWeight: "700",
   },
 
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
 
   requisitoTexto: {
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 10,
+    fontSize: 13,
   },
 
   botonGuardar: {
@@ -373,7 +375,7 @@ const styles = StyleSheet.create({
 
   botonTexto: {
     color: paletaColores.textoOscuro,
-    fontSize: 13,
+    fontSize: 17,
     fontWeight: "700",
   },
 });

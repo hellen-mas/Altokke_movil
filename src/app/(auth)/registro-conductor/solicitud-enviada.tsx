@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { LogoHeader } from "@/components/ui/LogoHeader";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { paletaColores } from "@/paletaColores";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type EstadoSolicitud =
   | "PENDIENTE"
@@ -18,14 +18,19 @@ type EstadoSolicitud =
 
 export default function SolicitudEnviada() {
     // TEMPORAL (más adelante el estado vendrá del backend)
-
     const [estadoSolicitud, setEstadoSolicitud] = useState<EstadoSolicitud>("PENDIENTE");
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setEstadoSolicitud("APROBADA");
+        }, 4000);
+
+        return () => clearTimeout(timer);
+    }, []);
     const contenido = obtenerContenidoEstado(estadoSolicitud);
 
     const manejarBoton = () => {
         if (estadoSolicitud === "APROBADA") {
-            // Más adelante
-            // router.replace("/conductor");
+            router.replace("/login" as any);
             return;
         } 
 

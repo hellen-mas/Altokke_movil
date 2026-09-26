@@ -90,13 +90,13 @@ const styles = StyleSheet.create({
 
     titulo: {
         color: paletaColores.textoClaro,
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: "700",
     },
 
     descripcion: {
         marginTop: 2,
         color: paletaColores.textoSecundarioClaro,
-        fontSize: 11,
+        fontSize: 12,
     },
 })

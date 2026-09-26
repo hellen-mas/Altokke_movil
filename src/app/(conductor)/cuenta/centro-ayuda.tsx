@@ -63,16 +63,18 @@ export default function CentroAyudaConductor() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <CabeceraConductor
+
+      <CabeceraConductor
           titulo="Centro de ayuda"
           subtitulo="Encuentra respuestas y recibe asistencia"
           mostrarAtras
           compacta
         />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
 
         <View style={styles.introCard}>
           <View style={styles.introIcono}>
@@ -254,14 +256,14 @@ const styles = StyleSheet.create({
 
   introTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
   },
 
   introDescripcion: {
     marginTop: 3,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 15,
   },
 
@@ -273,7 +275,7 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     marginBottom: 8,
     color: paletaColores.textoClaro,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
   },
 
@@ -314,14 +316,14 @@ const styles = StyleSheet.create({
 
   temaTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
   },
 
   temaDescripcion: {
     marginTop: 2,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 9,
+    fontSize: 10,
   },
 
   preguntasCard: {
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
   preguntaTitulo: {
     flex: 1,
     color: paletaColores.textoClaro,
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: "700",
   },
 
@@ -356,7 +358,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingRight: 24,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 10,
+    fontSize: 12,
     lineHeight: 15,
   },
 
@@ -378,7 +380,7 @@ const styles = StyleSheet.create({
 
   botonTexto: {
     color: paletaColores.textoOscuro,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "700",
   },
 

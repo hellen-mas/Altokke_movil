@@ -67,30 +67,6 @@ export default function PantallaBienvenida() {
 
           <View style={styles.linea} />
         </View>
-
-         <PrimaryButton
-          title={"Probar pasajero"}
-          onPress={() => {
-            router.push("/mapa");
-          }}
-          style={{ marginBottom: 15 }}
-        />
-
-        <PrimaryButton
-          title={"Probar registro conductor"}
-          onPress={() => {
-            router.push("/registro-conductor/datos-personales");
-          }}
-          style={{ marginBottom: 15 }}
-        /> 
-
-        <PrimaryButton
-          title={"Probar conductor"}
-          onPress={() => {
-            router.push("/cuenta");
-          }}
-          style={{ marginBottom: 15 }}
-        /> 
       </ScrollView>
     </SafeAreaView>
   );

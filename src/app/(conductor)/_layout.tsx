@@ -92,6 +92,17 @@ export default function ConductorLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="viaje-activo"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
     </Tabs>
   );
 }

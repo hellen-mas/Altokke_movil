@@ -135,10 +135,7 @@ export default function DocumentosConductor() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+
         {/* Cabecera */}
         <CabeceraConductor
           titulo="Documentos"
@@ -146,6 +143,11 @@ export default function DocumentosConductor() {
           mostrarAtras
           compacta
         />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
 
         {/* Introducción */}
         <View style={styles.introduccion}>
@@ -326,7 +328,7 @@ const styles = StyleSheet.create({
 
   tituloPrincipal: {
     color: paletaColores.textoClaro,
-    fontSize: 23,
+    fontSize: 25,
     fontWeight: "800",
     lineHeight: 25,
   },
@@ -338,7 +340,7 @@ const styles = StyleSheet.create({
   descripcionPrincipal: {
     marginTop: 7,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
   },
 
@@ -399,14 +401,14 @@ const styles = StyleSheet.create({
 
   progresoNumero: {
     color: paletaColores.textoClaro,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "800",
   },
 
   progresoTexto: {
     marginTop: 1,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 8,
+    fontSize: 9,
     lineHeight: 10,
     textAlign: "center",
   },
@@ -417,14 +419,14 @@ const styles = StyleSheet.create({
 
   resumenTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
   },
 
   resumenDescripcion: {
     marginTop: 3,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 14,
   },
 
@@ -442,7 +444,7 @@ const styles = StyleSheet.create({
 
   botonDetalleTexto: {
     color: paletaColores.verde,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "700",
   },
 
@@ -484,14 +486,14 @@ const styles = StyleSheet.create({
 
   documentoTitulo: {
     color: paletaColores.textoClaro,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: "700",
   },
 
   documentoDescripcion: {
     marginTop: 2,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 8,
+    fontSize: 9,
     lineHeight: 11,
   },
 
@@ -505,7 +507,7 @@ const styles = StyleSheet.create({
   },
 
   estadoTexto: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: "700",
   },
 
