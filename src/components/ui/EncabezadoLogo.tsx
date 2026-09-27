@@ -5,7 +5,7 @@ interface Props {
   variant?: "dark" | "light";
 }
 
-export const LogoHeader = ({variant = "dark"}: Props) => {
+export const EncabezadoLogo = ({variant = "dark"}: Props) => {
   const isLight = variant === "light";
 
   return (

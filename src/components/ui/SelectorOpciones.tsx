@@ -11,7 +11,7 @@ export interface CustomSelectProps {
   onSelect: (value: string) => void;
 }
 
-export function CustomSelect({
+export function SelectorOpciones({
   placeholder,
   iconName,
   value,

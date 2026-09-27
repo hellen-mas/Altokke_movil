@@ -6,7 +6,7 @@ import { BarraInferior } from "@/components/pasajero/BarraInferior";
 import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { IconoMototaxi } from "@/components/pasajero/IconoMototaxi";
 import { MapaBase } from "@/components/pasajero/MapaBase";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
@@ -213,7 +213,7 @@ export default function PantallaMapa() {
           </View>
         </View>
 
-        <PrimaryButton
+        <BotonPrincipal
           title="Solicitar mototaxi"
           onPress={solicitarMototaxi}
           style={styles.botonSolicitar}

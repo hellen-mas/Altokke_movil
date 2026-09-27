@@ -1,121 +1,195 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { paletaColores } from '@/paletaColores';
-import { StepIndicator } from '@/components/ui/StepIndicator';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { CustomInput } from '@/components/ui/CustomInput';
+import { BarraNavegacionSuperior } from "@/components/ui/BarraNavegacionSuperior";
+import { BotonPrincipal } from "@/components/ui/BotonPrincipal";
+import { CampoTexto } from "@/components/ui/CampoTexto";
+import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import { IndicadorPasos } from "@/components/ui/IndicadorPasos";
+import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
+import { paletaColores } from "@/paletaColores";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PasajeroVerificacionScreen() {
-  const [selectedPayment, setSelectedPayment] = useState('Efectivo');
-  const [emergencyName, setEmergencyName] = useState('');
-  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [selectedPayment, setSelectedPayment] = useState("Efectivo");
+  const [emergencyName, setEmergencyName] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
+  const { datosPersonales } = useRegistroPasajero();
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.topBar}>
-        <Pressable hitSlop={10} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={paletaColores.texto} />
-        </Pressable>
-        <Text style={styles.topBarTitle}>Altokke</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <BarraNavegacionSuperior title="Altokke" />
 
-      <KeyboardAwareScrollView 
-        contentContainerStyle={styles.scrollContainer} 
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
         extraScrollHeight={20}
       >
         <View style={styles.stepContainer}>
-          <StepIndicator currentStep={2} totalSteps={3} />
+          <IndicadorPasos currentStep={2} totalSteps={3} />
           <Text style={styles.stepText}>Paso 2 de 3</Text>
         </View>
 
         <View style={styles.headerContainer}>
-          <PageHeader 
-            title="Verificación y contacto" 
-            highlightedTitle="" 
-            description="Confirma tu identidad y cómo te contactaremos." 
+          <EncabezadoPagina
+            title="Verificación y contacto"
+            highlightedTitle=""
+            description="Confirma tu identidad y cómo te contactaremos."
           />
         </View>
 
         <View style={styles.card}>
-          <Ionicons name="call-outline" size={24} color={paletaColores.texto} style={styles.cardIcon} />
+          <Ionicons
+            name="call-outline"
+            size={24}
+            color={paletaColores.texto}
+            style={styles.cardIcon}
+          />
           <View style={styles.cardContent}>
             <Text style={styles.cardLabel}>Número de teléfono</Text>
-            <Text style={styles.cardValue}>+51 987 654 321</Text>
+            <Text style={styles.cardValue}>
+              {datosPersonales?.telefono || "No especificado"}
+            </Text>
           </View>
           <View style={styles.verifiedBadge}>
-            <Ionicons name="checkmark-circle" size={16} color={paletaColores.boton} />
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={paletaColores.boton}
+            />
             <Text style={styles.verifiedText}>Verificado</Text>
           </View>
         </View>
 
         <Pressable style={styles.card}>
-          <Ionicons name="location-outline" size={24} color={paletaColores.texto} style={styles.cardIcon} />
+          <Ionicons
+            name="location-outline"
+            size={24}
+            color={paletaColores.texto}
+            style={styles.cardIcon}
+          />
           <View style={styles.cardContent}>
             <Text style={styles.cardLabel}>Dirección principal</Text>
-            <Text style={styles.cardValue}>Av. Los Próceres 123</Text>
+            <Text style={styles.cardValue}>
+              {datosPersonales?.direccion || "No especificada"}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={paletaColores.textoSecundario} />
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={paletaColores.textoSecundario}
+          />
         </Pressable>
 
         <Pressable style={styles.card}>
-          <Ionicons name="business-outline" size={24} color={paletaColores.texto} style={styles.cardIcon} />
+          <Ionicons
+            name="business-outline"
+            size={24}
+            color={paletaColores.texto}
+            style={styles.cardIcon}
+          />
           <View style={styles.cardContent}>
             <Text style={styles.cardLabel}>Ciudad</Text>
-            <Text style={styles.cardValue}>Bagua</Text>
+            <Text style={styles.cardValue}>
+              {datosPersonales?.ciudad || "No especificada"}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={paletaColores.textoSecundario} />
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={paletaColores.textoSecundario}
+          />
         </Pressable>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="card-outline" size={24} color={paletaColores.texto} style={styles.sectionIcon} />
+            <Ionicons
+              name="card-outline"
+              size={24}
+              color={paletaColores.texto}
+              style={styles.sectionIcon}
+            />
             <View>
               <Text style={styles.sectionTitle}>Método de pago preferido</Text>
-              <Text style={styles.sectionSubtitle}>Selecciona cómo prefieres pagar tus viajes.</Text>
+              <Text style={styles.sectionSubtitle}>
+                Selecciona cómo prefieres pagar tus viajes.
+              </Text>
             </View>
           </View>
 
           <View style={styles.paymentMethodsRow}>
-            {['Efectivo', 'Yape', 'Plin'].map((method) => {
+            {["Efectivo", "Yape", "Plin"].map((method) => {
               const isSelected = selectedPayment === method;
               return (
                 <Pressable
                   key={method}
-                  style={[styles.paymentCard, isSelected && styles.paymentCardSelected]}
+                  style={[
+                    styles.paymentCard,
+                    isSelected && styles.paymentCardSelected,
+                  ]}
                   onPress={() => setSelectedPayment(method)}
                 >
                   <View style={styles.paymentCardTopRow}>
                     <View style={styles.paymentIconContainer}>
-                      {method === 'Efectivo' ? (
-                        <Ionicons name="cash-outline" size={28} color={isSelected ? paletaColores.texto : paletaColores.textoSecundario} />
-                      ) : method === 'Yape' ? (
-                        <View style={[styles.methodLogoPlaceholder, { backgroundColor: '#742183' }]}>
+                      {method === "Efectivo" ? (
+                        <Ionicons
+                          name="cash-outline"
+                          size={28}
+                          color={
+                            isSelected
+                              ? paletaColores.texto
+                              : paletaColores.textoSecundario
+                          }
+                        />
+                      ) : method === "Yape" ? (
+                        <View
+                          style={[
+                            styles.methodLogoPlaceholder,
+                            { backgroundColor: "#742183" },
+                          ]}
+                        >
                           <Text style={styles.methodLogoText}>Y</Text>
                         </View>
                       ) : (
-                        <View style={[styles.methodLogoPlaceholder, { backgroundColor: '#00D1FF' }]}>
+                        <View
+                          style={[
+                            styles.methodLogoPlaceholder,
+                            { backgroundColor: "#00D1FF" },
+                          ]}
+                        >
                           <Text style={styles.methodLogoText}>P</Text>
                         </View>
                       )}
                     </View>
-                    <Ionicons 
-                      name={isSelected ? "checkmark-circle" : "ellipse-outline"} 
-                      size={20} 
-                      color={isSelected ? paletaColores.boton : paletaColores.borde} 
+                    <Ionicons
+                      name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                      size={20}
+                      color={
+                        isSelected ? paletaColores.boton : paletaColores.borde
+                      }
                     />
                   </View>
-                  <Text style={[styles.paymentMethodName, isSelected && styles.paymentMethodNameSelected]}>{method}</Text>
-                  <Text style={[styles.paymentMethodDesc, isSelected && styles.paymentMethodDescSelected]}>
-                    {method === 'Efectivo' ? 'Pago en el viaje' : 'Pago al conductor'}
+                  <Text
+                    style={[
+                      styles.paymentMethodName,
+                      isSelected && styles.paymentMethodNameSelected,
+                    ]}
+                  >
+                    {method}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.paymentMethodDesc,
+                      isSelected && styles.paymentMethodDescSelected,
+                    ]}
+                  >
+                    {method === "Efectivo"
+                      ? "Pago en el viaje"
+                      : "Pago al conductor"}
                   </Text>
                 </Pressable>
               );
@@ -125,26 +199,35 @@ export default function PasajeroVerificacionScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="people-outline" size={24} color={paletaColores.texto} style={styles.sectionIcon} />
+            <Ionicons
+              name="people-outline"
+              size={24}
+              color={paletaColores.texto}
+              style={styles.sectionIcon}
+            />
             <View>
-              <Text style={styles.sectionTitle}>Contacto de emergencia (opcional)</Text>
-              <Text style={styles.sectionSubtitle}>En caso de cualquier eventualidad.</Text>
+              <Text style={styles.sectionTitle}>
+                Contacto de emergencia (opcional)
+              </Text>
+              <Text style={styles.sectionSubtitle}>
+                En caso de cualquier eventualidad.
+              </Text>
             </View>
           </View>
 
           <View style={styles.emergencyInputsRow}>
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Nombre</Text>
-              <CustomInput
+              <CampoTexto
                 iconName="person-outline"
-                placeholder="Ej. María Pérez"
+                placeholder="Ej. Marí­a Pérez"
                 value={emergencyName}
                 onChangeText={setEmergencyName}
               />
             </View>
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Teléfono</Text>
-              <CustomInput
+              <CampoTexto
                 iconName="call-outline"
                 placeholder="Ej. 987 654 321"
                 value={emergencyPhone}
@@ -156,17 +239,21 @@ export default function PasajeroVerificacionScreen() {
         </View>
 
         <View style={styles.footer}>
-          <PrimaryButton 
-            title="Siguiente" 
+          <BotonPrincipal
+            title="Siguiente"
             onPress={() => {
-              if ((emergencyName.trim() && !emergencyPhone.trim()) || (!emergencyName.trim() && emergencyPhone.trim())) {
-                import("react-native").then(({ Alert }) => {
-                  Alert.alert("Campos incompletos", "Si deseas agregar un contacto de emergencia, debes proveer tanto el nombre como el teléfono.");
-                });
+              if (
+                (emergencyName.trim() && !emergencyPhone.trim()) ||
+                (!emergencyName.trim() && emergencyPhone.trim())
+              ) {
+                Alert.alert(
+                  "Campos incompletos",
+                  "Si deseas agregar un contacto de emergencia, debes proveer tanto el nombre como el telÃ©fono.",
+                );
                 return;
               }
-              router.push("/registro-pasajero/preferencias" as any);
-            }} 
+              router.push("/registro-pasajero/preferencias");
+            }}
           />
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Atrás</Text>
@@ -182,26 +269,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: paletaColores.fondo,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  topBarTitle: {
-    color: paletaColores.texto,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   scrollContainer: {
     paddingHorizontal: 20,
     paddingBottom: 40,
     flexGrow: 1,
   },
   stepContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: -10,
   },
   stepText: {
@@ -214,8 +288,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: paletaColores.input,
     borderWidth: 1,
     borderColor: paletaColores.borde,
@@ -237,12 +311,12 @@ const styles = StyleSheet.create({
   cardValue: {
     color: paletaColores.texto,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(53, 233, 130, 0.15)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(53, 233, 130, 0.15)",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
@@ -251,26 +325,26 @@ const styles = StyleSheet.create({
   verifiedText: {
     color: paletaColores.boton,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   section: {
     marginTop: 20,
     marginBottom: 10,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionIcon: {
     marginRight: 12,
     marginTop: 2,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   sectionTitle: {
     color: paletaColores.texto,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 2,
   },
   sectionSubtitle: {
@@ -278,7 +352,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   paymentMethodsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   paymentCard: {
@@ -288,40 +362,40 @@ const styles = StyleSheet.create({
     borderColor: paletaColores.borde,
     borderRadius: 12,
     padding: 12,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   paymentCardSelected: {
     borderColor: paletaColores.boton,
-    backgroundColor: 'rgba(53, 233, 130, 0.05)',
+    backgroundColor: "rgba(53, 233, 130, 0.05)",
   },
   paymentCardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
     marginBottom: 12,
   },
   paymentIconContainer: {
     width: 32,
     height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   methodLogoPlaceholder: {
     width: 32,
     height: 32,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   methodLogoText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+    color: "#FFF",
+    fontWeight: "bold",
     fontSize: 18,
   },
   paymentMethodName: {
     color: paletaColores.texto,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   paymentMethodNameSelected: {
@@ -335,7 +409,7 @@ const styles = StyleSheet.create({
     color: paletaColores.boton,
   },
   emergencyInputsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   inputWrapper: {
@@ -352,13 +426,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   backButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
   },
   backButtonText: {
     color: paletaColores.texto,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

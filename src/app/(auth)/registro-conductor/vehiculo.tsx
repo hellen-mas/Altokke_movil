@@ -1,7 +1,7 @@
-import CustomInput from "@/components/ui/CustomInput";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PageHeader } from "@/components/ui/PageHeader";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import CampoTexto from "@/components/ui/CampoTexto";
+import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
+import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
@@ -103,9 +103,9 @@ export default function VehiculoConductor() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <LogoHeader variant="light" />
+        <EncabezadoLogo variant="light" />
 
-        <PageHeader
+        <EncabezadoPagina
           title={"Vehículo y\n"}
           highlightedTitle="solicitud"
           description="Completa los datos de tu mototaxi y envía tu solicitud."
@@ -116,7 +116,7 @@ export default function VehiculoConductor() {
 
         {/* Formulario */}
         <View style={styles.formulario}>
-          <CustomInput
+          <CampoTexto
             placeholder="Placa"
             iconName="card-outline"
             value={placa}
@@ -125,7 +125,7 @@ export default function VehiculoConductor() {
             maxLength={10}
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Marca"
             iconName="car-outline"
             value={marca}
@@ -133,7 +133,7 @@ export default function VehiculoConductor() {
             autoCapitalize="words"
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Modelo"
             iconName="settings-outline"
             value={modelo}
@@ -141,7 +141,7 @@ export default function VehiculoConductor() {
             autoCapitalize="words"
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Año"
             iconName="calendar-outline"
             value={anio}
@@ -150,7 +150,7 @@ export default function VehiculoConductor() {
             maxLength={4}
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Color"
             iconName="color-palette-outline"
             value={color}
@@ -158,7 +158,7 @@ export default function VehiculoConductor() {
             autoCapitalize="words"
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Capacidad de pasajeros"
             iconName="people-outline"
             value={capacidad}
@@ -198,7 +198,7 @@ export default function VehiculoConductor() {
           texto="Tu cuenta será revisada antes de ser activada."
         />
 
-        <PrimaryButton title="Enviar solicitud" onPress={enviarSolicitud} />
+        <BotonPrincipal title="Enviar solicitud" onPress={enviarSolicitud} />
 
         <Pressable style={styles.atras} onPress={() => router.back()}>
           <Ionicons

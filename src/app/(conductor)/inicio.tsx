@@ -66,25 +66,25 @@ export default function InicioConductorScreen() {
           <AccesoRapido
             icono="wallet-outline"
             texto="Ganancias"
-            onPress={() => router.push("/ganancias" as any)}
+            onPress={() => router.push("/ganancias")}
           />
 
           <AccesoRapido
             icono="receipt-outline"
             texto="Solicitudes"
-            onPress={() => router.push("/solicitudes" as any)}
+            onPress={() => router.push("/solicitudes")}
           />
 
           <AccesoRapido
             icono="car-sport-outline"
             texto="Vehículo"
-            onPress={() => router.push("/cuenta/vehiculo" as any)}
+            onPress={() => router.push("/cuenta/vehiculo")}
           />
 
           <AccesoRapido
             icono="person-outline"
             texto="Cuenta"
-            onPress={() => router.push("/cuenta" as any)}
+            onPress={() => router.push("/cuenta")}
           />
         </View>
 
@@ -138,7 +138,7 @@ export default function InicioConductorScreen() {
         {/* SOLICITUD */}
         <Pressable
           style={styles.solicitudCard}
-          onPress={() => router.push("/solicitudes" as any)}
+          onPress={() => router.push("/solicitudes")}
         >
           <View style={styles.solicitudIcono}>
             <Ionicons

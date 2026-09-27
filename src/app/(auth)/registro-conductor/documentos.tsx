@@ -1,9 +1,9 @@
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
 import { Ionicons } from "@expo/vector-icons";
 import { paletaColores } from "@/paletaColores";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PageHeader } from "@/components/ui/PageHeader";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
+import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { router } from "expo-router";
 import {
     Alert,
@@ -87,9 +87,9 @@ export default function DocumentosConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <LogoHeader variant="light"/>
+                <EncabezadoLogo variant="light"/>
 
-                <PageHeader
+                <EncabezadoPagina
                     title={"Documentos del\n"}
                     highlightedTitle="conductor"
                     description="Carga los documentos requeridos para conducir en Altokke"
@@ -127,7 +127,7 @@ export default function DocumentosConductor() {
                     texto="Asegúrate de que los documentos estén vigentes y sean legibles."
                 />
 
-                <PrimaryButton
+                <BotonPrincipal
                     title="Continuar"
                     onPress={continuar}
                 />

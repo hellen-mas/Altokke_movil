@@ -1,13 +1,27 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pressable, StyleSheet, Text, View, KeyboardAvoidingView, ScrollView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LogoHeader, OTPCodeField, PrimaryButton } from "@/components/ui";
+import { EncabezadoLogo, CampoCodigoVerificacion, BotonPrincipal, ContenedorPantalla } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 
+import { useLocalSearchParams } from "expo-router";
+
 export default function VerificacionCodigoScreen() {
+  const { email } = useLocalSearchParams<{ email: string }>();
   const [codigo, setCodigo] = useState("");
+  const [timer, setTimer] = useState(58);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const handleVerificar = () => {
     if (codigo.length < 6) {
@@ -17,27 +31,26 @@ export default function VerificacionCodigoScreen() {
       );
       return;
     }
-    router.push("/recuperar-password/nuevo" as any);
+    router.push("/recuperar-password/nuevo");
+  };
+
+  const handleReenviar = () => {
+    if (timer === 0) {
+      setTimer(58);
+      // Logic to resend code goes here
+    }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
           <View style={styles.container}>
-            <LogoHeader />
+            <EncabezadoLogo />
             <Text style={styles.title}>Verificar cuenta</Text>
             <Text style={styles.subtitle}>
-              Se ha enviado un código de 6 dígitos a{"\n"}jperez@email.com
+              Se ha enviado un código de 6 dígitos a{"\n"}
+              {email || "tu correo electrónico"}
             </Text>
-            <OTPCodeField 
+            <CampoCodigoVerificacion 
               numberOfDigits={6} 
               onTextChange={setCodigo} 
             />
@@ -47,32 +60,30 @@ export default function VerificacionCodigoScreen() {
                 size={16}
                 color={paletaColores.textoSecundario}
               />
-              <Text style={styles.timerText}>Reenviar código en 00:58</Text>
+              <Text style={styles.timerText}>
+                {timer > 0 ? `Reenviar código en 00:${timer.toString().padStart(2, '0')}` : "Puedes reenviar el código"}
+              </Text>
             </View>
-            <PrimaryButton
+            <BotonPrincipal
               title="Verificar"
               onPress={handleVerificar}
               style={styles.verifyButton}
             />
             <View style={styles.resendContainer}>
               <Text style={styles.resendText}>¿No recibiste el código? </Text>
-              <Link href={"/login" as any} asChild>
-                <Pressable>
-                  <Text style={styles.resendLink}>Reenviar</Text>
-                </Pressable>
-              </Link>
+              <Pressable onPress={handleReenviar} disabled={timer > 0}>
+                <Text style={[styles.resendLink, timer > 0 && { opacity: 0.5 }]}>Reenviar</Text>
+              </Pressable>
             </View>
             <View style={styles.footerContainer}>
-              <Link href={"/login" as any} asChild>
+              <Link href={"/login"} asChild>
                 <Pressable>
                   <Text style={styles.footerText}>Volver al inicio</Text>
                 </Pressable>
               </Link>
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </ContenedorPantalla>
   );
 }
 

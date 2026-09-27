@@ -1,7 +1,7 @@
 import { BarraInferior } from "@/components/pasajero/BarraInferior";
 import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { MapaBase } from "@/components/pasajero/MapaBase";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   Lugar,
@@ -226,7 +226,7 @@ export default function PantallaDestino() {
 
         {destino && (
           <View style={styles.pie}>
-            <PrimaryButton title="Confirmar destino" onPress={confirmarDestino} />
+            <BotonPrincipal title="Confirmar destino" onPress={confirmarDestino} />
           </View>
         )}
       </View>

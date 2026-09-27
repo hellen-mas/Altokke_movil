@@ -8,7 +8,7 @@ export interface OTPCodeFieldProps {
   numberOfDigits?: number;
 }
 
-export function OTPCodeField({
+export function CampoCodigoVerificacion({
   onTextChange,
   onFilled,
   numberOfDigits = 6,

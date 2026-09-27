@@ -3,10 +3,7 @@ import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View, KeyboardAvoidingView, ScrollView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CustomInput } from "@/components/ui/CustomInput";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { CampoTexto, EncabezadoLogo, EncabezadoPagina, BotonPrincipal, ContenedorPantalla } from "@/components/ui";
 
 export default function RecuperarPasswordScreen() {
   const [correo, setCorreo] = useState("");
@@ -19,31 +16,22 @@ export default function RecuperarPasswordScreen() {
       );
       return;
     }
-    router.push("/recuperar-password/verificar" as any);
+    router.push(`/recuperar-password/verificar?email=${encodeURIComponent(correo)}`);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            <LogoHeader />
+            <EncabezadoLogo />
 
-            <PageHeader
+            <EncabezadoPagina
               title={"Recuperar\ncontraseña"}
               highlightedTitle=""
               description=""
             />
 
             <View style={styles.inputContainer}>
-              <CustomInput
+              <CampoTexto
                 iconName="mail-outline"
                 placeholder="Correo electrónico o teléfono"
                 keyboardType="email-address"
@@ -53,36 +41,27 @@ export default function RecuperarPasswordScreen() {
               />
             </View>
 
-            <PrimaryButton
+            <BotonPrincipal
               title="Continuar"
               onPress={handleContinuar}
               style={styles.button}
             />
 
-            <Link href={"/login" as any} style={styles.secondaryLink}>
+            <Link href={"/login"} style={styles.secondaryLink}>
               Usa otra forma de recuperación
             </Link>
           </View>
 
           <View style={styles.footer}>
-            <Link href={"/login" as any} style={styles.secondaryLink}>
+            <Link href={"/login"} style={styles.secondaryLink}>
               Volver al inicio
             </Link>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ContenedorPantalla>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: paletaColores.fondo,
-  },
-  keyboardView: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,

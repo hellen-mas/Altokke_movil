@@ -1,4 +1,4 @@
-import { PageHeader, PrimaryButton } from "@/components/ui";
+import { EncabezadoPagina, BotonPrincipal } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
@@ -9,9 +9,11 @@ import {
   Switch,
   Text,
   View,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { BarraNavegacionSuperior } from "@/components/ui/BarraNavegacionSuperior";
 
 export default function PasajeroPreferenciasScreen() {
   const [notificaciones, setNotificaciones] = useState(true);
@@ -25,25 +27,22 @@ export default function PasajeroPreferenciasScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Pressable style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={paletaColores.texto} />
-          </Pressable>
-          
-          <Text style={styles.headerTitle}>Altokke</Text>
-          
-          <View style={styles.stepContainer}>
-            <Text style={styles.stepText}>Paso 3 de 3</Text>
-            <View style={styles.miniStepIndicator}>
-              <View style={[styles.miniStep, styles.stepCompleted]} />
-              <View style={[styles.miniStep, styles.stepCompleted]} />
-              <View style={[styles.miniStep, styles.activeStep]} />
+        <BarraNavegacionSuperior
+          title="Altokke"
+          rightComponent={
+            <View style={styles.stepContainer}>
+              <Text style={styles.stepText}>Paso 3 de 3</Text>
+              <View style={styles.miniStepIndicator}>
+                <View style={[styles.miniStep, styles.stepCompleted]} />
+                <View style={[styles.miniStep, styles.stepCompleted]} />
+                <View style={[styles.miniStep, styles.activeStep]} />
+              </View>
             </View>
-          </View>
-        </View>
+          }
+        />
 
         <View style={styles.pageHeaderContainer}>
-          <PageHeader
+          <EncabezadoPagina
             title="Preferencias"
             highlightedTitle={"\n" + "y seguridad"}
             description="Ajusta tu experiencia antes de empezar."
@@ -150,16 +149,14 @@ export default function PasajeroPreferenciasScreen() {
           </Text>
         </Pressable>
 
-        <PrimaryButton
+        <BotonPrincipal
           title="Crear cuenta"
           onPress={() => {
             if (!terminos) {
-              import("react-native").then(({ Alert }) => {
-                Alert.alert("Términos incompletos", "Debes aceptar los términos y condiciones para crear tu cuenta.");
-              });
+              Alert.alert("Términos incompletos", "Debes aceptar los términos y condiciones para crear tu cuenta.");
               return;
             }
-            router.push("/login" as any);
+            router.push("/login");
           }}
           style={styles.botonCrear}
         />
@@ -183,24 +180,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 24,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  backButton: {
-    padding: 4,
-    width: 40,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: "700",
-    color: paletaColores.texto,
-    marginRight: -40, 
   },
   stepContainer: {
     alignItems: "flex-end",

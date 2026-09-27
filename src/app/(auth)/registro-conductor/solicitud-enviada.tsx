@@ -6,8 +6,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { paletaColores } from "@/paletaColores";
 import { useEffect, useState } from "react";
 
@@ -30,7 +30,7 @@ export default function SolicitudEnviada() {
 
     const manejarBoton = () => {
         if (estadoSolicitud === "APROBADA") {
-            router.replace("/login" as any);
+            router.replace("/login");
             return;
         } 
 
@@ -51,7 +51,7 @@ export default function SolicitudEnviada() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
         >
-            <LogoHeader variant="light" />
+            <EncabezadoLogo variant="light" />
 
             <View style={styles.contenido}>
                 <View
@@ -182,7 +182,7 @@ export default function SolicitudEnviada() {
             </View>
 
             <View style={styles.acciones}>
-                <PrimaryButton
+                <BotonPrincipal
                     title={contenido.textoBoton}
                     onPress={manejarBoton}
                 />

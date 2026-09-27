@@ -2,9 +2,9 @@ import { useRegistroConductor } from "@/context/RegistroConductorContext";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { paletaColores } from "@/paletaColores";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PageHeader } from "@/components/ui/PageHeader";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
+import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { router } from "expo-router";
 import {
     Alert,
@@ -84,9 +84,9 @@ export default function IdentidadOficialConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <LogoHeader variant="light"/>
+                <EncabezadoLogo variant="light"/>
 
-                <PageHeader
+                <EncabezadoPagina
                     title={"Indentidad \n"}
                     highlightedTitle="oficial"
                     description="Sube tus documentos personales para validar tu identidad"
@@ -122,7 +122,7 @@ export default function IdentidadOficialConductor() {
                     texto="Asegúrate de que las fotografías sean claras y legibles."
                 />
 
-                <PrimaryButton
+                <BotonPrincipal
                     title="Continuar"
                     onPress={continuar}
                 />

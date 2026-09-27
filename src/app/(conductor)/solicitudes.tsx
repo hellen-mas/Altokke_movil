@@ -33,7 +33,7 @@ export default function SolicitudesConductor() {
     useState<EstadoSolicitud>("NUEVA");
 
   const aceptarSolicitud = () => {
-    router.push("/viaje-activo" as any)
+    router.push("/viaje-activo")
   }
 
   const rechazarSolicitud = () => {

@@ -1,7 +1,7 @@
-import CustomInput from "@/components/ui/CustomInput";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PageHeader } from "@/components/ui/PageHeader";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import CampoTexto from "@/components/ui/CampoTexto";
+import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
+import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -117,9 +117,9 @@ export default function VerificacionContactoConductor() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <LogoHeader variant="light" />
+        <EncabezadoLogo variant="light" />
 
-        <PageHeader
+        <EncabezadoPagina
           title={"Verificación y\n"}
           highlightedTitle="contacto"
           description="Confirma tu número y completa tu información de contacto"
@@ -160,7 +160,7 @@ export default function VerificacionContactoConductor() {
             </Pressable>
           </View>
 
-          <CustomInput
+          <CampoTexto
             placeholder="Código de verificación"
             iconName="shield-checkmark-outline"
             value={codigo}
@@ -169,7 +169,7 @@ export default function VerificacionContactoConductor() {
             maxLength={6}
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Correo de respaldo (opcional)"
             iconName="mail-outline"
             value={correoRespaldo}
@@ -179,7 +179,7 @@ export default function VerificacionContactoConductor() {
             autoCorrect={false}
             variant="light"
           />
-          <CustomInput
+          <CampoTexto
             placeholder="Dirección actual"
             iconName="location-outline"
             value={direccion}
@@ -226,7 +226,7 @@ export default function VerificacionContactoConductor() {
           texto="Usaremos esta información para comunicarnos contigo y verificar tu cuenta."
         />
 
-        <PrimaryButton title="Continuar" onPress={continuar} />
+        <BotonPrincipal title="Continuar" onPress={continuar} />
         <Pressable
           style={styles.atras}
           onPress={() => router.back()}

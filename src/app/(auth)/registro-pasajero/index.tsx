@@ -1,220 +1,244 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { StepIndicator } from '@/components/ui/StepIndicator';
-import { CustomInput } from '@/components/ui/CustomInput';
-import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { AuthFooter } from '@/components/ui/AuthFooter';
-import { CustomSelect } from '@/components/ui/CustomSelect';
-import { CustomDatePicker } from '@/components/ui/CustomDatePicker';
-import { paletaColores } from '@/paletaColores';
+import {
+  BarraNavegacionSuperior,
+  BotonPrincipal,
+  CampoTexto,
+  ContenedorPantalla,
+  EncabezadoPagina,
+  IndicadorPasos,
+  PiePaginaAutenticacion,
+  SelectorFecha,
+  SelectorOpciones,
+} from "@/components/ui";
+import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
+import { paletaColores } from "@/paletaColores";
+import { esquemaRegistroPasajero } from "@/utils/validaciones";
+import { Ionicons } from "@expo/vector-icons";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { router } from "expo-router";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function PasajeroDatosPersonalesScreen() {
-  const [nombres, setNombres] = useState('');
-  const [apellidos, setApellidos] = useState('');
-  const [tipoDocumento, setTipoDocumento] = useState('');
-  const [numeroDocumento, setNumeroDocumento] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState<Date | null>(null);
-  const [genero, setGenero] = useState('');
-  const [direccion, setDireccion] = useState('');
-  const [correo, setCorreo] = useState('');
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(esquemaRegistroPasajero),
+    defaultValues: {
+      nombres: "",
+      apellidos: "",
+      tipoDocumento: "",
+      numeroDocumento: "",
+      fechaNacimiento: undefined,
+      genero: "",
+      direccion: "",
+      telefono: "",
+      correo: "",
+    },
+  });
 
-  const handleSiguiente = () => {
-    if (
-      !nombres.trim() ||
-      !apellidos.trim() ||
-      !tipoDocumento ||
-      !numeroDocumento.trim() ||
-      !fechaNacimiento ||
-      !genero ||
-      !direccion.trim() ||
-      !correo.trim()
-    ) {
-      import("react-native").then(({ Alert }) => {
-        Alert.alert(
-          "Campos incompletos",
-          "Por favor, completa todos los datos para continuar."
-        );
-      });
-      return;
-    }
-    router.push("/registro-pasajero/verificacion" as any);
+  const { setDatosPersonales } = useRegistroPasajero();
+  const onSubmit = (data: any) => {
+    setDatosPersonales(data);
+    router.push("/registro-pasajero/verificacion");
+  };
+
+  const onError = () => {
+    Alert.alert(
+      "Campos incompletos",
+      "Por favor, completa todos los datos para continuar.",
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <KeyboardAwareScrollView 
-        contentContainerStyle={styles.scrollContent} 
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true}
-        extraScrollHeight={20}
-      >
-        <View style={styles.headerTop}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={paletaColores.texto} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Altokke</Text>
-          <View style={{ width: 24 }} />
-        </View>
+    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
+      <BarraNavegacionSuperior title="Altokke" />
 
-        <PageHeader 
-          title="Crea tu cuenta " 
-          highlightedTitle="de pasajero" 
-          description="Completa tus datos básicos para continuar." 
-        />
+      <EncabezadoPagina
+        title="Crea tu cuenta "
+        highlightedTitle="de pasajero"
+        description="Completa tus datos básicos para continuar."
+      />
 
-        <View style={styles.stepContainer}>
-          <Text style={styles.stepText}>Paso 1 de 3</Text>
-          <View style={styles.stepIndicatorWrapper}>
-            <StepIndicator currentStep={1} totalSteps={3} />
+      <IndicadorPasos currentStep={1} totalSteps={3} />
+
+      <View style={styles.profileSection}>
+        <Pressable style={styles.profileImageContainer}>
+          <View style={styles.profileImagePlaceholder}>
+            <Ionicons
+              name="person"
+              size={40}
+              color={paletaColores.textoSecundario}
+            />
           </View>
-        </View>
-
-        <View style={styles.profileSection}>
-          <Pressable style={styles.profileImageContainer}>
-            <View style={styles.profileImagePlaceholder}>
-              <Ionicons name="person" size={40} color={paletaColores.textoSecundario} />
-            </View>
-            <View style={styles.addIconContainer}>
-              <Ionicons name="add" size={16} color={paletaColores.fondo} />
-            </View>
-          </Pressable>
-          <View style={styles.profileTextContainer}>
-            <Text style={styles.profileTitle}>
-              Foto de perfil <Text style={styles.optionalText}>(opcional)</Text>
-            </Text>
-            <Text style={styles.profileDescription}>
-              Agrega una foto para que te reconozcan más fácil.
-            </Text>
+          <View style={styles.addIconContainer}>
+            <Ionicons name="add" size={16} color={paletaColores.fondo} />
           </View>
+        </Pressable>
+        <View style={styles.profileTextContainer}>
+          <Text style={styles.profileTitle}>
+            Foto de perfil <Text style={styles.optionalText}>(opcional)</Text>
+          </Text>
+          <Text style={styles.profileDescription}>
+            Agrega una foto para que te reconozcan más fácil.
+          </Text>
         </View>
+      </View>
 
-        <View style={styles.formContainer}>
-          <CustomInput 
-            iconName="person-outline" 
-            placeholder="Nombres" 
-            value={nombres}
-            onChangeText={setNombres}
-          />
-          <CustomInput 
-            iconName="person-outline" 
-            placeholder="Apellidos" 
-            value={apellidos}
-            onChangeText={setApellidos}
-          />
-          <CustomSelect 
-            iconName="card-outline" 
-            placeholder="Tipo de documento" 
-            value={tipoDocumento}
-            options={["DNI", "Pasaporte", "Carnet de Extranjería"]}
-            onSelect={setTipoDocumento}
-          />
-          <CustomInput 
-            iconName="card-outline" 
-            placeholder="Número de documento" 
-            value={numeroDocumento}
-            onChangeText={setNumeroDocumento}
-            keyboardType="numeric"
-          />
-          <CustomDatePicker
-            iconName="calendar-outline"
-            placeholder="Fecha de nacimiento"
-            date={fechaNacimiento}
-            onSelect={setFechaNacimiento}
-          />
-          <CustomSelect 
-            iconName="male-female-outline" 
-            placeholder="Género" 
-            value={genero}
-            options={["Masculino", "Femenino", "Otro", "Prefiero no decirlo"]}
-            onSelect={setGenero}
-          />
-          <CustomInput 
-            iconName="location-outline" 
-            placeholder="Dirección" 
-            value={direccion}
-            onChangeText={setDireccion}
-          />
-          <CustomInput 
-            iconName="mail-outline" 
-            placeholder="Correo electrónico" 
-            value={correo}
-            onChangeText={setCorreo}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <PrimaryButton 
-            title="Siguiente" 
-            onPress={handleSiguiente} 
-          />
-        </View>
-
-        <AuthFooter 
-          questionText="¿Ya tienes cuenta?" 
-          linkText="Iniciar sesión" 
-          href={"/login" as any} 
-          showBorder={false}
+      <View style={styles.formContainer}>
+        <Controller
+          control={control}
+          name="nombres"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto
+              iconName="person-outline"
+              placeholder="Nombres"
+              value={value}
+              onChangeText={onChange}
+            />
+          )}
         />
-      </KeyboardAwareScrollView>
-    </View>
+        <Controller
+          control={control}
+          name="apellidos"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto
+              iconName="person-outline"
+              placeholder="Apellidos"
+              value={value}
+              onChangeText={onChange}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="tipoDocumento"
+          render={({ field: { onChange, value } }) => (
+            <SelectorOpciones
+              iconName="card-outline"
+              placeholder="Tipo de documento"
+              value={value}
+              options={["DNI", "Pasaporte", "Carnet de Extranjería"]}
+              onSelect={onChange}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="numeroDocumento"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto
+              iconName="card-outline"
+              placeholder="Número de documento"
+              value={value}
+              onChangeText={onChange}
+              keyboardType="numeric"
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="fechaNacimiento"
+          render={({ field: { onChange, value } }) => (
+            <SelectorFecha
+              iconName="calendar-outline"
+              placeholder="Fecha de nacimiento"
+              date={value}
+              onSelect={onChange}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="genero"
+          render={({ field: { onChange, value } }) => (
+            <SelectorOpciones
+              iconName="male-female-outline"
+              placeholder="Género"
+              value={value}
+              options={["Masculino", "Femenino", "Otro", "Prefiero no decirlo"]}
+              onSelect={onChange}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="direccion"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto
+              iconName="location-outline"
+              placeholder="Dirección"
+              value={value}
+              onChangeText={onChange}
+            />
+          )}
+        />
+                <Controller
+          control={control}
+          name="ciudad"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto iconName="business-outline" placeholder="Ciudad" value={value} onChangeText={onChange} />
+          )}
+        />
+        <Controller
+          control={control}
+          name="telefono"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto
+              iconName="call-outline"
+              placeholder="Teléfono"
+              value={value}
+              onChangeText={onChange}
+              keyboardType="phone-pad"
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="correo"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto
+              iconName="mail-outline"
+              placeholder="Correo electrónico"
+              value={value}
+              onChangeText={onChange}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          )}
+        />
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <BotonPrincipal
+          title="Siguiente"
+          onPress={handleSubmit(onSubmit, onError)}
+        />
+      </View>
+
+      <PiePaginaAutenticacion
+        questionText="¿Ya tienes cuenta?"
+        linkText="Iniciar sesión"
+        href={"/login"}
+        showBorder={false}
+      />
+    </ContenedorPantalla>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: paletaColores.fondo,
-  },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 40,
     flexGrow: 1,
   },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: paletaColores.texto,
-  },
-  stepContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  stepText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: paletaColores.texto,
-    marginRight: 16,
-  },
-  stepIndicatorWrapper: {
-    flex: 1,
-  },
   profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 30,
     marginTop: 10,
   },
   profileImageContainer: {
-    position: 'relative',
+    position: "relative",
     marginRight: 16,
   },
   profileImagePlaceholder: {
@@ -224,19 +248,19 @@ const styles = StyleSheet.create({
     backgroundColor: paletaColores.input,
     borderWidth: 1,
     borderColor: paletaColores.borde,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addIconContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     backgroundColor: paletaColores.verde,
     borderRadius: 12,
     width: 24,
     height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 2,
     borderColor: paletaColores.fondo,
   },
@@ -245,13 +269,13 @@ const styles = StyleSheet.create({
   },
   profileTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: paletaColores.texto,
     marginBottom: 4,
   },
   optionalText: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: "400",
     color: paletaColores.textoSecundario,
   },
   profileDescription: {

@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { TarjetaConductor } from "@/components/pasajero/TarjetaConductor";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { ORIGEN_EJEMPLO } from "@/constants/pasajero";
 import { useViaje } from "@/context/ViajeContext";
 import { useResumenViaje } from "@/hooks/use-resumen-viaje";
@@ -286,7 +286,7 @@ export default function PantallaCalificacion() {
         style={[styles.pie, { paddingBottom: Math.max(insets.bottom, 14) }]}
       >
         {enviado ? (
-          <PrimaryButton title="Volver al inicio" onPress={irAlInicio} />
+          <BotonPrincipal title="Volver al inicio" onPress={irAlInicio} />
         ) : (
           <>
             <Pressable

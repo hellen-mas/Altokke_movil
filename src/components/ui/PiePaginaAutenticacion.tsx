@@ -11,7 +11,7 @@ interface Props {
   variant?: "dark" | "light";
 }
 
-export const AuthFooter = ({
+export const PiePaginaAutenticacion = ({
   questionText,
   linkText,
   href,

@@ -1,67 +1,55 @@
-import { CustomInput, LogoHeader, PrimaryButton } from "@/components/ui";
+import { CampoTexto, EncabezadoLogo, BotonPrincipal, ContenedorPantalla } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
-import { useState } from "react";
-import { StyleSheet, Text, View, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React from "react";
+import { StyleSheet, Text, View, Alert } from "react-native";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { esquemaNuevaContrasena } from "@/utils/validaciones";
 
 export default function NuevoPasswordScreen() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(esquemaNuevaContrasena),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    }
+  });
 
-  const handleGuardar = () => {
-    if (!password.trim() || !confirmPassword.trim()) {
-      Alert.alert(
-        "Campos incompletos",
-        "Por favor, ingresa y confirma tu nueva contraseña."
-      );
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert(
-        "Contraseñas no coinciden",
-        "Las contraseñas ingresadas no son iguales."
-      );
-      return;
-    }
-    router.push("/login" as any);
+  const onSubmit = (data: any) => {
+    router.push("/login");
+  };
+
+  const onError = () => {
+    Alert.alert("Campos inválidos", "Verifica que las contraseñas coincidan y cumplan los requisitos.");
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoiding}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContainer} 
-          bounces={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <LogoHeader />
+    <ContenedorPantalla contentContainerStyle={styles.scrollContainer}>
+      <EncabezadoLogo />
 
-          <Text style={styles.title}>Crear nueva contraseña</Text>
-          <Text style={styles.subtitle}>
-            Crea una contraseña fuerte y segura para proteger tu cuenta.
-          </Text>
+      <Text style={styles.title}>Crear nueva contraseña</Text>
+      <Text style={styles.subtitle}>
+        Crea una contraseña fuerte y segura para proteger tu cuenta.
+      </Text>
 
-          <View style={styles.formContainer}>
-            <CustomInput
-              iconName="lock-closed-outline"
-              placeholder="Nueva contraseña"
-              isPassword
-              value={password}
-              onChangeText={setPassword}
-            />
+      <View style={styles.formContainer}>
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto iconName="lock-closed-outline" placeholder="Nueva contraseña" isPassword value={value} onChangeText={onChange} />
+          )}
+        />
 
-            <CustomInput
-              iconName="lock-closed-outline"
-              placeholder="Confirmar nueva contraseña"
-              isPassword
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
+        <Controller
+          control={control}
+          name="confirmPassword"
+          render={({ field: { onChange, value } }) => (
+            <CampoTexto iconName="lock-closed-outline" placeholder="Confirmar nueva contraseña" isPassword value={value} onChangeText={onChange} />
+          )}
+        />
 
             <View style={styles.requirementsContainer}>
               <RequirementItem text="Al menos 8 caracteres" checked={true} />
@@ -70,21 +58,19 @@ export default function NuevoPasswordScreen() {
               <RequirementItem text="Una mayúscula" checked={true} />
             </View>
 
-            <PrimaryButton
+            <BotonPrincipal
               title="Guardar contraseña"
-              onPress={handleGuardar}
+              onPress={handleSubmit(onSubmit, onError)}
               style={styles.submitButton}
             />
           </View>
 
           <View style={styles.footerContainer}>
-            <Link href={"/login" as any} style={styles.backLink}>
+            <Link href={"/login"} style={styles.backLink}>
               Volver al inicio
             </Link>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ContenedorPantalla>
   );
 }
 
@@ -104,13 +90,6 @@ function RequirementItem({ text, checked }: { text: string; checked: boolean }) 
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: paletaColores.fondo,
-  },
-  keyboardAvoiding: {
-    flex: 1,
-  },
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: 24,

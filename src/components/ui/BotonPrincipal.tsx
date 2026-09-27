@@ -18,7 +18,7 @@ export interface Props {
   disabled?: boolean;
 }
 
-export function PrimaryButton({ 
+export function BotonPrincipal({ 
   title, 
   onPress, 
   style,
@@ -53,7 +53,7 @@ export function PrimaryButton({
   );
 }
 
-export default PrimaryButton;
+export default BotonPrincipal;
 
 const styles = StyleSheet.create({
   button: {

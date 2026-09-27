@@ -1,24 +1,19 @@
 import {
-  AuthFooter,
-  CustomInput,
-  LogoHeader,
-  PageHeader,
-  PrimaryButton,
+  PiePaginaAutenticacion,
+  CampoTexto,
+  EncabezadoLogo,
+  EncabezadoPagina,
+  BotonPrincipal,
+  BotonRedesSociales,
+  ContenedorPantalla,
 } from "@/components/ui";
+import { USUARIOS_DEMO } from "@/constants/usuarios";
 import { paletaColores } from "@/paletaColores";
-import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { USUARIOS_DEMO } from "@/constants/usuarios";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const [correo, setCorreo] = useState("");
@@ -28,50 +23,42 @@ export default function LoginScreen() {
     if (!correo.trim() || !contrasena.trim()) {
       Alert.alert(
         "Campos incompletos",
-        "Por favor, ingresa tu correo y contraseña para continuar."
+        "Por favor, ingresa tu correo y contraseña para continuar.",
       );
       return;
     }
-    
+
     const usuario = USUARIOS_DEMO.find(
-      (u) => 
+      (u) =>
         u.correo.toLowerCase() === correo.trim().toLowerCase() &&
-        u.password === contrasena
+        u.password === contrasena,
     );
 
     if (!usuario) {
       Alert.alert(
         "Credenciales incorrectas",
-        "El correo o la contraseña no son correctos."
+        "El correo o la contraseña no son correctos.",
       );
       return;
     }
 
     if (usuario.rol === "conductor") {
-      router.replace("/inicio" as any);
+      router.replace("/inicio");
       return;
     }
 
     if (usuario.rol === "pasajero") {
-      router.replace("/mapa" as any);
+      router.replace("/mapa");
       return;
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAwareScrollView
-        style={styles.keyboardView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
-        extraScrollHeight={20}
-      >
-        <LogoHeader />
+    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
+        <EncabezadoLogo />
 
         <View style={styles.headerContainer}>
-          <PageHeader
+          <EncabezadoPagina
             title={"Iniciar sesión\nen "}
             highlightedTitle="Altokke"
             description={"Accede a tu cuenta y sigue\nmoviendo tu ciudad."}
@@ -79,7 +66,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.formContainer}>
-          <CustomInput
+          <CampoTexto
             iconName="mail-outline"
             placeholder="Correo electrónico o teléfono"
             keyboardType="email-address"
@@ -88,7 +75,7 @@ export default function LoginScreen() {
             onChangeText={setCorreo}
           />
 
-          <CustomInput
+          <CampoTexto
             iconName="lock-closed-outline"
             placeholder="Contraseña"
             isPassword
@@ -97,13 +84,13 @@ export default function LoginScreen() {
           />
 
           <Link
-            href={"/recuperar-password" as any}
+            href={"/recuperar-password"}
             style={styles.forgotPassword}
           >
             ¿Olvidaste tu contraseña?
           </Link>
 
-          <PrimaryButton title="Entrar" onPress={handleLogin} />
+          <BotonPrincipal title="Entrar" onPress={handleLogin} />
         </View>
 
         <View style={styles.dividerContainer}>
@@ -113,22 +100,24 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.socialButtonsContainer}>
-          <Pressable style={styles.socialButton}>
-            <Ionicons name="logo-google" size={20} color="#EA4335" />
-            <Text style={styles.socialButtonText}>Continuar con Google</Text>
-          </Pressable>
+          <BotonRedesSociales
+            title="Continuar con Google"
+            iconName="logo-google"
+            iconColor="#EA4335"
+          />
 
-          <Pressable style={styles.socialButton}>
-            <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-            <Text style={styles.socialButtonText}>Continuar con Apple</Text>
-          </Pressable>
+          <BotonRedesSociales
+            title="Continuar con Apple"
+            iconName="logo-apple"
+            iconColor="#FFFFFF"
+          />
         </View>
 
         <View style={styles.footerContainer}>
-          <AuthFooter
+          <PiePaginaAutenticacion
             questionText="¿No tienes una cuenta?"
             linkText="Crear cuenta"
-            href={"/crear-cuenta" as any}
+            href={"/crear-cuenta"}
           />
         </View>
 
@@ -136,19 +125,11 @@ export default function LoginScreen() {
           Al iniciar sesión, aceptas nuestros{"\n"}
           Términos de servicio y Política de privacidad.
         </Text>
-      </KeyboardAwareScrollView>
-    </SafeAreaView>
+    </ContenedorPantalla>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: paletaColores.fondo,
-  },
-  keyboardView: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,

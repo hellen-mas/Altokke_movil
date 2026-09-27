@@ -1,6 +1,4 @@
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { RoleCard } from "@/components/ui/RoleCard";
+import { EncabezadoLogo, BotonPrincipal, TarjetaRol } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -15,9 +13,9 @@ export default function CrearCuentaScreen() {
 
   const handleContinue = () => {
     if (selectedRole === "pasajero") {
-      router.push("/registro-pasajero" as any);
+      router.push("/registro-pasajero");
     } else if (selectedRole === "conductor") {
-      router.push("/registro-conductor/datos-personales" as any);
+      router.push("/registro-conductor/datos-personales");
     }
   };
 
@@ -28,7 +26,7 @@ export default function CrearCuentaScreen() {
         backgroundColor={paletaColores.fondo}
       />
       <View style={styles.container}>
-        <LogoHeader />
+        <EncabezadoLogo />
 
         <View style={styles.headerTextContainer}>
           <Text style={styles.title}>
@@ -40,14 +38,14 @@ export default function CrearCuentaScreen() {
         </View>
 
         <View style={styles.cardsContainer}>
-          <RoleCard
+          <TarjetaRol
             title="Cuenta de pasajero"
             subtitle="Pide mototaxis para ti y tu familia."
             iconName="people-outline"
             selected={selectedRole === "pasajero"}
             onPress={() => setSelectedRole("pasajero")}
           />
-          <RoleCard
+          <TarjetaRol
             title="Cuenta de conductor"
             subtitle="Regístrate para ofrecer viajes y generar ingresos."
             iconName="car-outline"
@@ -58,7 +56,7 @@ export default function CrearCuentaScreen() {
 
         <View style={styles.spacer} />
 
-        <PrimaryButton
+        <BotonPrincipal
           title="Continuar"
           onPress={handleContinue}
           disabled={!selectedRole}
@@ -68,7 +66,7 @@ export default function CrearCuentaScreen() {
           <View style={styles.footerLine} />
           <Text style={styles.footerText}>
             ¿Ya tienes cuenta?{" "}
-            <Link href={"/login" as any} style={styles.footerLink}>
+            <Link href={"/login"} style={styles.footerLink}>
               Iniciar sesión
             </Link>
           </Text>

@@ -61,7 +61,7 @@ export default function ViajeActivoConductor() {
         {
           text: "Finalizar",
           onPress: () => {
-            router.replace("/cuenta/historial" as any);
+            router.replace("/cuenta/historial");
           },
         },
       ]

@@ -9,11 +9,11 @@ import {
     View,
 } from "react-native";
 import { paletaColores } from "@/paletaColores";
-import { AuthFooter } from "@/components/ui/AuthFooter";
-import CustomInput from "@/components/ui/CustomInput";
-import { LogoHeader } from "@/components/ui/LogoHeader";
-import { PageHeader } from "@/components/ui/PageHeader";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import { PiePaginaAutenticacion } from "@/components/ui/PiePaginaAutenticacion";
+import CampoTexto from "@/components/ui/CampoTexto";
+import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
+import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import DateTimePicker, {DateTimePickerEvent,} from "@react-native-community/datetimepicker";
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -109,9 +109,9 @@ export default function DatosPersonalesConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <LogoHeader variant="light" />
+                <EncabezadoLogo variant="light" />
 
-                <PageHeader
+                <EncabezadoPagina
                     title={"Registro de\n"}
                     highlightedTitle="conductor"
                     description="Completa tus datos para empezar a conducir con Altokke."
@@ -122,7 +122,7 @@ export default function DatosPersonalesConductor() {
 
                 {/* Formulario */}
                 <View style={styles.formulario}>
-                    <CustomInput
+                    <CampoTexto
                         placeholder="Nombre completo"
                         iconName="person-outline"
                         value={nombre}
@@ -130,7 +130,7 @@ export default function DatosPersonalesConductor() {
                         autoCapitalize="words"
                         variant="light"
                     />
-                    <CustomInput
+                    <CampoTexto
                         placeholder="Apellidos"
                         iconName="person-outline"
                         value={apellidos}
@@ -138,7 +138,7 @@ export default function DatosPersonalesConductor() {
                         autoCapitalize="words"
                         variant="light"
                     />
-                    <CustomInput
+                    <CampoTexto
                         placeholder="DNI"
                         iconName="card-outline"
                         value={dni}
@@ -192,7 +192,7 @@ export default function DatosPersonalesConductor() {
                             }}
                         />
                     )}
-                    <CustomInput
+                    <CampoTexto
                         placeholder="Correo electrónico"
                         iconName="mail-outline"
                         value={correo}
@@ -202,7 +202,7 @@ export default function DatosPersonalesConductor() {
                         autoCorrect={false}
                         variant="light"
                     />
-                    <CustomInput
+                    <CampoTexto
                         placeholder="Contraseña"
                         iconName="lock-closed-outline"
                         value={contrasena}
@@ -210,7 +210,7 @@ export default function DatosPersonalesConductor() {
                         isPassword
                         variant="light"
                     />
-                    <CustomInput
+                    <CampoTexto
                         placeholder="Confirmar contraseña"
                         iconName="lock-closed-outline"
                         value={confirmarContrasena}
@@ -226,12 +226,12 @@ export default function DatosPersonalesConductor() {
                     texto="La edad minima para conducir con Altokke es de 18 años."
                 />
 
-                <PrimaryButton
+                <BotonPrincipal
                     title="Continuar"
                     onPress={continuar}
                 />
 
-                <AuthFooter
+                <PiePaginaAutenticacion
                     questionText="¿Ya tienes cuenta?"
                     linkText="Iniciar sesión"
                     href="/"

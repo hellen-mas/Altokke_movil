@@ -1,6 +1,6 @@
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
-import { forwardRef, useState } from "react";
+import { useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -15,9 +15,14 @@ export interface CustomInputProps extends TextInputProps {
   variant?: "dark" | "light";
 }
 
-export const CustomInput = forwardRef<TextInput, CustomInputProps>(
-  ({ iconName, isPassword, variant = "dark", style, ...rest }, ref) => {
-    const [visible, setVisible] = useState(false);
+export const CampoTexto = ({
+  iconName,
+  isPassword,
+  variant = "dark",
+  style,
+  ...rest
+}: CustomInputProps) => {
+  const [visible, setVisible] = useState(false);
     
     const isLight = variant === "light";
     const colorSecundario = isLight
@@ -38,7 +43,6 @@ export const CustomInput = forwardRef<TextInput, CustomInputProps>(
         />
 
         <TextInput
-          ref={ref}
           style={[
             styles.input, 
             isLight && styles.inputLight,
@@ -66,11 +70,9 @@ export const CustomInput = forwardRef<TextInput, CustomInputProps>(
         )}
       </View>
     );
-  },
-);
+};
 
-CustomInput.displayName = "CustomInput";
-export default CustomInput;
+export default CampoTexto;
 
 const styles = StyleSheet.create({
   container: {

@@ -13,7 +13,7 @@ import { BarraInferior } from "@/components/pasajero/BarraInferior";
 import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { IconoMototaxi } from "@/components/pasajero/IconoMototaxi";
 import { MapaBase } from "@/components/pasajero/MapaBase";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { CENTRO_BAGUA, ORIGEN_EJEMPLO } from "@/constants/pasajero";
 import { MetodoPago, useViaje } from "@/context/ViajeContext";
 import { ServicioViaje, useResumenViaje } from "@/hooks/use-resumen-viaje";
@@ -253,7 +253,7 @@ export default function PantallaConfirmarViaje() {
         </ScrollView>
 
         <View style={styles.pie}>
-          <PrimaryButton title="Confirmar viaje" onPress={confirmarViaje} />
+          <BotonPrincipal title="Confirmar viaje" onPress={confirmarViaje} />
         </View>
       </View>
 

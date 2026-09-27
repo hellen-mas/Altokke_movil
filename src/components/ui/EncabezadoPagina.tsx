@@ -8,7 +8,7 @@ interface Props {
   variant?: "dark" | "light";
 }
 
-export const PageHeader = ({ title, highlightedTitle, description, variant = "dark" }: Props) => {
+export const EncabezadoPagina = ({ title, highlightedTitle, description, variant = "dark" }: Props) => {
   const isLight = variant === "light";
 
   return (

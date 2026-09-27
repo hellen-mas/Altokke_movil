@@ -11,7 +11,7 @@ export interface CustomDatePickerProps {
   onSelect: (date: Date) => void;
 }
 
-export function CustomDatePicker({
+export function SelectorFecha({
   placeholder,
   iconName,
   date,

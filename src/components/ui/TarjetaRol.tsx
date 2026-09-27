@@ -10,7 +10,7 @@ export interface RoleCardProps {
   onPress: () => void;
 }
 
-export function RoleCard({
+export function TarjetaRol({
   title,
   subtitle,
   iconName,

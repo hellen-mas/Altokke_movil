@@ -14,7 +14,7 @@ import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
 import { MapaBase } from "@/components/pasajero/MapaBase";
 import { PulsoBusqueda } from "@/components/pasajero/PulsoBusqueda";
 import { TarjetaConductor } from "@/components/pasajero/TarjetaConductor";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   CONDUCTORES_CERCANOS,
@@ -211,7 +211,7 @@ export default function PantallaBuscandoConductor() {
               { paddingBottom: Math.max(insets.bottom, 14) },
             ]}
           >
-            <PrimaryButton title="Ver mi viaje" onPress={verMiViaje} />
+            <BotonPrincipal title="Ver mi viaje" onPress={verMiViaje} />
           </View>
         )}
       </View>

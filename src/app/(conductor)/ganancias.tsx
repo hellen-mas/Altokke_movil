@@ -1,5 +1,5 @@
 
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { RESUMEN_GANANCIAS, VIAJES_EJEMPLO } from "@/constants/conductor";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
@@ -154,7 +154,7 @@ export default function GananciasConductor() {
 
         {/* Retirar saldo */}
         <View style={styles.bloqueRetiro}>
-          <PrimaryButton title="Retirar saldo" onPress={mostrarRetiroProximamente} />
+          <BotonPrincipal title="Retirar saldo" onPress={mostrarRetiroProximamente} />
           <Text style={styles.saldoTexto}>
             Saldo disponible: S/ {RESUMEN_GANANCIAS.saldoDisponible.toFixed(2)}
           </Text>
