@@ -19,7 +19,7 @@ export function SelectorFecha({
 }: CustomDatePickerProps) {
   const [show, setShow] = useState(false);
 
-  const handleValueChange = (date?: Date) => {
+  const handleValueChange = (event: any, date: Date) => {
     if (Platform.OS === 'android') {
        setShow(false);
     }
