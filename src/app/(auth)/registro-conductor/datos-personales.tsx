@@ -178,16 +178,20 @@ export default function DatosPersonalesConductor() {
                             value={fechaNacimiento ?? fechaMaximaNacimiento}
                             mode="date"
                             maximumDate={fechaMaximaNacimiento}
-                            onChange={(
-                                event: DateTimePickerEvent,
+                            onValueChange={(
                                 selectDate?: Date
                             ) => {
                                 if (Platform.OS === "android") {
                                     setMostarCalendario(false);
                                 }
 
-                                if (event.type === "set" && selectDate) {
+                                if (selectDate) {
                                     setFechaNacimiento(selectDate);
+                                }
+                            }}
+                            onDismiss={() => {
+                                if (Platform.OS === "android") {
+                                    setMostarCalendario(false);
                                 }
                             }}
                         />

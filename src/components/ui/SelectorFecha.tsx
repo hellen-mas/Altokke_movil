@@ -19,12 +19,18 @@ export function SelectorFecha({
 }: CustomDatePickerProps) {
   const [show, setShow] = useState(false);
 
-  const onChange = (event: any, selectedDate?: Date) => {
+  const handleValueChange = (date?: Date) => {
     if (Platform.OS === 'android') {
        setShow(false);
     }
-    if (selectedDate) {
-      onSelect(selectedDate);
+    if (date) {
+      onSelect(date);
+    }
+  };
+
+  const handleDismiss = () => {
+    if (Platform.OS === 'android') {
+       setShow(false);
     }
   };
 
@@ -46,7 +52,8 @@ export function SelectorFecha({
           value={date || new Date()}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onChange}
+          onValueChange={handleValueChange}
+          onDismiss={handleDismiss}
           maximumDate={new Date()}
         />
       )}
