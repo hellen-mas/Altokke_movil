@@ -50,7 +50,7 @@ export default function LoginScreen() {
       return;
     }
 
-    login();
+    login(usuario.rol as "pasajero" | "conductor");
 
     if (usuario.rol === "conductor") {
       router.replace("/inicio");
