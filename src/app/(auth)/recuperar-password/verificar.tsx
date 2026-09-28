@@ -1,10 +1,14 @@
+import {
+  BotonPrincipal,
+  CampoCodigoVerificacion,
+  ContenedorPantalla,
+  EncabezadoLogo,
+} from "@/components/ui";
+import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
-import { useState, useEffect } from "react";
-import { Pressable, StyleSheet, Text, View, KeyboardAvoidingView, ScrollView, Platform, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { EncabezadoLogo, CampoCodigoVerificacion, BotonPrincipal, ContenedorPantalla } from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useLocalSearchParams } from "expo-router";
 
@@ -27,15 +31,12 @@ export default function VerificacionCodigoScreen() {
     if (codigo.length < 6) {
       Alert.alert(
         "Código incompleto",
-        "Por favor, ingresa el código completo de 6 dígitos."
+        "Por favor, ingresa el código completo de 6 dígitos.",
       );
       return;
     }
     if (codigo !== "123456") {
-      Alert.alert(
-        "Código incorrecto",
-        "El código OTP ingresado no es válido."
-      );
+      Alert.alert("Código incorrecto", "El código OTP ingresado no es válido.");
       return;
     }
     router.push("/recuperar-password/nuevo");
@@ -49,48 +50,49 @@ export default function VerificacionCodigoScreen() {
   };
 
   return (
-    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
-          <View style={styles.container}>
-            <EncabezadoLogo />
-            <Text style={styles.title}>Verificar cuenta</Text>
-            <Text style={styles.subtitle}>
-              Se ha enviado un código de 6 dígitos a{"\n"}
-              {email || "tu correo electrónico"}
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <View style={styles.container}>
+        <EncabezadoLogo />
+        <Text style={styles.title}>Verificar cuenta</Text>
+        <Text style={styles.subtitle}>
+          Se ha enviado un código de 6 dígitos a{"\n"}
+          {email || "tu correo electrónico"}
+        </Text>
+        <CampoCodigoVerificacion numeroDigitos={6} alCambiarTexto={setCodigo} />
+        <View style={styles.timerContainer}>
+          <Ionicons
+            name="time-outline"
+            size={16}
+            color={paletaColores.textoSecundario}
+          />
+          <Text style={styles.timerText}>
+            {timer > 0
+              ? `Reenviar código en 00:${timer.toString().padStart(2, "0")}`
+              : "Puedes reenviar el código"}
+          </Text>
+        </View>
+        <BotonPrincipal
+          titulo="Verificar"
+          alPresionar={handleVerificar}
+          estilo={styles.verifyButton}
+        />
+        <View style={styles.resendContainer}>
+          <Text style={styles.resendText}>¿No recibiste el código? </Text>
+          <Pressable onPress={handleReenviar} disabled={timer > 0}>
+            <Text style={[styles.resendLink, timer > 0 && { opacity: 0.5 }]}>
+              Reenviar
             </Text>
-            <CampoCodigoVerificacion 
-              numberOfDigits={6} 
-              onTextChange={setCodigo} 
-            />
-            <View style={styles.timerContainer}>
-              <Ionicons
-                name="time-outline"
-                size={16}
-                color={paletaColores.textoSecundario}
-              />
-              <Text style={styles.timerText}>
-                {timer > 0 ? `Reenviar código en 00:${timer.toString().padStart(2, '0')}` : "Puedes reenviar el código"}
-              </Text>
-            </View>
-            <BotonPrincipal
-              title="Verificar"
-              onPress={handleVerificar}
-              style={styles.verifyButton}
-            />
-            <View style={styles.resendContainer}>
-              <Text style={styles.resendText}>¿No recibiste el código? </Text>
-              <Pressable onPress={handleReenviar} disabled={timer > 0}>
-                <Text style={[styles.resendLink, timer > 0 && { opacity: 0.5 }]}>Reenviar</Text>
-              </Pressable>
-            </View>
-            <View style={styles.footerContainer}>
-              <Link href={"/login"} asChild>
-                <Pressable>
-                  <Text style={styles.footerText}>Volver al inicio</Text>
-                </Pressable>
-              </Link>
-            </View>
-          </View>
-        </ContenedorPantalla>
+          </Pressable>
+        </View>
+        <View style={styles.footerContainer}>
+          <Link href={"/login"} asChild>
+            <Pressable>
+              <Text style={styles.footerText}>Volver al inicio</Text>
+            </Pressable>
+          </Link>
+        </View>
+      </View>
+    </ContenedorPantalla>
   );
 }
 

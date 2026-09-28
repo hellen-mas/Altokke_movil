@@ -1,31 +1,31 @@
 import { Image, StyleSheet, Text, View } from "react-native";
-import { paletaColores } from "../../paletaColores";
+import { paletaColores } from "@/paletaColores";
 
-interface Props {
-  variant?: "dark" | "light";
+interface PropsEncabezadoLogo {
+  variante?: "oscuro" | "claro";
 }
 
-export const EncabezadoLogo = ({variant = "dark"}: Props) => {
-  const isLight = variant === "light";
+export const EncabezadoLogo = ({ variante = "oscuro" }: PropsEncabezadoLogo) => {
+  const esClaro = variante === "claro";
 
   return (
-    <View style={styles.logoContainer}>
+    <View style={estilos.contenedorLogo}>
       <Image
-        source={require("../../../assets/images/logo-altokke-v2.png")}
-        style={styles.logoImagen}
+        source={require("@/assets/images/logo-altokke-v2.png")}
+        style={estilos.imagenLogo}
         resizeMode="contain"
       />
 
       <Text style={[
-        styles.logo,
-        isLight && styles.logoLight,
+        estilos.logo,
+        esClaro && estilos.logoClaro,
       ]}>Altokke</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  logoContainer: {
+const estilos = StyleSheet.create({
+  contenedorLogo: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  logoImagen: {
+  imagenLogo: {
     width: 32,
     height: 32,
   },
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     color: paletaColores.texto,
   },
 
-  logoLight: {
+  logoClaro: {
     color: paletaColores.textoClaro,
   }
 });

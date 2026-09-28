@@ -1,14 +1,14 @@
 import {
-  PiePaginaAutenticacion,
+  BotonPrincipal,
   EncabezadoLogo,
   EncabezadoPagina,
-  BotonPrincipal,
+  PiePaginaAutenticacion,
 } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PantallaBienvenida() {
@@ -21,9 +21,9 @@ export default function PantallaBienvenida() {
         <EncabezadoLogo />
 
         <EncabezadoPagina
-          title={"Tu mototaxi,\n"}
-          highlightedTitle="cuando lo necesites."
-          description={"Pide un viaje en Bagua de forma \nrapida y sencilla."}
+          titulo={"Tu mototaxi,\n"}
+          tituloDestacado="cuando lo necesites."
+          descripcion={"Pide un viaje en Bagua de forma \nrapida y sencilla."}
         />
 
         <Image
@@ -34,17 +34,17 @@ export default function PantallaBienvenida() {
         />
 
         <BotonPrincipal
-          title={"Continuar"}
-          onPress={() => {
+          titulo={"Continuar"}
+          alPresionar={() => {
             router.push("/crear-cuenta");
           }}
-          style={{ marginBottom: 15 }}
+          estilo={{ marginBottom: 15 }}
         />
 
         <PiePaginaAutenticacion
-          questionText="¿Tienes una cuenta?"
-          href={"/login"}
-          linkText="Iniciar Sesión"
+          textoPregunta="¿Tienes una cuenta?"
+          ruta={"/login"}
+          textoEnlace="Iniciar Sesión"
         />
 
         <View style={styles.rolesContainer}>

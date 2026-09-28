@@ -10,38 +10,38 @@ import {
   ViewStyle,
 } from "react-native";
 
-export interface Props {
-  title: string;
-  onPress: () => void;
-  style?: StyleProp<ViewStyle>;
-  isLoading?: boolean;
-  disabled?: boolean;
+export interface PropsBotonPrincipal {
+  titulo: string;
+  alPresionar: () => void;
+  estilo?: StyleProp<ViewStyle>;
+  cargando?: boolean;
+  deshabilitado?: boolean;
 }
 
 export function BotonPrincipal({ 
-  title, 
-  onPress, 
-  style,
-  isLoading,
-  disabled
-}: Props) {
+  titulo, 
+  alPresionar, 
+  estilo,
+  cargando,
+  deshabilitado
+}: PropsBotonPrincipal) {
   return (
     <Pressable
       style={({ pressed }) => [
-        styles.button,
-        style,
-        (disabled || isLoading) && styles.disabled,
-        pressed && !disabled && !isLoading && { backgroundColor: paletaColores.botonPresionado },
-        pressed && styles.pressed,
+        estilos.boton,
+        estilo,
+        (deshabilitado || cargando) && estilos.deshabilitado,
+        pressed && !deshabilitado && !cargando && { backgroundColor: paletaColores.botonPresionado },
+        pressed && estilos.presionado,
       ]}
-      disabled={disabled || isLoading}
-      onPress={onPress}
+      disabled={deshabilitado || cargando}
+      onPress={alPresionar}
     >
-      {isLoading ? (
+      {cargando ? (
         <ActivityIndicator color={paletaColores.textoOscuro} />
       ) : (
-        <View style={styles.contenido}>
-          <Text style={styles.text}>{title}</Text>
+        <View style={estilos.contenido}>
+          <Text style={estilos.texto}>{titulo}</Text>
           <Ionicons 
             name="arrow-forward" 
             size={26} 
@@ -53,10 +53,8 @@ export function BotonPrincipal({
   );
 }
 
-export default BotonPrincipal;
-
-const styles = StyleSheet.create({
-  button: {
+const estilos = StyleSheet.create({
+  boton: {
     width: "100%",
     height: 56,
     flexDirection: "row",
@@ -66,16 +64,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 3,
   },
-  text: { 
+  texto: { 
     fontSize: 19, 
     lineHeight: 24, 
     fontWeight: "700", 
     color: paletaColores.textoOscuro, 
   },
-  disabled: {
+  deshabilitado: {
     backgroundColor: "#A0A0A0",
   },
-  pressed: { 
+  presionado: { 
     transform: [{ scale: 0.98 }] 
   },
   contenido: {
@@ -84,3 +82,5 @@ const styles = StyleSheet.create({
     gap: 20,
   },
 });
+
+export default BotonPrincipal;

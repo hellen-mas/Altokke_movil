@@ -2,47 +2,47 @@ import { paletaColores } from "@/paletaColores";
 import { StyleSheet, View } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 
-export interface OTPCodeFieldProps {
-  onTextChange?: (text: string) => void;
-  onFilled?: (text: string) => void;
-  numberOfDigits?: number;
+export interface PropsCampoCodigoVerificacion {
+  alCambiarTexto?: (texto: string) => void;
+  alLlenar?: (texto: string) => void;
+  numeroDigitos?: number;
 }
 
 export function CampoCodigoVerificacion({
-  onTextChange,
-  onFilled,
-  numberOfDigits = 6,
-}: OTPCodeFieldProps) {
+  alCambiarTexto,
+  alLlenar,
+  numeroDigitos = 6,
+}: PropsCampoCodigoVerificacion) {
   return (
-    <View style={styles.container}>
+    <View style={estilos.contenedor}>
       <OtpInput
-        numberOfDigits={numberOfDigits}
+        numberOfDigits={numeroDigitos}
         focusColor={paletaColores.boton}
         focusStickBlinkingDuration={500}
-        onTextChange={onTextChange}
-        onFilled={onFilled}
+        onTextChange={alCambiarTexto}
+        onFilled={alLlenar}
         theme={{
-          containerStyle: styles.otpContainer,
-          pinCodeContainerStyle: styles.pinCodeContainer,
-          pinCodeTextStyle: styles.pinCodeText,
-          focusStickStyle: styles.focusStick,
-          focusedPinCodeContainerStyle: styles.activePinCodeContainer,
+          containerStyle: estilos.contenedorOtp,
+          pinCodeContainerStyle: estilos.contenedorCodigoPin,
+          pinCodeTextStyle: estilos.textoCodigoPin,
+          focusStickStyle: estilos.paloEnfoque,
+          focusedPinCodeContainerStyle: estilos.contenedorCodigoPinActivo,
         }}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const estilos = StyleSheet.create({
+  contenedor: {
     width: "100%",
     marginVertical: 16,
   },
-  otpContainer: {
+  contenedorOtp: {
     width: "100%",
     justifyContent: "space-between",
   },
-  pinCodeContainer: {
+  contenedorCodigoPin: {
     width: 50,
     height: 58,
     borderRadius: 14,
@@ -50,15 +50,15 @@ const styles = StyleSheet.create({
     borderColor: paletaColores.borde,
     backgroundColor: paletaColores.input,
   },
-  activePinCodeContainer: {
+  contenedorCodigoPinActivo: {
     borderColor: paletaColores.boton,
   },
-  pinCodeText: {
+  textoCodigoPin: {
     color: paletaColores.texto,
     fontSize: 22,
     fontWeight: "bold",
   },
-  focusStick: {
+  paloEnfoque: {
     backgroundColor: paletaColores.boton,
   },
 });

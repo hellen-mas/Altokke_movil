@@ -87,13 +87,13 @@ export default function DocumentosConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <EncabezadoLogo variant="light"/>
+                <EncabezadoLogo variante="claro"/>
 
                 <EncabezadoPagina
-                    title={"Documentos del\n"}
-                    highlightedTitle="conductor"
-                    description="Carga los documentos requeridos para conducir en Altokke"
-                    variant="light"
+                    titulo={"Documentos del\n"}
+                    tituloDestacado="conductor"
+                    descripcion="Carga los documentos requeridos para conducir en Altokke"
+                    variante="claro"
                 />
 
                 <ProgresoRegistro pasoActual={4}/>
@@ -128,8 +128,8 @@ export default function DocumentosConductor() {
                 />
 
                 <BotonPrincipal
-                    title="Continuar"
-                    onPress={continuar}
+                    titulo="Continuar"
+                    alPresionar={continuar}
                 />
                 
                 <Pressable

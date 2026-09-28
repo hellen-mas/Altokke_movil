@@ -286,7 +286,7 @@ export default function PantallaCalificacion() {
         style={[styles.pie, { paddingBottom: Math.max(insets.bottom, 14) }]}
       >
         {enviado ? (
-          <BotonPrincipal title="Volver al inicio" onPress={irAlInicio} />
+          <BotonPrincipal titulo="Volver al inicio" alPresionar={irAlInicio} />
         ) : (
           <>
             <Pressable

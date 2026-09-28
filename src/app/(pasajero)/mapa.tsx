@@ -214,9 +214,9 @@ export default function PantallaMapa() {
         </View>
 
         <BotonPrincipal
-          title="Solicitar mototaxi"
-          onPress={solicitarMototaxi}
-          style={styles.botonSolicitar}
+          titulo="Solicitar mototaxi"
+          alPresionar={solicitarMototaxi}
+          estilo={styles.botonSolicitar}
         />
       </ScrollView>
 

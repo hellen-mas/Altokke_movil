@@ -154,7 +154,7 @@ export default function GananciasConductor() {
 
         {/* Retirar saldo */}
         <View style={styles.bloqueRetiro}>
-          <BotonPrincipal title="Retirar saldo" onPress={mostrarRetiroProximamente} />
+          <BotonPrincipal titulo="Retirar saldo" alPresionar={mostrarRetiroProximamente} />
           <Text style={styles.saldoTexto}>
             Saldo disponible: S/ {RESUMEN_GANANCIAS.saldoDisponible.toFixed(2)}
           </Text>

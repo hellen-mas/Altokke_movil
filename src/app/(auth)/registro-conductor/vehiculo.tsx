@@ -103,13 +103,13 @@ export default function VehiculoConductor() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <EncabezadoLogo variant="light" />
+        <EncabezadoLogo variante="claro" />
 
         <EncabezadoPagina
-          title={"Vehículo y\n"}
-          highlightedTitle="solicitud"
-          description="Completa los datos de tu mototaxi y envía tu solicitud."
-          variant="light"
+          titulo={"Vehículo y\n"}
+          tituloDestacado="solicitud"
+          descripcion="Completa los datos de tu mototaxi y envía tu solicitud."
+          variante="claro"
         />
 
         <ProgresoRegistro pasoActual={5}/>
@@ -117,55 +117,55 @@ export default function VehiculoConductor() {
         {/* Formulario */}
         <View style={styles.formulario}>
           <CampoTexto
-            placeholder="Placa"
-            iconName="card-outline"
-            value={placa}
-            onChangeText={(texto) => setPlaca(texto.toUpperCase())}
+            textoReferencia="Placa"
+            nombreIcono="card-outline"
+            valor={placa}
+            alCambiarTexto={(texto) => setPlaca(texto.toUpperCase())}
             autoCapitalize="characters"
             maxLength={10}
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Marca"
-            iconName="car-outline"
-            value={marca}
-            onChangeText={setMarca}
+            textoReferencia="Marca"
+            nombreIcono="car-outline"
+            valor={marca}
+            alCambiarTexto={setMarca}
             autoCapitalize="words"
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Modelo"
-            iconName="settings-outline"
-            value={modelo}
-            onChangeText={setModelo}
+            textoReferencia="Modelo"
+            nombreIcono="settings-outline"
+            valor={modelo}
+            alCambiarTexto={setModelo}
             autoCapitalize="words"
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Año"
-            iconName="calendar-outline"
-            value={anio}
-            onChangeText={setAnio}
+            textoReferencia="Año"
+            nombreIcono="calendar-outline"
+            valor={anio}
+            alCambiarTexto={setAnio}
             keyboardType="numeric"
             maxLength={4}
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Color"
-            iconName="color-palette-outline"
-            value={color}
-            onChangeText={setColor}
+            textoReferencia="Color"
+            nombreIcono="color-palette-outline"
+            valor={color}
+            alCambiarTexto={setColor}
             autoCapitalize="words"
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Capacidad de pasajeros"
-            iconName="people-outline"
-            value={capacidad}
-            onChangeText={setCapacidad}
+            textoReferencia="Capacidad de pasajeros"
+            nombreIcono="people-outline"
+            valor={capacidad}
+            alCambiarTexto={setCapacidad}
             keyboardType="numeric"
             maxLength={1}
-            variant="light"
+            variante="claro"
           />
         </View>
 
@@ -198,7 +198,7 @@ export default function VehiculoConductor() {
           texto="Tu cuenta será revisada antes de ser activada."
         />
 
-        <BotonPrincipal title="Enviar solicitud" onPress={enviarSolicitud} />
+        <BotonPrincipal titulo="Enviar solicitud" alPresionar={enviarSolicitud} />
 
         <Pressable style={styles.atras} onPress={() => router.back()}>
           <Ionicons

@@ -2,47 +2,47 @@ import { Fragment } from "react";
 import { paletaColores } from "@/paletaColores";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
-export interface StepIndicatorProps {
-  currentStep: number;
-  totalSteps: number;
-  style?: StyleProp<ViewStyle>;
+export interface PropsIndicadorPasos {
+  pasoActual: number;
+  totalPasos: number;
+  estilo?: StyleProp<ViewStyle>;
 }
 
-export function IndicadorPasos({ currentStep, totalSteps, style }: StepIndicatorProps) {
-  const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
+export function IndicadorPasos({ pasoActual, totalPasos, estilo }: PropsIndicadorPasos) {
+  const pasos = Array.from({ length: totalPasos }, (_, i) => i + 1);
 
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.progreso}>
-        {steps.map((paso) => {
-          const completado = paso < currentStep;
-          const activo = paso === currentStep;
+    <View style={[estilos.contenedor, estilo]}>
+      <View style={estilos.progreso}>
+        {pasos.map((paso) => {
+          const completado = paso < pasoActual;
+          const activo = paso === pasoActual;
 
           return (
             <Fragment key={paso}>
               <View
                 style={[
-                  styles.circulo,
-                  completado && styles.circuloCompletado,
-                  activo && styles.circuloActivo,
+                  estilos.circulo,
+                  completado && estilos.circuloCompletado,
+                  activo && estilos.circuloActivo,
                 ]}
               >
                 <Text
                   style={[
-                    styles.numero,
-                    completado && styles.numeroCompletado,
-                    activo && styles.numeroActivo,
+                    estilos.numero,
+                    completado && estilos.numeroCompletado,
+                    activo && estilos.numeroActivo,
                   ]}
                 >
                   {paso}
                 </Text>
               </View>
 
-              {paso < totalSteps && (
+              {paso < totalPasos && (
                 <View
                   style={[
-                    styles.linea,
-                    paso < currentStep && styles.lineaCompletada,
+                    estilos.linea,
+                    paso < pasoActual && estilos.lineaCompletada,
                   ]}
                 />
               )}
@@ -54,8 +54,8 @@ export function IndicadorPasos({ currentStep, totalSteps, style }: StepIndicator
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const estilos = StyleSheet.create({
+  contenedor: {
     width: "100%",
     marginVertical: 10,
   },

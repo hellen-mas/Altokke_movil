@@ -3,25 +3,25 @@ import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-interface Props {
+interface PropsContenedorPantalla {
   children: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-  contentContainerStyle?: StyleProp<ViewStyle>;
-  withScroll?: boolean;
+  estilo?: StyleProp<ViewStyle>;
+  estiloContenedorContenido?: StyleProp<ViewStyle>;
+  conScroll?: boolean;
 }
 
 export function ContenedorPantalla({
   children,
-  style,
-  contentContainerStyle,
-  withScroll = true,
-}: Props) {
+  estilo,
+  estiloContenedorContenido,
+  conScroll = true,
+}: PropsContenedorPantalla) {
   return (
-    <SafeAreaView style={[styles.safeArea, style]}>
-      {withScroll ? (
+    <SafeAreaView style={[estilos.areaSegura, estilo]}>
+      {conScroll ? (
         <KeyboardAwareScrollView
-          style={styles.keyboardView}
-          contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+          style={estilos.vistaTeclado}
+          contentContainerStyle={[estilos.contenidoScroll, estiloContenedorContenido]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           enableOnAndroid={true}
@@ -36,15 +36,15 @@ export function ContenedorPantalla({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
+const estilos = StyleSheet.create({
+  areaSegura: {
     flex: 1,
     backgroundColor: paletaColores.fondo,
   },
-  keyboardView: {
+  vistaTeclado: {
     flex: 1,
   },
-  scrollContent: {
+  contenidoScroll: {
     flexGrow: 1,
   },
 });

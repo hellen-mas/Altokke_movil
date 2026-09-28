@@ -1,31 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View, FlatList } from "react-native";
-import { paletaColores } from "../../paletaColores";
+import { paletaColores } from "@/paletaColores";
 
-export interface CustomSelectProps {
-  placeholder: string;
-  iconName: keyof typeof Ionicons.glyphMap;
-  value: string;
-  options: string[];
-  onSelect: (value: string) => void;
+export interface PropsSelectorOpciones {
+  textoReferencia: string;
+  nombreIcono: keyof typeof Ionicons.glyphMap;
+  valor: string;
+  opciones: string[];
+  alSeleccionar: (valor: string) => void;
 }
 
 export function SelectorOpciones({
-  placeholder,
-  iconName,
-  value,
-  options,
-  onSelect,
-}: CustomSelectProps) {
+  textoReferencia,
+  nombreIcono,
+  valor,
+  opciones,
+  alSeleccionar,
+}: PropsSelectorOpciones) {
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
     <>
-      <Pressable style={styles.container} onPress={() => setModalVisible(true)}>
-        <Ionicons name={iconName} size={21} color={paletaColores.textoSecundario} />
-        <Text style={[styles.text, !value && styles.placeholderText]}>
-          {value || placeholder}
+      <Pressable style={estilos.contenedor} onPress={() => setModalVisible(true)}>
+        <Ionicons name={nombreIcono} size={21} color={paletaColores.textoSecundario} />
+        <Text style={[estilos.texto, !valor && estilos.textoReferencia]}>
+          {valor || textoReferencia}
         </Text>
         <Ionicons name="chevron-down" size={21} color={paletaColores.textoSecundario} />
       </Pressable>
@@ -36,29 +36,29 @@ export function SelectorOpciones({
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{placeholder}</Text>
+        <Pressable style={estilos.superposicionModal} onPress={() => setModalVisible(false)}>
+          <View style={estilos.contenidoModal}>
+            <View style={estilos.cabeceraModal}>
+              <Text style={estilos.tituloModal}>{textoReferencia}</Text>
               <Pressable onPress={() => setModalVisible(false)}>
                 <Ionicons name="close" size={24} color={paletaColores.texto} />
               </Pressable>
             </View>
             <FlatList
-              data={options}
+              data={opciones}
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
                 <Pressable
-                  style={styles.optionItem}
+                  style={estilos.itemOpcion}
                   onPress={() => {
-                    onSelect(item);
+                    alSeleccionar(item);
                     setModalVisible(false);
                   }}
                 >
-                  <Text style={[styles.optionText, value === item && styles.optionTextSelected]}>
+                  <Text style={[estilos.textoOpcion, valor === item && estilos.textoOpcionSeleccionada]}>
                     {item}
                   </Text>
-                  {value === item && (
+                  {valor === item && (
                     <Ionicons name="checkmark" size={20} color={paletaColores.boton} />
                   )}
                 </Pressable>
@@ -71,8 +71,8 @@ export function SelectorOpciones({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const estilos = StyleSheet.create({
+  contenedor: {
     width: "100%",
     height: 58,
     flexDirection: "row",
@@ -84,20 +84,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: paletaColores.input,
   },
-  text: {
+  texto: {
     flex: 1,
     fontSize: 16,
     color: paletaColores.texto,
   },
-  placeholderText: {
+  textoReferencia: {
     color: paletaColores.textoSecundario,
   },
-  modalOverlay: {
+  superposicionModal: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
-  modalContent: {
+  contenidoModal: {
     backgroundColor: paletaColores.fondo,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -106,18 +106,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: paletaColores.borde,
   },
-  modalHeader: {
+  cabeceraModal: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
   },
-  modalTitle: {
+  tituloModal: {
     fontSize: 18,
     fontWeight: "bold",
     color: paletaColores.texto,
   },
-  optionItem: {
+  itemOpcion: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -125,11 +125,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: paletaColores.borde,
   },
-  optionText: {
+  textoOpcion: {
     fontSize: 16,
     color: paletaColores.texto,
   },
-  optionTextSelected: {
+  textoOpcionSeleccionada: {
     color: paletaColores.verde,
     fontWeight: "bold",
   },

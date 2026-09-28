@@ -1,9 +1,14 @@
+import {
+  BotonPrincipal,
+  CampoTexto,
+  ContenedorPantalla,
+  EncabezadoLogo,
+  EncabezadoPagina,
+} from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, View, KeyboardAvoidingView, ScrollView, Platform, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { CampoTexto, EncabezadoLogo, EncabezadoPagina, BotonPrincipal, ContenedorPantalla } from "@/components/ui";
+import { Alert, StyleSheet, View } from "react-native";
 
 export default function RecuperarPasswordScreen() {
   const [correo, setCorreo] = useState("");
@@ -12,51 +17,53 @@ export default function RecuperarPasswordScreen() {
     if (!correo.trim()) {
       Alert.alert(
         "Campo incompleto",
-        "Por favor, ingresa tu correo electrónico o teléfono."
+        "Por favor, ingresa tu correo electrónico o teléfono.",
       );
       return;
     }
-    router.push(`/recuperar-password/verificar?email=${encodeURIComponent(correo)}`);
+    router.push(
+      `/recuperar-password/verificar?email=${encodeURIComponent(correo)}`,
+    );
   };
 
   return (
-    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
-          <View style={styles.content}>
-            <EncabezadoLogo />
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <View style={styles.content}>
+        <EncabezadoLogo />
 
-            <EncabezadoPagina
-              title={"Recuperar\ncontraseña"}
-              highlightedTitle=""
-              description=""
-            />
+        <EncabezadoPagina
+          titulo={"Recuperar\ncontraseña"}
+          tituloDestacado=""
+          descripcion=""
+        />
 
-            <View style={styles.inputContainer}>
-              <CampoTexto
-                iconName="mail-outline"
-                placeholder="Correo electrónico o teléfono"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={correo}
-                onChangeText={setCorreo}
-              />
-            </View>
+        <View style={styles.inputContainer}>
+          <CampoTexto
+            nombreIcono="mail-outline"
+            textoReferencia="Correo electrónico o teléfono"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            valor={correo}
+            alCambiarTexto={setCorreo}
+          />
+        </View>
 
-            <BotonPrincipal
-              title="Continuar"
-              onPress={handleContinuar}
-              style={styles.button}
-            />
+        <BotonPrincipal
+          titulo="Continuar"
+          alPresionar={handleContinuar}
+          estilo={styles.button}
+        />
 
-            <Link href={"/login"} style={styles.secondaryLink}>
-              Usa otra forma de recuperación
-            </Link>
-          </View>
+        <Link href={"/login"} style={styles.secondaryLink}>
+          Usa otra forma de recuperación
+        </Link>
+      </View>
 
-          <View style={styles.footer}>
-            <Link href={"/login"} style={styles.secondaryLink}>
-              Volver al inicio
-            </Link>
-          </View>
+      <View style={styles.footer}>
+        <Link href={"/login"} style={styles.secondaryLink}>
+          Volver al inicio
+        </Link>
+      </View>
     </ContenedorPantalla>
   );
 }

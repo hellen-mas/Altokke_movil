@@ -10,62 +10,71 @@ import {
   View,
 } from "react-native";
 
-export interface CustomInputProps extends TextInputProps {
-  iconName: keyof typeof Ionicons.glyphMap;
-  isPassword?: boolean;
-  variant?: "dark" | "light";
+export interface PropsCampoTexto extends Omit<TextInputProps, 'value' | 'onChangeText' | 'placeholder'> {
+  nombreIcono: keyof typeof Ionicons.glyphMap;
+  esPassword?: boolean;
+  variante?: "oscuro" | "claro";
   error?: boolean;
-  errorText?: string;
+  textoError?: string;
+  valor?: string;
+  alCambiarTexto?: (text: string) => void;
+  textoReferencia?: string;
 }
 
 export const CampoTexto = ({
-  iconName,
-  isPassword,
-  variant = "dark",
+  nombreIcono,
+  esPassword,
+  variante = "oscuro",
   error,
-  errorText,
+  textoError,
+  valor,
+  alCambiarTexto,
+  textoReferencia,
   style,
   ...rest
-}: CustomInputProps) => {
+}: PropsCampoTexto) => {
   const [visible, setVisible] = useState(false);
     
-    const isLight = variant === "light";
-    const colorSecundario = isLight
+    const esClaro = variante === "claro";
+    const colorSecundario = esClaro
       ? paletaColores.textoSecundarioClaro
       : paletaColores.textoSecundario;
 
     return (
-      <View style={styles.wrapper}>
+      <View style={estilos.envoltorio}>
         <View 
           style={[
-            styles.container,
-            isLight && styles.containerLight,
-            error && styles.containerError,
+            estilos.contenedor,
+            esClaro && estilos.contenedorClaro,
+            error && estilos.contenedorError,
           ]}
         >
           <Ionicons
-            name={iconName}
+            name={nombreIcono}
             size={21}
             color={error ? "red" : colorSecundario}
           />
 
           <TextInput
             style={[
-              styles.input, 
-              isLight && styles.inputLight,
+              estilos.entrada, 
+              esClaro && estilos.entradaClara,
               style,
             ]}
             placeholderTextColor={colorSecundario}
-            secureTextEntry={isPassword ? !visible : rest.secureTextEntry}
+            secureTextEntry={esPassword ? !visible : rest.secureTextEntry}
+            value={valor}
+            onChangeText={alCambiarTexto}
+            placeholder={textoReferencia}
             {...rest}
           />
-          {isPassword && (
+          {esPassword && (
             <Pressable
               onPress={() => setVisible((prev) => !prev)}
-              style={styles.botonOjo}
+              style={estilos.botonOjo}
               accessibilityRole="button"
               accessibilityLabel={
-                visible ? "Ocultar contraseña" : "Mostrar contraseña"
+                visible ? "Ocultar password" : "Mostrar password"
               }
             >
               <Ionicons
@@ -76,8 +85,8 @@ export const CampoTexto = ({
             </Pressable>
           )}
         </View>
-        {error && errorText ? (
-          <Text style={styles.errorText}>{errorText}</Text>
+        {error && textoError ? (
+          <Text style={estilos.textoError}>{textoError}</Text>
         ) : null}
       </View>
     );
@@ -85,11 +94,11 @@ export const CampoTexto = ({
 
 export default CampoTexto;
 
-const styles = StyleSheet.create({
-  wrapper: {
+const estilos = StyleSheet.create({
+  envoltorio: {
     width: "100%",
   },
-  container: {
+  contenedor: {
     width: "100%",
     height: 58,
     flexDirection: "row",
@@ -101,26 +110,26 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: paletaColores.input,
   },
-  containerLight: {
+  contenedorClaro: {
     backgroundColor: paletaColores.inputClaro,
     borderColor: paletaColores.bordeClaro,
   },
-  containerError: {
+  contenedorError: {
     borderColor: "red",
   },
-  input: {
+  entrada: {
     flex: 1,
     height: "100%",
     fontSize: 16,
     color: paletaColores.texto,
   },
-  inputLight: {
+  entradaClara: {
     color: paletaColores.textoClaro,
   },
   botonOjo: {
     padding: 4,
   },
-  errorText: {
+  textoError: {
     color: "red",
     fontSize: 12,
     marginTop: 4,

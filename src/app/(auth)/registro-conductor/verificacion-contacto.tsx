@@ -117,13 +117,13 @@ export default function VerificacionContactoConductor() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <EncabezadoLogo variant="light" />
+        <EncabezadoLogo variante="claro" />
 
         <EncabezadoPagina
-          title={"Verificación y\n"}
-          highlightedTitle="contacto"
-          description="Confirma tu número y completa tu información de contacto"
-          variant="light"
+          titulo={"Verificación y\n"}
+          tituloDestacado="contacto"
+          descripcion="Confirma tu número y completa tu información de contacto"
+          variante="claro"
         />
 
         <ProgresoRegistro pasoActual={2}/>
@@ -161,30 +161,30 @@ export default function VerificacionContactoConductor() {
           </View>
 
           <CampoTexto
-            placeholder="Código de verificación"
-            iconName="shield-checkmark-outline"
-            value={codigo}
-            onChangeText={setCodigo}
+            textoReferencia="Código de verificación"
+            nombreIcono="shield-checkmark-outline"
+            valor={codigo}
+            alCambiarTexto={setCodigo}
             keyboardType="numeric"
             maxLength={6}
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Correo de respaldo (opcional)"
-            iconName="mail-outline"
-            value={correoRespaldo}
-            onChangeText={setCorreoRespaldo}
+            textoReferencia="Correo de respaldo (opcional)"
+            nombreIcono="mail-outline"
+            valor={correoRespaldo}
+            alCambiarTexto={setCorreoRespaldo}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            variant="light"
+            variante="claro"
           />
           <CampoTexto
-            placeholder="Dirección actual"
-            iconName="location-outline"
-            value={direccion}
-            onChangeText={setDireccion}
-            variant="light"
+            textoReferencia="Dirección actual"
+            nombreIcono="location-outline"
+            valor={direccion}
+            alCambiarTexto={setDireccion}
+            variante="claro"
           />
         </View>
 
@@ -226,7 +226,7 @@ export default function VerificacionContactoConductor() {
           texto="Usaremos esta información para comunicarnos contigo y verificar tu cuenta."
         />
 
-        <BotonPrincipal title="Continuar" onPress={continuar} />
+        <BotonPrincipal titulo="Continuar" alPresionar={continuar} />
         <Pressable
           style={styles.atras}
           onPress={() => router.back()}

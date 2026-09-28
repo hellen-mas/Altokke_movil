@@ -20,7 +20,7 @@ export default function PasajeroVerificacionScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <BarraNavegacionSuperior title="Altokke" />
+      <BarraNavegacionSuperior titulo="Altokke" />
 
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContainer}
@@ -31,14 +31,14 @@ export default function PasajeroVerificacionScreen() {
       >
         <View style={styles.stepContainer}>
           <Text style={styles.stepText}>Paso 2 de 3</Text>
-          <IndicadorPasos currentStep={2} totalSteps={3} />
+          <IndicadorPasos pasoActual={2} totalPasos={3} />
         </View>
 
         <View style={styles.headerContainer}>
           <EncabezadoPagina
-            title="Verifica tu "
-            highlightedTitle="información"
-            description="Revisa tus datos y configura tus preferencias de viaje."
+            titulo="Verifica tu "
+            tituloDestacado="información"
+            descripcion="Revisa tus datos y configura tus preferencias de viaje."
           />
         </View>
 
@@ -192,19 +192,19 @@ export default function PasajeroVerificacionScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Nombre</Text>
               <CampoTexto
-                iconName="person-outline"
-                placeholder="Ej. María Pérez"
-                value={emergencyName}
-                onChangeText={setEmergencyName}
+                nombreIcono="person-outline"
+                textoReferencia="Ej. María Pérez"
+                valor={emergencyName}
+                alCambiarTexto={setEmergencyName}
               />
             </View>
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Teléfono</Text>
               <CampoTexto
-                iconName="call-outline"
-                placeholder="Ej. 987 654 321"
-                value={emergencyPhone}
-                onChangeText={setEmergencyPhone}
+                nombreIcono="call-outline"
+                textoReferencia="Ej. 987 654 321"
+                valor={emergencyPhone}
+                alCambiarTexto={setEmergencyPhone}
                 keyboardType="phone-pad"
               />
             </View>
@@ -213,8 +213,8 @@ export default function PasajeroVerificacionScreen() {
 
         <View style={styles.footer}>
           <BotonPrincipal
-            title="Siguiente"
-            onPress={() => {
+            titulo="Siguiente"
+            alPresionar={() => {
               if (!emergencyName.trim() || !emergencyPhone.trim()) {
                 Alert.alert(
                   "Campo obligatorio",

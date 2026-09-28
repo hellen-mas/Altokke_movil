@@ -28,8 +28,8 @@ export default function PasajeroPreferenciasScreen() {
         showsVerticalScrollIndicator={false}
       >
         <BarraNavegacionSuperior
-          title="Altokke"
-          rightComponent={
+          titulo="Altokke"
+          componenteDerecho={
             <View style={styles.stepContainer}>
               <Text style={styles.stepText}>Paso 3 de 3</Text>
               <View style={styles.miniStepIndicator}>
@@ -43,9 +43,9 @@ export default function PasajeroPreferenciasScreen() {
 
         <View style={styles.pageHeaderContainer}>
           <EncabezadoPagina
-            title="Preferencias"
-            highlightedTitle={"\n" + "y seguridad"}
-            description="Ajusta tu experiencia antes de empezar."
+            titulo="Preferencias"
+            tituloDestacado={"\n" + "y seguridad"}
+            descripcion="Ajusta tu experiencia antes de empezar."
           />
         </View>
 
@@ -150,9 +150,9 @@ export default function PasajeroPreferenciasScreen() {
         </Pressable>
 
         <BotonPrincipal
-          title="Crear cuenta"
-          disabled={!terminos}
-          onPress={() => {
+          titulo="Crear cuenta"
+          deshabilitado={!terminos}
+          alPresionar={() => {
             if (!terminos) {
               Alert.alert("Términos incompletos", "Debes aceptar los términos y condiciones para crear tu cuenta.");
               return;

@@ -1,35 +1,35 @@
 import { paletaColores } from "@/paletaColores";
 import { StyleSheet, Text } from "react-native";
 
-interface Props {
-  title: string;
-  highlightedTitle: string;
-  description: string;
-  variant?: "dark" | "light";
+interface PropsEncabezadoPagina {
+  titulo: string;
+  tituloDestacado: string;
+  descripcion: string;
+  variante?: "oscuro" | "claro";
 }
 
-export const EncabezadoPagina = ({ title, highlightedTitle, description, variant = "dark" }: Props) => {
-  const isLight = variant === "light";
+export const EncabezadoPagina = ({ titulo, tituloDestacado, descripcion, variante = "oscuro" }: PropsEncabezadoPagina) => {
+  const esClaro = variante === "claro";
 
   return (
     <>
       <Text style={[
-        styles.encabezado,
-        isLight && styles.encabezadoLight,
+        estilos.encabezado,
+        esClaro && estilos.encabezadoClaro,
       ]}>
-        {title}
-        <Text style={styles.resaltado}>{highlightedTitle}</Text>
+        {titulo}
+        <Text style={estilos.resaltado}>{tituloDestacado}</Text>
       </Text>
 
       <Text style={[
-        styles.descripcion,
-        isLight && styles.descripcionLight,
-      ]}>{description}</Text>
+        estilos.descripcion,
+        esClaro && estilos.descripcionClara,
+      ]}>{descripcion}</Text>
     </>
   );
 };
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   encabezado: {
     width: "100%",
     fontSize: 42,
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 
-  encabezadoLight: {
+  encabezadoClaro: {
     color: paletaColores.textoClaro,
   },
 
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
 
-  descripcionLight: {
+  descripcionClara: {
     color: paletaColores.textoSecundarioClaro,
   },
 });

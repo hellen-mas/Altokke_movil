@@ -2,49 +2,49 @@ import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-export interface RoleCardProps {
-  title: string;
-  subtitle: string;
-  iconName: keyof typeof Ionicons.glyphMap;
-  selected: boolean;
-  onPress: () => void;
+export interface PropsTarjetaRol {
+  titulo: string;
+  subtitulo: string;
+  nombreIcono: keyof typeof Ionicons.glyphMap;
+  seleccionado: boolean;
+  alPresionar: () => void;
 }
 
 export function TarjetaRol({
-  title,
-  subtitle,
-  iconName,
-  selected,
-  onPress,
-}: RoleCardProps) {
+  titulo,
+  subtitulo,
+  nombreIcono,
+  seleccionado,
+  alPresionar,
+}: PropsTarjetaRol) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={alPresionar}
       style={[
-        styles.card,
-        selected ? styles.cardSelected : styles.cardUnselected,
+        estilos.tarjeta,
+        seleccionado ? estilos.tarjetaSeleccionada : estilos.tarjetaNoSeleccionada,
       ]}
     >
       <View
         style={[
-          styles.iconContainer,
-          selected
-            ? styles.iconContainerSelected
-            : styles.iconContainerUnselected,
+          estilos.contenedorIcono,
+          seleccionado
+            ? estilos.contenedorIconoSeleccionado
+            : estilos.contenedorIconoNoSeleccionado,
         ]}
       >
         <Ionicons
-          name={iconName}
+          name={nombreIcono}
           size={24}
-          color={selected ? paletaColores.boton : paletaColores.textoSecundario}
+          color={seleccionado ? paletaColores.boton : paletaColores.textoSecundario}
         />
       </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+      <View style={estilos.contenedorTexto}>
+        <Text style={estilos.titulo}>{titulo}</Text>
+        <Text style={estilos.subtitulo}>{subtitulo}</Text>
       </View>
-      <View style={styles.checkContainer}>
-        {selected ? (
+      <View style={estilos.contenedorCheck}>
+        {seleccionado ? (
           <Ionicons
             name="checkmark-circle"
             size={28}
@@ -62,8 +62,8 @@ export function TarjetaRol({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
+const estilos = StyleSheet.create({
+  tarjeta: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
@@ -71,43 +71,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
   },
-  cardSelected: {
+  tarjetaSeleccionada: {
     borderColor: paletaColores.boton,
     backgroundColor: "rgba(53, 233, 130, 0.05)",
   },
-  cardUnselected: {
+  tarjetaNoSeleccionada: {
     borderColor: paletaColores.borde,
     backgroundColor: "transparent",
   },
-  iconContainer: {
+  contenedorIcono: {
     width: 48,
     height: 48,
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
   },
-  iconContainerSelected: {
+  contenedorIconoSeleccionado: {
     backgroundColor: "rgba(53, 233, 130, 0.15)",
   },
-  iconContainerUnselected: {
+  contenedorIconoNoSeleccionado: {
     backgroundColor: "rgba(70, 97, 87, 0.2)",
   },
-  textContainer: {
+  contenedorTexto: {
     flex: 1,
     marginLeft: 16,
     marginRight: 16,
   },
-  title: {
+  titulo: {
     color: paletaColores.texto,
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
   },
-  subtitle: {
+  subtitulo: {
     color: paletaColores.textoSecundario,
     fontSize: 14,
   },
-  checkContainer: {
+  contenedorCheck: {
     justifyContent: "center",
     alignItems: "center",
   },

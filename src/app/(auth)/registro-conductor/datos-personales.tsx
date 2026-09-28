@@ -109,13 +109,13 @@ export default function DatosPersonalesConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <EncabezadoLogo variant="light" />
+                <EncabezadoLogo variante="claro" />
 
                 <EncabezadoPagina
-                    title={"Registro de\n"}
-                    highlightedTitle="conductor"
-                    description="Completa tus datos para empezar a conducir con Altokke."
-                    variant="light"
+                    titulo={"Registro de\n"}
+                    tituloDestacado="conductor"
+                    descripcion="Completa tus datos para empezar a conducir con Altokke."
+                    variante="claro"
                 />
 
                 <ProgresoRegistro pasoActual={1}/>
@@ -123,29 +123,29 @@ export default function DatosPersonalesConductor() {
                 {/* Formulario */}
                 <View style={styles.formulario}>
                     <CampoTexto
-                        placeholder="Nombre completo"
-                        iconName="person-outline"
-                        value={nombre}
-                        onChangeText={setNombre}
+                        textoReferencia="Nombre completo"
+                        nombreIcono="person-outline"
+                        valor={nombre}
+                        alCambiarTexto={setNombre}
                         autoCapitalize="words"
-                        variant="light"
+                        variante="claro"
                     />
                     <CampoTexto
-                        placeholder="Apellidos"
-                        iconName="person-outline"
-                        value={apellidos}
-                        onChangeText={setApellidos}
+                        textoReferencia="Apellidos"
+                        nombreIcono="person-outline"
+                        valor={apellidos}
+                        alCambiarTexto={setApellidos}
                         autoCapitalize="words"
-                        variant="light"
+                        variante="claro"
                     />
                     <CampoTexto
-                        placeholder="DNI"
-                        iconName="card-outline"
-                        value={dni}
-                        onChangeText={setDni}
+                        textoReferencia="DNI"
+                        nombreIcono="card-outline"
+                        valor={dni}
+                        alCambiarTexto={setDni}
                         keyboardType="numeric"
                         maxLength={8}
-                        variant="light"
+                        variante="claro"
                     />
                     <Pressable
                         style={styles.dateInput}
@@ -198,30 +198,30 @@ export default function DatosPersonalesConductor() {
                         />
                     )}
                     <CampoTexto
-                        placeholder="Correo electrónico"
-                        iconName="mail-outline"
-                        value={correo}
-                        onChangeText={setCorreo}
+                        textoReferencia="Correo electrónico"
+                        nombreIcono="mail-outline"
+                        valor={correo}
+                        alCambiarTexto={setCorreo}
                         keyboardType="email-address"
                         autoCapitalize="none"
                         autoCorrect={false}
-                        variant="light"
+                        variante="claro"
                     />
                     <CampoTexto
-                        placeholder="Contraseña"
-                        iconName="lock-closed-outline"
-                        value={contrasena}
-                        onChangeText={setContrasena}
-                        isPassword
-                        variant="light"
+                        textoReferencia="Contraseña"
+                        nombreIcono="lock-closed-outline"
+                        valor={contrasena}
+                        alCambiarTexto={setContrasena}
+                        esPassword
+                        variante="claro"
                     />
                     <CampoTexto
-                        placeholder="Confirmar contraseña"
-                        iconName="lock-closed-outline"
-                        value={confirmarContrasena}
-                        onChangeText={setConfirmarContrasena}
-                        isPassword
-                        variant="light"
+                        textoReferencia="Confirmar contraseña"
+                        nombreIcono="lock-closed-outline"
+                        valor={confirmarContrasena}
+                        alCambiarTexto={setConfirmarContrasena}
+                        esPassword
+                        variante="claro"
                     />
                 </View>
 
@@ -232,16 +232,16 @@ export default function DatosPersonalesConductor() {
                 />
 
                 <BotonPrincipal
-                    title="Continuar"
-                    onPress={continuar}
+                    titulo="Continuar"
+                    alPresionar={continuar}
                 />
 
                 <PiePaginaAutenticacion
-                    questionText="¿Ya tienes cuenta?"
-                    linkText="Iniciar sesión"
-                    href="/"
-                    showBorder={false}
-                    variant="light"
+                    textoPregunta="¿Ya tienes cuenta?"
+                    textoEnlace="Iniciar sesión"
+                    ruta="/"
+                    mostrarBorde={false}
+                    variante="claro"
                 />
             </ScrollView>
         </KeyboardAvoidingView>

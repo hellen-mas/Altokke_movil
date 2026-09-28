@@ -1,45 +1,45 @@
 import { Href, Link } from "expo-router";
 import { StyleSheet, Text } from "react-native";
-import { paletaColores } from "../../paletaColores";
+import { paletaColores } from "@/paletaColores";
 
-interface Props {
-  questionText: string;
-  linkText: string;
-  href: Href;
-  align?: "left" | "center" | "right";
-  showBorder?: boolean;
-  variant?: "dark" | "light";
+interface PropsPiePaginaAutenticacion {
+  textoPregunta: string;
+  textoEnlace: string;
+  ruta: Href;
+  alineacion?: "left" | "center" | "right";
+  mostrarBorde?: boolean;
+  variante?: "oscuro" | "claro";
 }
 
 export const PiePaginaAutenticacion = ({
-  questionText,
-  linkText,
-  href,
-  align = "center",
-  showBorder = true,
-  variant = "dark",
-}: Props) => {
-  const isLight = variant === "light";
+  textoPregunta,
+  textoEnlace,
+  ruta,
+  alineacion = "center",
+  mostrarBorde = true,
+  variante = "oscuro",
+}: PropsPiePaginaAutenticacion) => {
+  const esClaro = variante === "claro";
 
   return (
     <Text
       style={[
-        styles.accesoCuenta,
-        { textAlign: align },
-        isLight && styles.accesoCuentaLight,
-        !showBorder && { borderWidth: 0 },
+        estilos.accesoCuenta,
+        { textAlign: alineacion },
+        esClaro && estilos.accesoCuentaClaro,
+        !mostrarBorde && { borderWidth: 0 },
       ]}
     >
-      {questionText}{" "}
+      {textoPregunta}{" "}
 
-      <Link href={href} style={styles.enlaceAcceso}>
-        {linkText}
+      <Link href={ruta} style={estilos.enlaceAcceso}>
+        {textoEnlace}
       </Link>
     </Text>
   );
 };
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   accesoCuenta: {
     width: "100%",
     height: 50,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  accesoCuentaLight: {
+  accesoCuentaClaro: {
     color: paletaColores.textoSecundarioClaro,
     borderColor: paletaColores.bordeClaro,
   }

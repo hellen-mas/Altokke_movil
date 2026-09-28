@@ -51,7 +51,7 @@ export default function SolicitudEnviada() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
         >
-            <EncabezadoLogo variant="light" />
+            <EncabezadoLogo variante="claro" />
 
             <View style={styles.contenido}>
                 <View
@@ -183,8 +183,8 @@ export default function SolicitudEnviada() {
 
             <View style={styles.acciones}>
                 <BotonPrincipal
-                    title={contenido.textoBoton}
-                    onPress={manejarBoton}
+                    titulo={contenido.textoBoton}
+                    alPresionar={manejarBoton}
                 />
 
                 {estadoSolicitud === "PENDIENTE" && (

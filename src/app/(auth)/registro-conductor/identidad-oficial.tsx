@@ -84,13 +84,13 @@ export default function IdentidadOficialConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <EncabezadoLogo variant="light"/>
+                <EncabezadoLogo variante="claro"/>
 
                 <EncabezadoPagina
-                    title={"Indentidad \n"}
-                    highlightedTitle="oficial"
-                    description="Sube tus documentos personales para validar tu identidad"
-                    variant="light"
+                    titulo={"Indentidad \n"}
+                    tituloDestacado="oficial"
+                    descripcion="Sube tus documentos personales para validar tu identidad"
+                    variante="claro"
                 />
 
                 <ProgresoRegistro pasoActual={3}/>
@@ -123,8 +123,8 @@ export default function IdentidadOficialConductor() {
                 />
 
                 <BotonPrincipal
-                    title="Continuar"
-                    onPress={continuar}
+                    titulo="Continuar"
+                    alPresionar={continuar}
                 />
 
                 <Pressable

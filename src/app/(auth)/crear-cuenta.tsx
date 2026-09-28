@@ -1,4 +1,4 @@
-import { EncabezadoLogo, BotonPrincipal, TarjetaRol } from "@/components/ui";
+import { BotonPrincipal, EncabezadoLogo, TarjetaRol } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -39,27 +39,27 @@ export default function CrearCuentaScreen() {
 
         <View style={styles.cardsContainer}>
           <TarjetaRol
-            title="Cuenta de pasajero"
-            subtitle="Pide mototaxis para ti y tu familia."
-            iconName="people-outline"
-            selected={selectedRole === "pasajero"}
-            onPress={() => setSelectedRole("pasajero")}
+            titulo="Cuenta de pasajero"
+            subtitulo="Pide mototaxis para ti y tu familia."
+            nombreIcono="people-outline"
+            seleccionado={selectedRole === "pasajero"}
+            alPresionar={() => setSelectedRole("pasajero")}
           />
           <TarjetaRol
-            title="Cuenta de conductor"
-            subtitle="Regístrate para ofrecer viajes y generar ingresos."
-            iconName="car-outline"
-            selected={selectedRole === "conductor"}
-            onPress={() => setSelectedRole("conductor")}
+            titulo="Cuenta de conductor"
+            subtitulo="Regístrate para ofrecer viajes y generar ingresos."
+            nombreIcono="car-outline"
+            seleccionado={selectedRole === "conductor"}
+            alPresionar={() => setSelectedRole("conductor")}
           />
         </View>
 
         <View style={styles.spacer} />
 
         <BotonPrincipal
-          title="Continuar"
-          onPress={handleContinue}
-          disabled={!selectedRole}
+          titulo="Continuar"
+          alPresionar={handleContinue}
+          deshabilitado={!selectedRole}
         />
 
         <View style={styles.footerContainer}>

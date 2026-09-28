@@ -211,7 +211,7 @@ export default function PantallaBuscandoConductor() {
               { paddingBottom: Math.max(insets.bottom, 14) },
             ]}
           >
-            <BotonPrincipal title="Ver mi viaje" onPress={verMiViaje} />
+            <BotonPrincipal titulo="Ver mi viaje" alPresionar={verMiViaje} />
           </View>
         )}
       </View>

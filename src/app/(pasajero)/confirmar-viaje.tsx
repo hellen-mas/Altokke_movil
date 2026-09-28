@@ -253,7 +253,7 @@ export default function PantallaConfirmarViaje() {
         </ScrollView>
 
         <View style={styles.pie}>
-          <BotonPrincipal title="Confirmar viaje" onPress={confirmarViaje} />
+          <BotonPrincipal titulo="Confirmar viaje" alPresionar={confirmarViaje} />
         </View>
       </View>
 

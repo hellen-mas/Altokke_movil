@@ -51,16 +51,16 @@ export default function PasajeroDatosPersonalesScreen() {
   };
 
   return (
-    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
-      <BarraNavegacionSuperior title="Altokke" />
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <BarraNavegacionSuperior titulo="Altokke" />
 
       <EncabezadoPagina
-        title="Crea tu cuenta "
-        highlightedTitle="de pasajero"
-        description="Completa tus datos básicos para continuar."
+        titulo="Crea tu cuenta "
+        tituloDestacado="de pasajero"
+        descripcion="Completa tus datos básicos para continuar."
       />
 
-      <IndicadorPasos currentStep={1} totalSteps={3} />
+      <IndicadorPasos pasoActual={1} totalPasos={3} />
 
       <View style={styles.profileSection}>
         <Pressable style={styles.profileImageContainer}>
@@ -91,12 +91,12 @@ export default function PasajeroDatosPersonalesScreen() {
           name="nombres"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="person-outline"
-              placeholder="Nombres"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="person-outline"
+              textoReferencia="Nombres"
+              valor={value}
+              alCambiarTexto={onChange}
               error={!!errors.nombres}
-              errorText={errors.nombres?.message as string}
+              textoError={errors.nombres?.message as string}
             />
           )}
         />
@@ -105,12 +105,12 @@ export default function PasajeroDatosPersonalesScreen() {
           name="apellidos"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="person-outline"
-              placeholder="Apellidos"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="person-outline"
+              textoReferencia="Apellidos"
+              valor={value}
+              alCambiarTexto={onChange}
               error={!!errors.apellidos}
-              errorText={errors.apellidos?.message as string}
+              textoError={errors.apellidos?.message as string}
             />
           )}
         />
@@ -119,11 +119,11 @@ export default function PasajeroDatosPersonalesScreen() {
           name="tipoDocumento"
           render={({ field: { onChange, value } }) => (
             <SelectorOpciones
-              iconName="card-outline"
-              placeholder="Tipo de documento"
-              value={value}
-              options={["DNI", "Pasaporte", "Carnet de Extranjería"]}
-              onSelect={onChange}
+              nombreIcono="card-outline"
+              textoReferencia="Tipo de documento"
+              valor={value}
+              opciones={["DNI", "Pasaporte", "Carnet de Extranjería"]}
+              alSeleccionar={onChange}
             />
           )}
         />
@@ -132,13 +132,13 @@ export default function PasajeroDatosPersonalesScreen() {
           name="numeroDocumento"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="card-outline"
-              placeholder="Número de documento"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="card-outline"
+              textoReferencia="Número de documento"
+              valor={value}
+              alCambiarTexto={onChange}
               keyboardType="numeric"
               error={!!errors.numeroDocumento}
-              errorText={errors.numeroDocumento?.message as string}
+              textoError={errors.numeroDocumento?.message as string}
             />
           )}
         />
@@ -147,10 +147,10 @@ export default function PasajeroDatosPersonalesScreen() {
           name="fechaNacimiento"
           render={({ field: { onChange, value } }) => (
             <SelectorFecha
-              iconName="calendar-outline"
-              placeholder="Fecha de nacimiento"
-              date={value}
-              onSelect={onChange}
+              nombreIcono="calendar-outline"
+              textoReferencia="Fecha de nacimiento"
+              fecha={value}
+              alSeleccionar={onChange}
             />
           )}
         />
@@ -159,11 +159,11 @@ export default function PasajeroDatosPersonalesScreen() {
           name="genero"
           render={({ field: { onChange, value } }) => (
             <SelectorOpciones
-              iconName="male-female-outline"
-              placeholder="Género"
-              value={value}
-              options={["Masculino", "Femenino", "Otro", "Prefiero no decirlo"]}
-              onSelect={onChange}
+              nombreIcono="male-female-outline"
+              textoReferencia="Género"
+              valor={value}
+              opciones={["Masculino", "Femenino", "Otro", "Prefiero no decirlo"]}
+              alSeleccionar={onChange}
             />
           )}
         />
@@ -172,12 +172,12 @@ export default function PasajeroDatosPersonalesScreen() {
           name="direccion"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="location-outline"
-              placeholder="Dirección"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="location-outline"
+              textoReferencia="Dirección"
+              valor={value}
+              alCambiarTexto={onChange}
               error={!!errors.direccion}
-              errorText={errors.direccion?.message as string}
+              textoError={errors.direccion?.message as string}
             />
           )}
         />
@@ -186,12 +186,12 @@ export default function PasajeroDatosPersonalesScreen() {
           name="ciudad"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="business-outline"
-              placeholder="Ciudad"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="business-outline"
+              textoReferencia="Ciudad"
+              valor={value}
+              alCambiarTexto={onChange}
               error={!!errors.ciudad}
-              errorText={errors.ciudad?.message as string}
+              textoError={errors.ciudad?.message as string}
             />
           )}
         />
@@ -200,13 +200,13 @@ export default function PasajeroDatosPersonalesScreen() {
           name="telefono"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="call-outline"
-              placeholder="Teléfono"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="call-outline"
+              textoReferencia="Teléfono"
+              valor={value}
+              alCambiarTexto={onChange}
               keyboardType="phone-pad"
               error={!!errors.telefono}
-              errorText={errors.telefono?.message as string}
+              textoError={errors.telefono?.message as string}
             />
           )}
         />
@@ -215,14 +215,14 @@ export default function PasajeroDatosPersonalesScreen() {
           name="correo"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="mail-outline"
-              placeholder="Correo electrónico"
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="mail-outline"
+              textoReferencia="Correo electrónico"
+              valor={value}
+              alCambiarTexto={onChange}
               keyboardType="email-address"
               autoCapitalize="none"
               error={!!errors.correo}
-              errorText={errors.correo?.message as string}
+              textoError={errors.correo?.message as string}
             />
           )}
         />
@@ -230,16 +230,16 @@ export default function PasajeroDatosPersonalesScreen() {
 
       <View style={styles.buttonContainer}>
         <BotonPrincipal
-          title="Siguiente"
-          onPress={handleSubmit(onSubmit, onError)}
+          titulo="Siguiente"
+          alPresionar={handleSubmit(onSubmit, onError)}
         />
       </View>
 
       <PiePaginaAutenticacion
-        questionText="¿Ya tienes cuenta?"
-        linkText="Iniciar sesión"
-        href={"/login"}
-        showBorder={false}
+        textoPregunta="¿Ya tienes cuenta?"
+        textoEnlace="Iniciar sesión"
+        ruta={"/login"}
+        mostrarBorde={false}
       />
     </ContenedorPantalla>
   );

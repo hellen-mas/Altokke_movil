@@ -64,41 +64,41 @@ export default function LoginScreen() {
   };
 
   return (
-    <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
       <EncabezadoLogo />
 
       <View style={styles.headerContainer}>
         <EncabezadoPagina
-          title={"Iniciar sesión\nen "}
-          highlightedTitle="Altokke"
-          description={"Accede a tu cuenta y sigue\nmoviendo tu ciudad."}
+          titulo={"Iniciar sesión\nen "}
+          tituloDestacado="Altokke"
+          descripcion={"Accede a tu cuenta y sigue\nmoviendo tu ciudad."}
         />
       </View>
 
       <View style={styles.formContainer}>
         <CampoTexto
-          iconName="mail-outline"
-          placeholder="Correo electrónico o teléfono"
+          nombreIcono="mail-outline"
+          textoReferencia="Correo electrónico o teléfono"
           keyboardType="email-address"
           autoCapitalize="none"
-          value={correo}
-          onChangeText={setCorreo}
+          valor={correo}
+          alCambiarTexto={setCorreo}
           error={correoError}
         />
 
         <CampoTexto
-          iconName="lock-closed-outline"
-          placeholder="Contraseña"
-          isPassword
-          value={contrasena}
-          onChangeText={setContrasena}
+          nombreIcono="lock-closed-outline"
+          textoReferencia="Contraseña"
+          esPassword
+          valor={contrasena}
+          alCambiarTexto={setContrasena}
         />
 
         <Link href={"/recuperar-password"} style={styles.forgotPassword}>
           ¿Olvidaste tu contraseña?
         </Link>
 
-        <BotonPrincipal title="Entrar" onPress={handleLogin} />
+        <BotonPrincipal titulo="Entrar" alPresionar={handleLogin} />
       </View>
 
       <View style={styles.dividerContainer}>
@@ -109,22 +109,22 @@ export default function LoginScreen() {
 
       <View style={styles.socialButtonsContainer}>
         <BotonRedesSociales
-          title="Continuar con Google"
-          iconName="logo-google"
-          iconColor="#EA4335"
+          titulo="Continuar con Google"
+          nombreIcono="logo-google"
+          colorIcono="#EA4335"
         />
         <BotonRedesSociales
-          title="Continuar con Apple"
-          iconName="logo-apple"
-          iconColor={paletaColores.texto}
+          titulo="Continuar con Apple"
+          nombreIcono="logo-apple"
+          colorIcono={paletaColores.texto}
         />
       </View>
 
       <View style={styles.footerContainer}>
         <PiePaginaAutenticacion
-          questionText="¿No tienes una cuenta?"
-          linkText="Crear cuenta"
-          href={"/crear-cuenta"}
+          textoPregunta="¿No tienes una cuenta?"
+          textoEnlace="Crear cuenta"
+          ruta={"/crear-cuenta"}
         />
       </View>
 

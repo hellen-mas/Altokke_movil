@@ -35,7 +35,7 @@ export default function NuevoPasswordScreen() {
   };
 
   return (
-    <ContenedorPantalla contentContainerStyle={styles.scrollContainer}>
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContainer}>
       <EncabezadoLogo />
 
       <Text style={styles.title}>Crear nueva contraseña</Text>
@@ -49,11 +49,11 @@ export default function NuevoPasswordScreen() {
           name="password"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="lock-closed-outline"
-              placeholder="Nueva contraseña"
-              isPassword
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="lock-closed-outline"
+              textoReferencia="Nueva contraseña"
+              esPassword
+              valor={value}
+              alCambiarTexto={onChange}
             />
           )}
         />
@@ -63,11 +63,11 @@ export default function NuevoPasswordScreen() {
           name="confirmPassword"
           render={({ field: { onChange, value } }) => (
             <CampoTexto
-              iconName="lock-closed-outline"
-              placeholder="Confirmar nueva contraseña"
-              isPassword
-              value={value}
-              onChangeText={onChange}
+              nombreIcono="lock-closed-outline"
+              textoReferencia="Confirmar nueva contraseña"
+              esPassword
+              valor={value}
+              alCambiarTexto={onChange}
             />
           )}
         />
@@ -83,9 +83,9 @@ export default function NuevoPasswordScreen() {
         </View>
 
         <BotonPrincipal
-          title="Guardar contraseña"
-          onPress={handleSubmit(onSubmit, onError)}
-          style={styles.submitButton}
+          titulo="Guardar contraseña"
+          alPresionar={handleSubmit(onSubmit, onError)}
+          estilo={styles.submitButton}
         />
       </View>
 

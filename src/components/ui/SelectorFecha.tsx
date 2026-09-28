@@ -2,58 +2,57 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text } from "react-native";
-import { paletaColores } from "../../paletaColores";
+import { paletaColores } from "@/paletaColores";
 
-export interface CustomDatePickerProps {
-  placeholder: string;
-  iconName: keyof typeof Ionicons.glyphMap;
-  date: Date | null;
-  onSelect: (date: Date) => void;
+export interface PropsSelectorFecha {
+  textoReferencia: string;
+  nombreIcono: keyof typeof Ionicons.glyphMap;
+  fecha: Date | null;
+  alSeleccionar: (fecha: Date) => void;
 }
 
 export function SelectorFecha({
-  placeholder,
-  iconName,
-  date,
-  onSelect,
-}: CustomDatePickerProps) {
-  const [show, setShow] = useState(false);
+  textoReferencia,
+  nombreIcono,
+  fecha,
+  alSeleccionar,
+}: PropsSelectorFecha) {
+  const [mostrar, setMostrar] = useState(false);
 
-  const handleValueChange = (event: any, date: Date) => {
+  const manejarCambioValor = (evento: any, fechaSeleccionada?: Date) => {
     if (Platform.OS === 'android') {
-       setShow(false);
+       setMostrar(false);
     }
-    if (date) {
-      onSelect(date);
+    if (fechaSeleccionada) {
+      alSeleccionar(fechaSeleccionada);
     }
   };
 
-  const handleDismiss = () => {
+  const manejarOcultar = () => {
     if (Platform.OS === 'android') {
-       setShow(false);
+       setMostrar(false);
     }
   };
 
-  const formattedDate = date
-    ? `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`
+  const fechaFormateada = fecha
+    ? `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`
     : "";
 
   return (
     <>
-      <Pressable style={styles.container} onPress={() => setShow(true)}>
-        <Ionicons name={iconName} size={21} color={paletaColores.textoSecundario} />
-        <Text style={[styles.text, !date && styles.placeholderText]}>
-          {formattedDate || placeholder}
+      <Pressable style={estilos.contenedor} onPress={() => setMostrar(true)}>
+        <Ionicons name={nombreIcono} size={21} color={paletaColores.textoSecundario} />
+        <Text style={[estilos.texto, !fecha && estilos.textoReferencia]}>
+          {fechaFormateada || textoReferencia}
         </Text>
       </Pressable>
 
-      {show && (
+      {mostrar && (
         <DateTimePicker
-          value={date || new Date()}
+          value={fecha || new Date()}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onValueChange={handleValueChange}
-          onDismiss={handleDismiss}
+          onValueChange={manejarCambioValor} onDismiss={manejarOcultar}
           maximumDate={new Date()}
         />
       )}
@@ -61,8 +60,8 @@ export function SelectorFecha({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const estilos = StyleSheet.create({
+  contenedor: {
     width: "100%",
     height: 58,
     flexDirection: "row",
@@ -74,12 +73,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: paletaColores.input,
   },
-  text: {
+  texto: {
     flex: 1,
     fontSize: 16,
     color: paletaColores.texto,
   },
-  placeholderText: {
+  textoReferencia: {
     color: paletaColores.textoSecundario,
   },
 });

@@ -2,24 +2,24 @@ import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text } from "react-native";
 
-interface Props {
-  title: string;
-  iconName: keyof typeof Ionicons.glyphMap;
-  iconColor: string;
-  onPress?: () => void;
+interface PropsBotonRedesSociales {
+  titulo: string;
+  nombreIcono: keyof typeof Ionicons.glyphMap;
+  colorIcono: string;
+  alPresionar?: () => void;
 }
 
-export function BotonRedesSociales({ title, iconName, iconColor, onPress }: Props) {
+export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, alPresionar }: PropsBotonRedesSociales) {
   return (
-    <Pressable style={styles.socialButton} onPress={onPress}>
-      <Ionicons name={iconName} size={20} color={iconColor} />
-      <Text style={styles.socialButtonText}>{title}</Text>
+    <Pressable style={estilos.botonRedSocial} onPress={alPresionar}>
+      <Ionicons name={nombreIcono} size={20} color={colorIcono} />
+      <Text style={estilos.textoBotonRedSocial}>{titulo}</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  socialButton: {
+const estilos = StyleSheet.create({
+  botonRedSocial: {
     flex: 1,
     height: 56,
     flexDirection: "row",
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "transparent",
   },
-  socialButtonText: {
+  textoBotonRedSocial: {
     color: paletaColores.texto,
     fontSize: 13,
     fontWeight: "500",
