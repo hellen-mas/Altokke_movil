@@ -14,17 +14,27 @@ import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginScreen() {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [correoError, setCorreoError] = useState(false);
+  const { login } = useAuth();
 
   const handleLogin = () => {
+    setCorreoError(false);
     if (!correo.trim() || !contrasena.trim()) {
       Alert.alert(
         "Campos incompletos",
         "Por favor, ingresa tu correo y contraseña para continuar.",
       );
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo.trim())) {
+      setCorreoError(true);
       return;
     }
 
@@ -41,6 +51,8 @@ export default function LoginScreen() {
       );
       return;
     }
+
+    login();
 
     if (usuario.rol === "conductor") {
       router.replace("/inicio");
@@ -73,6 +85,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             value={correo}
             onChangeText={setCorreo}
+            error={correoError}
           />
 
           <CampoTexto

@@ -13,12 +13,14 @@ export interface CustomInputProps extends TextInputProps {
   iconName: keyof typeof Ionicons.glyphMap;
   isPassword?: boolean;
   variant?: "dark" | "light";
+  error?: boolean;
 }
 
 export const CampoTexto = ({
   iconName,
   isPassword,
   variant = "dark",
+  error,
   style,
   ...rest
 }: CustomInputProps) => {
@@ -34,6 +36,7 @@ export const CampoTexto = ({
         style={[
           styles.container,
           isLight && styles.containerLight,
+          error && styles.containerError,
         ]}
       >
         <Ionicons
@@ -90,6 +93,9 @@ const styles = StyleSheet.create({
   containerLight: {
     backgroundColor: paletaColores.inputClaro,
     borderColor: paletaColores.bordeClaro,
+  },
+  containerError: {
+    borderColor: "red",
   },
   input: {
     flex: 1,
