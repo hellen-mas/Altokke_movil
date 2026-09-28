@@ -22,7 +22,7 @@ export default function NuevoPasswordScreen() {
     },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = () => {
     Alert.alert("Éxito", "La contraseña se actualizó correctamente.");
     router.push("/login");
   };

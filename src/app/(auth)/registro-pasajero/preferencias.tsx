@@ -160,7 +160,7 @@ export default function PasajeroPreferenciasScreen() {
             Alert.alert("Cuenta creada con éxito", "Tus datos han sido registrados exitosamente.");
             router.push("/login");
           }}
-          style={styles.botonCrear}
+          estilo={styles.botonCrear}
         />
 
         <View style={styles.separadorContainer}>

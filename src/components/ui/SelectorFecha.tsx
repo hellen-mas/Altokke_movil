@@ -19,7 +19,7 @@ export function SelectorFecha({
 }: PropsSelectorFecha) {
   const [mostrar, setMostrar] = useState(false);
 
-  const manejarCambioValor = (evento: any, fechaSeleccionada?: Date) => {
+  const manejarCambioValor = (_evento: any, fechaSeleccionada?: Date) => {
     if (Platform.OS === 'android') {
        setMostrar(false);
     }
