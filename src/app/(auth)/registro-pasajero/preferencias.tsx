@@ -151,20 +151,24 @@ export default function PasajeroPreferenciasScreen() {
 
         <BotonPrincipal
           title="Crear cuenta"
+          disabled={!terminos}
           onPress={() => {
             if (!terminos) {
               Alert.alert("Términos incompletos", "Debes aceptar los términos y condiciones para crear tu cuenta.");
               return;
             }
+            Alert.alert("Cuenta creada con éxito", "Tus datos han sido registrados exitosamente.");
             router.push("/login");
           }}
           style={styles.botonCrear}
         />
 
         <View style={styles.separadorContainer}>
-          <View style={styles.linea} />
-          <Text style={styles.textoSeparador}>Atrás</Text>
-          <View style={styles.linea} />
+          <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+            <View style={styles.linea} />
+            <Text style={styles.textoSeparador}>Atrás</Text>
+            <View style={styles.linea} />
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>

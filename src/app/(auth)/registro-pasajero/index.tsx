@@ -20,22 +20,24 @@ import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function PasajeroDatosPersonalesScreen() {
-  const { control, handleSubmit } = useForm({
+  const { datosPersonales, setDatosPersonales } = useRegistroPasajero();
+
+  const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(esquemaRegistroPasajero),
     defaultValues: {
-      nombres: "",
-      apellidos: "",
-      tipoDocumento: "",
-      numeroDocumento: "",
-      fechaNacimiento: undefined,
-      genero: "",
-      direccion: "",
-      telefono: "",
-      correo: "",
+      ciudad: datosPersonales.ciudad || "",
+      nombres: datosPersonales.nombres || "",
+      apellidos: datosPersonales.apellidos || "",
+      tipoDocumento: datosPersonales.tipoDocumento || "",
+      numeroDocumento: datosPersonales.numeroDocumento || "",
+      fechaNacimiento: datosPersonales.fechaNacimiento || undefined,
+      genero: datosPersonales.genero || "",
+      direccion: datosPersonales.direccion || "",
+      telefono: datosPersonales.telefono || "",
+      correo: datosPersonales.correo || "",
     },
   });
 
-  const { setDatosPersonales } = useRegistroPasajero();
   const onSubmit = (data: any) => {
     setDatosPersonales(data);
     router.push("/registro-pasajero/verificacion");
@@ -93,6 +95,8 @@ export default function PasajeroDatosPersonalesScreen() {
               placeholder="Nombres"
               value={value}
               onChangeText={onChange}
+              error={!!errors.nombres}
+              errorText={errors.nombres?.message as string}
             />
           )}
         />
@@ -105,6 +109,8 @@ export default function PasajeroDatosPersonalesScreen() {
               placeholder="Apellidos"
               value={value}
               onChangeText={onChange}
+              error={!!errors.apellidos}
+              errorText={errors.apellidos?.message as string}
             />
           )}
         />
@@ -131,6 +137,8 @@ export default function PasajeroDatosPersonalesScreen() {
               value={value}
               onChangeText={onChange}
               keyboardType="numeric"
+              error={!!errors.numeroDocumento}
+              errorText={errors.numeroDocumento?.message as string}
             />
           )}
         />
@@ -168,14 +176,23 @@ export default function PasajeroDatosPersonalesScreen() {
               placeholder="Dirección"
               value={value}
               onChangeText={onChange}
+              error={!!errors.direccion}
+              errorText={errors.direccion?.message as string}
             />
           )}
         />
-                <Controller
+        <Controller
           control={control}
           name="ciudad"
           render={({ field: { onChange, value } }) => (
-            <CampoTexto iconName="business-outline" placeholder="Ciudad" value={value} onChangeText={onChange} />
+            <CampoTexto
+              iconName="business-outline"
+              placeholder="Ciudad"
+              value={value}
+              onChangeText={onChange}
+              error={!!errors.ciudad}
+              errorText={errors.ciudad?.message as string}
+            />
           )}
         />
         <Controller
@@ -188,6 +205,8 @@ export default function PasajeroDatosPersonalesScreen() {
               value={value}
               onChangeText={onChange}
               keyboardType="phone-pad"
+              error={!!errors.telefono}
+              errorText={errors.telefono?.message as string}
             />
           )}
         />
@@ -202,6 +221,8 @@ export default function PasajeroDatosPersonalesScreen() {
               onChangeText={onChange}
               keyboardType="email-address"
               autoCapitalize="none"
+              error={!!errors.correo}
+              errorText={errors.correo?.message as string}
             />
           )}
         />

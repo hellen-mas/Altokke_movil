@@ -30,85 +30,58 @@ export default function PasajeroVerificacionScreen() {
         extraScrollHeight={20}
       >
         <View style={styles.stepContainer}>
-          <IndicadorPasos currentStep={2} totalSteps={3} />
           <Text style={styles.stepText}>Paso 2 de 3</Text>
+          <IndicadorPasos currentStep={2} totalSteps={3} />
         </View>
 
         <View style={styles.headerContainer}>
           <EncabezadoPagina
-            title="Verificación y contacto"
-            highlightedTitle=""
-            description="Confirma tu identidad y cómo te contactaremos."
+            title="Verifica tu "
+            highlightedTitle="información"
+            description="Revisa tus datos y configura tus preferencias de viaje."
           />
         </View>
 
         <View style={styles.card}>
           <Ionicons
-            name="call-outline"
-            size={24}
+            name="person-circle-outline"
+            size={42}
             color={paletaColores.texto}
             style={styles.cardIcon}
           />
           <View style={styles.cardContent}>
-            <Text style={styles.cardLabel}>Número de teléfono</Text>
+            <Text style={styles.cardLabel}>Pasajero registrado</Text>
             <Text style={styles.cardValue}>
-              {datosPersonales?.telefono || "No especificado"}
+              {datosPersonales?.nombres} {datosPersonales?.apellidos}
             </Text>
           </View>
           <View style={styles.verifiedBadge}>
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={paletaColores.boton}
-            />
+            <Ionicons name="checkmark-circle" size={14} color={paletaColores.boton} />
             <Text style={styles.verifiedText}>Verificado</Text>
           </View>
         </View>
 
-        <Pressable style={styles.card}>
+        <View style={styles.card}>
           <Ionicons
             name="location-outline"
-            size={24}
+            size={36}
             color={paletaColores.texto}
             style={styles.cardIcon}
           />
           <View style={styles.cardContent}>
-            <Text style={styles.cardLabel}>Dirección principal</Text>
-            <Text style={styles.cardValue}>
-              {datosPersonales?.direccion || "No especificada"}
-            </Text>
+            <Text style={styles.cardLabel}>Ubicación principal</Text>
+            <Text style={styles.cardValue}>{datosPersonales?.ciudad}</Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={paletaColores.textoSecundario}
-          />
-        </Pressable>
-
-        <Pressable style={styles.card}>
-          <Ionicons
-            name="business-outline"
-            size={24}
-            color={paletaColores.texto}
-            style={styles.cardIcon}
-          />
-          <View style={styles.cardContent}>
-            <Text style={styles.cardLabel}>Ciudad</Text>
-            <Text style={styles.cardValue}>
-              {datosPersonales?.ciudad || "No especificada"}
-            </Text>
+          <View style={styles.verifiedBadge}>
+            <Ionicons name="checkmark-circle" size={14} color={paletaColores.boton} />
+            <Text style={styles.verifiedText}>Confirmado</Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={paletaColores.textoSecundario}
-          />
-        </Pressable>
+        </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons
-              name="card-outline"
+              name="wallet-outline"
               size={24}
               color={paletaColores.texto}
               style={styles.sectionIcon}
@@ -116,7 +89,7 @@ export default function PasajeroVerificacionScreen() {
             <View>
               <Text style={styles.sectionTitle}>Método de pago preferido</Text>
               <Text style={styles.sectionSubtitle}>
-                Selecciona cómo prefieres pagar tus viajes.
+                Podrás cambiarlo en cada viaje si lo deseas.
               </Text>
             </View>
           </View>
@@ -207,7 +180,7 @@ export default function PasajeroVerificacionScreen() {
             />
             <View>
               <Text style={styles.sectionTitle}>
-                Contacto de emergencia (opcional)
+                Contacto de emergencia
               </Text>
               <Text style={styles.sectionSubtitle}>
                 En caso de cualquier eventualidad.
@@ -220,7 +193,7 @@ export default function PasajeroVerificacionScreen() {
               <Text style={styles.inputLabel}>Nombre</Text>
               <CampoTexto
                 iconName="person-outline"
-                placeholder="Ej. Marí­a Pérez"
+                placeholder="Ej. María Pérez"
                 value={emergencyName}
                 onChangeText={setEmergencyName}
               />
@@ -242,13 +215,10 @@ export default function PasajeroVerificacionScreen() {
           <BotonPrincipal
             title="Siguiente"
             onPress={() => {
-              if (
-                (emergencyName.trim() && !emergencyPhone.trim()) ||
-                (!emergencyName.trim() && emergencyPhone.trim())
-              ) {
+              if (!emergencyName.trim() || !emergencyPhone.trim()) {
                 Alert.alert(
-                  "Campos incompletos",
-                  "Si deseas agregar un contacto de emergencia, debes proveer tanto el nombre como el telÃ©fono.",
+                  "Campo obligatorio",
+                  "Debes agregar un contacto de emergencia para continuar.",
                 );
                 return;
               }

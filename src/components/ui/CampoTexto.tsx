@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Pressable,
   StyleSheet,
+  Text,
   TextInput,
   TextInputProps,
   View,
@@ -14,6 +15,7 @@ export interface CustomInputProps extends TextInputProps {
   isPassword?: boolean;
   variant?: "dark" | "light";
   error?: boolean;
+  errorText?: string;
 }
 
 export const CampoTexto = ({
@@ -21,6 +23,7 @@ export const CampoTexto = ({
   isPassword,
   variant = "dark",
   error,
+  errorText,
   style,
   ...rest
 }: CustomInputProps) => {
@@ -32,45 +35,50 @@ export const CampoTexto = ({
       : paletaColores.textoSecundario;
 
     return (
-      <View 
-        style={[
-          styles.container,
-          isLight && styles.containerLight,
-          error && styles.containerError,
-        ]}
-      >
-        <Ionicons
-          name={iconName}
-          size={21}
-          color={colorSecundario}
-        />
-
-        <TextInput
+      <View style={styles.wrapper}>
+        <View 
           style={[
-            styles.input, 
-            isLight && styles.inputLight,
-            style,
+            styles.container,
+            isLight && styles.containerLight,
+            error && styles.containerError,
           ]}
-          placeholderTextColor={colorSecundario}
-          secureTextEntry={isPassword ? !visible : rest.secureTextEntry}
-          {...rest}
-        />
-        {isPassword && (
-          <Pressable
-            onPress={() => setVisible((prev) => !prev)}
-            style={styles.botonOjo}
-            accessibilityRole="button"
-            accessibilityLabel={
-              visible ? "Ocultar contraseña" : "Mostrar contraseña"
-            }
-          >
-            <Ionicons
-              name={visible ? "eye-outline" : "eye-off-outline"}
-              size={21}
-              color={colorSecundario}
-            />
-          </Pressable>
-        )}
+        >
+          <Ionicons
+            name={iconName}
+            size={21}
+            color={error ? "red" : colorSecundario}
+          />
+
+          <TextInput
+            style={[
+              styles.input, 
+              isLight && styles.inputLight,
+              style,
+            ]}
+            placeholderTextColor={colorSecundario}
+            secureTextEntry={isPassword ? !visible : rest.secureTextEntry}
+            {...rest}
+          />
+          {isPassword && (
+            <Pressable
+              onPress={() => setVisible((prev) => !prev)}
+              style={styles.botonOjo}
+              accessibilityRole="button"
+              accessibilityLabel={
+                visible ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+            >
+              <Ionicons
+                name={visible ? "eye-outline" : "eye-off-outline"}
+                size={21}
+                color={colorSecundario}
+              />
+            </Pressable>
+          )}
+        </View>
+        {error && errorText ? (
+          <Text style={styles.errorText}>{errorText}</Text>
+        ) : null}
       </View>
     );
 };
@@ -78,6 +86,9 @@ export const CampoTexto = ({
 export default CampoTexto;
 
 const styles = StyleSheet.create({
+  wrapper: {
+    width: "100%",
+  },
   container: {
     width: "100%",
     height: 58,
@@ -108,5 +119,11 @@ const styles = StyleSheet.create({
   },
   botonOjo: {
     padding: 4,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 8,
   },
 });
