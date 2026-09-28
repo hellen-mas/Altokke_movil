@@ -1,12 +1,17 @@
-import { CampoTexto, EncabezadoLogo, BotonPrincipal, ContenedorPantalla } from "@/components/ui";
+import {
+  BotonPrincipal,
+  CampoTexto,
+  ContenedorPantalla,
+  EncabezadoLogo,
+} from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
+import { esquemaNuevaContrasena } from "@/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Link, router } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, View, Alert } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { esquemaNuevaContrasena } from "@/utils/validaciones";
+import { Controller, useForm } from "react-hook-form";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 export default function NuevoPasswordScreen() {
   const { control, handleSubmit } = useForm({
@@ -14,15 +19,19 @@ export default function NuevoPasswordScreen() {
     defaultValues: {
       password: "",
       confirmPassword: "",
-    }
+    },
   });
 
   const onSubmit = (data: any) => {
+    Alert.alert("Éxito", "La contraseña se actualizó correctamente.");
     router.push("/login");
   };
 
   const onError = () => {
-    Alert.alert("Campos inválidos", "Verifica que las contraseñas coincidan y cumplan los requisitos.");
+    Alert.alert(
+      "Error",
+      "Las contraseñas no coinciden o no cumplen con los requisitos mínimos.",
+    );
   };
 
   return (
@@ -39,7 +48,13 @@ export default function NuevoPasswordScreen() {
           control={control}
           name="password"
           render={({ field: { onChange, value } }) => (
-            <CampoTexto iconName="lock-closed-outline" placeholder="Nueva contraseña" isPassword value={value} onChangeText={onChange} />
+            <CampoTexto
+              iconName="lock-closed-outline"
+              placeholder="Nueva contraseña"
+              isPassword
+              value={value}
+              onChangeText={onChange}
+            />
           )}
         />
 
@@ -47,34 +62,49 @@ export default function NuevoPasswordScreen() {
           control={control}
           name="confirmPassword"
           render={({ field: { onChange, value } }) => (
-            <CampoTexto iconName="lock-closed-outline" placeholder="Confirmar nueva contraseña" isPassword value={value} onChangeText={onChange} />
+            <CampoTexto
+              iconName="lock-closed-outline"
+              placeholder="Confirmar nueva contraseña"
+              isPassword
+              value={value}
+              onChangeText={onChange}
+            />
           )}
         />
 
-            <View style={styles.requirementsContainer}>
-              <RequirementItem text="Al menos 8 caracteres" checked={true} />
-              <RequirementItem text="Un número" checked={true} />
-              <RequirementItem text="Un carácter especial (ej: @ # $ % & *)" checked={true} />
-              <RequirementItem text="Una mayúscula" checked={true} />
-            </View>
+        <View style={styles.requirementsContainer}>
+          <RequirementItem text="Al menos 8 caracteres" checked={true} />
+          <RequirementItem text="Un número" checked={true} />
+          <RequirementItem
+            text="Un carácter especial (ej: @ # $ % & *)"
+            checked={true}
+          />
+          <RequirementItem text="Una mayúscula" checked={true} />
+        </View>
 
-            <BotonPrincipal
-              title="Guardar contraseña"
-              onPress={handleSubmit(onSubmit, onError)}
-              style={styles.submitButton}
-            />
-          </View>
+        <BotonPrincipal
+          title="Guardar contraseña"
+          onPress={handleSubmit(onSubmit, onError)}
+          style={styles.submitButton}
+        />
+      </View>
 
-          <View style={styles.footerContainer}>
-            <Link href={"/login"} style={styles.backLink}>
-              Volver al inicio
-            </Link>
-          </View>
+      <View style={styles.footerContainer}>
+        <Link href={"/login"} style={styles.backLink}>
+          Volver al inicio
+        </Link>
+      </View>
     </ContenedorPantalla>
   );
 }
 
-function RequirementItem({ text, checked }: { text: string; checked: boolean }) {
+function RequirementItem({
+  text,
+  checked,
+}: {
+  text: string;
+  checked: boolean;
+}) {
   return (
     <View style={styles.requirementItem}>
       <Ionicons
@@ -82,7 +112,12 @@ function RequirementItem({ text, checked }: { text: string; checked: boolean }) 
         size={18}
         color={checked ? paletaColores.verde : paletaColores.textoSecundario}
       />
-      <Text style={[styles.requirementText, checked && styles.requirementTextChecked]}>
+      <Text
+        style={[
+          styles.requirementText,
+          checked && styles.requirementTextChecked,
+        ]}
+      >
         {text}
       </Text>
     </View>

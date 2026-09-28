@@ -1,20 +1,18 @@
 import {
-  PiePaginaAutenticacion,
-  CampoTexto,
-  EncabezadoLogo,
-  EncabezadoPagina,
   BotonPrincipal,
   BotonRedesSociales,
+  CampoTexto,
   ContenedorPantalla,
+  EncabezadoLogo,
+  EncabezadoPagina,
+  PiePaginaAutenticacion,
 } from "@/components/ui";
 import { USUARIOS_DEMO } from "@/constants/usuarios";
+import { useAuth } from "@/context/AuthContext";
 import { paletaColores } from "@/paletaColores";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/context/AuthContext";
 
 export default function LoginScreen() {
   const [correo, setCorreo] = useState("");
@@ -67,77 +65,73 @@ export default function LoginScreen() {
 
   return (
     <ContenedorPantalla contentContainerStyle={styles.scrollContent}>
-        <EncabezadoLogo />
+      <EncabezadoLogo />
 
-        <View style={styles.headerContainer}>
-          <EncabezadoPagina
-            title={"Iniciar sesión\nen "}
-            highlightedTitle="Altokke"
-            description={"Accede a tu cuenta y sigue\nmoviendo tu ciudad."}
-          />
-        </View>
+      <View style={styles.headerContainer}>
+        <EncabezadoPagina
+          title={"Iniciar sesión\nen "}
+          highlightedTitle="Altokke"
+          description={"Accede a tu cuenta y sigue\nmoviendo tu ciudad."}
+        />
+      </View>
 
-        <View style={styles.formContainer}>
-          <CampoTexto
-            iconName="mail-outline"
-            placeholder="Correo electrónico o teléfono"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={correo}
-            onChangeText={setCorreo}
-            error={correoError}
-          />
+      <View style={styles.formContainer}>
+        <CampoTexto
+          iconName="mail-outline"
+          placeholder="Correo electrónico o teléfono"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={correo}
+          onChangeText={setCorreo}
+          error={correoError}
+        />
 
-          <CampoTexto
-            iconName="lock-closed-outline"
-            placeholder="Contraseña"
-            isPassword
-            value={contrasena}
-            onChangeText={setContrasena}
-          />
+        <CampoTexto
+          iconName="lock-closed-outline"
+          placeholder="Contraseña"
+          isPassword
+          value={contrasena}
+          onChangeText={setContrasena}
+        />
 
-          <Link
-            href={"/recuperar-password"}
-            style={styles.forgotPassword}
-          >
-            ¿Olvidaste tu contraseña?
-          </Link>
+        <Link href={"/recuperar-password"} style={styles.forgotPassword}>
+          ¿Olvidaste tu contraseña?
+        </Link>
 
-          <BotonPrincipal title="Entrar" onPress={handleLogin} />
-        </View>
+        <BotonPrincipal title="Entrar" onPress={handleLogin} />
+      </View>
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>O continúa con</Text>
-          <View style={styles.divider} />
-        </View>
+      <View style={styles.dividerContainer}>
+        <View style={styles.divider} />
+        <Text style={styles.dividerText}>O continúa con</Text>
+        <View style={styles.divider} />
+      </View>
 
-        <View style={styles.socialButtonsContainer}>
-          <BotonRedesSociales
-            title="Continuar con Google"
-            iconName="logo-google"
-            iconColor="#EA4335"
-          />
+      <View style={styles.socialButtonsContainer}>
+        <BotonRedesSociales
+          title="Continuar con Google"
+          iconName="logo-google"
+          iconColor="#EA4335"
+        />
+        <BotonRedesSociales
+          title="Continuar con Apple"
+          iconName="logo-apple"
+          iconColor={paletaColores.texto}
+        />
+      </View>
 
-          <BotonRedesSociales
-            title="Continuar con Apple"
-            iconName="logo-apple"
-            iconColor="#FFFFFF"
-          />
-        </View>
+      <View style={styles.footerContainer}>
+        <PiePaginaAutenticacion
+          questionText="¿No tienes una cuenta?"
+          linkText="Crear cuenta"
+          href={"/crear-cuenta"}
+        />
+      </View>
 
-        <View style={styles.footerContainer}>
-          <PiePaginaAutenticacion
-            questionText="¿No tienes una cuenta?"
-            linkText="Crear cuenta"
-            href={"/crear-cuenta"}
-          />
-        </View>
-
-        <Text style={styles.disclaimerText}>
-          Al iniciar sesión, aceptas nuestros{"\n"}
-          Términos de servicio y Política de privacidad.
-        </Text>
+      <Text style={styles.disclaimerText}>
+        Al iniciar sesión, aceptas nuestros{"\n"}
+        Términos de servicio y Política de privacidad.
+      </Text>
     </ContenedorPantalla>
   );
 }
@@ -149,6 +143,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerContainer: {
+    marginTop: 20,
     marginBottom: 40,
   },
   formContainer: {
@@ -176,21 +171,19 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: paletaColores.textoSecundario,
-    fontSize: 14,
     paddingHorizontal: 16,
+    fontSize: 14,
   },
   socialButtonsContainer: {
-    flexDirection: "row",
     gap: 12,
     marginBottom: 32,
   },
   socialButton: {
-    flex: 1,
-    height: 56,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
+    height: 58,
     borderWidth: 1,
     borderColor: paletaColores.borde,
     borderRadius: 14,
@@ -198,10 +191,11 @@ const styles = StyleSheet.create({
   },
   socialButtonText: {
     color: paletaColores.texto,
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 16,
+    fontWeight: "600",
   },
   footerContainer: {
+    marginTop: "auto",
     marginBottom: 24,
   },
   disclaimerText: {

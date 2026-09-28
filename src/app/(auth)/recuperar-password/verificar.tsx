@@ -31,6 +31,13 @@ export default function VerificacionCodigoScreen() {
       );
       return;
     }
+    if (codigo !== "123456") {
+      Alert.alert(
+        "Código incorrecto",
+        "El código OTP ingresado no es válido."
+      );
+      return;
+    }
     router.push("/recuperar-password/nuevo");
   };
 
