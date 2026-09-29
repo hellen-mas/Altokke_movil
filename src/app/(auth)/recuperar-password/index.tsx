@@ -32,9 +32,9 @@ export default function RecuperarPasswordScreen() {
         <EncabezadoLogo />
 
         <EncabezadoPagina
-          titulo={"Recuperar\ncontraseña"}
+          titulo={"Recuperar\ncuenta"}
           tituloDestacado=""
-          descripcion=""
+          descripcion="Ingresa tu correo o teléfono para recuperar tu acceso."
         />
 
         <View style={styles.inputContainer}>
