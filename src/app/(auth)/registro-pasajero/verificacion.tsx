@@ -180,7 +180,7 @@ export default function PasajeroVerificacionScreen() {
             />
             <View>
               <Text style={styles.sectionTitle}>
-                Contacto de emergencia
+                Contacto de emergencia (Opcional)
               </Text>
               <Text style={styles.sectionSubtitle}>
                 En caso de cualquier eventualidad.
@@ -215,13 +215,6 @@ export default function PasajeroVerificacionScreen() {
           <BotonPrincipal
             titulo="Siguiente"
             alPresionar={() => {
-              if (!emergencyName.trim() || !emergencyPhone.trim()) {
-                Alert.alert(
-                  "Campo obligatorio",
-                  "Debes agregar un contacto de emergencia para continuar.",
-                );
-                return;
-              }
               router.push("/registro-pasajero/preferencias");
             }}
           />
