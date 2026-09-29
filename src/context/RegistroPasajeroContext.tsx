@@ -1,7 +1,6 @@
-﻿import React, { createContext, useContext, useState } from 'react';
+﻿import React, { createContext, useContext, useState } from "react";
 
 interface RegistroPasajeroContextType {
-  // Add state types here depending on what gets filled in the forms
   datosPersonales: any;
   setDatosPersonales: (data: any) => void;
   preferencias: any;
@@ -9,9 +8,15 @@ interface RegistroPasajeroContextType {
   clearRegistro: () => void;
 }
 
-const RegistroPasajeroContext = createContext<RegistroPasajeroContextType | undefined>(undefined);
+const RegistroPasajeroContext = createContext<
+  RegistroPasajeroContextType | undefined
+>(undefined);
 
-export function RegistroPasajeroProvider({ children }: { children: React.ReactNode }) {
+export function RegistroPasajeroProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [datosPersonales, setDatosPersonales] = useState({});
   const [preferencias, setPreferencias] = useState({});
 
@@ -21,7 +26,15 @@ export function RegistroPasajeroProvider({ children }: { children: React.ReactNo
   };
 
   return (
-    <RegistroPasajeroContext.Provider value={{ datosPersonales, setDatosPersonales, preferencias, setPreferencias, clearRegistro }}>
+    <RegistroPasajeroContext.Provider
+      value={{
+        datosPersonales,
+        setDatosPersonales,
+        preferencias,
+        setPreferencias,
+        clearRegistro,
+      }}
+    >
       {children}
     </RegistroPasajeroContext.Provider>
   );
@@ -30,7 +43,9 @@ export function RegistroPasajeroProvider({ children }: { children: React.ReactNo
 export function useRegistroPasajero() {
   const context = useContext(RegistroPasajeroContext);
   if (context === undefined) {
-    throw new Error('useRegistroPasajero debe usarse dentro de un RegistroPasajeroProvider');
+    throw new Error(
+      "useRegistroPasajero debe usarse dentro de un RegistroPasajeroProvider",
+    );
   }
   return context;
 }

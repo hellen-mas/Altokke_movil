@@ -45,7 +45,6 @@ export default function VerificacionCodigoScreen() {
   const handleReenviar = () => {
     if (timer === 0) {
       setTimer(58);
-      // Logic to resend code goes here
     }
   };
 
