@@ -17,11 +17,6 @@ export const CONDUCTORES_CERCANOS: PuntoMapa[] = [
   { latitude: -5.63893, longitude: -78.53022 },
 ];
 
-// TEMPORAL: usuario de ejemplo (más adelante vendrá del login)
-export const USUARIO_EJEMPLO = {
-  nombre: "Hellen",
-};
-
 // TEMPORAL: conductor de ejemplo (más adelante vendrá del backend)
 export const CONDUCTOR_EJEMPLO = {
   nombre: "Juan Carlos Flores",

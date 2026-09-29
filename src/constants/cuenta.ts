@@ -8,15 +8,21 @@ export const PASAJERO_DEMO = {
   id: "pasajero-001",
   rol: "pasajero",
 
-  nombre: "Jhunior Cercado",
-  iniciales: "JC",
+  nombre: "Donina Garro",
+  iniciales: "DG",
   calificacion: 4.9,
   viajes: 127,
 
-  correo: "cercadojhunior@gmail.com",
-  telefono: "+51 982 735 946",
-  fechaNacimiento: "31 de octubre de 2003",
-  genero: "Masculino",
+  dni: "75070610",
+  correo: "donigarro@gmail.com",
+  telefono: "+51 913 714 910",
+  fechaNacimiento: "1 de noviembre de 2005",
+  genero: "Femenino",
+
+  contactoEmergencia: {
+    nombre: "Alicia Gomez",
+    telefono: "+51 978 189 389",
+  },
 };
 
 export const METODOS_PAGO = [

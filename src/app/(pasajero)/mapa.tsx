@@ -12,10 +12,13 @@ import {
   COLOR_CABECERA,
   CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
-  USUARIO_EJEMPLO,
 } from "@/constants/pasajero";
+import { PASAJERO_DEMO } from "@/constants/cuenta";
 import { TipoServicio, useViaje } from "@/context/ViajeContext";
 import { paletaColores } from "@/paletaColores";
+
+// Solo el primer nombre para el saludo ("Jhunior Cercado" -> "Jhunior")
+const PRIMER_NOMBRE = PASAJERO_DEMO.nombre.split(" ")[0];
 
 const SERVICIOS: {
   id: TipoServicio;
@@ -72,7 +75,7 @@ export default function PantallaMapa() {
       >
         {/* Cabecera */}
         <CabeceraPasajero
-          titulo={`Hola, ${USUARIO_EJEMPLO.nombre} 👋`}
+          titulo={`Hola, ${PRIMER_NOMBRE} 👋`}
           subtitulo="¿A dónde te llevamos hoy?"
           paddingInferior={72}
         />
