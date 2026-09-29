@@ -1,56 +1,211 @@
-# Welcome to your Expo app 👋
+# 🛺 Altokke
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+### Tu mototaxi, cuando lo necesites.
 
-## Get started
+**Altokke** es una aplicación móvil orientada al servicio de mototaxi que busca conectar pasajeros y conductores mediante una experiencia sencilla, rápida y organizada.
 
-1. Install dependencies
+El proyecto se desarrolla como parte del curso **Programación de Aplicaciones Móviles** de la Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas (UNTRM).
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## 📱 Sobre el proyecto
 
-   ```bash
-   npx expo start
-   ```
+Actualmente, la solicitud de un mototaxi suele realizarse mediante señas, llamadas o acuerdos directos. Altokke propone digitalizar este proceso mediante una aplicación móvil que permita gestionar el servicio desde el celular.
 
-In the output, you'll find options to open the app in a
+La aplicación contempla dos tipos de usuario:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 👤 Pasajero
+- Crear una cuenta e iniciar sesión.
+- Seleccionar origen y destino.
+- Solicitar un mototaxi.
+- Consultar el estado de la solicitud.
+- Visualizar información del conductor.
+- Seguir el desarrollo del viaje.
+- Finalizar y calificar el servicio.
+- Consultar el historial de viajes.
+- Gestionar su cuenta y preferencias.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 🛺 Conductor
+- Registrarse mediante un proceso de verificación.
+- Registrar información personal.
+- Verificar información de contacto.
+- Registrar identidad y documentación.
+- Registrar información de su vehículo.
+- Recibir y gestionar solicitudes de viaje.
+- Consultar ganancias e historial.
+- Gestionar información personal, vehículo y documentos.
+- Acceder a opciones de seguridad y configuración.
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## ✨ Estado actual
 
-```bash
-npm run reset-project
+> 🚧 **Avance 01 — Versión mínima navegable**
+
+La versión actual permite demostrar los principales flujos de navegación e interacción de Altokke.
+
+Algunas funcionalidades todavía utilizan información local o simulada y serán conectadas posteriormente con servicios persistentes y un backend.
+
+---
+
+## 🧭 Flujo principal
+
+### Pasajero
+
+`Inicio de sesión`
+→ `Inicio`
+→ `Seleccionar destino`
+→ `Confirmar viaje`
+→ `Buscar conductor`
+→ `Conductor encontrado`
+→ `Viaje activo`
+→ `Finalizar`
+→ `Calificar`
+
+### Conductor
+
+`Registro`
+→ `Datos personales`
+→ `Verificación`
+→ `Identidad`
+→ `Documentos`
+→ `Vehículo`
+→ `Enviar solicitud`
+
+Una vez dentro de la aplicación:
+
+`Inicio`
+→ `Solicitudes`
+→ `Aceptar viaje`
+→ `Viaje activo`
+→ `Finalizar`
+
+---
+
+## 🧰 Tecnologías utilizadas
+
+| Tecnología | Uso |
+|---|---|
+| **React Native** | Desarrollo de la aplicación móvil |
+| **Expo** | Entorno y herramientas de desarrollo |
+| **TypeScript** | Lenguaje principal del proyecto |
+| **Expo Router** | Navegación basada en archivos |
+| **Context API** | Manejo de estado compartido en determinados flujos |
+| **Expo ImagePicker** | Acceso a cámara y selección de imágenes |
+| **Expo DocumentPicker** | Selección de documentos |
+
+---
+
+## 📂 Estructura general
+
+```text
+Altokke_movil/
+│
+├── src/
+│   ├── app/             # Pantallas y navegación
+│   ├── components/      # Componentes reutilizables
+│   ├── constants/       # Constantes y datos utilizados
+│   ├── context/         # Contextos de la aplicación
+│   ├── hooks/           # Hooks personalizados
+│   └── types/           # Tipos e interfaces
+│
+├── assets/              # Recursos gráficos
+├── app.json             # Configuración de Expo
+├── package.json         # Dependencias y scripts
+└── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+# 🚀 Ejecutar el proyecto
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Requisitos
 
-## Learn more
+Antes de comenzar, asegúrate de tener instalado:
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Node.js**
+- **npm**
+- **Git**
+- **Expo Go** en un dispositivo móvil, o un emulador Android/iOS compatible.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 1. Clonar el repositorio
 
-Join our community of developers creating universal apps.
+```bash
+git clone https://github.com/hellen-mas/Altokke_movil.git
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 2. Ingresar al proyecto
+
+```bash
+cd Altokke_movil
+```
+
+## 3. Instalar las dependencias
+
+```bash
+npm install
+```
+
+## 4. Iniciar Expo
+
+```bash
+npx expo start
+```
+
+Después de iniciar el proyecto puedes:
+
+- Escanear el código QR utilizando **Expo Go**.
+- Ejecutar la aplicación en un emulador Android.
+- Utilizar las demás opciones disponibles en Expo según el entorno configurado.
+
+Si existen problemas relacionados con la caché, puede iniciarse nuevamente con:
+
+```bash
+npx expo start -c
+```
+
+---
+
+# 👥 Equipo
+
+| Integrante | GitHub | Participación principal |
+|---|---|---|
+| **Jhunior Aldahir Cercado Acuña** | `@jhunior-cercado` | Cuenta del pasajero y funcionalidades del conductor |
+| **Elvita Donina Garro Gómez** | `@doninaa` | Flujo principal de solicitud y viaje del pasajero |
+| **Hellen Shanela Mas Tuesta** | `@hellen-mas` | Registro y cuenta del conductor |
+| **Juan Carlos Sandoval Núñez** | `@Juan-Sandoval-Dev` | Autenticación, recuperación de cuenta y registro del pasajero |
+
+> La participación individual también puede identificarse mediante el historial de **commits y contribuciones del repositorio**.
+
+---
+
+## 🔜 Siguiente incremento
+
+Las siguientes etapas del proyecto contemplan:
+
+- Integración con un backend y base de datos.
+- Persistencia de usuarios, vehículos y documentos.
+- Verificación real de solicitudes de conductores.
+- Integración completa entre registro y cuenta.
+- Gestión persistente de viajes.
+- Mejoras de seguridad y autenticación.
+- Notificaciones y actualización del estado del servicio.
+
+---
+
+## 🎓 Información académica
+
+**Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas**  
+**Carrera:** Ingeniería de Sistemas  
+**Curso:** Programación de Aplicaciones Móviles  
+**Proyecto:** Altokke  
+**Avance:** 01 — Versión mínima navegable
+
+---
+
+<p align="center">
+  <strong>🛺 Altokke</strong><br>
+  <em>Tu mototaxi, cuando lo necesites.</em>
+</p>
