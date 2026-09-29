@@ -22,7 +22,7 @@ export default function RecuperarPasswordScreen() {
       return;
     }
     router.push(
-      `/recuperar-password/verificar?email=${encodeURIComponent(correo)}`,
+      `/recuperar-cuenta/verificar?email=${encodeURIComponent(correo)}`,
     );
   };
 

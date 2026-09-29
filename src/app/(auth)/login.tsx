@@ -94,7 +94,7 @@ export default function LoginScreen() {
           alCambiarTexto={setContrasena}
         />
 
-        <Link href={"/recuperar-password"} style={styles.forgotPassword}>
+        <Link href={"/recuperar-cuenta"} style={styles.forgotPassword}>
           ¿Olvidaste tu contraseña?
         </Link>
 

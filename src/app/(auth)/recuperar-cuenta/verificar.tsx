@@ -39,7 +39,7 @@ export default function VerificacionCodigoScreen() {
       Alert.alert("Código incorrecto", "El código OTP ingresado no es válido.");
       return;
     }
-    router.push("/recuperar-password/nuevo");
+    router.push("/recuperar-cuenta/nuevo");
   };
 
   const handleReenviar = () => {
