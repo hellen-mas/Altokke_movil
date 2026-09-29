@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   socialButtonsContainer: {
+    flexDirection: "row",
     gap: 12,
     marginBottom: 32,
   },
