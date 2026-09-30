@@ -1,4 +1,4 @@
-import { BotonPrincipal, EncabezadoLogo, TarjetaRol } from "@/components/ui";
+import { BotonPrincipal, EncabezadoLogo, TarjetaRol, PiePaginaAutenticacion } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -60,14 +60,11 @@ export default function CrearCuentaScreen() {
         />
 
         <View style={styles.footerContainer}>
-          <View style={styles.footerLine} />
-          <Text style={styles.footerText}>
-            ¿Ya tienes cuenta?{" "}
-            <Link href={"/login"} style={styles.footerLink}>
-              Iniciar sesión
-            </Link>
-          </Text>
-          <View style={styles.footerLine} />
+          <PiePaginaAutenticacion
+            textoPregunta="¿Ya tienes cuenta?"
+            ruta={"/login"}
+            textoEnlace="Iniciar sesión"
+          />
         </View>
       </View>
     </SafeAreaView>
