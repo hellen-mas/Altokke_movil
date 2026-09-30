@@ -57,8 +57,6 @@ export default function CrearCuentaScreen() {
         <BotonPrincipal
           titulo="Continuar"
           alPresionar={handleContinue}
-          // El botón se apaga (se deshabilita) si "selectedRole" está vacío (null)
-          deshabilitado={!selectedRole}
         />
 
         <View style={styles.footerContainer}>
