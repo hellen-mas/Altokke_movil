@@ -2,7 +2,7 @@ import { BotonPrincipal, EncabezadoLogo, TarjetaRol } from "@/components/ui";
 import { paletaColores } from "@/paletaColores";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { StatusBar, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CrearCuentaScreen() {
@@ -23,10 +23,6 @@ export default function CrearCuentaScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={paletaColores.fondo}
-      />
       <View style={styles.container}>
         <EncabezadoLogo />
 
