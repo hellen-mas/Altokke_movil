@@ -14,6 +14,8 @@ import { Controller, useForm } from "react-hook-form";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
 export default function NuevoPasswordScreen() {
+  // Ayuda a manejar los datos del formulario fácilmente
+  // yupResolver conecta las validaciones con el formulario
   const { control, handleSubmit } = useForm({
     resolver: yupResolver(esquemaNuevaContrasena),
     defaultValues: {
@@ -44,6 +46,7 @@ export default function NuevoPasswordScreen() {
       </Text>
 
       <View style={styles.formContainer}>
+        {/* Controller conecta nuestro componente visual (CampoTexto) con el estado del formulario */}
         <Controller
           control={control}
           name="password"

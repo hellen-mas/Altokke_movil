@@ -1,6 +1,7 @@
 import * as yup from "yup";
 
 export const esquemaRegistroPasajero = yup.object({
+  // Formato: yup .tipoDato() .formato("mensaje") .regla("mensaje")
   nombres: yup.string().required("Requerido"),
   apellidos: yup.string().required("Requerido"),
   tipoDocumento: yup.string().required("Requerido"),
@@ -14,6 +15,10 @@ export const esquemaRegistroPasajero = yup.object({
 });
 
 export const esquemaNuevaContrasena = yup.object({
+  // Formato: yup .tipoDato() .regla("mensaje") .condicion(valor, "mensaje")
   password: yup.string().required("Requerido").min(8, "Mínimo 8 caracteres"),
-  confirmPassword: yup.string().required("Requerido").oneOf([yup.ref('password')], 'Las contraseñas no coinciden'),
+  confirmPassword: yup
+    .string()
+    .required("Requerido")
+    .oneOf([yup.ref("password")], "Las contraseñas no coinciden"),
 });

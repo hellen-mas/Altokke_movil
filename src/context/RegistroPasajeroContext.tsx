@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface RegistroPasajeroContextType {
   datosPersonales: any;
@@ -8,6 +8,7 @@ interface RegistroPasajeroContextType {
   clearRegistro: () => void;
 }
 
+// Creamos el espacio global para guardar los datos del registro mientras el usuario pasa de una pantalla a otra
 const RegistroPasajeroContext = createContext<
   RegistroPasajeroContextType | undefined
 >(undefined);

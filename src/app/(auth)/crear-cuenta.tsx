@@ -6,12 +6,14 @@ import { StatusBar, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CrearCuentaScreen() {
+  // Guardamos qué rol elige el usuario. Los signos < > le dicen a TypeScript que solo puede elegir esas 3 opciones exactas.
   const [selectedRole, setSelectedRole] = useState<
     "pasajero" | "conductor" | null
   >("pasajero");
   const router = useRouter();
 
   const handleContinue = () => {
+    // Dependiendo del botón que tocó el usuario, lo mandamos a una ruta u otra
     if (selectedRole === "pasajero") {
       router.push("/registro-pasajero");
     } else if (selectedRole === "conductor") {
@@ -59,6 +61,7 @@ export default function CrearCuentaScreen() {
         <BotonPrincipal
           titulo="Continuar"
           alPresionar={handleContinue}
+          // El botón se apaga (se deshabilita) si "selectedRole" está vacío (null)
           deshabilitado={!selectedRole}
         />
 

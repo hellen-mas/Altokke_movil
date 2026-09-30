@@ -13,17 +13,22 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
 export default function VerificacionCodigoScreen() {
+  // Obtenemos el correo que enviamos por la URL desde la pantalla anterior
   const { email } = useLocalSearchParams<{ email: string }>();
+
   const [codigo, setCodigo] = useState("");
   const [timer, setTimer] = useState(58);
 
+  // Se ejecuta cada vez que el valor de "timer" cambia
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (timer > 0) {
+      // Temporizador que resta 1 al estado cada segundo
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
     }
+    // Se limpia el temporizador para no gastar memoria
     return () => clearInterval(interval);
   }, [timer]);
 

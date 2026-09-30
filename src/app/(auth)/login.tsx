@@ -30,12 +30,14 @@ export default function LoginScreen() {
       return;
     }
 
+    // Verificar formato de correo
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo.trim())) {
       setCorreoError(true);
       return;
     }
 
+    // Esto es solo simulación
     const usuario = USUARIOS_DEMO.find(
       (u) =>
         u.correo.toLowerCase() === correo.trim().toLowerCase() &&
@@ -50,6 +52,7 @@ export default function LoginScreen() {
       return;
     }
 
+    // Se avisa a toda la app que este usuario hizo login
     login(usuario.rol as "pasajero" | "conductor");
 
     if (usuario.rol === "conductor") {

@@ -1,19 +1,19 @@
-import { EncabezadoPagina, BotonPrincipal } from "@/components/ui";
+import { BotonPrincipal, EncabezadoPagina } from "@/components/ui";
+import { BarraNavegacionSuperior } from "@/components/ui/BarraNavegacionSuperior";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   View,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { BarraNavegacionSuperior } from "@/components/ui/BarraNavegacionSuperior";
 
 export default function PasajeroPreferenciasScreen() {
   const [notificaciones, setNotificaciones] = useState(true);
@@ -67,7 +67,10 @@ export default function PasajeroPreferenciasScreen() {
             <Switch
               value={notificaciones}
               onValueChange={setNotificaciones}
-              trackColor={{ false: paletaColores.borde, true: paletaColores.boton }}
+              trackColor={{
+                false: paletaColores.borde,
+                true: paletaColores.boton,
+              }}
               thumbColor="#ffffff"
             />
           </View>
@@ -91,7 +94,10 @@ export default function PasajeroPreferenciasScreen() {
             <Switch
               value={ubicacion}
               onValueChange={setUbicacion}
-              trackColor={{ false: paletaColores.borde, true: paletaColores.boton }}
+              trackColor={{
+                false: paletaColores.borde,
+                true: paletaColores.boton,
+              }}
               thumbColor="#ffffff"
             />
           </View>
@@ -113,7 +119,10 @@ export default function PasajeroPreferenciasScreen() {
             <Switch
               value={promociones}
               onValueChange={setPromociones}
-              trackColor={{ false: paletaColores.borde, true: paletaColores.boton }}
+              trackColor={{
+                false: paletaColores.borde,
+                true: paletaColores.boton,
+              }}
               thumbColor="#ffffff"
             />
           </View>
@@ -130,7 +139,8 @@ export default function PasajeroPreferenciasScreen() {
           <View style={styles.infoTextos}>
             <Text style={styles.infoTitulo}>Tu información será protegida</Text>
             <Text style={styles.infoDescripcion}>
-              Cuidamos tus datos y los usamos solo para brindarte un mejor servicio.
+              Cuidamos tus datos y los usamos solo para brindarte un mejor
+              servicio.
             </Text>
           </View>
         </View>
@@ -142,10 +152,14 @@ export default function PasajeroPreferenciasScreen() {
           <Ionicons
             name={terminos ? "checkbox" : "square-outline"}
             size={24}
-            color={terminos ? paletaColores.boton : paletaColores.textoSecundario}
+            color={
+              terminos ? paletaColores.boton : paletaColores.textoSecundario
+            }
           />
           <Text style={styles.checkboxText}>
-            Acepto los <Text style={styles.linkText}>términos y condiciones</Text> y la <Text style={styles.linkText}>política de privacidad</Text>.
+            Acepto los{" "}
+            <Text style={styles.linkText}>términos y condiciones</Text> y la{" "}
+            <Text style={styles.linkText}>política de privacidad</Text>.
           </Text>
         </Pressable>
 
@@ -153,18 +167,32 @@ export default function PasajeroPreferenciasScreen() {
           titulo="Crear cuenta"
           deshabilitado={!terminos}
           alPresionar={() => {
+            // Asegurar que el usuario acepto los terminos y condiciones.
             if (!terminos) {
-              Alert.alert("Términos incompletos", "Debes aceptar los términos y condiciones para crear tu cuenta.");
+              Alert.alert(
+                "Términos incompletos",
+                "Debes aceptar los términos y condiciones para crear tu cuenta.",
+              );
               return;
             }
-            Alert.alert("Cuenta creada con éxito", "Tus datos han sido registrados exitosamente.");
+            Alert.alert(
+              "Cuenta creada con éxito",
+              "Tus datos han sido registrados exitosamente.",
+            );
             router.push("/login");
           }}
           estilo={styles.botonCrear}
         />
 
         <View style={styles.separadorContainer}>
-          <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              width: "100%",
+            }}
+          >
             <View style={styles.linea} />
             <Text style={styles.textoSeparador}>Atrás</Text>
             <View style={styles.linea} />

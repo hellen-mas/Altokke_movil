@@ -30,6 +30,7 @@ export default function PantallaBienvenida() {
           source={require("@/assets/images/img-central.png")}
           style={styles.ilustracion}
           contentFit="contain"
+          // Aparece despacio durante un segundo
           transition={1000}
         />
 

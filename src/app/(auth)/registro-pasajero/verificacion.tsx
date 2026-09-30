@@ -1,32 +1,36 @@
-import { BarraNavegacionSuperior } from "@/components/ui/BarraNavegacionSuperior";
-import { BotonPrincipal } from "@/components/ui/BotonPrincipal";
-import { CampoTexto } from "@/components/ui/CampoTexto";
-import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
-import { IndicadorPasos } from "@/components/ui/IndicadorPasos";
+import {
+  BarraNavegacionSuperior,
+  BotonPrincipal,
+  CampoTexto,
+  EncabezadoPagina,
+  IndicadorPasos,
+} from "@/components/ui";
 import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PasajeroVerificacionScreen() {
-  const [selectedPayment, setSelectedPayment] = useState("Efectivo");
-  const [emergencyName, setEmergencyName] = useState("");
-  const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [metodoPagoSeleccionado, setMetodoPagoSeleccionado] = useState("Efectivo");
+  const [nombreEmergencia, setNombreEmergencia] = useState("");
+  const [telefonoEmergencia, setTelefonoEmergencia] = useState("");
+  // Se lee los datos que el usuario ingresó en la pantalla anterior para mostrarlos aquí
   const { datosPersonales } = useRegistroPasajero();
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <BarraNavegacionSuperior titulo="Altokke" />
 
+      {/* Evita que el teclado tape al campo */}
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true}
+        keyboardShouldPersistTaps="handled" //Permite presionar el boton con el teclado en uso
+        enableOnAndroid={true} //Permite subir y bajar, no solo en los iPhones
         extraScrollHeight={20}
       >
         <View style={styles.stepContainer}>
@@ -56,7 +60,11 @@ export default function PasajeroVerificacionScreen() {
             </Text>
           </View>
           <View style={styles.verifiedBadge}>
-            <Ionicons name="checkmark-circle" size={14} color={paletaColores.boton} />
+            <Ionicons
+              name="checkmark-circle"
+              size={14}
+              color={paletaColores.boton}
+            />
             <Text style={styles.verifiedText}>Verificado</Text>
           </View>
         </View>
@@ -73,7 +81,11 @@ export default function PasajeroVerificacionScreen() {
             <Text style={styles.cardValue}>{datosPersonales?.ciudad}</Text>
           </View>
           <View style={styles.verifiedBadge}>
-            <Ionicons name="checkmark-circle" size={14} color={paletaColores.boton} />
+            <Ionicons
+              name="checkmark-circle"
+              size={14}
+              color={paletaColores.boton}
+            />
             <Text style={styles.verifiedText}>Confirmado</Text>
           </View>
         </View>
@@ -95,30 +107,31 @@ export default function PasajeroVerificacionScreen() {
           </View>
 
           <View style={styles.paymentMethodsRow}>
-            {["Efectivo", "Yape", "Plin"].map((method) => {
-              const isSelected = selectedPayment === method;
+            {["Efectivo", "Yape", "Plin"].map((metodo) => {
+              //Transforma la lista, una por una
+              const estaSeleccionado = metodoPagoSeleccionado === metodo;
               return (
                 <Pressable
-                  key={method}
+                  key={metodo}
                   style={[
                     styles.paymentCard,
-                    isSelected && styles.paymentCardSelected,
+                    estaSeleccionado && styles.paymentCardSelected,
                   ]}
-                  onPress={() => setSelectedPayment(method)}
+                  onPress={() => setMetodoPagoSeleccionado(metodo)}
                 >
                   <View style={styles.paymentCardTopRow}>
                     <View style={styles.paymentIconContainer}>
-                      {method === "Efectivo" ? (
+                      {metodo === "Efectivo" ? (
                         <Ionicons
                           name="cash-outline"
                           size={28}
                           color={
-                            isSelected
+                            estaSeleccionado
                               ? paletaColores.texto
                               : paletaColores.textoSecundario
                           }
                         />
-                      ) : method === "Yape" ? (
+                      ) : metodo === "Yape" ? (
                         <View
                           style={[
                             styles.methodLogoPlaceholder,
@@ -139,28 +152,28 @@ export default function PasajeroVerificacionScreen() {
                       )}
                     </View>
                     <Ionicons
-                      name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                      name={estaSeleccionado ? "checkmark-circle" : "ellipse-outline"}
                       size={20}
                       color={
-                        isSelected ? paletaColores.boton : paletaColores.borde
+                        estaSeleccionado ? paletaColores.boton : paletaColores.borde
                       }
                     />
                   </View>
                   <Text
                     style={[
                       styles.paymentMethodName,
-                      isSelected && styles.paymentMethodNameSelected,
+                      estaSeleccionado && styles.paymentMethodNameSelected,
                     ]}
                   >
-                    {method}
+                    {metodo}
                   </Text>
                   <Text
                     style={[
                       styles.paymentMethodDesc,
-                      isSelected && styles.paymentMethodDescSelected,
+                      estaSeleccionado && styles.paymentMethodDescSelected,
                     ]}
                   >
-                    {method === "Efectivo"
+                    {metodo === "Efectivo"
                       ? "Pago en el viaje"
                       : "Pago al conductor"}
                   </Text>
@@ -194,8 +207,8 @@ export default function PasajeroVerificacionScreen() {
               <CampoTexto
                 nombreIcono="person-outline"
                 textoReferencia="Ej. María Pérez"
-                valor={emergencyName}
-                alCambiarTexto={setEmergencyName}
+                valor={nombreEmergencia}
+                alCambiarTexto={setNombreEmergencia}
               />
             </View>
             <View style={styles.inputWrapper}>
@@ -203,8 +216,8 @@ export default function PasajeroVerificacionScreen() {
               <CampoTexto
                 nombreIcono="call-outline"
                 textoReferencia="Ej. 987 654 321"
-                valor={emergencyPhone}
-                alCambiarTexto={setEmergencyPhone}
+                valor={telefonoEmergencia}
+                alCambiarTexto={setTelefonoEmergencia}
                 keyboardType="phone-pad"
               />
             </View>

@@ -22,7 +22,12 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 export default function PasajeroDatosPersonalesScreen() {
   const { datosPersonales, setDatosPersonales } = useRegistroPasajero();
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  // Iniciamos el formulario con los datos globales por si ya existían
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(esquemaRegistroPasajero),
     defaultValues: {
       ciudad: datosPersonales.ciudad || "",
@@ -95,6 +100,7 @@ export default function PasajeroDatosPersonalesScreen() {
               textoReferencia="Nombres"
               valor={value}
               alCambiarTexto={onChange}
+              // Convertimos el error a booleano (true/false) con !! para saber si debemos pintar el input de rojo
               error={!!errors.nombres}
               textoError={errors.nombres?.message as string}
             />
@@ -162,7 +168,12 @@ export default function PasajeroDatosPersonalesScreen() {
               nombreIcono="male-female-outline"
               textoReferencia="Género"
               valor={value}
-              opciones={["Masculino", "Femenino", "Otro", "Prefiero no decirlo"]}
+              opciones={[
+                "Masculino",
+                "Femenino",
+                "Otro",
+                "Prefiero no decirlo",
+              ]}
               alSeleccionar={onChange}
             />
           )}

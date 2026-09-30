@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
 
-type RolUsuario = 'pasajero' | 'conductor' | null;
+type RolUsuario = "pasajero" | "conductor" | null;
 
 type TipoContextoAutenticacion = {
   isAuthenticated: boolean;
@@ -9,9 +9,17 @@ type TipoContextoAutenticacion = {
   logout: () => void;
 };
 
-const ContextoAutenticacion = createContext<TipoContextoAutenticacion | undefined>(undefined);
+// Espacio para guardar la sesión del usuario
+const ContextoAutenticacion = createContext<
+  TipoContextoAutenticacion | undefined
+>(undefined);
 
-export const AuthProvider = ({ children: pantallasHijas }: { children: React.ReactNode }) => {
+// Envuelve la app y le reparte a las pantallas los datos de sesión
+export const AuthProvider = ({
+  children: pantallasHijas,
+}: {
+  children: React.ReactNode;
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<RolUsuario>(null);
 
@@ -26,18 +34,21 @@ export const AuthProvider = ({ children: pantallasHijas }: { children: React.Rea
   };
 
   return (
-    <ContextoAutenticacion.Provider value={{ isAuthenticated, userRole, login, logout }}>
+    <ContextoAutenticacion.Provider
+      value={{ isAuthenticated, userRole, login, logout }}
+    >
       {pantallasHijas}
     </ContextoAutenticacion.Provider>
   );
 };
 
+// Hook personalizado para obtener los datos de autenticación
 export const useAuth = () => {
   const contexto = useContext(ContextoAutenticacion);
-  
+
   if (!contexto) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
-  
+
   return contexto;
 };

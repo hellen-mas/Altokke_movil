@@ -21,6 +21,8 @@ export default function RecuperarPasswordScreen() {
       );
       return;
     }
+    // Enviamos el correo como parámetro
+    // Asegurando que caracteres especiales (como el @) puedan enviarse sin errores en la URL
     router.push(
       `/recuperar-cuenta/verificar?email=${encodeURIComponent(correo)}`,
     );
