@@ -1,41 +1,43 @@
 import React, { createContext, useContext, useState } from 'react';
 
-type UserRole = 'pasajero' | 'conductor' | null;
+type RolUsuario = 'pasajero' | 'conductor' | null;
 
-type AuthContextType = {
+type TipoContextoAutenticacion = {
   isAuthenticated: boolean;
-  userRole: UserRole;
-  login: (rol: UserRole) => void;
+  userRole: RolUsuario;
+  login: (rol: RolUsuario) => void;
   logout: () => void;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const ContextoAutenticacion = createContext<TipoContextoAutenticacion | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children: pantallasHijas }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [userRole, setUserRole] = useState<RolUsuario>(null);
 
-  const login = (rol: UserRole) => {
+  const login = (rol: RolUsuario) => {
     setIsAuthenticated(true);
     setUserRole(rol);
   };
-  
+
   const logout = () => {
     setIsAuthenticated(false);
     setUserRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <ContextoAutenticacion.Provider value={{ isAuthenticated, userRole, login, logout }}>
+      {pantallasHijas}
+    </ContextoAutenticacion.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  const contexto = useContext(ContextoAutenticacion);
+  
+  if (!contexto) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
-  return context;
+  
+  return contexto;
 };
