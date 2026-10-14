@@ -7,6 +7,7 @@ import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
   CONDUCTORES_CERCANOS,
+  NOTIFICACIONES_EJEMPLO,
   ORIGEN_EJEMPLO,
 } from "@/constants/pasajero";
 import { TipoServicio, useViaje } from "@/context/ViajeContext";
@@ -78,7 +79,9 @@ export default function PantallaMapa() {
           titulo={nombre ? `Hola, ${nombre} 👋` : "Hola 👋"}
           subtitulo="¿A dónde te llevamos hoy?"
           paddingInferior={72}
-          hayNotificaciones
+          hayNotificaciones={NOTIFICACIONES_EJEMPLO.some(
+            (notificacion) => !notificacion.leida,
+          )}
         />
 
         {/* Origen y destino */}

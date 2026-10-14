@@ -1,8 +1,9 @@
 import { COLOR_CABECERA } from "@/constants/pasajero";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { ReactNode } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
   /** Contenido extra bajo el subtítulo (por ejemplo la barra de progreso del viaje) */
   children?: ReactNode;
 
-  /** Muesta el punto de aviso en la campana cuando hay notificaciones por leer */
+  /** Muestra el punto de aviso en la campana cuando hay notificaciones por leer */
   hayNotificaciones?: boolean;
 }
 
@@ -42,14 +43,17 @@ export function CabeceraPasajero({
         />
         <Text style={styles.logoTexto}>Altokke</Text>
 
-        <View style={styles.botonNotificaciones}>
+        <Pressable
+          onPress={() => router.push("/notificaciones")}
+          style={styles.botonNotificaciones}
+        >
           <Ionicons
             name="notifications"
             size={22}
             color={paletaColores.textoSecundario}
           />
           {hayNotificaciones && <View style={styles.puntoNuevo} />}
-        </View>
+        </Pressable>
       </View>
 
       {titulo && <Text style={styles.titulo}>{titulo}</Text>}
