@@ -13,12 +13,9 @@ import {
   CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
 } from "@/constants/pasajero";
-import { PASAJERO_DEMO } from "@/constants/cuenta";
 import { TipoServicio, useViaje } from "@/context/ViajeContext";
+import { useNombrePasajero } from "@/hooks/use-nombre-pasajero";
 import { paletaColores } from "@/paletaColores";
-
-// Solo el primer nombre para el saludo ("Jhunior Cercado" -> "Jhunior")
-const PRIMER_NOMBRE = PASAJERO_DEMO.nombre.split(" ")[0];
 
 const SERVICIOS: {
   id: TipoServicio;
@@ -57,6 +54,7 @@ const DESTINOS_FRECUENTES: {
 
 export default function PantallaMapa() {
   const { tipoServicio, setTipoServicio, destino, setDestino } = useViaje();
+  const nombre = useNombrePasajero();
 
   const irADestino = () => {
     router.push("/destino");
@@ -75,7 +73,7 @@ export default function PantallaMapa() {
       >
         {/* Cabecera */}
         <CabeceraPasajero
-          titulo={`Hola, ${PRIMER_NOMBRE} 👋`}
+          titulo={nombre ? `Hola, ${nombre} 👋` : "Hola 👋"}
           subtitulo="¿A dónde te llevamos hoy?"
           paddingInferior={72}
         />
