@@ -153,3 +153,25 @@ export const HISTORIAL_EJEMPLO: ViajeHistorial[] = [
     calificacion: 5,
   },
 ];
+
+//Notificaciones de ejemplo (mas adelante viene el backend)
+
+export const NOTIFICACIONES_EJEMPLO = [
+  {
+    id: "n1",
+    icono: "car-outline",
+    titulo: "Tu viaje fue completado",
+    mensaje: "Llegaste a tu destino. ¡Gracias por viajar con Altokke!",
+    hora: "Hace 10 minutos",
+    leida: false,
+  },
+
+  {
+    id: "n2",
+    icono: "shield-checkmark-outline",
+    titulo: "Cuenta verificada",
+    mensaje: "Tu cuenta de pasajero ya está activa.",
+    hora: "Ayer",
+    leida: true,
+  },
+] as const;
