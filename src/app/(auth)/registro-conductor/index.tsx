@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
+    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -21,6 +22,8 @@ import { router } from "expo-router";
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
 import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
 import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
+import { MedidorPasswordSeguro } from "@/components/ui";
+import { buscarDNI } from "@/utils/apiDNI";
 
 export default function DatosPersonalesConductor() {
     const {
@@ -41,6 +44,14 @@ export default function DatosPersonalesConductor() {
     } = useRegistroConductor();
     
     const [mostrarCalendario, setMostarCalendario] = useState(false);
+
+    // Indica si estamos consultado la API
+    const [consultandoDni, setConsultandoDni] = useState(false);
+    // Guarda el DNI cuya consulta fue exitosa
+    const [dniVerificado, setDniVerificado] = useState("");
+    //Mensaje de error de al consulta
+    const [errorDni, setErrorDni] = useState("");
+
     const hoy = new Date();
     const fechaMaximaNacimiento = new Date(
         hoy.getFullYear() - 18,
@@ -48,7 +59,80 @@ export default function DatosPersonalesConductor() {
         hoy.getDate(),
     );
 
+    const cambiarDni = (texto:string) => {
+        const nuevoDni = texto.replace(/\D/g, "").slice(0, 8);
+        if (nuevoDni === dni) return;
+
+        setDni(nuevoDni);
+
+        setNombre("");
+        setApellidos("");
+        setDniVerificado("");
+        setErrorDni("");
+        setConsultandoDni(false);
+    };
+
+    useEffect(() => {
+        if (!/^\d{8}$/.test(dni)) {
+            return;
+        }
+
+        // Permite ignorar respeustas de consultas antiguas
+        let cancelado = false;
+
+        const temporizador = setTimeout(async () => {
+            setConsultandoDni(true);
+            setErrorDni("");
+
+            try {
+                const datos = await buscarDNI(dni);
+                // Ignoramos la respuesta si el DNI cambió
+                if (cancelado) return;
+
+                if (!datos.nombres || !datos.apellidos) {
+                    throw new Error("La consulta no devolvió nombres y apellidos.");
+                }
+
+                setNombre(datos.nombres);
+                setApellidos(datos.apellidos);
+                setDniVerificado(dni);
+            } catch (error:unknown) {
+                if (cancelado) return;
+
+                const mensaje = error instanceof Error ? error.message : "No se pudo consultar el DNI.";
+                setErrorDni(mensaje);
+                setDniVerificado("");
+            } finally {
+                if (!cancelado) {
+                    setConsultandoDni(false);
+                }
+            }
+        }, 500);
+
+        // Cancela el temporizador e invalida respuestas anteriores.
+        return () => {
+            cancelado = true;
+            clearTimeout(temporizador);
+        };
+    }, [dni, setNombre, setApellidos]);
+
     const continuar = () => {
+        if (consultandoDni) {
+            Alert.alert(
+                "Consulta en proceso",
+                "Espera mientras verificamos los datos de tu DNI."
+            );
+            return;
+        }
+
+        if (dniVerificado !== dni || !/^\d{8}$/.test(dni)) {
+            Alert.alert(
+                "DNI sin consultar",
+                "Debes ingresar un DNI válido y completar la consulta de identidad antes de continuar."
+            );
+            return;
+        }
+
         if (
             !nombre.trim() ||
             !apellidos.trim() ||
@@ -88,6 +172,23 @@ export default function DatosPersonalesConductor() {
             return;
         }
 
+        const requisitosContrasena = [
+            contrasena.length >= 12,
+            /[A-Z]/.test(contrasena),
+            /[a-z]/.test(contrasena),
+            /[0-9]/.test(contrasena),
+            /[^A-Za-z0-9]/.test(contrasena),
+        ];
+
+        if (!requisitosContrasena.every(Boolean)) {
+            Alert.alert(
+                "Contraseña poco segura",
+                "Tu contraseña debe tener al menos 12 caracteres, " +
+                "una mayúscula, una minúscula, un número y un símbolo."
+            );
+            return;
+        }
+
         if (contrasena !== confirmarContrasena) {
             Alert.alert(
                 "Contraseñas diferentes",
@@ -122,31 +223,58 @@ export default function DatosPersonalesConductor() {
 
                 {/* Formulario */}
                 <View style={styles.formulario}>
+                    {/* Consulta de DNI */}
+                    <View style={styles.contenedorDni}>
+                        <CampoTexto
+                            placeholder="Número de DNI"
+                            nombreIcono="card-outline"
+                            value={dni}
+                            onChangeText={cambiarDni}
+                            keyboardType="number-pad"
+                            maxLength={8}
+                            variante="claro"
+                            error={!!errorDni}
+                            textoError={errorDni}
+                        />
+
+                        {consultandoDni && (
+                            <ActivityIndicator
+                                style={styles.indicadorDni}
+                                size="small"
+                                color={paletaColores.verde}
+                            />
+                        )}
+                    </View>
+
+                    {/* Confirmación de consulta exitosa */}
+                    {dniVerificado === dni && dni.length === 8 && (
+                        <View style={styles.mensajeExito}>
+                            <Ionicons
+                                name="checkmark-circle"
+                                size={18}
+                                color={paletaColores.verde}
+                            />
+                            <Text style={styles.textoExito}>
+                                Datos encontrados correctamente
+                            </Text>
+                        </View>
+                    )}
+
                     <CampoTexto
                         placeholder="Nombre completo"
                         nombreIcono="person-outline"
                         value={nombre}
-                        onChangeText={setNombre}
-                        autoCapitalize="words"
+                        editable={false}
                         variante="claro"
                     />
                     <CampoTexto
                         placeholder="Apellidos"
                         nombreIcono="person-outline"
                         value={apellidos}
-                        onChangeText={setApellidos}
-                        autoCapitalize="words"
+                        editable={false}
                         variante="claro"
                     />
-                    <CampoTexto
-                        placeholder="DNI"
-                        nombreIcono="card-outline"
-                        value={dni}
-                        onChangeText={setDni}
-                        keyboardType="numeric"
-                        maxLength={8}
-                        variante="claro"
-                    />
+
                     <Pressable
                         style={styles.dateInput}
                         onPress={() => setMostarCalendario(true)}
@@ -213,14 +341,25 @@ export default function DatosPersonalesConductor() {
                         value={contrasena}
                         onChangeText={setContrasena}
                         esPassword
+                        autoCapitalize="none"
+                        autoCorrect={false}
                         variante="claro"
                     />
+
+                    <MedidorPasswordSeguro
+                        contrasena={contrasena}
+                        longitudMinima={12}
+                        variante="claro"
+                    />
+
                     <CampoTexto
                         placeholder="Confirmar contraseña"
                         nombreIcono="lock-closed-outline"
                         value={confirmarContrasena}
                         onChangeText={setConfirmarContrasena}
                         esPassword
+                        autoCapitalize="none"
+                        autoCorrect={false}
                         variante="claro"
                     />
                 </View>
@@ -339,4 +478,30 @@ const styles = StyleSheet.create({
     datePlaceholder: {
         color: paletaColores.textoSecundarioClaro,
     },
+
+    contenedorDni: {
+        width: "100%",
+        position: "relative",
+    },
+
+    indicadorDni: {
+        position: "absolute",
+        right: 18,
+        top: 20,
+    },
+
+    mensajeExito: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 7,
+        marginTop: -4,
+        marginBottom: 4,
+    },
+
+    textoExito: {
+        color: paletaColores.verde,
+        fontSize: 13,
+        fontWeight: "600",
+    },
+
 })

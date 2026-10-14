@@ -35,7 +35,7 @@ export default function SolicitudEnviada() {
         } 
 
         if (estadoSolicitud === "RECHAZADA") {
-            router.replace("/registro-conductor/datos-personales");
+            router.replace("/registro-conductor");
             return;
         }
 

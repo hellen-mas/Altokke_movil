@@ -5,14 +5,20 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   contrasena: string;
+  longitudMinima?: number;
+  variante?: "oscuro" | "claro";
 }
 
-export function MedidorPasswordSeguro({ contrasena }: Props) {
-  const tieneMinLongitud = contrasena.length >= 8;
+export function MedidorPasswordSeguro({ 
+  contrasena,
+  longitudMinima = 8,
+  variante = "oscuro",
+}: Props) {
+  const tieneMinLongitud = contrasena.length >= longitudMinima;
   const tieneMayuscula = /[A-Z]/.test(contrasena);
   const tieneMinuscula = /[a-z]/.test(contrasena);
   const tieneNumero = /[0-9]/.test(contrasena);
-  const tieneSimbolo = /[\W_]/.test(contrasena);
+  const tieneSimbolo = /[^A-Za-z0-9]/.test(contrasena);
 
   const reglasCumplidas = [
     tieneMinLongitud,
@@ -53,14 +59,27 @@ export function MedidorPasswordSeguro({ contrasena }: Props) {
 
   const colorActual = colores[nivel as keyof typeof colores];
 
+  const colorTexto = variante === "claro"
+    ? paletaColores.textoClaro
+    : paletaColores.texto;
+
+  const colorSecundario = variante === "claro"
+    ? paletaColores.textoSecundarioClaro
+    : paletaColores.textoSecundario;
+
   const renderRequisito = (cumplido: boolean, texto: string) => (
     <View style={styles.requisitoFila}>
       <Ionicons 
         name={cumplido ? 'checkmark-circle' : 'ellipse-outline'} 
         size={18} 
-        color={cumplido ? paletaColores.exito : paletaColores.textoSecundario} 
+        color={cumplido ? paletaColores.exito : colorSecundario} 
       />
-      <Text style={[styles.textoRequisito, cumplido && styles.textoCumplido]}>
+      <Text 
+        style={[
+          styles.textoRequisito, 
+          { color: cumplido ? colorTexto : colorSecundario },
+          cumplido && { fontWeight: "500" },
+        ]}>
         {texto}
       </Text>
     </View>
@@ -81,13 +100,17 @@ export function MedidorPasswordSeguro({ contrasena }: Props) {
       </View>
       
       <View style={styles.textoContainer}>
-        <Text style={[styles.textoFuerza, { color: nivel > 0 ? colorActual : paletaColores.textoSecundario }]}>
+        <Text 
+          style={[
+            styles.textoFuerza, 
+            { color: nivel > 0 ? colorActual : colorSecundario },
+          ]}>
           {etiquetas[nivel as keyof typeof etiquetas]}
         </Text>
       </View>
 
       <View style={styles.requisitosContainer}>
-        {renderRequisito(tieneMinLongitud, 'Mínimo 8 caracteres')}
+        {renderRequisito(tieneMinLongitud,  `Mínimo ${longitudMinima} caracteres`)}
         {renderRequisito(tieneMayuscula && tieneMinuscula, 'Mayúsculas (A-Z) y minúsculas (a-z)')}
         {renderRequisito(tieneNumero, 'Al menos un número (0-9)')}
         {renderRequisito(tieneSimbolo, 'Símbolo especial (!, @, #, $, etc)')}
