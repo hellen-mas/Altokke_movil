@@ -1,9 +1,9 @@
+import { COLOR_CABECERA } from "@/constants/pasajero";
+import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLOR_CABECERA } from "@/constants/pasajero";
-import { paletaColores } from "@/paletaColores";
 
 interface Props {
   /** Texto grande bajo el logo (por ejemplo el saludo) */
@@ -13,6 +13,9 @@ interface Props {
   paddingInferior?: number;
   /** Contenido extra bajo el subtítulo (por ejemplo la barra de progreso del viaje) */
   children?: ReactNode;
+
+  /** Muesta el punto de aviso en la campana cuando hay notificaciones por leer */
+  hayNotificaciones?: boolean;
 }
 
 export function CabeceraPasajero({
@@ -20,6 +23,7 @@ export function CabeceraPasajero({
   subtitulo,
   paddingInferior = 14,
   children,
+  hayNotificaciones = false,
 }: Props) {
   const insets = useSafeAreaInsets();
 
@@ -38,9 +42,13 @@ export function CabeceraPasajero({
         />
         <Text style={styles.logoTexto}>Altokke</Text>
 
-        <View style={styles.avatar}>
-          <Ionicons name="person" size={22} color={paletaColores.textoSecundario} />
-          <View style={styles.avatarEnLinea} />
+        <View style={styles.botonNotificaciones}>
+          <Ionicons
+            name="notifications"
+            size={22}
+            color={paletaColores.textoSecundario}
+          />
+          {hayNotificaciones && <View style={styles.puntoNuevo} />}
         </View>
       </View>
 
@@ -77,7 +85,7 @@ const styles = StyleSheet.create({
     color: paletaColores.texto,
   },
 
-  avatar: {
+  botonNotificaciones: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -88,14 +96,14 @@ const styles = StyleSheet.create({
     borderColor: paletaColores.borde,
   },
 
-  avatarEnLinea: {
+  puntoNuevo: {
     position: "absolute",
     right: 0,
-    bottom: 0,
+    top: 0,
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: paletaColores.verde,
+    backgroundColor: paletaColores.error,
     borderWidth: 2,
     borderColor: COLOR_CABECERA,
   },
