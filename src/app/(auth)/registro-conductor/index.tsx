@@ -24,6 +24,7 @@ import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
 import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
 import { MedidorPasswordSeguro } from "@/components/ui";
 import { buscarDNI } from "@/utils/apiDNI";
+import { supabase } from "@/lib/supabase";
 
 export default function DatosPersonalesConductor() {
     const {
@@ -73,47 +74,81 @@ export default function DatosPersonalesConductor() {
     };
 
     useEffect(() => {
-        if (!/^\d{8}$/.test(dni)) {
-            return;
+    if (!/^\d{8}$/.test(dni)) {
+        return;
+    }
+
+    let cancelado = false;
+
+    const temporizador = setTimeout(async () => {
+        setConsultandoDni(true);
+        setErrorDni("");
+
+        try {
+        // 1. Consultar primero nuestra base de datos
+        const { data: usuarioExistente, error: dbError } =
+            await supabase
+            .from("usuarios")
+            .select("id")
+            .eq("dni", dni)
+            .maybeSingle();
+
+        if (cancelado) return;
+
+        // Si falla Supabase, detenemos la validación
+        if (dbError) {
+            throw new Error(
+            "No pudimos verificar si el DNI ya está registrado. Inténtalo nuevamente."
+            );
         }
 
-        // Permite ignorar respeustas de consultas antiguas
-        let cancelado = false;
+        // 2. Si ya existe, NO consultar la API
+        if (usuarioExistente) {
+            throw new Error(
+            "Este DNI ya está registrado en Altokke. Si es tu cuenta, inicia sesión."
+            );
+        }
 
-        const temporizador = setTimeout(async () => {
-            setConsultandoDni(true);
-            setErrorDni("");
+        // 3. Solo si no existe, consultar la API
+        const datos = await buscarDNI(dni);
 
-            try {
-                const datos = await buscarDNI(dni);
-                // Ignoramos la respuesta si el DNI cambió
-                if (cancelado) return;
+        if (cancelado) return;
 
-                if (!datos.nombres || !datos.apellidos) {
-                    throw new Error("La consulta no devolvió nombres y apellidos.");
-                }
+        if (!datos.nombres || !datos.apellidos) {
+            throw new Error(
+            "La consulta no devolvió nombres y apellidos."
+            );
+        }
 
-                setNombre(datos.nombres);
-                setApellidos(datos.apellidos);
-                setDniVerificado(dni);
-            } catch (error:unknown) {
-                if (cancelado) return;
+        // 4. Completar los datos
+        setNombre(datos.nombres);
+        setApellidos(datos.apellidos);
+        setDniVerificado(dni);
 
-                const mensaje = error instanceof Error ? error.message : "No se pudo consultar el DNI.";
-                setErrorDni(mensaje);
-                setDniVerificado("");
-            } finally {
-                if (!cancelado) {
-                    setConsultandoDni(false);
-                }
-            }
-        }, 500);
+        } catch (error: unknown) {
+        if (cancelado) return;
 
-        // Cancela el temporizador e invalida respuestas anteriores.
-        return () => {
-            cancelado = true;
-            clearTimeout(temporizador);
-        };
+        const mensaje =
+            error instanceof Error
+            ? error.message
+            : "No se pudo validar el DNI.";
+
+        setErrorDni(mensaje);
+        setDniVerificado("");
+        setNombre("");
+        setApellidos("");
+
+        } finally {
+        if (!cancelado) {
+            setConsultandoDni(false);
+        }
+        }
+    }, 500);
+
+    return () => {
+        cancelado = true;
+        clearTimeout(temporizador);
+    };
     }, [dni, setNombre, setApellidos]);
 
     const continuar = () => {
