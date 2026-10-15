@@ -32,7 +32,7 @@ export const CampoTexto = ({
     const esClaro = variante === "claro";
     const colorSecundario = esClaro
       ? paletaColores.textoSecundarioClaro
-      : paletaColores.textoSecundario;
+      : "#8FA198";
 
     return (
       <View style={estilos.envoltorio}>
@@ -46,7 +46,7 @@ export const CampoTexto = ({
           <Ionicons
             name={nombreIcono}
             size={24}
-            color={error ? "red" : colorSecundario}
+            color={error ? "#FF5E5E" : colorSecundario}
           />
 
           <TextInput
@@ -57,16 +57,19 @@ export const CampoTexto = ({
             ]}
             placeholderTextColor={colorSecundario}
             secureTextEntry={esPassword ? !visible : rest.secureTextEntry}
+            accessibilityLabel={rest.placeholder || "Campo de texto"}
             {...rest}
           />
           {esPassword && (
             <Pressable
               onPress={() => setVisible((prev) => !prev)}
               style={estilos.botonOjo}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel={
-                visible ? "Ocultar password" : "Mostrar password"
+                visible ? "Ocultar contraseña" : "Ver contraseña"
               }
+              accessibilityHint="Muestra u oculta los caracteres de la contraseña"
             >
               <Ionicons
                 name={visible ? "eye-outline" : "eye-off-outline"}
@@ -89,14 +92,15 @@ const estilos = StyleSheet.create({
   },
   contenedor: {
     width: "100%",
-    height: 60, // Increased for a11y
+    minHeight: 60,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: paletaColores.borde,
-    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.14)",
+    borderRadius: 16,
     backgroundColor: paletaColores.input,
   },
   contenedorClaro: {
@@ -104,24 +108,27 @@ const estilos = StyleSheet.create({
     borderColor: paletaColores.bordeClaro,
   },
   contenedorError: {
-    borderColor: "red",
+    borderColor: "#FF5E5E",
   },
   entrada: {
     flex: 1,
-    height: "100%",
-    fontSize: 18, // Increased for a11y
+    fontSize: 18,
     color: paletaColores.texto,
   },
   entradaClara: {
     color: paletaColores.textoClaro,
   },
   botonOjo: {
-    padding: 4,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   textoError: {
-    color: "red",
-    fontSize: 14, // Increased for a11y
-    marginTop: 4,
+    color: "#FF5E5E",
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 6,
     marginLeft: 8,
   },
 });

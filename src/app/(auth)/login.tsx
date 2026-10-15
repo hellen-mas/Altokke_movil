@@ -9,12 +9,12 @@ import {
 import { BotonRedesSociales } from "@/components/ui/BotonRedesSociales";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { paletaColores } from "@/paletaColores";
-import { Link, router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
+import { traducirErrorAuth } from "@/utils/erroresAuth";
 import * as AuthSession from "expo-auth-session";
+import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Keyboard, Pressable, StyleSheet, Text, View } from "react-native";
 import { obtenerEstadoConductor } from "@/services/estadoConductor";
 
 // Completo la sesion si vuelve de un navegador web
@@ -28,53 +28,44 @@ export default function LoginScreen() {
   const { login } = useAuth();
 
   const handleSession = async (user: any) => {
-    try {
-      // Usuario de Google que todavía no completó su registro
-      if (!user.user_metadata?.rol || !user.user_metadata?.dni) {
-        Alert.alert(
-          "¡Bienvenido a Altokke!",
-          "Completa tu registro seleccionando tu rol.",
-          [
-            {
-              text: "Continuar",
-              onPress: () => router.replace("/crear-cuenta"),
-            },
-          ]
-        );
-        return;
-      }
-
-      const rol = user.user_metadata.rol;
-
-      if (rol === "conductor") {
-        // Consultar primero el estado real en Supabase
-        await dirigirConductor(user.id);
-        login("conductor");
-        return;
-      }
-
-      if (rol === "pasajero") {
-        login("pasajero");
-        router.replace("/mapa");
-        return;
-      }
-
-      throw new Error("Rol de usuario no reconocido.");
-
-    } catch (error: any) {
-      console.error("Error al verificar acceso:", error);
-
+    if (!user.user_metadata?.rol || !user.user_metadata?.dni) {
       Alert.alert(
-        "No se pudo verificar tu cuenta",
-        error.message ||
-          "Intenta nuevamente en unos momentos."
+        "¡Bienvenido!",
+        "Completa tu registro seleccionando tu rol.",
+        [
+          {
+            text: "Continuar",
+            onPress: () => router.replace("/crear-cuenta"),
+          },
+        ]
       );
+      return;
     }
+
+    const rol = user.user_metadata.rol;
+
+    if (rol === "conductor") {
+      // Verificar la solicitud antes de permitir el acceso.
+      await obtenerEstadoConductor(user.id);
+
+      login("conductor");
+      router.replace("/(auth)/estado-solicitud");
+      return;
+    }
+
+    if (rol === "pasajero") {
+      login("pasajero");
+      router.replace("/mapa");
+      return;
+    }
+
+    throw new Error("Rol de usuario no reconocido.");
   };
 
   const handleLogin = async () => {
     if (loading) return;
 
+    Keyboard.dismiss();
     setCorreoError(false);
 
     if (!correo.trim() || !contrasena.trim()) {
@@ -95,8 +86,6 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      console.log("Iniciando sesión...");
-
       const { data, error } =
         await supabase.auth.signInWithPassword({
           email: correo.trim(),
@@ -109,24 +98,24 @@ export default function LoginScreen() {
         throw new Error("No se pudo obtener el usuario.");
       }
 
-      console.log("Sesión iniciada correctamente");
-
       await handleSession(data.user);
-
     } catch (error: any) {
-      console.error("ERROR LOGIN:", error);
+      console.error("Error de login:", error);
 
       Alert.alert(
         "No se pudo iniciar sesión",
-        error.message || "Intenta nuevamente."
+        traducirErrorAuth(
+          error,
+          "Comprueba tus datos e inténtalo nuevamente."
+        )
       );
-
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    Keyboard.dismiss();
     setLoading(true);
     try {
       const redirectUrl = AuthSession.makeRedirectUri();
@@ -170,96 +159,130 @@ export default function LoginScreen() {
           }
         }
       }
-    } catch {
-      Alert.alert("Error", "No se pudo iniciar sesión con Google.");
+    } catch (err: any) {
+      Alert.alert(
+        "Inicio con Google",
+        traducirErrorAuth(err, "No se pudo iniciar sesión con Google. Por favor, inténtalo nuevamente.")
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const dirigirConductor = async (
-      usuarioId: string
-    ) => {
-      console.log("Consultando estado del conductor...");
-      const estado = await obtenerEstadoConductor(usuarioId);
-      console.log("Estado del conductor:", estado);
-      router.replace("/(auth)/estado-solicitud");
+  const handleTerms = () => {
+    Alert.alert(
+      "Términos de Servicio",
+      "1. Uso del Servicio: Nuestra plataforma conecta a usuarios con opciones de transporte y movilidad de forma segura.\n2. Cuentas y Responsabilidad: Eres responsable de la veracidad de los datos registrados y del resguardo de tu cuenta.\n3. Seguridad y Convivencia: Nos reservamos el derecho de suspender cuentas que infrinjan las normas de seguridad de la comunidad.",
+      [{ text: "Entendido", style: "default" }]
+    );
+  };
+
+  const handlePrivacy = () => {
+    Alert.alert(
+      "Política de Privacidad",
+      "Protegemos tu información:\n\n1. Recopilación: Solo recolectamos los datos necesarios (correo, nombre, viajes) para la prestación del servicio.\n2. Seguridad: Tus credenciales y datos viajan cifrados bajo estándares de alta seguridad.\n3. Derechos: Tienes control total sobre tu cuenta y puedes gestionar tus datos en cualquier momento.",
+      [{ text: "Entendido", style: "default" }]
+    );
   };
 
   return (
     <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-      <EncabezadoLogo />
+      <View style={styles.topSection}>
+        <EncabezadoLogo sinMargenSuperior />
 
-      <View style={styles.headerContainer}>
-        <EncabezadoPagina
-          titulo={"Iniciar sesión\nen "}
-          tituloDestacado="Altokke"
-          descripcion={"Accede a tu cuenta y sigue\nmoviendo tu ciudad."}
-        />
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Iniciar "}
+            tituloDestacado="sesión"
+            descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
+          />
+        </View>
+
+        <View style={styles.formContainer}>
+          <CampoTexto
+            nombreIcono="mail-outline"
+            placeholder="Correo electrónico"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            value={correo}
+            onChangeText={setCorreo}
+            error={correoError}
+            textoError={correoError ? "Ingresa un correo electrónico válido" : undefined}
+          />
+
+          <CampoTexto
+            nombreIcono="lock-closed-outline"
+            placeholder="Contraseña"
+            esPassword
+            autoComplete="password"
+            textContentType="password"
+            value={contrasena}
+            onChangeText={setContrasena}
+          />
+
+          <Pressable
+            onPress={() => router.push("/recuperar-cuenta")}
+            hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
+            accessibilityRole="link"
+            accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
+            style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+          </Pressable>
+
+          <BotonPrincipal
+            titulo="Iniciar sesión"
+            cargando={loading}
+            onPress={handleLogin}
+            disabled={loading}
+          />
+        </View>
+
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>O continúa con</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <View style={styles.socialButtonsContainer}>
+          <BotonRedesSociales
+            titulo="Continuar con Google"
+            nombreIcono="logo-google"
+            colorIcono="#EA4335"
+            onPress={handleGoogleLogin}
+          />
+        </View>
       </View>
 
-      <View style={styles.formContainer}>
-        <CampoTexto
-          nombreIcono="mail-outline"
-          placeholder="Correo electrónico"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          textContentType="emailAddress"
-          value={correo}
-          onChangeText={setCorreo}
-          error={correoError}
-        />
-
-        <CampoTexto
-          nombreIcono="lock-closed-outline"
-          placeholder="Contraseña"
-          esPassword
-          autoComplete="password"
-          textContentType="password"
-          value={contrasena}
-          onChangeText={setContrasena}
-        />
-
-        <Link href={"/recuperar-cuenta"} style={styles.forgotPassword}>
-          ¿Olvidaste tu contraseña?
-        </Link>
-
-        <BotonPrincipal
-          titulo={loading ? "Entrando..." : "Entrar"}
-          onPress={handleLogin}
-          disabled={loading}
-        />
-      </View>
-
-      <View style={styles.dividerContainer}>
-        <View style={styles.divider} />
-        <Text style={styles.dividerText}>O continúa con</Text>
-        <View style={styles.divider} />
-      </View>
-
-      <View style={styles.socialButtonsContainer}>
-        <BotonRedesSociales
-          titulo="Continuar con Google"
-          nombreIcono="logo-google"
-          colorIcono="#EA4335"
-          onPress={handleGoogleLogin}
-        />
-      </View>
-
-      <View style={styles.footerContainer}>
+      <View style={styles.bottomContainer}>
         <PiePaginaAutenticacion
           textoPregunta="¿No tienes una cuenta?"
           textoEnlace="Crear cuenta"
-          ruta={"/crear-cuenta"}
-          mostrarBorde={false}
+          ruta="/crear-cuenta"
         />
-      </View>
 
-      <Text style={styles.disclaimerText}>
-        Al iniciar sesión, aceptas nuestros{"\n"}
-        Términos de servicio y Política de privacidad.
-      </Text>
+        <View style={styles.legalContainer}>
+          <Text style={styles.disclaimerText}>
+            Al iniciar sesión, aceptas nuestros{" "}
+            <Text
+              onPress={handleTerms}
+              style={styles.legalLink}
+            >
+              Términos de servicio
+            </Text>
+            {" "}y{" "}
+            <Text
+              onPress={handlePrivacy}
+              style={styles.legalLink}
+            >
+              Política de privacidad
+            </Text>
+            .
+          </Text>
+        </View>
+      </View>
     </ContenedorPantalla>
   );
 }
@@ -268,53 +291,74 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingTop: 8,
+    paddingBottom: 24,
+    justifyContent: "space-between",
+  },
+  topSection: {
+    gap: 4,
   },
   headerContainer: {
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  formContainer: {
-    gap: 16,
+    marginTop: 8,
     marginBottom: 24,
   },
+  formContainer: {
+    gap: 14,
+    marginBottom: 16,
+  },
   forgotPassword: {
-    color: paletaColores.verde,
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "right",
     alignSelf: "flex-end",
-    marginTop: -4,
-    marginBottom: 8,
+    marginTop: -2,
+    marginBottom: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  forgotPasswordText: {
+    color: "#2ECE79",
+    fontSize: 17,
+    fontWeight: "700",
+    textAlign: "right",
   },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
+    marginTop: 4,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: paletaColores.borde,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   dividerText: {
-    color: paletaColores.textoSecundario,
-    paddingHorizontal: 16,
-    fontSize: 14,
+    color: "#A8BCB2",
+    paddingHorizontal: 14,
+    fontSize: 15,
+    fontWeight: "500",
   },
   socialButtonsContainer: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 32,
+    marginBottom: 16,
   },
-  footerContainer: {
+  bottomContainer: {
     marginTop: "auto",
-    marginBottom: 24,
+    paddingTop: 12,
+    gap: 10,
+    alignItems: "center",
+  },
+  legalContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   disclaimerText: {
-    color: paletaColores.textoSecundario,
-    fontSize: 14,
+    color: "#A8BCB2",
+    fontSize: 15,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 22,
+  },
+  legalLink: {
+    color: "#2ECE79",
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
 });

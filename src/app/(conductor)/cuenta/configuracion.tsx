@@ -1,6 +1,7 @@
 import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
 import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
 import { OpcionCuenta } from "@/components/conductor/OpcionCuenta";
+import { useAuth } from "@/context/AuthContext";
 import { paletaColores } from "@/paletaColores";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
@@ -10,13 +11,22 @@ const mostrarProximamente = () => {
 };
 
 export default function ConfiguracionConductor() {
+  const { logout } = useAuth();
+
   const cerrarSesion = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que quieres salir de tu cuenta?", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Cerrar sesión",
         style: "destructive",
-        onPress: () => router.replace("/login"),
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+          }
+          router.replace("/(auth)/login");
+        },
       },
     ]);
   };

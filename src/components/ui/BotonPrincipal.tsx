@@ -6,6 +6,7 @@ import {
   StyleProp,
   StyleSheet,
   Text,
+  TextStyle,
   View,
   ViewStyle,
 } from "react-native";
@@ -15,15 +16,19 @@ export interface PropsBotonPrincipal {
   onPress?: () => void;
   alPresionar?: () => void;
   estilo?: StyleProp<ViewStyle>;
+  estiloTexto?: StyleProp<TextStyle>;
+  tamanoIcono?: number;
   cargando?: boolean;
   disabled?: boolean;
 }
 
-export function BotonPrincipal({ 
-  titulo, 
-  onPress, 
+export function BotonPrincipal({
+  titulo,
+  onPress,
   alPresionar,
   estilo,
+  estiloTexto,
+  tamanoIcono,
   cargando,
   disabled
 }: PropsBotonPrincipal) {
@@ -40,16 +45,22 @@ export function BotonPrincipal({
       ]}
       disabled={disabled || cargando}
       onPress={funcionAccion}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityRole="button"
+      accessibilityLabel={titulo}
+      accessibilityState={{ disabled: disabled || cargando, busy: cargando }}
     >
       {cargando ? (
         <ActivityIndicator color={paletaColores.textoOscuro} />
       ) : (
         <View style={estilos.contenido}>
-          <Text style={estilos.texto}>{titulo}</Text>
-          <Ionicons 
-            name="arrow-forward" 
-            size={26} 
-            color={paletaColores.textoOscuro} 
+          <Text style={[estilos.texto, estiloTexto]} numberOfLines={2}>
+            {titulo}
+          </Text>
+          <Ionicons
+            name="arrow-forward"
+            size={tamanoIcono ?? 24}
+            color={paletaColores.textoOscuro}
           />
         </View>
       )}
@@ -60,30 +71,33 @@ export function BotonPrincipal({
 const estilos = StyleSheet.create({
   boton: {
     width: "100%",
-    height: 56,
+    minHeight: 60,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: paletaColores.boton,
-    borderRadius: 16,
+    borderRadius: 18,
     marginTop: 3,
   },
-  texto: { 
-    fontSize: 19, 
-    lineHeight: 24, 
-    fontWeight: "700", 
-    color: paletaColores.textoOscuro, 
+  texto: {
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+    color: paletaColores.textoOscuro,
+    textAlign: "center",
   },
   disabled: {
     backgroundColor: "#A0A0A0",
   },
-  presionado: { 
-    transform: [{ scale: 0.98 }] 
+  presionado: {
+    transform: [{ scale: 0.98 }]
   },
   contenido: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 20,
+    gap: 12,
   },
 });
 

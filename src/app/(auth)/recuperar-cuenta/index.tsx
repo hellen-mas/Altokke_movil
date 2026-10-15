@@ -4,10 +4,11 @@ import {
   ContenedorPantalla,
   EncabezadoLogo,
   EncabezadoPagina,
+  PiePaginaAutenticacion,
 } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
-import { paletaColores } from "@/paletaColores";
-import { Link, router } from "expo-router";
+import { traducirErrorAuth } from "@/utils/erroresAuth";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
@@ -35,7 +36,7 @@ export default function RecuperarPasswordScreen() {
 
     setLoading(true);
 
-    // Pido a Supabase el envio del codigo OTP para restablecer la contraseña
+    // Pido a Supabase el envío del código OTP para restablecer la contraseña
     const { error } = await supabase.auth.resetPasswordForEmail(correo.trim());
 
     setLoading(false);
@@ -43,12 +44,15 @@ export default function RecuperarPasswordScreen() {
     if (error) {
       Alert.alert(
         "Error al enviar código",
-        error.message || "No se pudo enviar el código. Revisa que el correo esté registrado e inténtalo nuevamente."
+        traducirErrorAuth(
+          error,
+          "No se pudo enviar el código. Revisa que el correo esté registrado e inténtalo nuevamente."
+        )
       );
       return;
     }
 
-    // Envie el correo como parametro para que el @ pase sin errores en la URL
+    // Envío el correo como parámetro codificado
     router.push(
       `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(correo.trim())}`,
     );
@@ -56,42 +60,44 @@ export default function RecuperarPasswordScreen() {
 
   return (
     <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-      <View style={styles.content}>
-        <EncabezadoLogo />
+      <View style={styles.topSection}>
+        <EncabezadoLogo sinMargenSuperior />
 
-        <EncabezadoPagina
-          titulo={"Recuperar\ncuenta"}
-          tituloDestacado=""
-          descripcion="Ingresa tu correo o teléfono para recuperar tu acceso."
-        />
-
-        <View style={styles.inputContainer}>
-          <CampoTexto
-            nombreIcono="mail-outline"
-            placeholder="Correo electrónico o teléfono"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={correo}
-            onChangeText={setCorreo}
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Recuperar "}
+            tituloDestacado="cuenta"
+            descripcion="Ingresa tu correo para recibir un código de recuperación."
           />
         </View>
 
-        <BotonPrincipal
-          titulo={loading ? "Enviando código..." : "Continuar"}
-          onPress={handleContinuar}
-          disabled={loading}
-          estilo={styles.button}
-        />
+        <View style={styles.formContainer}>
+          <CampoTexto
+            nombreIcono="mail-outline"
+            placeholder="Correo electrónico"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            value={correo}
+            onChangeText={setCorreo}
+          />
 
-        <Link href={"/login"} style={styles.secondaryLink}>
-          Usa otra forma de recuperación
-        </Link>
+          <BotonPrincipal
+            titulo="Continuar"
+            cargando={loading}
+            onPress={handleContinuar}
+            disabled={loading}
+          />
+        </View>
       </View>
 
-      <View style={styles.footer}>
-        <Link href={"/login"} style={styles.secondaryLink}>
-          Volver al inicio
-        </Link>
+      <View style={styles.bottomContainer}>
+        <PiePaginaAutenticacion
+          textoPregunta="¿Recordaste tu contraseña?"
+          textoEnlace="Iniciar sesión"
+          ruta="/login"
+        />
       </View>
     </ContenedorPantalla>
   );
@@ -99,29 +105,24 @@ export default function RecuperarPasswordScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  content: {
-    flex: 1,
     paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
-  inputContainer: {
-    marginTop: 30,
-    marginBottom: 40,
+  topSection: {
+    gap: 4,
   },
-  button: {
-    marginBottom: 30,
+  headerContainer: {
+    marginTop: 8,
+    marginBottom: 26,
   },
-  secondaryLink: {
-    color: paletaColores.verde,
-    fontSize: 16,
-    fontWeight: "500",
-    textAlign: "center",
+  formContainer: {
+    gap: 24,
+    marginBottom: 24,
   },
-  footer: {
-    paddingBottom: 40,
+  bottomContainer: {
+    marginTop: 10,
     alignItems: "center",
-    marginTop: "auto",
   },
 });

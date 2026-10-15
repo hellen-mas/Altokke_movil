@@ -156,7 +156,7 @@ Debes poner las credenciales de la base de datos y crea un archivo llamado `.env
 
 ```env
 EXPO_PUBLIC_SUPABASE_URL=aqui_va_la_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=aqui_va_la_key
+EXPO_PUBLIC_SUPABASE_KEY=aqui_va_la_key
 ```
 
 ## 4. Iniciar Expo

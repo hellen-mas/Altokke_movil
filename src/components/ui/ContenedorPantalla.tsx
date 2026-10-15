@@ -1,7 +1,6 @@
 import { paletaColores } from "@/paletaColores";
 import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Platform, ScrollView } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface PropsContenedorPantalla {

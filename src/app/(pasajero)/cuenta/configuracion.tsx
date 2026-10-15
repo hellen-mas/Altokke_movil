@@ -1,7 +1,7 @@
-import { ScrollView, StyleSheet, View } from "react-native";
 import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
 import { ItemMenu } from "@/components/cuenta/ItemMenu";
 import { paletaColores } from "@/paletaColores";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function Configuracion() {
   return (

@@ -1,52 +1,57 @@
 import {
   BotonPrincipal,
+  ContenedorPantalla,
   EncabezadoLogo,
+  EncabezadoPagina,
   PiePaginaAutenticacion,
   TarjetaRol,
 } from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "@/lib/supabase";
+import { StyleSheet, View } from "react-native";
 
-type RolSeleccionado = "pasajero" | "conductor" | null;
+type RolSeleccionado = "pasajero" | "conductor";
 
 export default function CrearCuentaScreen() {
   const [selectedRole, setSelectedRole] = useState<RolSeleccionado>("pasajero");
   const router = useRouter();
 
   const handleContinue = async () => {
-    // Si ya inicio con Google salta correo y contraseña y va directo a verificar su identidad
+    // Si ya inició con Google salta correo/contraseña y va directo a verificar su identidad
     const { data } = await supabase.auth.getSession();
     const hasSession = !!data.session;
 
     if (selectedRole === "pasajero") {
-      router.push("/registro-pasajero");
-    } else if (selectedRole === "conductor") {
-      router.push("/registro-conductor");
+      router.push(
+        hasSession ? "/registro-pasajero/verificacion" : "/registro-pasajero"
+      );
+    } else {
+      router.push(
+        hasSession
+          ? "/registro-conductor/identidad-oficial"
+          : "/registro-conductor"
+      );
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <EncabezadoLogo />
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <View style={styles.topSection}>
+        <EncabezadoLogo sinMargenSuperior />
 
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.title}>
-            Crear <Text style={styles.titleHighlight}>cuenta</Text>
-          </Text>
-          <Text style={styles.subtitle}>
-            Primero elige cómo deseas{"\n"}registrarte en Altokke.
-          </Text>
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Crear "}
+            tituloDestacado="cuenta"
+            descripcion="Elige cómo deseas comenzar."
+          />
         </View>
 
         <View style={styles.cardsContainer}>
           <TarjetaRol
             titulo="Cuenta de pasajero"
-            subtitulo="Pide mototaxis para ti y tu familia."
+            subtitulo="Pide mototaxis para ti y tu familia de forma rápida."
             nombreIcono="people-outline"
             seleccionado={selectedRole === "pasajero"}
             onPress={() => setSelectedRole("pasajero")}
@@ -59,58 +64,44 @@ export default function CrearCuentaScreen() {
             onPress={() => setSelectedRole("conductor")}
           />
         </View>
-
-        <View style={styles.spacer} />
-
-        <BotonPrincipal titulo="Continuar" onPress={handleContinue} />
-
-        <View style={styles.footerContainer}>
-          <PiePaginaAutenticacion
-            textoPregunta="¿Ya tienes cuenta?"
-            ruta={"/login"}
-            textoEnlace="Iniciar sesión"
-            mostrarBorde={false}
-          />
-        </View>
       </View>
-    </SafeAreaView>
+
+      <View style={styles.bottomContainer}>
+        <BotonPrincipal
+          titulo="Continuar"
+          onPress={handleContinue}
+        />
+
+        <PiePaginaAutenticacion
+          textoPregunta="¿Ya tienes una cuenta?"
+          ruta="/login"
+          textoEnlace="Iniciar sesión"
+        />
+      </View>
+    </ContenedorPantalla>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: paletaColores.fondo,
-  },
-  container: {
-    flex: 1,
+  scrollContent: {
     paddingHorizontal: 24,
+    paddingTop: 8,
     paddingBottom: 32,
+    flexGrow: 1,
   },
-  headerTextContainer: {
-    marginBottom: 32,
+  topSection: {
+    gap: 4,
   },
-  title: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: paletaColores.texto,
-    marginBottom: 8,
-  },
-  titleHighlight: {
-    color: paletaColores.verde,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: paletaColores.textoSecundario,
-    lineHeight: 24,
+  headerContainer: {
+    marginTop: 8,
+    marginBottom: 22,
   },
   cardsContainer: {
-    marginTop: 8,
+    marginTop: 6,
+    marginBottom: 6,
   },
-  spacer: {
-    flex: 1,
-  },
-  footerContainer: {
-    marginTop: 16,
+  bottomContainer: {
+    marginTop: 24,
+    gap: 32,
   },
 });

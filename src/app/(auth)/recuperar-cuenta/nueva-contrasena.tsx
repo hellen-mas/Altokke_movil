@@ -3,16 +3,18 @@ import {
   CampoTexto,
   ContenedorPantalla,
   EncabezadoLogo,
+  EncabezadoPagina,
+  MedidorPasswordSeguro,
+  PiePaginaAutenticacion,
 } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
-import { paletaColores } from "@/paletaColores";
+import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { esquemaNuevaContrasena } from "@/utils/validaciones";
-import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { Alert, StyleSheet, View } from "react-native";
 
 export default function NuevoPasswordScreen() {
   const [loading, setLoading] = useState(false);
@@ -25,10 +27,11 @@ export default function NuevoPasswordScreen() {
     },
   });
 
+  const passwordActual = useWatch({ control, name: "password" }) || "";
+
   const onSubmit = async (data: any) => {
     setLoading(true);
 
-    // Actualizo la contraseña del usuario en Supabase
     const { error } = await supabase.auth.updateUser({
       password: data.password,
     });
@@ -37,168 +40,120 @@ export default function NuevoPasswordScreen() {
       setLoading(false);
       Alert.alert(
         "Error al actualizar",
-        error.message || "No se pudo actualizar la contraseña. Es posible que el enlace haya expirado."
+        traducirErrorAuth(
+          error,
+          "No se pudo actualizar la contraseña. Es posible que el enlace haya expirado."
+        )
       );
       return;
     }
 
-    // Cierro la sesion temporal para que el usuario inicie sesión con su nueva clave
     await supabase.auth.signOut();
     setLoading(false);
 
-    Alert.alert("Éxito", "La contraseña se actualizó correctamente. Por favor inicia sesión.");
-    router.replace("/login");
+    Alert.alert(
+      "Contraseña actualizada",
+      "Tu contraseña se actualizó correctamente. Por favor inicia sesión con tu nueva clave.",
+      [
+        {
+          text: "Iniciar sesión",
+          onPress: () => router.replace("/login"),
+        },
+      ]
+    );
   };
 
   const onError = () => {
     Alert.alert(
-      "Error",
-      "Las contraseñas no coinciden o no cumplen con los requisitos mínimos.",
+      "Datos incompletos",
+      "Las contraseñas no coinciden o no cumplen con los requisitos mínimos de seguridad.",
     );
   };
 
   return (
-    <ContenedorPantalla estiloContenedorContenido={styles.scrollContainer}>
-      <EncabezadoLogo />
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <View style={styles.topSection}>
+        <EncabezadoLogo sinMargenSuperior />
 
-      <Text style={styles.title}>Crear nueva contraseña</Text>
-      <Text style={styles.subtitle}>
-        Crea una contraseña fuerte y segura para proteger tu cuenta.
-      </Text>
-
-      <View style={styles.formContainer}>
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, value } }) => (
-            <CampoTexto
-              nombreIcono="lock-closed-outline"
-              placeholder="Nueva contraseña"
-              esPassword
-              value={value}
-              onChangeText={onChange}
-            />
-          )}
-        />
-
-        <Controller
-          control={control}
-          name="confirmPassword"
-          render={({ field: { onChange, value } }) => (
-            <CampoTexto
-              nombreIcono="lock-closed-outline"
-              placeholder="Confirmar nueva contraseña"
-              esPassword
-              value={value}
-              onChangeText={onChange}
-            />
-          )}
-        />
-
-        <View style={styles.requirementsContainer}>
-          <RequirementItem text="Al menos 8 caracteres" checked={true} />
-          <RequirementItem text="Un número" checked={true} />
-          <RequirementItem
-            text="Un carácter especial (ej: @ # $ % & *)"
-            checked={true}
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Nueva "}
+            tituloDestacado="contraseña"
+            descripcion="Crea una contraseña segura para proteger tu cuenta."
           />
-          <RequirementItem text="Una mayúscula" checked={true} />
         </View>
 
-        <BotonPrincipal
-          titulo={loading ? "Guardando..." : "Guardar contraseña"}
-          onPress={handleSubmit(onSubmit, onError)}
-          disabled={loading}
-          estilo={styles.submitButton}
-        />
+        <View style={styles.formContainer}>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <CampoTexto
+                nombreIcono="lock-closed-outline"
+                placeholder="Nueva contraseña"
+                esPassword
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+
+          <MedidorPasswordSeguro contrasena={passwordActual} />
+
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, value } }) => (
+              <CampoTexto
+                nombreIcono="lock-closed-outline"
+                placeholder="Confirmar nueva contraseña"
+                esPassword
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+
+          <BotonPrincipal
+            titulo="Guardar contraseña"
+            cargando={loading}
+            onPress={handleSubmit(onSubmit, onError)}
+            disabled={loading}
+          />
+        </View>
       </View>
 
-      <View style={styles.footerContainer}>
-        <Link href={"/login"} style={styles.backLink}>
-          Volver al inicio
-        </Link>
+      <View style={styles.bottomContainer}>
+        <PiePaginaAutenticacion
+          textoPregunta="¿Deseas cancelar?"
+          textoEnlace="Iniciar sesión"
+          ruta="/login"
+        />
       </View>
     </ContenedorPantalla>
   );
 }
 
-function RequirementItem({
-  text,
-  checked,
-}: {
-  text: string;
-  checked: boolean;
-}) {
-  return (
-    <View style={styles.requirementItem}>
-      <Ionicons
-        name="checkmark"
-        size={18}
-        color={checked ? paletaColores.verde : paletaColores.textoSecundario}
-      />
-      <Text
-        style={[
-          styles.requirementText,
-          checked && styles.requirementTextChecked,
-        ]}
-      >
-        {text}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
+  scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 100,
+    paddingTop: 8,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
-  title: {
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: "700",
-    color: paletaColores.texto,
-    marginTop: 10,
-    marginBottom: 12,
+  topSection: {
+    gap: 4,
   },
-  subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: paletaColores.textoSecundario,
-    marginBottom: 32,
+  headerContainer: {
+    marginTop: 8,
+    marginBottom: 26,
   },
   formContainer: {
-    gap: 16,
+    gap: 18,
+    marginBottom: 20,
   },
-  requirementsContainer: {
-    marginTop: 8,
-    marginBottom: 16,
-    gap: 10,
-  },
-  requirementItem: {
-    flexDirection: "row",
+  bottomContainer: {
+    marginTop: 14,
     alignItems: "center",
-    gap: 8,
-  },
-  requirementText: {
-    fontSize: 16,
-    color: paletaColores.textoSecundario,
-  },
-  requirementTextChecked: {
-    color: paletaColores.texto,
-  },
-  submitButton: {
-    marginTop: 8,
-  },
-  footerContainer: {
-    marginTop: "auto",
-    paddingTop: 32,
-    alignItems: "center",
-  },
-  backLink: {
-    color: paletaColores.verde,
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

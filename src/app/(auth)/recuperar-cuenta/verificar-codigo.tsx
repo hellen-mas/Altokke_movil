@@ -3,22 +3,25 @@ import {
   CampoCodigoVerificacion,
   ContenedorPantalla,
   EncabezadoLogo,
+  EncabezadoPagina,
+  PiePaginaAutenticacion,
 } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
-import { paletaColores } from "@/paletaColores";
+import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function VerificacionCodigoScreen() {
-  // Saco el correo que llego como parametro en la URL
   const { email } = useLocalSearchParams<{ email: string }>();
 
   const [codigo, setCodigo] = useState("");
   const [timer, setTimer] = useState(58);
   const [loading, setLoading] = useState(false);
   const [reenviando, setReenviando] = useState(false);
+  const [intentosFallidos, setIntentosFallidos] = useState(0);
+  const [bloqueadoHasta, setBloqueadoHasta] = useState<number | null>(null);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -27,11 +30,19 @@ export default function VerificacionCodigoScreen() {
         setTimer((prev) => prev - 1);
       }, 1000);
     }
-    // Limpio el intervalo para no dejar nada colgado
     return () => clearInterval(interval);
   }, [timer]);
 
   const handleVerificar = async () => {
+    if (bloqueadoHasta && Date.now() < bloqueadoHasta) {
+      const segundosRestantes = Math.ceil((bloqueadoHasta - Date.now()) / 1000);
+      Alert.alert(
+        "Demasiados intentos",
+        `Has superado el límite de intentos permitidos. Por seguridad, espera ${segundosRestantes} segundos antes de volver a intentar.`
+      );
+      return;
+    }
+
     if (codigo.length < 6) {
       Alert.alert(
         "Código incompleto",
@@ -42,37 +53,69 @@ export default function VerificacionCodigoScreen() {
 
     setLoading(true);
 
-    // Valido el codigo OTP de recuperacion en Supabase
-    const { error } = await supabase.auth.verifyOtp({
-      email: email || "",
-      token: codigo.trim(),
-      type: "recovery",
-    });
-
-    setLoading(false);
-
-    if (error) {
-      Alert.alert(
-        "Código incorrecto",
-        "El código OTP es inválido o ha expirado. Por favor, solicita uno nuevo."
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("La verificación tardó demasiado. Por favor verifica tu conexión e inténtalo de nuevo.")),
+          10000
+        )
       );
-      return;
-    }
 
-    // Paso a la pantalla donde se define la nueva contraseña
-    router.push("/recuperar-cuenta/nueva-contrasena");
+      const { error } = await Promise.race([
+        supabase.auth.verifyOtp({
+          email: email || "",
+          token: codigo.trim(),
+          type: "recovery",
+        }),
+        timeoutPromise,
+      ]);
+
+      setLoading(false);
+
+      if (error) {
+        const nuevosIntentos = intentosFallidos + 1;
+        setIntentosFallidos(nuevosIntentos);
+
+        if (nuevosIntentos >= 5) {
+          setBloqueadoHasta(Date.now() + 5 * 60 * 1000); // 5 minutos de bloqueo
+          Alert.alert(
+            "Acceso temporalmente bloqueado",
+            "Has alcanzado el límite de 5 intentos fallidos. Por seguridad, la verificación se ha bloqueado durante 5 minutos."
+          );
+          return;
+        }
+
+        Alert.alert(
+          "Código incorrecto",
+          `${traducirErrorAuth(
+            error,
+            "El código OTP es inválido o ha expirado. Por favor solicita uno nuevo."
+          )} (Intentos restantes: ${5 - nuevosIntentos})`
+        );
+        return;
+      }
+
+      setIntentosFallidos(0);
+      setBloqueadoHasta(null);
+      router.push("/recuperar-cuenta/nueva-contrasena");
+    } catch (err: any) {
+      setLoading(false);
+      Alert.alert(
+        "Error de verificación",
+        err?.message || "No se pudo verificar el código. Verifica tu conexión a internet."
+      );
+    }
   };
 
   const handleReenviar = async () => {
     if (timer > 0 || reenviando) return;
     if (!email) {
-      Alert.alert("Error", "No se encontró el correo electrónico para reenviar el código.");
+      Alert.alert("Correo no encontrado", "No se encontró el correo electrónico para reenviar el código.");
       return;
     }
 
     setReenviando(true);
 
-    // Vuelvo a pedir el envio del codigo de recuperacion a Supabase
     const { error } = await supabase.auth.resetPasswordForEmail(email);
 
     setReenviando(false);
@@ -80,7 +123,7 @@ export default function VerificacionCodigoScreen() {
     if (error) {
       Alert.alert(
         "Error al reenviar",
-        error.message || "No se pudo reenviar el código. Inténtalo más tarde."
+        traducirErrorAuth(error, "No se pudo reenviar el código. Inténtalo más tarde.")
       );
       return;
     }
@@ -91,127 +134,118 @@ export default function VerificacionCodigoScreen() {
 
   return (
     <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-      <View style={styles.container}>
-        <EncabezadoLogo />
-        <Text style={styles.title}>Verificar cuenta</Text>
-        <Text style={styles.subtitle}>
-          Se ha enviado un código de 6 dígitos a{"\n"}
-          {email || "tu correo electrónico"}
-        </Text>
-        <CampoCodigoVerificacion numeroDigitos={6} onChangeText={setCodigo} />
-        <View style={styles.timerContainer}>
-          <Ionicons
-            name="time-outline"
-            size={16}
-            color={paletaColores.textoSecundario}
+      <View style={styles.topSection}>
+        <EncabezadoLogo sinMargenSuperior />
+
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Verificar "}
+            tituloDestacado="código"
+            descripcion={`Hemos enviado un código de 6 dígitos a:\n${email || "tu correo"}`}
           />
-          <Text style={styles.timerText}>
-            {timer > 0
-              ? `Reenviar código en 00:${timer.toString().padStart(2, "0")}`
-              : "Puedes reenviar el código"}
-          </Text>
         </View>
-        <BotonPrincipal
-          titulo={loading ? "Verificando..." : "Verificar"}
-          onPress={handleVerificar}
-          disabled={loading}
-          estilo={styles.verifyButton}
-        />
-        <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>¿No recibiste el código? </Text>
-          <Pressable onPress={handleReenviar} disabled={timer > 0 || reenviando}>
-            <Text
-              style={[
-                styles.resendLink,
-                (timer > 0 || reenviando) && { opacity: 0.5 },
-              ]}
-            >
-              {reenviando ? "Reenviando..." : "Reenviar"}
+
+        <View style={styles.codeContainer}>
+          <CampoCodigoVerificacion numeroDigitos={6} onChangeText={setCodigo} />
+
+          <View style={styles.timerContainer}>
+            <Ionicons
+              name="time-outline"
+              size={18}
+              color="#2ECE79"
+            />
+            <Text style={styles.timerText}>
+              {timer > 0
+                ? `Reenviar código en 00:${timer.toString().padStart(2, "0")}`
+                : "Ya puedes solicitar otro código"}
             </Text>
-          </Pressable>
-        </View>
-        <View style={styles.footerContainer}>
-          <Link href={"/login"} asChild>
-            <Pressable>
-              <Text style={styles.footerText}>Volver al inicio</Text>
+          </View>
+
+          <BotonPrincipal
+            titulo="Verificar código"
+            cargando={loading}
+            onPress={handleVerificar}
+            disabled={loading || codigo.length < 6}
+          />
+
+          <View style={styles.resendContainer}>
+            <Text style={styles.resendText}>¿No recibiste el código? </Text>
+            <Pressable
+              onPress={handleReenviar}
+              disabled={timer > 0 || reenviando}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text
+                style={[
+                  styles.resendLink,
+                  (timer > 0 || reenviando) && { opacity: 0.5 },
+                ]}
+              >
+                {reenviando ? "Reenviando..." : "Reenviar"}
+              </Text>
             </Pressable>
-          </Link>
+          </View>
         </View>
+      </View>
+
+      <View style={styles.bottomContainer}>
+        <PiePaginaAutenticacion
+          textoPregunta="¿No es tu correo?"
+          textoEnlace="Cambiar"
+          ruta="/recuperar-cuenta"
+        />
       </View>
     </ContenedorPantalla>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: paletaColores.fondo,
-  },
-  keyboardView: {
-    flex: 1,
-  },
   scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  container: {
-    flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
-  title: {
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: "700",
-    color: paletaColores.texto,
-    marginTop: 20,
-    marginBottom: 12,
+  topSection: {
+    gap: 4,
   },
-  subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: paletaColores.texto,
-    marginBottom: 10,
+  headerContainer: {
+    marginTop: 8,
+    marginBottom: 26,
+  },
+  codeContainer: {
+    gap: 20,
+    marginBottom: 20,
   },
   timerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 12,
-    marginBottom: 40,
-    gap: 6,
+    gap: 8,
+    marginTop: 4,
   },
   timerText: {
-    color: paletaColores.textoSecundario,
+    color: "#C2D4CB",
     fontSize: 16,
-  },
-  verifyButton: {
-    marginTop: 10,
+    fontWeight: "500",
   },
   resendContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 24,
+    alignItems: "center",
+    marginTop: 8,
   },
   resendText: {
-    color: paletaColores.textoSecundario,
+    color: "#C2D4CB",
     fontSize: 16,
   },
   resendLink: {
-    color: paletaColores.verde,
+    color: "#2ECE79",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "800",
   },
-  footerContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
+  bottomContainer: {
+    marginTop: 14,
     alignItems: "center",
-    marginBottom: 40,
-    marginTop: 40,
-  },
-  footerText: {
-    color: paletaColores.textoSecundario,
-    fontSize: 16,
-    fontWeight: "500",
   },
 });

@@ -1,4 +1,3 @@
-import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -20,6 +19,11 @@ export function TarjetaRol({
   return (
     <Pressable
       onPress={onPress}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: seleccionado }}
+      accessibilityLabel={`${titulo}: ${subtitulo}`}
+      accessibilityHint="Toca para seleccionar este tipo de cuenta"
       style={({ pressed }) => [
         estilos.tarjeta,
         seleccionado ? estilos.tarjetaSeleccionada : estilos.tarjetaNoSeleccionada,
@@ -36,26 +40,42 @@ export function TarjetaRol({
       >
         <Ionicons
           name={nombreIcono}
-          size={32}
-          color={seleccionado ? paletaColores.textoOscuro : paletaColores.textoSecundario}
+          size={30}
+          color={seleccionado ? "#051A10" : "#8A9C92"}
         />
       </View>
       <View style={estilos.contenedorTexto}>
-        <Text style={estilos.titulo}>{titulo}</Text>
-        <Text style={estilos.subtitulo}>{subtitulo}</Text>
+        <Text
+          style={[
+            estilos.titulo,
+            seleccionado ? estilos.tituloSeleccionado : estilos.tituloNoSeleccionado,
+          ]}
+        >
+          {titulo}
+        </Text>
+        <Text
+          style={[
+            estilos.subtitulo,
+            seleccionado
+              ? estilos.subtituloSeleccionado
+              : estilos.subtituloNoSeleccionado,
+          ]}
+        >
+          {subtitulo}
+        </Text>
       </View>
       <View style={estilos.contenedorCheck}>
         {seleccionado ? (
           <Ionicons
             name="checkmark-circle"
             size={32}
-            color={paletaColores.boton}
+            color="#2ECE79"
           />
         ) : (
           <Ionicons
             name="ellipse-outline"
             size={32}
-            color={paletaColores.textoSecundario}
+            color="rgba(255, 255, 255, 0.22)"
           />
         )}
       </View>
@@ -67,22 +87,25 @@ const estilos = StyleSheet.create({
   tarjeta: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 20,
+    minHeight: 104,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginBottom: 18,
   },
   tarjetaPresionada: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.82,
+    transform: [{ scale: 0.985 }],
   },
   tarjetaSeleccionada: {
-    borderColor: paletaColores.boton,
-    backgroundColor: paletaColores.tarjeta,
+    borderWidth: 2,
+    borderColor: "#2ECE79",
+    backgroundColor: "rgba(46, 206, 121, 0.13)",
   },
   tarjetaNoSeleccionada: {
-    borderColor: paletaColores.borde,
-    backgroundColor: paletaColores.superficie,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.09)",
+    backgroundColor: "rgba(255, 255, 255, 0.035)",
   },
   contenedorIcono: {
     width: 56,
@@ -92,26 +115,39 @@ const estilos = StyleSheet.create({
     alignItems: "center",
   },
   contenedorIconoSeleccionado: {
-    backgroundColor: paletaColores.boton,
+    backgroundColor: "#2ECE79",
   },
   contenedorIconoNoSeleccionado: {
-    backgroundColor: paletaColores.fondo,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
   contenedorTexto: {
     flex: 1,
     marginLeft: 16,
-    marginRight: 16,
+    marginRight: 12,
   },
   titulo: {
-    color: paletaColores.texto,
-    fontSize: 20, // Increased for accessibility
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontSize: 21,
+    marginBottom: 6,
+  },
+  tituloSeleccionado: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+  },
+  tituloNoSeleccionado: {
+    color: "#E2ECE6",
+    fontWeight: "700",
   },
   subtitulo: {
-    color: paletaColores.textoSecundario,
-    fontSize: 16, // Increased for accessibility
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 24,
+  },
+  subtituloSeleccionado: {
+    color: "#EDF7F2",
+    fontWeight: "500",
+  },
+  subtituloNoSeleccionado: {
+    color: "#C2D4CB",
+    fontWeight: "400",
   },
   contenedorCheck: {
     justifyContent: "center",

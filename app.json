@@ -21,7 +21,8 @@
     "plugins": [
       "expo-router",
       "@react-native-community/datetimepicker",
-      "expo-image"
+      "expo-image",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": false,

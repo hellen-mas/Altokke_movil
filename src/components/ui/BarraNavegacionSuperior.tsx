@@ -26,14 +26,22 @@ export function BarraNavegacionSuperior({
 
   return (
     <View style={[estilos.cabeceraSuperior, estilo]}>
-      <Pressable onPress={manejarRegreso} style={estilos.botonAtras} hitSlop={10}>
+      <Pressable
+        onPress={manejarRegreso}
+        style={estilos.botonAtras}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Regresar a la pantalla anterior"
+      >
         <Ionicons name="arrow-back" size={24} color={paletaColores.texto} />
       </Pressable>
       
-      <Text style={estilos.tituloCabecera}>{titulo}</Text>
+      <Text style={estilos.tituloCabecera} numberOfLines={1}>
+        {titulo}
+      </Text>
       
       <View style={estilos.contenedorDerecho}>
-        {componenteDerecho ? componenteDerecho : <View style={{ width: 24 }} />}
+        {componenteDerecho ?? <View style={estilos.espacioDerecho} />}
       </View>
     </View>
   );
@@ -45,11 +53,13 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
-    paddingTop: 10,
+    paddingTop: 6,
   },
   botonAtras: {
-    padding: 4,
-    width: 40,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   tituloCabecera: {
     flex: 1,
@@ -59,7 +69,12 @@ const estilos = StyleSheet.create({
     color: paletaColores.texto,
   },
   contenedorDerecho: {
-    width: 80,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
     alignItems: 'flex-end',
-  }
+  },
+  espacioDerecho: {
+    width: 44,
+  },
 });

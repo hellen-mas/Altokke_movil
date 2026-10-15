@@ -1,5 +1,5 @@
-import { Href, Link } from "expo-router";
-import { StyleSheet, Text } from "react-native";
+import { Href, router } from "expo-router";
+import { Pressable, StyleProp, StyleSheet, Text, TextStyle, View } from "react-native";
 import { paletaColores } from "@/paletaColores";
 
 interface PropsPiePaginaAutenticacion {
@@ -9,6 +9,9 @@ interface PropsPiePaginaAutenticacion {
   alineacion?: "left" | "center" | "right";
   mostrarBorde?: boolean;
   variante?: "oscuro" | "claro";
+  tamanoTexto?: number;
+  estiloPregunta?: StyleProp<TextStyle>;
+  estiloEnlace?: StyleProp<TextStyle>;
 }
 
 export const PiePaginaAutenticacion = ({
@@ -16,49 +19,105 @@ export const PiePaginaAutenticacion = ({
   textoEnlace,
   ruta,
   alineacion = "center",
-  mostrarBorde = true,
+  mostrarBorde = false,
   variante = "oscuro",
+  tamanoTexto,
+  estiloPregunta,
+  estiloEnlace,
 }: PropsPiePaginaAutenticacion) => {
   const esClaro = variante === "claro";
+  const estiloTamano = tamanoTexto ? { fontSize: tamanoTexto } : null;
 
   return (
-    <Text
+    <View
       style={[
-        estilos.accesoCuenta,
-        { textAlign: alineacion },
-        esClaro && estilos.accesoCuentaClaro,
-        !mostrarBorde && { borderWidth: 0, height: "auto", paddingTop: 0 },
+        estilos.contenedor,
+        mostrarBorde ? estilos.contenedorBorde : estilos.contenedorSinBorde,
+        esClaro && estilos.contenedorClaro,
+        { justifyContent: alineacion === "center" ? "center" : alineacion === "left" ? "flex-start" : "flex-end" },
       ]}
     >
-      {textoPregunta}{" "}
-      <Link href={ruta} style={estilos.enlaceAcceso}>
-        {textoEnlace}
-      </Link>
-    </Text>
+      <View style={estilos.fila}>
+        <Text
+          style={[
+            estilos.textoPregunta,
+            esClaro && estilos.textoPreguntaClaro,
+            estiloTamano,
+            estiloPregunta,
+          ]}
+        >
+          {textoPregunta}{" "}
+        </Text>
+        <Pressable
+          onPress={() => router.push(ruta)}
+          hitSlop={{ top: 12, bottom: 12, left: 10, right: 12 }}
+          accessibilityRole="link"
+          accessibilityLabel={`${textoPregunta} ${textoEnlace}`}
+          accessibilityHint="Navega a la pantalla para iniciar sesión"
+          style={({ pressed }) => [
+            pressed && { opacity: 0.6 },
+          ]}
+        >
+          <Text
+            style={[
+              estilos.textoEnlace,
+              esClaro && estilos.textoEnlaceClaro,
+              estiloTamano,
+              estiloEnlace,
+            ]}
+          >
+            {textoEnlace}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   );
 };
 
 const estilos = StyleSheet.create({
-  accesoCuenta: {
+  contenedor: {
     width: "100%",
-    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  contenedorBorde: {
+    minHeight: 56,
     borderWidth: 1,
     borderColor: paletaColores.borde,
     borderRadius: 12,
     marginTop: 10,
     marginBottom: 10,
-    paddingTop: 16,
     paddingHorizontal: 20,
-    fontSize: 16, // Increased for accessibility
-    lineHeight: 24,
-    color: paletaColores.texto,
+    paddingVertical: 14,
   },
-  enlaceAcceso: {
-    color: paletaColores.verde,
-    fontWeight: "700",
+  contenedorSinBorde: {
+    paddingVertical: 6,
+    minHeight: 48,
+    justifyContent: "center",
   },
-  accesoCuentaClaro: {
-    color: paletaColores.textoSecundarioClaro,
+  contenedorClaro: {
     borderColor: paletaColores.bordeClaro,
-  }
+  },
+  fila: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  textoPregunta: {
+    fontSize: 19,
+    color: "#C2D4CB",
+    fontWeight: "500",
+  },
+  textoPreguntaClaro: {
+    color: paletaColores.textoSecundarioClaro,
+  },
+  textoEnlace: {
+    fontSize: 19,
+    fontWeight: "800",
+    color: "#2ECE79",
+  },
+  textoEnlaceClaro: {
+    color: paletaColores.verde,
+  },
 });

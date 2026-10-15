@@ -31,7 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.local
 
 # typescript
 *.tsbuildinfo
@@ -42,5 +44,14 @@ example
 /ios
 /android
 
-.env
-database/
+# IDEs and editors
+.idea/
+.vscode/
+
+# AI and knowledge graph artifacts
+.agents/
+graphify-out/
+.tempmediaStorage/
+
+# Supabase local temp
+supabase/.temp/

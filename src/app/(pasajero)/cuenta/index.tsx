@@ -9,6 +9,10 @@ import { BarraInferior } from "@/components/pasajero/BarraInferior";
 import { COLORES_CUENTA, PASAJERO_DEMO } from "@/constants/cuenta";
 import { paletaColores } from "@/paletaColores";
 
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import React, { useEffect, useState } from "react";
+
 const OPCIONES = [
   {
     icono: "person-outline",
@@ -56,6 +60,41 @@ const OPCIONES = [
 
 export default function CuentaPasajero() {
   const insets = useSafeAreaInsets();
+  const { logout, userId } = useAuth();
+  const [foto, setFoto] = useState<string | null>(null);
+  const [nombre, setNombre] = useState(PASAJERO_DEMO.nombre);
+
+  useEffect(() => {
+    let montado = true;
+
+    async function cargarAvatar() {
+      if (!userId) return;
+
+      try {
+        const { data } = await supabase
+          .from("usuarios")
+          .select("nombre, apellidos, avatar_url, foto_url")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (data && montado) {
+          const avatar = data.avatar_url || data.foto_url;
+          if (avatar) setFoto(avatar);
+
+          const nom = `${data.nombre || ""} ${data.apellidos || ""}`.trim();
+          if (nom) setNombre(nom);
+        }
+      } catch (err) {
+        console.warn("Aviso al cargar avatar de cuenta:", err);
+      }
+    }
+
+    cargarAvatar();
+
+    return () => {
+      montado = false;
+    };
+  }, [userId]);
 
   const cerrarSesion = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que quieres salir de tu cuenta?", [
@@ -63,7 +102,14 @@ export default function CuentaPasajero() {
       {
         text: "Cerrar sesión",
         style: "destructive",
-        onPress: () => router.replace("/login"),
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+          }
+          router.replace("/(auth)/login");
+        },
       },
     ]);
   };
@@ -83,14 +129,15 @@ export default function CuentaPasajero() {
 
           <View style={styles.perfil}>
             <AvatarPerfil
-              nombre={PASAJERO_DEMO.nombre}
+              nombre={nombre}
               tamano={84}
               enLinea
               conBorde
+              uri={foto}
             />
 
             <View style={styles.perfilTextos}>
-              <Text style={styles.nombre}>{PASAJERO_DEMO.nombre}</Text>
+              <Text style={styles.nombre}>{nombre}</Text>
 
               <View style={styles.filaInfo}>
                 <Ionicons name="star" size={15} color={paletaColores.advertencia} />

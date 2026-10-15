@@ -17,6 +17,9 @@ export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, onPress }:
         pressed && estilos.botonPresionado
       ]} 
       onPress={onPress}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityRole="button"
+      accessibilityLabel={titulo}
     >
       <Ionicons name={nombreIcono} size={26} color={colorIcono} />
       <Text style={estilos.textoBotonRedSocial}>{titulo}</Text>
@@ -26,24 +29,26 @@ export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, onPress }:
 
 const estilos = StyleSheet.create({
   botonRedSocial: {
-    flex: 1,
-    height: 56,
+    width: "100%",
+    minHeight: 60,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    borderWidth: 1,
-    borderColor: paletaColores.borde,
-    borderRadius: 14,
-    backgroundColor: paletaColores.superficie,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.14)",
+    borderRadius: 16,
+    backgroundColor: paletaColores.input,
   },
   botonPresionado: {
     opacity: 0.7,
     backgroundColor: paletaColores.tarjeta,
   },
   textoBotonRedSocial: {
-    color: paletaColores.texto,
-    fontSize: 17,
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
   },
 });

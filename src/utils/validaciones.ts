@@ -16,6 +16,8 @@ export const esquemaRegistroPasajero = yup.object({
   dni: yup.string().length(8, "El DNI debe tener 8 dígitos").required("Requerido"),
   nombres: yup.string().required("Requerido"),
   apellidos: yup.string().required("Requerido"),
+  fotoPerfil: yup.string().nullable().optional(),
+  fotoBase64: yup.string().nullable().optional(),
 });
 
 export type TipoDatosPersonales = yup.InferType<typeof esquemaRegistroPasajero>;
