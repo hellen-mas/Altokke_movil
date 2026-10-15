@@ -15,6 +15,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
+import { obtenerEstadoConductor } from "@/services/estadoConductor";
 
 // Completo la sesion si vuelve de un navegador web
 WebBrowser.maybeCompleteAuthSession();
@@ -26,71 +27,102 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSession = (user: any) => {
-    // Si entro con Google y todavia no tiene rol ni DNI le aviso antes de enviarlo a completar perfil
-    if (!user.user_metadata?.rol || !user.user_metadata?.dni) {
-      Alert.alert(
-        "¡Bienvenido a Altokke!",
-        "Detecté que es tu primera vez iniciando sesión con Google. Por favor completa tu registro seleccionando tu rol.",
-        [
-          {
-            text: "Continuar",
-            onPress: () => router.replace("/crear-cuenta"),
-          },
-        ]
-      );
-    } else {
-      const rol = user.user_metadata.rol;
-      login(rol as "pasajero" | "conductor");
-      if (rol === "conductor") {
-        router.replace("/inicio");
-      } else {
-        router.replace("/mapa");
+  const handleSession = async (user: any) => {
+    try {
+      // Usuario de Google que todavía no completó su registro
+      if (!user.user_metadata?.rol || !user.user_metadata?.dni) {
+        Alert.alert(
+          "¡Bienvenido a Altokke!",
+          "Completa tu registro seleccionando tu rol.",
+          [
+            {
+              text: "Continuar",
+              onPress: () => router.replace("/crear-cuenta"),
+            },
+          ]
+        );
+        return;
       }
+
+      const rol = user.user_metadata.rol;
+
+      if (rol === "conductor") {
+        // Consultar primero el estado real en Supabase
+        await dirigirConductor(user.id);
+        login("conductor");
+        return;
+      }
+
+      if (rol === "pasajero") {
+        login("pasajero");
+        router.replace("/mapa");
+        return;
+      }
+
+      throw new Error("Rol de usuario no reconocido.");
+
+    } catch (error: any) {
+      console.error("Error al verificar acceso:", error);
+
+      Alert.alert(
+        "No se pudo verificar tu cuenta",
+        error.message ||
+          "Intenta nuevamente en unos momentos."
+      );
     }
   };
 
   const handleLogin = async () => {
+    if (loading) return;
+
     setCorreoError(false);
+
     if (!correo.trim() || !contrasena.trim()) {
       Alert.alert(
         "Campos incompletos",
-        "Por favor, ingresa tu correo y contraseña para continuar.",
+        "Ingresa tu correo y contraseña."
       );
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!emailRegex.test(correo.trim())) {
       setCorreoError(true);
       return;
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: correo.trim(),
-      password: contrasena.trim(),
-    });
-    setLoading(false);
 
-    if (error) {
-      console.log("Error de login en Supabase:", error.message, error.status);
-      if (error.message?.toLowerCase().includes("email not confirmed")) {
-        Alert.alert(
-          "Correo pendiente de confirmación",
-          "Supabase requiere confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada o desmarca 'Confirm email' en tu panel de Supabase.",
-        );
-      } else {
-        Alert.alert(
-          "No se pudo iniciar sesión",
-          error.message || "Correo o contraseña incorrectos. Por favor, verifica tus datos.",
-        );
+    try {
+      console.log("Iniciando sesión...");
+
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: correo.trim(),
+          password: contrasena,
+        });
+
+      if (error) throw error;
+
+      if (!data.user) {
+        throw new Error("No se pudo obtener el usuario.");
       }
-      return;
-    }
 
-    if (data?.user) {
-      handleSession(data.user);
+      console.log("Sesión iniciada correctamente");
+
+      await handleSession(data.user);
+
+    } catch (error: any) {
+      console.error("ERROR LOGIN:", error);
+
+      Alert.alert(
+        "No se pudo iniciar sesión",
+        error.message || "Intenta nuevamente."
+      );
+
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -132,7 +164,7 @@ export default function LoginScreen() {
               if (sessionError) throw sessionError;
 
               if (sessionData?.session?.user) {
-                handleSession(sessionData.session.user);
+                await handleSession(sessionData.session.user);
               }
             }
           }
@@ -143,6 +175,15 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const dirigirConductor = async (
+      usuarioId: string
+    ) => {
+      console.log("Consultando estado del conductor...");
+      const estado = await obtenerEstadoConductor(usuarioId);
+      console.log("Estado del conductor:", estado);
+      router.replace("/(auth)/estado-solicitud");
   };
 
   return (

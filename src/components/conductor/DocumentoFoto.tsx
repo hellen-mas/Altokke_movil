@@ -13,6 +13,7 @@ interface DocumentoFotoProps {
     descripcion: string;
     foto: string | null;
     onPress: () => void;
+    onVerFoto?: () => void;
 }
 
 export function DocumentoFoto({
@@ -20,23 +21,31 @@ export function DocumentoFoto({
     descripcion,
     foto,
     onPress,
+    onVerFoto,
 } : DocumentoFotoProps) {
     return (
         <View style={styles.card}>
-            <View style={styles.previewContainer}>
+            <Pressable
+                style={styles.previewContainer}
+                onPress={onVerFoto}
+                disabled={!foto || !onVerFoto}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver fotografía de ${titulo}`}
+            >
                 {foto ? (
-                    <Image 
-                        source={{ uri: foto }}
-                        style={styles.preview}
+                    <Image
+                    source={{ uri: foto }}
+                    style={styles.preview}
+                    resizeMode="cover"
                     />
                 ) : (
                     <Ionicons
-                        name="image-outline"
-                        size={28}
-                        color={paletaColores.textoSecundarioClaro}
+                    name="image-outline"
+                    size={28}
+                    color={paletaColores.textoSecundarioClaro}
                     />
                 )}
-            </View>
+            </Pressable>
 
             <View style={styles.informacion}>
                 <Text style={styles.titulo}>

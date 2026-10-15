@@ -1,4 +1,5 @@
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +11,7 @@ import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { paletaColores } from "@/paletaColores";
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 type EstadoSolicitud =
   | "PENDIENTE"
@@ -19,30 +21,17 @@ type EstadoSolicitud =
 export default function SolicitudEnviada() {
     // TEMPORAL (más adelante el estado vendrá del backend)
     const [estadoSolicitud, setEstadoSolicitud] = useState<EstadoSolicitud>("PENDIENTE");
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setEstadoSolicitud("APROBADA");
-        }, 4000);
-
-        return () => clearTimeout(timer);
-    }, []);
     const contenido = obtenerContenidoEstado(estadoSolicitud);
 
-    const manejarBoton = () => {
-        if (estadoSolicitud === "APROBADA") {
-            router.replace("/login");
-            return;
-        } 
+    const irAlLogin = async () => {
+        const { error } = await supabase.auth.signOut();
 
-        if (estadoSolicitud === "RECHAZADA") {
-            router.replace("/registro-conductor");
+        if (error) {
+            Alert.alert("Error", "No se pudo cerrar la sesión.");
             return;
         }
 
-        if (estadoSolicitud === "PENDIENTE") {
-            router.replace("/");
-            return;
-        }
+        router.replace("/login");
     };
 
     return (
@@ -184,7 +173,7 @@ export default function SolicitudEnviada() {
             <View style={styles.acciones}>
                 <BotonPrincipal
                     titulo={contenido.textoBoton}
-                    onPress={manejarBoton}
+                    onPress={irAlLogin}
                 />
 
                 {estadoSolicitud === "PENDIENTE" && (

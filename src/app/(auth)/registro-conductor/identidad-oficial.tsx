@@ -15,10 +15,13 @@ import {
     StyleSheet,
     Text,
     View,
+    Image,
+    Modal,
 } from "react-native";
 import { DocumentoFoto } from "@/components/conductor/DocumentoFoto";
 import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
 import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
+import { useState } from 'react';
 
 export default function IdentidadOficialConductor() {
     const {
@@ -30,43 +33,83 @@ export default function IdentidadOficialConductor() {
         setSelfie,
     } = useRegistroConductor();
 
+    const [fotoVistaPrevia, setFotoVistaPrevia] = useState<string | null>(null);
+    const [capturando, setCapturando] = useState(false);
+
     const tomarFoto = async(tipo: "frente" | "reverso" | "selfie") => {
-        const permiso = await ImagePicker.requestCameraPermissionsAsync();
+        if (capturando) return;
+        setCapturando(true);
 
-        if (!permiso.granted) {
+        try {
+            const permiso = await ImagePicker.requestCameraPermissionsAsync();
+
+            if (!permiso.granted) {
+                Alert.alert(
+                    "Permiso necesario",
+                    "Debes permitir el acceso a la cámara para tomar las fotografías",
+                );
+                return;
+            }
+
+            const resultado = await ImagePicker.launchCameraAsync({
+                allowsEditing: false,
+                quality: 0.9,
+            });
+
+            if (resultado.canceled || !resultado.assets?.length) {
+                return;
+            }
+
+            const imagen = resultado.assets[0];
+
+            if (!imagen.uri) {
+                Alert.alert(
+                    "Imagen inválida",
+                    "No se pudo obtener la fotografía. Inténtalo nuevamente."
+                );
+                return;
+            }
+
+            if (tipo === "frente") {
+                setDniFrente(imagen.uri);
+            }
+            if (tipo === "reverso") {
+                setDniReverso(imagen.uri);
+            }
+            if (tipo === "selfie") {
+                setSelfie(imagen.uri);
+            }
+        } catch {
             Alert.alert(
-                "Permiso necesario",
-                "Debes permitir el acceso a la cámara para tomar las fotografías",
+                "Error de cámara",
+                "No se pudo tomar la fotografía. Inténtalo nuevamente."
             );
-            return;
-        }
-
-        const resultado = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            quality: 0.8,
-        });
-
-        if (resultado.canceled) {
-            return;
-        }
-
-        const uri = resultado.assets[0].uri;
-        if (tipo === "frente") {
-            setDniFrente(uri);
-        }
-        if (tipo === "reverso") {
-            setDniReverso(uri);
-        }
-        if (tipo === "selfie") {
-            setSelfie(uri);
+        } finally {
+            setCapturando(false);
         }
     };
 
     const continuar = () => {
-        if (!dniFrente || !dniReverso || !selfie) {
+        if (!dniFrente) {
             Alert.alert(
-                "Documentos incompletos",
-                "Debe tomar todas las fotografías requeridas para continuar.",
+            "DNI frontal pendiente",
+            "Debes tomar una fotografía del frente de tu DNI."
+            );
+            return;
+        }
+
+        if (!dniReverso) {
+            Alert.alert(
+            "DNI posterior pendiente",
+            "Debes tomar una fotografía del reverso de tu DNI."
+            );
+            return;
+        }
+
+        if (!selfie) {
+            Alert.alert(
+            "Selfie pendiente",
+            "Debes tomar una fotografía sosteniendo tu documento."
             );
             return;
         }
@@ -87,7 +130,7 @@ export default function IdentidadOficialConductor() {
                 <EncabezadoLogo variante="claro"/>
 
                 <EncabezadoPagina
-                    titulo={"Indentidad \n"}
+                    titulo={"Identidad \n"}
                     tituloDestacado="oficial"
                     descripcion="Sube tus documentos personales para validar tu identidad"
                     variante="claro"
@@ -99,21 +142,24 @@ export default function IdentidadOficialConductor() {
                 <View style={styles.documentosContainer}>
                     <DocumentoFoto
                         titulo="DNI - Frente"
-                        descripcion="Sube una foto del frente de tu documento."
+                        descripcion="Fotografía completa, clara y sin reflejos."
                         foto={dniFrente}
                         onPress={() => tomarFoto("frente")}
+                        onVerFoto={() => setFotoVistaPrevia(dniFrente)}
                     />
                     <DocumentoFoto
                         titulo="DNI - Reverso"
-                        descripcion="Sube una foto del reverso de tu documento."
+                        descripcion="Incluye todos los bordes y datos del reverso."
                         foto={dniReverso}
                         onPress={() => tomarFoto("reverso")}
+                        onVerFoto={() => setFotoVistaPrevia(dniReverso)}
                     />
                     <DocumentoFoto
                         titulo="Selfie con documento"
-                        descripcion="Tómate una foto sosteniendo tu documento."
+                        descripcion="Muestra claramente tu rostro y el documento."
                         foto={selfie}
                         onPress={() => tomarFoto("selfie")}
+                        onVerFoto={() => setFotoVistaPrevia(selfie)}
                     />
                 </View>
 
@@ -142,36 +188,82 @@ export default function IdentidadOficialConductor() {
                     </Text>
                 </Pressable>
             </ScrollView>
+
+            <Modal
+                visible={!!fotoVistaPrevia}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setFotoVistaPrevia(null)}
+            >
+                <View style={styles.modalFondo}>
+                    <Pressable
+                        style={styles.modalCerrar}
+                        onPress={() => setFotoVistaPrevia(null)}
+                        accessibilityLabel="Cerrar vista previa"
+                    >
+                        <Ionicons name="close" size={28} color="#FFFFFF" />
+                    </Pressable>
+
+                    {fotoVistaPrevia && (
+                        <Image
+                            source={{ uri: fotoVistaPrevia }}
+                            style={styles.imagenAmpliada}
+                            resizeMode="contain"
+                        />
+                    )}
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create ({
-  container: {
-    flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: paletaColores.fondoClaro,
+    },
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+    },
 
-  documentosContainer: {
-    width: "100%",
-    gap: 12,
-  },
+    documentosContainer: {
+        width: "100%",
+        gap: 12,
+    },
 
-  atras: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 16,
-  },
+    atras: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 16,
+    },
 
-  atrasTexto: {
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 14,
-    fontWeight: "600",
-  },
+    atrasTexto: {
+        color: paletaColores.textoSecundarioClaro,
+        fontSize: 14,
+        fontWeight: "600",
+    },
+  
+    modalFondo: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.92)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    modalCerrar: {
+        position: "absolute",
+        top: 50,
+        right: 24,
+        zIndex: 2,
+        padding: 10,
+    },
+
+    imagenAmpliada: {
+        width: "95%",
+        height: "75%",
+    },
+
 })

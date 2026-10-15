@@ -18,8 +18,17 @@ import {
 } from "react-native";
 import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
 import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
+import { supabase } from "@/lib/supabase";
+import { subirAvatar } from "@/services/avatarStorage";
+import { useState } from "react";
+import {
+  subirDocumento,
+  guardarDocumentoBD,
+  TipoDocumento
+} from "@/services/documentosStorage";
 
 export default function VehiculoConductor() {
+  const [enviando, setEnviando] = useState(false);
   const {
     placa,
     setPlaca,
@@ -35,9 +44,118 @@ export default function VehiculoConductor() {
     setCapacidad,
     confirmacionVeracidad,
     setConfirmacionVeracidad,
+    nombre,
+    apellidos,
+    dni,
+    correo,
+    contrasena,
+    telefono,
+    foto,
+    dniFrente,
+    dniReverso,
+    selfie,
+    licenciaConducir,
+    soat,
+    antecedentesPenales,
   } = useRegistroConductor();
 
-  const enviarSolicitud = () => {
+  const guardarArchivosConductor = async (
+    usuarioId: string
+  ) => {
+    // 1. Fotografía de perfil
+    if (foto) {
+      const urlAvatar = await subirAvatar(
+        usuarioId,
+        foto
+      );
+
+      const { error } = await supabase
+        .from("usuarios")
+        .update({
+          avatar_url: urlAvatar,
+        })
+        .eq("id", usuarioId);
+
+      if (error) throw error;
+    }
+
+    // 2. Reunir documentos seleccionados
+    const archivos: {
+      tipo: TipoDocumento;
+      uri: string;
+      nombre?: string;
+      mime?: string;
+    }[] = [];
+
+    if (dniFrente) {
+      archivos.push({
+        tipo: "DNI_FRONTAL",
+        uri: dniFrente,
+      });
+    }
+
+    if (dniReverso) {
+      archivos.push({
+        tipo: "DNI_POSTERIOR",
+        uri: dniReverso,
+      });
+    }
+
+    if (selfie) {
+      archivos.push({
+        tipo: "SELFIE",
+        uri: selfie,
+      });
+    }
+
+    if (licenciaConducir) {
+      archivos.push({
+        tipo: "LICENCIA",
+        uri: licenciaConducir.uri,
+        nombre: licenciaConducir.nombre,
+        mime: licenciaConducir.tipo,
+      });
+    }
+
+    if (soat) {
+      archivos.push({
+        tipo: "SOAT",
+        uri: soat.uri,
+        nombre: soat.nombre,
+        mime: soat.tipo,
+      });
+    }
+
+    if (antecedentesPenales) {
+      archivos.push({
+        tipo: "ANTECEDENTES",
+        uri: antecedentesPenales.uri,
+        nombre: antecedentesPenales.nombre,
+        mime: antecedentesPenales.tipo,
+      });
+    }
+
+    // 3. Subir y registrar cada documento
+    for (const archivo of archivos) {
+      const ruta = await subirDocumento(
+        usuarioId,
+        archivo.tipo,
+        {
+          uri: archivo.uri,
+          nombre: archivo.nombre,
+          tipo: archivo.mime,
+        }
+      );
+
+      await guardarDocumentoBD(
+        usuarioId,
+        archivo.tipo,
+        ruta
+      );
+    }
+  };
+
+  const enviarSolicitud = async () => {
     if (
       !placa.trim() ||
       !marca.trim() ||
@@ -90,7 +208,153 @@ export default function VehiculoConductor() {
       return;
     }
 
-    router.replace("/registro-conductor/solicitud-enviada");
+    if (enviando) return;
+
+    setEnviando(true);
+
+    try {
+       // 1. Comprobar si existe una sesión REALMENTE válida
+        const { data: sesionData } =
+          await supabase.auth.getSession();
+
+        let usuarioId: string | null = null;
+        let usuarioValido = false;
+
+        if (sesionData.session) {
+          const { data: usuarioData, error: usuarioError } =
+            await supabase.auth.getUser();
+
+          if (
+            !usuarioError &&
+            usuarioData.user &&
+            usuarioData.user.email?.toLowerCase() ===
+              correo.trim().toLowerCase() &&
+            usuarioData.user.user_metadata?.rol === "conductor"
+          ) {
+            usuarioId = usuarioData.user.id;
+            usuarioValido = true;
+          }
+        }
+
+        if (!usuarioValido) {
+          // Limpiar cualquier sesión antigua o inválida
+          const { error: salidaError } =
+            await supabase.auth.signOut({ scope: "local" });
+
+          if (salidaError) {
+            throw new Error(
+              "No se pudo limpiar la sesión anterior: " +
+              salidaError.message
+            );
+          }
+
+          // 2. Crear la cuenta del nuevo conductor
+          const { data, error: registroError } =
+            await supabase.auth.signUp({
+              email: correo.trim(),
+              password: contrasena,
+              options: {
+                data: {
+                  nombre: nombre.trim(),
+                  apellidos: apellidos.trim(),
+                  telefono: telefono.trim(),
+                  dni: dni.trim(),
+                  rol: "conductor",
+                },
+              },
+            });
+
+          if (registroError) throw registroError;
+
+          if (!data.user) {
+            throw new Error("No se pudo crear la cuenta.");
+          }
+
+          if (!data.session) {
+            Alert.alert(
+              "Confirma tu correo",
+              "Tu cuenta fue creada, pero debes confirmar tu correo antes de subir los documentos."
+            );
+            return;
+          }
+
+          usuarioId = data.user.id;
+        }
+
+        // Confirmar que el usuario autenticado corresponde
+        // al conductor antes de subir archivos.
+        const { data: confirmacion, error: errorConfirmacion } =
+          await supabase.auth.getUser();
+
+        if (
+          errorConfirmacion ||
+          !confirmacion.user ||
+          confirmacion.user.id !== usuarioId
+        ) {
+          throw new Error(
+            "No se pudo validar la sesión del conductor. Vuelve a iniciar sesión."
+          );
+        }
+
+        if (!usuarioId) {
+          throw new Error(
+            "No se pudo obtener el ID del conductor."
+          );
+        }
+        
+        console.log("Conductor autenticado:", usuarioId);
+
+      // 3. Guardar fotografías y documentos
+      console.log("Subiendo archivos del conductor...");
+
+      await guardarArchivosConductor(usuarioId);
+
+      console.log("Archivos guardados correctamente.");
+
+      // 4. Registrar vehículo
+      const { error: vehiculoError } = await supabase
+        .from("vehiculos")
+        .insert({
+          conductor_id: usuarioId,
+          placa: placa.trim().toUpperCase(),
+          marca: marca.trim(),
+          modelo: modelo.trim(),
+          anio: Number(anio),
+          color: color.trim(),
+          capacidad: Number(capacidad),
+          activo: false,
+        });
+
+      if (vehiculoError) throw vehiculoError;
+
+      console.log("Vehículo registrado correctamente.");
+
+      // 5. Registro completado
+      Alert.alert(
+        "Solicitud enviada",
+        "Tus documentos y vehículo fueron registrados. Tu cuenta está pendiente de aprobación.",
+        [
+          {
+            text: "Aceptar",
+            onPress: () => {
+              router.replace(
+                "/registro-conductor/solicitud-enviada"
+              );
+            },
+          },
+        ]
+      );
+
+    } catch (error: any) {
+      console.error("Error al registrar conductor:", error);
+
+      Alert.alert(
+        "Error de registro",
+        error.message || "No se pudo completar el registro."
+      );
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -198,7 +462,11 @@ export default function VehiculoConductor() {
           texto="Tu cuenta será revisada antes de ser activada."
         />
 
-        <BotonPrincipal titulo="Enviar solicitud" onPress={enviarSolicitud} />
+        <BotonPrincipal 
+          titulo={enviando ? "Guardando archivos..." : "Enviar solicitud"}
+          onPress={enviarSolicitud}
+          disabled={enviando}
+        />
 
         <Pressable style={styles.atras} onPress={() => router.back()}>
           <Ionicons

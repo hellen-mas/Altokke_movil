@@ -26,8 +26,6 @@ export default function VerificacionContactoConductor() {
   const {
     telefono,
     setTelefono,
-    codigo,
-    setCodigo,
     correoRespaldo,
     setCorreoRespaldo,
     direccion,
@@ -36,19 +34,10 @@ export default function VerificacionContactoConductor() {
     setFoto,
   } = useRegistroConductor();
 
-  const enviarCodigo = () => {
-    if (!/^\d{9}$/.test(telefono)) {
-      Alert.alert(
-        "Teléfono inválido",
-        "Ingresa un número de teléfono de 9 dígitos.",
-      );
-      return;
-    }
+  const cambiarTelefono = (texto: string) => {
+    const numero = texto.replace(/\D/g, "").slice(0, 9);
 
-    Alert.alert(
-      "Codigo enviado",
-      "Se envió un código de verificación a tu teléfono.",
-    );
+    setTelefono(numero);
   };
 
   const seleccionarFoto = async () => {
@@ -75,35 +64,37 @@ export default function VerificacionContactoConductor() {
   };
 
   const continuar = () => {
-    if (!telefono.trim() || !codigo.trim() || !direccion.trim() || !foto) {
+     // Validar los campos obligatorios
+    if (!telefono.trim() || !direccion.trim() || !foto) {
       Alert.alert(
         "Campos incompletos",
-        "Completa todos los campos para continuar.",
+        "Completa tu teléfono, dirección y fotografía de perfil."
       );
       return;
     }
 
-    if (!/^\d{9}$/.test(telefono)) {
-      Alert.alert("Teléfono inválido", "El teléfono debe contener 9 dígitos.");
-      return;
-    }
-
-    if (!/^\d{6}$/.test(codigo)) {
+    // Validar número celular peruano
+    if (!/^9\d{8}$/.test(telefono.trim())) {
       Alert.alert(
-        "Código inválido",
-        "El código de verificación debe contener 6 dígitos.",
+        "Teléfono inválido",
+        "Ingresa un número celular peruano de 9 dígitos."
       );
       return;
     }
 
+    // Validar correo de respaldo si se ingresó
     if (
       correoRespaldo.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRespaldo)
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRespaldo.trim())
     ) {
-      Alert.alert("Correo inválido", "Ingresa un correo de respaldo válido.");
+      Alert.alert(
+        "Correo inválido",
+        "Ingresa un correo de respaldo válido."
+      );
       return;
     }
 
+    // Continuar sin verificación SMS temporalmente
     router.push("/registro-conductor/identidad-oficial");
   };
 
@@ -122,7 +113,7 @@ export default function VerificacionContactoConductor() {
         <EncabezadoPagina
           titulo={"Verificación y\n"}
           tituloDestacado="contacto"
-          descripcion="Confirma tu número y completa tu información de contacto"
+          descripcion="Confirma tu información de contacto para continuar con el registro"
           variante="claro"
         />
 
@@ -145,30 +136,17 @@ export default function VerificacionContactoConductor() {
 
                 <TextInput
                   style={styles.telefonoTextInput}
-                  placeholder="987 654 321"
+                  placeholder="987654321"
                   placeholderTextColor={paletaColores.textoSecundarioClaro}
                   value={telefono}
-                  onChangeText={setTelefono}
+                  onChangeText={cambiarTelefono}
                   keyboardType="phone-pad"
                   maxLength={9}
                 />
               </View>
             </View>
-
-            <Pressable style={styles.botonCodigo} onPress={enviarCodigo}>
-              <Text style={styles.textoBotonCodigo}>Enviar código</Text>
-            </Pressable>
           </View>
 
-          <CampoTexto
-            placeholder="Código de verificación"
-            nombreIcono="shield-checkmark-outline"
-            value={codigo}
-            onChangeText={setCodigo}
-            keyboardType="numeric"
-            maxLength={6}
-            variante="claro"
-          />
           <CampoTexto
             placeholder="Correo de respaldo (opcional)"
             nombreIcono="mail-outline"
@@ -223,7 +201,7 @@ export default function VerificacionContactoConductor() {
         {/* Información */}
         <AvisoInformativo
           icono="shield-checkmark-outline"
-          texto="Usaremos esta información para comunicarnos contigo y verificar tu cuenta."
+          texto="Tu número de teléfono será validado posteriormente. Asegúrate de ingresar información correcta."
         />
 
         <BotonPrincipal titulo="Continuar" onPress={continuar} />
@@ -304,19 +282,6 @@ const styles = StyleSheet.create({
     margin: 0,
     fontSize: 16,
     color: paletaColores.textoClaro,
-  },
-
-  botonCodigo: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: "#DDF7EA",
-  },
-
-  textoBotonCodigo: {
-    color: paletaColores.textoClaro,
-    fontSize: 12,
-    fontWeight: "600",
   },
 
   fotoCard: {
