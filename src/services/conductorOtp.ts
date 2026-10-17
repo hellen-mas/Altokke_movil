@@ -1,5 +1,8 @@
 
 import { supabase } from "@/lib/supabase";
+import { FunctionsFetchError } from "@supabase/supabase-js";
+
+const TIEMPO_LIMITE_MS = 12000;
 
 type ResultadoEnvio = {
   enviado: boolean;
@@ -15,11 +18,18 @@ type ResultadoVerificacion = {
 async function invocarOtp<T>(body: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke(
     "conductor-otp",
-    { body }
+    { 
+      body,
+      timeout: TIEMPO_LIMITE_MS
+    }
   );
 
   if (error) {
     let mensaje = "No se pudo conectar al servicio OTP.";
+
+    if (error instanceof FunctionsFetchError) {
+      mensaje = "La conexión es inestable. Revisa tu conexión a internet e inténtalo nuevamente.";
+    }
 
     if (error.context instanceof Response) {
       try {
