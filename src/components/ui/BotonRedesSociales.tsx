@@ -3,19 +3,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 interface PropsBotonRedesSociales {
+  disabled?: boolean;
   titulo: string;
   nombreIcono: keyof typeof Ionicons.glyphMap;
   colorIcono: string;
   onPress?: () => void;
 }
 
-export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, onPress }: PropsBotonRedesSociales) {
+export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, onPress, disabled }: PropsBotonRedesSociales) {
   return (
     <Pressable 
       style={({ pressed }) => [
         estilos.botonRedSocial,
         pressed && estilos.botonPresionado
       ]} 
+      disabled={disabled}
       onPress={onPress}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       accessibilityRole="button"

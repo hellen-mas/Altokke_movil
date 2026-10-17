@@ -112,6 +112,7 @@ export default function PasajeroPreferenciasScreen() {
   ];
 
   const handleCrearCuenta = async () => {
+    if (loading) return;
     if (!terminos) {
       Alert.alert(
         "Acción requerida",

@@ -116,6 +116,7 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
+    if (loading) return;
     Keyboard.dismiss();
     setLoading(true);
     try {
@@ -253,6 +254,7 @@ export default function LoginScreen() {
             nombreIcono="logo-google"
             colorIcono="#EA4335"
             onPress={handleGoogleLogin}
+            disabled={loading}
           />
         </View>
       </View>
