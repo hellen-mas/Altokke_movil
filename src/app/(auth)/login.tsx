@@ -76,9 +76,10 @@ export default function LoginScreen() {
       return;
     }
 
+    const correoNormalizado = correo.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(correo.trim())) {
+    if (!emailRegex.test(correoNormalizado)) {
       setCorreoError(true);
       return;
     }
@@ -88,7 +89,7 @@ export default function LoginScreen() {
     try {
       const { data, error } =
         await supabase.auth.signInWithPassword({
-          email: correo.trim(),
+          email: correoNormalizado,
           password: contrasena,
         });
 

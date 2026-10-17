@@ -25,8 +25,9 @@ export default function RecuperarPasswordScreen() {
       return;
     }
 
+    const correoNormalizado = correo.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(correo.trim())) {
+    if (!emailRegex.test(correoNormalizado)) {
       Alert.alert(
         "Correo inválido",
         "Por favor, ingresa un correo electrónico válido.",
@@ -37,7 +38,7 @@ export default function RecuperarPasswordScreen() {
     setLoading(true);
 
     // Pido a Supabase el envío del código OTP para restablecer la contraseña
-    const { error } = await supabase.auth.resetPasswordForEmail(correo.trim());
+    const { error } = await supabase.auth.resetPasswordForEmail(correoNormalizado);
 
     setLoading(false);
 
@@ -54,7 +55,7 @@ export default function RecuperarPasswordScreen() {
 
     // Envío el correo como parámetro codificado
     router.push(
-      `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(correo.trim())}`,
+      `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(correoNormalizado)}`,
     );
   };
 
