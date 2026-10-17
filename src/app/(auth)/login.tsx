@@ -76,9 +76,10 @@ export default function LoginScreen() {
       return;
     }
 
+    const correoNormalizado = correo.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(correo.trim())) {
+    if (!emailRegex.test(correoNormalizado)) {
       setCorreoError(true);
       return;
     }
@@ -88,7 +89,7 @@ export default function LoginScreen() {
     try {
       const { data, error } =
         await supabase.auth.signInWithPassword({
-          email: correo.trim(),
+          email: correoNormalizado,
           password: contrasena,
         });
 
@@ -115,6 +116,7 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
+    if (loading) return;
     Keyboard.dismiss();
     setLoading(true);
     try {
@@ -252,6 +254,7 @@ export default function LoginScreen() {
             nombreIcono="logo-google"
             colorIcono="#EA4335"
             onPress={handleGoogleLogin}
+            disabled={loading}
           />
         </View>
       </View>

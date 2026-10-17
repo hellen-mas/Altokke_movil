@@ -12,11 +12,17 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
+//Guarda cuándo se envio el ultimo codigo a cada correo para evitar que se pueda enviar otro codigo antes de 1 minuto
+
+const ultimoEnvioPorCorreo = new Map<string, number>();
+const ESPERA_MS = 60000;
+
 export default function RecuperarPasswordScreen() {
   const [correo, setCorreo] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleContinuar = async () => {
+    if (loading) return; // Evita múltiples envíos mientras se está cargando
     if (!correo.trim()) {
       Alert.alert(
         "Campo incompleto",
@@ -25,8 +31,9 @@ export default function RecuperarPasswordScreen() {
       return;
     }
 
+    const correoNormalizado = correo.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(correo.trim())) {
+    if (!emailRegex.test(correoNormalizado)) {
       Alert.alert(
         "Correo inválido",
         "Por favor, ingresa un correo electrónico válido.",
@@ -34,10 +41,23 @@ export default function RecuperarPasswordScreen() {
       return;
     }
 
+    const ultimoEnvio = ultimoEnvioPorCorreo.get(correoNormalizado);
+
+    if (ultimoEnvio && Date.now() - ultimoEnvio < ESPERA_MS) {
+      const segundos = Math.ceil(
+        (ESPERA_MS - (Date.now() - ultimoEnvio)) / 1000,
+      );
+      Alert.alert(
+        "Espera un momento",
+        `Ya enviamos un código a este correo hace menos de un minuto. Podrás solicitar otro en ${segundos} segundos`,
+      );
+      return;
+    }
+
     setLoading(true);
 
     // Pido a Supabase el envío del código OTP para restablecer la contraseña
-    const { error } = await supabase.auth.resetPasswordForEmail(correo.trim());
+    const { error } = await supabase.auth.resetPasswordForEmail(correoNormalizado);
 
     setLoading(false);
 
@@ -52,9 +72,11 @@ export default function RecuperarPasswordScreen() {
       return;
     }
 
+    ultimoEnvioPorCorreo.set(correoNormalizado, Date.now());
+
     // Envío el correo como parámetro codificado
     router.push(
-      `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(correo.trim())}`,
+      `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(correoNormalizado)}`,
     );
   };
 
