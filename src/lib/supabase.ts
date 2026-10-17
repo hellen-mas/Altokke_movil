@@ -1,15 +1,15 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 import type { Database } from '@/types/database.types';
+import { almacenamientoSeguro } from '@/lib/almacenamientoSeguro';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || "placeholder_key";
 
-// Inicializo el cliente de Supabase guardando la sesion en el almacenamiento local
+// Inicializo el cliente de Supabase guardando la sesion en el almacenamiento seguro (AsyncStorage + SecureStore) para que la sesion persista entre reinicios de la app
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: almacenamientoSeguro,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
