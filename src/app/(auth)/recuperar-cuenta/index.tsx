@@ -12,11 +12,17 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
+//Guarda cuándo se envio el ultimo codigo a cada correo para evitar que se pueda enviar otro codigo antes de 1 minuto
+
+const ultimoEnvioPorCorreo = new Map<string, number>();
+const ESPERA_MS = 60000;
+
 export default function RecuperarPasswordScreen() {
   const [correo, setCorreo] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleContinuar = async () => {
+    if (loading) return; // Evita múltiples envíos mientras se está cargando
     if (!correo.trim()) {
       Alert.alert(
         "Campo incompleto",
@@ -31,6 +37,19 @@ export default function RecuperarPasswordScreen() {
       Alert.alert(
         "Correo inválido",
         "Por favor, ingresa un correo electrónico válido.",
+      );
+      return;
+    }
+
+    const ultimoEnvio = ultimoEnvioPorCorreo.get(correoNormalizado);
+
+    if (ultimoEnvio && Date.now() - ultimoEnvio < ESPERA_MS) {
+      const segundos = Math.ceil(
+        (ESPERA_MS - (Date.now() - ultimoEnvio)) / 1000,
+      );
+      Alert.alert(
+        "Espera un momento",
+        `Ya enviamos un código a este correo hace menos de un minuto. Podrás solicitar otro en ${segundos} segundos`,
       );
       return;
     }
@@ -52,6 +71,8 @@ export default function RecuperarPasswordScreen() {
       );
       return;
     }
+
+    ultimoEnvioPorCorreo.set(correoNormalizado, Date.now());
 
     // Envío el correo como parámetro codificado
     router.push(
