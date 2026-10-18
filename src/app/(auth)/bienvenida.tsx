@@ -1,26 +1,24 @@
 import {
   BotonPrincipal,
-  EncabezadoLogo,
   EncabezadoPagina,
   PiePaginaAutenticacion,
 } from "@/components/ui";
+import { paletaColores } from "@/paletaColores";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const { height: ALTO_PANTALLA } = Dimensions.get("window");
 
 export default function PantallaBienvenida() {
   return (
     <LinearGradient
-      colors={["#05150E", "#0A2217", "#06150E", "#040D08"]}
-      start={{ x: 0.15, y: 0 }}
-      end={{ x: 0.85, y: 1 }}
+      colors={["#1d5538ff", paletaColores.background]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.7 }}
       style={styles.pantalla}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -31,18 +29,11 @@ export default function PantallaBienvenida() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.topSection}>
-            <EncabezadoLogo
-              sinMargenSuperior
-              estilo={styles.encabezadoLogoAjuste}
+            <EncabezadoPagina
+              titulo="Tu mototaxi en "
+              tituloDestacado="minutos"
+              descripcion="Pide tu viaje al instante o genera ingresos conduciendo."
             />
-
-            <View style={styles.headerContainer}>
-              <EncabezadoPagina
-                titulo={"Tu mototaxi,\n"}
-                tituloDestacado="cuando lo necesites."
-                descripcion="Pide tu viaje de forma rápida, segura y sencilla."
-              />
-            </View>
           </View>
 
           <View style={styles.imageContainer}>
@@ -50,25 +41,22 @@ export default function PantallaBienvenida() {
               source={require("@/assets/images/imagen-central-v2.png")}
               style={styles.ilustracion}
               contentFit="contain"
-              transition={300}
+              transition={250}
               accessibilityRole="image"
-              accessibilityLabel="Ilustración de mototaxi"
+              accessibilityLabel="Ilustración de mototaxi Altokke"
             />
           </View>
 
           <View style={styles.bottomSection}>
             <BotonPrincipal
-              titulo="Continuar"
+              titulo="Empezar ahora"
               onPress={() => router.push("/crear-cuenta")}
             />
-
-            <View style={styles.footerWrap}>
-              <PiePaginaAutenticacion
-                textoPregunta="¿Ya tienes cuenta?"
-                ruta="/login"
-                textoEnlace="Iniciar sesión"
-              />
-            </View>
+            <PiePaginaAutenticacion
+              textoPregunta="¿Ya tienes cuenta?"
+              ruta="/login"
+              textoEnlace="Iniciar sesión"
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -79,6 +67,7 @@ export default function PantallaBienvenida() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
+    backgroundColor: paletaColores.background,
   },
   safeArea: {
     flex: 1,
@@ -88,41 +77,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: "space-between",
     paddingBottom: 24,
-    paddingTop: 8,
+    paddingTop: 12,
   },
   topSection: {
-    gap: 6,
-  },
-  encabezadoLogoAjuste: {
-    width: "auto",
-    marginBottom: 0,
-    marginTop: 8,
-  },
-  headerContainer: {
-    marginTop: 4,
-    marginBottom: 4,
+    gap: 12,
   },
   imageContainer: {
     flex: 1,
-    minHeight: 220,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 14,
+    width: "100%",
+    marginVertical: 8,
   },
   ilustracion: {
-    width: "100%",
-    height: "100%",
+    width: "120%",
+    height: Math.min(Math.max(ALTO_PANTALLA * 0.46, 342), 418),
     alignSelf: "center",
-    transform: [{ scale: 1.18 }],
   },
   bottomSection: {
-    gap: 20,
-    paddingTop: 4,
-  },
-  footerWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    paddingTop: 2,
+    gap: 16,
+    paddingTop: 8,
   },
 });

@@ -2,22 +2,21 @@ import {
   BotonPrincipal,
   CampoTexto,
   ContenedorPantalla,
-  EncabezadoLogo,
   EncabezadoPagina,
   PiePaginaAutenticacion,
 } from "@/components/ui";
 import { BotonRedesSociales } from "@/components/ui/BotonRedesSociales";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { paletaColores } from "@/paletaColores";
+import { authService } from "@/services/authService";
+import { obtenerEstadoConductor } from "@/services/estadoConductor";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
-import * as AuthSession from "expo-auth-session";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { Alert, Keyboard, Pressable, StyleSheet, Text, View } from "react-native";
-import { obtenerEstadoConductor } from "@/services/estadoConductor";
 
-// Completo la sesion si vuelve de un navegador web
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
@@ -28,35 +27,22 @@ export default function LoginScreen() {
   const { login } = useAuth();
 
   const handleSession = async (user: any) => {
-    if (!user.user_metadata?.rol || !user.user_metadata?.dni) {
-      Alert.alert(
-        "¡Bienvenido!",
-        "Completa tu registro seleccionando tu rol.",
-        [
-          {
-            text: "Continuar",
-            onPress: () => router.replace("/crear-cuenta"),
-          },
-        ]
-      );
-      return;
+    const rol = user.user_metadata?.rol;
+    if (!rol || !user.user_metadata?.dni) {
+      return Alert.alert("¡Bienvenido!", "Completa tu registro seleccionando tu rol.", [
+        { text: "Continuar", onPress: () => router.replace("/crear-cuenta") },
+      ]);
     }
 
-    const rol = user.user_metadata.rol;
-
     if (rol === "conductor") {
-      // Verificar la solicitud antes de permitir el acceso.
       await obtenerEstadoConductor(user.id);
-
       login("conductor");
-      router.replace("/(auth)/estado-solicitud");
-      return;
+      return router.replace("/(auth)/estado-solicitud");
     }
 
     if (rol === "pasajero") {
       login("pasajero");
-      router.replace("/mapa");
-      return;
+      return router.replace("/mapa");
     }
 
     throw new Error("Rol de usuario no reconocido.");
@@ -64,52 +50,23 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (loading) return;
-
     Keyboard.dismiss();
     setCorreoError(false);
 
-    if (!correo.trim() || !contrasena.trim()) {
-      Alert.alert(
-        "Campos incompletos",
-        "Ingresa tu correo y contraseña."
-      );
-      return;
+    const normalizado = correo.trim().toLowerCase();
+    if (!normalizado || !contrasena.trim()) {
+      return Alert.alert("Campos incompletos", "Ingresa tu correo y contraseña.");
     }
-
-    const correoNormalizado = correo.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(correoNormalizado)) {
-      setCorreoError(true);
-      return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizado)) {
+      return setCorreoError(true);
     }
 
     setLoading(true);
-
     try {
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email: correoNormalizado,
-          password: contrasena,
-        });
-
-      if (error) throw error;
-
-      if (!data.user) {
-        throw new Error("No se pudo obtener el usuario.");
-      }
-
-      await handleSession(data.user);
+      const user = await authService.loginConPassword(normalizado, contrasena);
+      await handleSession(user);
     } catch (error: any) {
-      console.error("Error de login:", error);
-
-      Alert.alert(
-        "No se pudo iniciar sesión",
-        traducirErrorAuth(
-          error,
-          "Comprueba tus datos e inténtalo nuevamente."
-        )
-      );
+      Alert.alert("No se pudo iniciar sesión", traducirErrorAuth(error, "Comprueba tus datos e inténtalo nuevamente."));
     } finally {
       setLoading(false);
     }
@@ -120,135 +77,94 @@ export default function LoginScreen() {
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const redirectUrl = AuthSession.makeRedirectUri();
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: redirectUrl,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        const res = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUrl,
-        );
-
-        if (res.type === "success") {
-          const urlStr = res.url;
-          const hashOrQuery = urlStr.split("#")[1] || urlStr.split("?")[1];
-          if (hashOrQuery) {
-            const params = new URLSearchParams(hashOrQuery);
-            const access_token = params.get("access_token");
-            const refresh_token = params.get("refresh_token");
-
-            if (access_token && refresh_token) {
-              const { data: sessionData, error: sessionError } =
-                await supabase.auth.setSession({
-                  access_token,
-                  refresh_token,
-                });
-
-              if (sessionError) throw sessionError;
-
-              if (sessionData?.session?.user) {
-                await handleSession(sessionData.session.user);
-              }
-            }
-          }
-        }
-      }
+      const user = await authService.loginConGoogle();
+      if (user) await handleSession(user);
     } catch (err: any) {
-      Alert.alert(
-        "Inicio con Google",
-        traducirErrorAuth(err, "No se pudo iniciar sesión con Google. Por favor, inténtalo nuevamente.")
-      );
+      Alert.alert("Inicio con Google", traducirErrorAuth(err, "No se pudo iniciar sesión con Google."));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTerms = () => {
+
+  const handleTerms = () =>
     Alert.alert(
       "Términos de Servicio",
-      "1. Uso del Servicio: Nuestra plataforma conecta a usuarios con opciones de transporte y movilidad de forma segura.\n2. Cuentas y Responsabilidad: Eres responsable de la veracidad de los datos registrados y del resguardo de tu cuenta.\n3. Seguridad y Convivencia: Nos reservamos el derecho de suspender cuentas que infrinjan las normas de seguridad de la comunidad.",
-      [{ text: "Entendido", style: "default" }]
+      "1. Uso del Servicio: Conectamos pasajeros y conductores de forma ágil y segura.\n2. Seguridad: Tus datos viajan protegidos.\n3. Convivencia: Cuentas que violen normas serán suspendidas."
     );
-  };
 
-  const handlePrivacy = () => {
+  const handlePrivacy = () =>
     Alert.alert(
       "Política de Privacidad",
-      "Protegemos tu información:\n\n1. Recopilación: Solo recolectamos los datos necesarios (correo, nombre, viajes) para la prestación del servicio.\n2. Seguridad: Tus credenciales y datos viajan cifrados bajo estándares de alta seguridad.\n3. Derechos: Tienes control total sobre tu cuenta y puedes gestionar tus datos en cualquier momento.",
-      [{ text: "Entendido", style: "default" }]
+      "Protegemos tus datos personales y credenciales bajo altos estándares de cifrado y seguridad."
     );
-  };
 
   return (
-    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-      <View style={styles.topSection}>
-        <EncabezadoLogo sinMargenSuperior />
-
-        <View style={styles.headerContainer}>
+    <LinearGradient
+      colors={["#1d5538ff", paletaColores.background]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.7 }}
+      style={styles.pantalla}
+    >
+      <ContenedorPantalla
+        estilo={{ backgroundColor: "transparent" }}
+        estiloContenedorContenido={styles.scrollContent}
+      >
+        <View style={styles.topSection}>
           <EncabezadoPagina
-            titulo={"Iniciar "}
+            titulo="Iniciar "
             tituloDestacado="sesión"
             descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
           />
-        </View>
 
-        <View style={styles.formContainer}>
-          <CampoTexto
-            nombreIcono="mail-outline"
-            placeholder="Correo electrónico"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            textContentType="emailAddress"
-            value={correo}
-            onChangeText={setCorreo}
-            error={correoError}
-            textoError={correoError ? "Ingresa un correo electrónico válido" : undefined}
-          />
+          <View style={styles.formContainer}>
+            <CampoTexto
+              nombreIcono="mail-outline"
+              placeholder="Correo electrónico"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              value={correo}
+              onChangeText={setCorreo}
+              error={correoError}
+              textoError={correoError ? "Ingresa un correo electrónico válido" : undefined}
+            />
 
-          <CampoTexto
-            nombreIcono="lock-closed-outline"
-            placeholder="Contraseña"
-            esPassword
-            autoComplete="password"
-            textContentType="password"
-            value={contrasena}
-            onChangeText={setContrasena}
-          />
+            <CampoTexto
+              nombreIcono="lock-closed-outline"
+              placeholder="Contraseña"
+              esPassword
+              autoComplete="password"
+              textContentType="password"
+              value={contrasena}
+              onChangeText={setContrasena}
+            />
 
-          <Pressable
-            onPress={() => router.push("/recuperar-cuenta")}
-            hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
-            accessibilityRole="link"
-            accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
-            style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
-          >
-            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
-          </Pressable>
+            <Pressable
+              onPress={() => router.push("/recuperar-cuenta")}
+              hitSlop={12}
+              accessibilityRole="link"
+              accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
+              style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+            </Pressable>
 
-          <BotonPrincipal
-            titulo="Iniciar sesión"
-            cargando={loading}
-            onPress={handleLogin}
-            disabled={loading}
-          />
-        </View>
+            <BotonPrincipal
+              titulo="Iniciar sesión"
+              cargando={loading}
+              onPress={handleLogin}
+              disabled={loading}
+            />
+          </View>
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>O continúa con</Text>
-          <View style={styles.divider} />
-        </View>
+          <View style={styles.dividerContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>O continúa con</Text>
+            <View style={styles.divider} />
+          </View>
 
-        <View style={styles.socialButtonsContainer}>
           <BotonRedesSociales
             titulo="Continuar con Google"
             nombreIcono="logo-google"
@@ -257,40 +173,33 @@ export default function LoginScreen() {
             disabled={loading}
           />
         </View>
-      </View>
 
-      <View style={styles.bottomContainer}>
-        <PiePaginaAutenticacion
-          textoPregunta="¿No tienes una cuenta?"
-          textoEnlace="Crear cuenta"
-          ruta="/crear-cuenta"
-        />
+        <View style={styles.bottomContainer}>
+          <PiePaginaAutenticacion
+            textoPregunta="¿No tienes una cuenta?"
+            textoEnlace="Crear cuenta"
+            ruta="/crear-cuenta"
+          />
 
-        <View style={styles.legalContainer}>
-          <Text style={styles.disclaimerText}>
-            Al iniciar sesión, aceptas nuestros{" "}
-            <Text
-              onPress={handleTerms}
-              style={styles.legalLink}
-            >
-              Términos de servicio
+          <View style={styles.legalContainer}>
+            <Text style={styles.disclaimerText}>
+              Al iniciar sesión, aceptas nuestros{" "}
+              <Text onPress={handleTerms} style={styles.legalLink}>Términos de servicio</Text>
+              {" "}y{" "}
+              <Text onPress={handlePrivacy} style={styles.legalLink}>Política de privacidad</Text>.
             </Text>
-            {" "}y{" "}
-            <Text
-              onPress={handlePrivacy}
-              style={styles.legalLink}
-            >
-              Política de privacidad
-            </Text>
-            .
-          </Text>
+          </View>
         </View>
-      </View>
-    </ContenedorPantalla>
+      </ContenedorPantalla>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  pantalla: {
+    flex: 1,
+    backgroundColor: paletaColores.background,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -299,25 +208,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   topSection: {
-    gap: 4,
-  },
-  headerContainer: {
-    marginTop: 8,
-    marginBottom: 24,
+    gap: 16,
   },
   formContainer: {
     gap: 14,
-    marginBottom: 16,
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    marginTop: -2,
-    marginBottom: 4,
     paddingVertical: 6,
     paddingHorizontal: 4,
   },
   forgotPasswordText: {
-    color: "#2ECE79",
+    color: paletaColores.primary,
     fontSize: 17,
     fontWeight: "700",
     textAlign: "right",
@@ -325,8 +227,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
-    marginTop: 4,
+    marginVertical: 4,
   },
   divider: {
     flex: 1,
@@ -334,14 +235,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   dividerText: {
-    color: "#A8BCB2",
+    color: paletaColores.textSecondary,
     paddingHorizontal: 14,
     fontSize: 15,
     fontWeight: "500",
-  },
-  socialButtonsContainer: {
-    flexDirection: "row",
-    marginBottom: 16,
   },
   bottomContainer: {
     marginTop: "auto",
@@ -354,13 +251,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   disclaimerText: {
-    color: "#A8BCB2",
+    color: paletaColores.textSecondary,
     fontSize: 15,
     textAlign: "center",
     lineHeight: 22,
   },
   legalLink: {
-    color: "#2ECE79",
+    color: paletaColores.primary,
     fontWeight: "700",
     textDecorationLine: "underline",
   },

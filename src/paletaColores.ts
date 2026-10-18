@@ -1,34 +1,54 @@
 export const paletaColores = {
-  // Modo oscuro
-  fondo: "#0E1713",
-  superficie: "#151F1A",
-  tarjeta: "#19241F",
-  texto: "#F5F7F6",
-  textoSecundario: "#9DAAA3",
-  borde: "#304039",
-  input: "#19261F",
+  // Tokens semánticos canónicos Altokke (Modo Oscuro Premium)
+  background: "#0A130E",
+  surface: "#121E18",
+  surfaceBorder: "#1E2E25",
+  surfaceElevated: "#16241D",
+  primary: "#24A665",
+  primaryHover: "#1C8450",
+  primaryMuted: "rgba(36, 166, 101, 0.20)",
+  textPrimary: "#E9E7E7",
+  textSecondary: "#8B9E94",
+  textTertiary: "#64776E",
+  textDark: "#04160C",
+  textOnPrimary: "#c2d1c9ff",
+  error: "#E54D4D",
+  errorMuted: "rgba(229, 77, 77, 0.14)",
+  warning: "#E5A93C",
+  warningMuted: "rgba(229, 169, 60, 0.14)",
+  success: "#24A665",
+  successMuted: "rgba(36, 166, 101, 0.14)",
+  disabled: "#1C2A22",
+  disabledText: "rgba(244, 247, 245, 0.38)",
 
-  // Colores principales
-  boton: "#2A9B64",
-  botonPresionado: "#207C50",
-
-  // Verde principal de Altokke
-  verde: "#228E5B",
-
-  // Texto auxiliar
-  textoOscuro: "#0B0E0D",
+  // Alias para retrocompatibilidad total con la base de código existente
+  fondo: "#0A130E",
+  superficie: "#121E18",
+  superficieElevada: "#16241D",
+  tarjeta: "#121E18",
+  input: "#121E18",
+  borde: "#1E2E25",
+  bordeFuerte: "#283C30",
+  boton: "#24A665",
+  botonPresionado: "#1C8450",
+  botonTexto: "#D8E2DC",
+  verde: "#24A665",
+  texto: "#F4F7F5",
+  textoSecundario: "#8B9E94",
+  textoTerciario: "#64776E",
+  textoOscuro: "#04160C",
+  errorFondo: "rgba(229, 77, 77, 0.14)",
+  advertencia: "#E5A93C",
+  advertenciaFondo: "rgba(229, 169, 60, 0.14)",
+  exito: "#24A665",
+  exitoFondo: "rgba(36, 166, 101, 0.14)",
+  disabledTexto: "rgba(244, 247, 245, 0.38)",
 
   // Modo claro
   fondoClaro: "#F7F9F8",
   superficieClara: "#FFFFFF",
-  textoClaro: "#16221D",
+  textoClaro: "#121A15",
   textoSecundarioClaro: "#66756E",
-  bordeClaro: "#D8E0DC",
+  bordeClaro: "#CBD8D1",
   inputClaro: "#FFFFFF",
-
-  // Estados
-  error: "#D95757",
-  advertencia: "#C99738",
-  exito: "#319967",
-  disabled: "#55615B",
 };

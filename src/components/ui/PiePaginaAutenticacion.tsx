@@ -1,15 +1,23 @@
-import { Href, router } from "expo-router";
-import { Pressable, StyleProp, StyleSheet, Text, TextStyle, View } from "react-native";
 import { paletaColores } from "@/paletaColores";
+import { Href, router } from "expo-router";
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native";
 
-interface PropsPiePaginaAutenticacion {
+export interface PropsPiePaginaAutenticacion {
   textoPregunta: string;
   textoEnlace: string;
   ruta: Href;
   alineacion?: "left" | "center" | "right";
   mostrarBorde?: boolean;
-  variante?: "oscuro" | "claro";
-  tamanoTexto?: number;
+  variante?: "oscuro" | "claro" | string;
+  estilo?: StyleProp<ViewStyle>;
   estiloPregunta?: StyleProp<TextStyle>;
   estiloEnlace?: StyleProp<TextStyle>;
 }
@@ -21,51 +29,33 @@ export const PiePaginaAutenticacion = ({
   alineacion = "center",
   mostrarBorde = false,
   variante = "oscuro",
-  tamanoTexto,
+  estilo,
   estiloPregunta,
   estiloEnlace,
 }: PropsPiePaginaAutenticacion) => {
   const esClaro = variante === "claro";
-  const estiloTamano = tamanoTexto ? { fontSize: tamanoTexto } : null;
 
   return (
     <View
       style={[
         estilos.contenedor,
-        mostrarBorde ? estilos.contenedorBorde : estilos.contenedorSinBorde,
-        esClaro && estilos.contenedorClaro,
-        { justifyContent: alineacion === "center" ? "center" : alineacion === "left" ? "flex-start" : "flex-end" },
+        mostrarBorde && (esClaro ? estilos.bordeClaro : estilos.bordeOscuro),
+        { justifyContent: alineacion === "left" ? "flex-start" : alineacion === "right" ? "flex-end" : "center" },
+        estilo,
       ]}
     >
       <View style={estilos.fila}>
-        <Text
-          style={[
-            estilos.textoPregunta,
-            esClaro && estilos.textoPreguntaClaro,
-            estiloTamano,
-            estiloPregunta,
-          ]}
-        >
+        <Text style={[estilos.textoPregunta, esClaro && estilos.textoPreguntaClaro, estiloPregunta]}>
           {textoPregunta}{" "}
         </Text>
         <Pressable
           onPress={() => router.push(ruta)}
-          hitSlop={{ top: 12, bottom: 12, left: 10, right: 12 }}
+          hitSlop={10}
           accessibilityRole="link"
           accessibilityLabel={`${textoPregunta} ${textoEnlace}`}
-          accessibilityHint="Navega a la pantalla para iniciar sesión"
-          style={({ pressed }) => [
-            pressed && { opacity: 0.6 },
-          ]}
+          style={({ pressed }) => [pressed && { opacity: 0.75 }]}
         >
-          <Text
-            style={[
-              estilos.textoEnlace,
-              esClaro && estilos.textoEnlaceClaro,
-              estiloTamano,
-              estiloEnlace,
-            ]}
-          >
+          <Text style={[estilos.textoEnlace, esClaro && estilos.textoEnlaceClaro, estiloEnlace]}>
             {textoEnlace}
           </Text>
         </Pressable>
@@ -77,47 +67,47 @@ export const PiePaginaAutenticacion = ({
 const estilos = StyleSheet.create({
   contenedor: {
     width: "100%",
-    flexDirection: "row",
+    paddingVertical: 10,
+    minHeight: 52,
     alignItems: "center",
   },
-  contenedorBorde: {
-    minHeight: 56,
-    borderWidth: 1,
-    borderColor: paletaColores.borde,
-    borderRadius: 12,
-    marginTop: 10,
-    marginBottom: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+  bordeOscuro: {
+    borderTopWidth: 1,
+    borderTopColor: paletaColores.surfaceBorder,
+    marginTop: 12,
+    paddingTop: 16,
   },
-  contenedorSinBorde: {
-    paddingVertical: 6,
-    minHeight: 48,
-    justifyContent: "center",
-  },
-  contenedorClaro: {
-    borderColor: paletaColores.bordeClaro,
+  bordeClaro: {
+    borderTopWidth: 1,
+    borderTopColor: paletaColores.bordeClaro,
+    marginTop: 12,
+    paddingTop: 16,
   },
   fila: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
     justifyContent: "center",
+    gap: 6,
   },
   textoPregunta: {
-    fontSize: 19,
-    color: "#C2D4CB",
+    fontSize: 17,
+    lineHeight: 24,
+    color: paletaColores.textSecondary,
     fontWeight: "500",
   },
   textoPreguntaClaro: {
     color: paletaColores.textoSecundarioClaro,
   },
   textoEnlace: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#2ECE79",
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: "700",
+    color: paletaColores.primary,
   },
   textoEnlaceClaro: {
-    color: paletaColores.verde,
+    color: paletaColores.primaryHover,
   },
 });
+
+export default PiePaginaAutenticacion;

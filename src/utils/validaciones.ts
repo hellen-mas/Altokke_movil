@@ -1,5 +1,20 @@
 import * as yup from "yup";
 
+export function calcularEdad(fecha: Date | string): number {
+  if (!fecha) return 0;
+  const d = typeof fecha === "string" ? new Date(fecha.includes("T") ? fecha : `${fecha}T00:00:00`) : fecha;
+  if (isNaN(d.getTime())) return 0;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - d.getFullYear();
+  const m = hoy.getMonth() - d.getMonth();
+  return (m < 0 || (m === 0 && hoy.getDate() < d.getDate())) ? edad - 1 : edad;
+}
+
+export const sanitizarDNI = (texto: string) => texto.replace(/\D/g, "").slice(0, 8);
+export const sanitizarTelefono = (texto: string) => texto.replace(/\D/g, "").slice(0, 9);
+export const esDNIValido = (dni: string) => /^\d{8}$/.test(dni);
+export const esTelefonoValido = (tel: string) => /^9\d{8}$/.test(tel);
+
 export const esquemaRegistroPasajero = yup.object({
   // Paso 1: Acceso
   correo: yup.string().email("Correo inválido").required("Requerido"),
@@ -21,21 +36,7 @@ export const esquemaRegistroPasajero = yup.object({
   apellidos: yup.string().required("Requerido"),
   fechaNacimiento: yup.string()
     .required("Selecciona tu fecha de nacimiento")
-    .test("es-mayor-de-edad", "Debes tener al menos 18 años para registrarte", (valor) => {
-      if (!valor) return false;
-      const partes = valor.split("-");
-      if (partes.length !== 3) return false;
-      const [anio, mes, dia] = partes.map(Number);
-      if (!anio || !mes || !dia) return false;
-      const nacimiento = new Date(anio, mes - 1, dia);
-      const hoy = new Date();
-      let edad = hoy.getFullYear() - nacimiento.getFullYear();
-      const m = hoy.getMonth() - nacimiento.getMonth();
-      if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
-        edad--;
-      }
-      return edad >= 18;
-    }),
+    .test("es-mayor-de-edad", "Debes tener al menos 18 años para registrarte", (val) => Boolean(val && calcularEdad(val) >= 18)),
   fotoPerfil: yup.string().nullable().optional(),
   fotoBase64: yup.string().nullable().optional(),
 });
@@ -46,6 +47,14 @@ export const esquemaPaso1 = esquemaRegistroPasajero.pick([
   "correo",
   "contrasena",
   "confirmarContrasena",
+]);
+
+export const esquemaPaso2 = esquemaRegistroPasajero.pick([
+  "dni",
+  "nombres",
+  "apellidos",
+  "telefono",
+  "fechaNacimiento",
 ]);
 
 export const esquemaNuevaContrasena = yup.object({

@@ -11,9 +11,9 @@ import {
 } from "react-native";
 
 export interface PropsCampoTexto extends TextInputProps {
-  nombreIcono: keyof typeof Ionicons.glyphMap;
+  nombreIcono?: keyof typeof Ionicons.glyphMap;
   esPassword?: boolean;
-  variante?: "oscuro" | "claro";
+  variante?: "oscuro" | "claro" | string;
   error?: boolean;
   textoError?: string;
 }
@@ -22,68 +22,74 @@ export const CampoTexto = ({
   nombreIcono,
   esPassword,
   variante = "oscuro",
-  error,
+  error = false,
   textoError,
   style,
+  onFocus,
+  onBlur,
   ...rest
 }: PropsCampoTexto) => {
   const [visible, setVisible] = useState(false);
-    
-    const esClaro = variante === "claro";
-    const colorSecundario = esClaro
-      ? paletaColores.textoSecundarioClaro
-      : "#8FA198";
+  const [enFoco, setEnFoco] = useState(false);
 
-    return (
-      <View style={estilos.envoltorio}>
-        <View 
-          style={[
-            estilos.contenedor,
-            esClaro && estilos.contenedorClaro,
-            error && estilos.contenedorError,
-          ]}
-        >
+  const esClaro = variante === "claro";
+  const colorSecundario = esClaro ? paletaColores.textoSecundarioClaro : paletaColores.textSecondary;
+  const colorIcono = error ? paletaColores.error : enFoco ? paletaColores.primary : colorSecundario;
+
+  return (
+    <View style={estilos.envoltorio}>
+      <View
+        style={[
+          estilos.contenedor,
+          esClaro && estilos.contenedorClaro,
+          enFoco && estilos.contenedorFoco,
+          error && estilos.contenedorError,
+        ]}
+      >
+        {nombreIcono && (
           <Ionicons
             name={nombreIcono}
             size={24}
-            color={error ? "#FF5E5E" : colorSecundario}
+            color={colorIcono}
+            style={estilos.iconoIzquierdo}
           />
+        )}
 
-          <TextInput
-            style={[
-              estilos.entrada, 
-              esClaro && estilos.entradaClara,
-              style,
-            ]}
-            placeholderTextColor={colorSecundario}
-            secureTextEntry={esPassword ? !visible : rest.secureTextEntry}
-            accessibilityLabel={rest.placeholder || "Campo de texto"}
-            {...rest}
-          />
-          {esPassword && (
-            <Pressable
-              onPress={() => setVisible((prev) => !prev)}
-              style={estilos.botonOjo}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityRole="button"
-              accessibilityLabel={
-                visible ? "Ocultar contraseña" : "Ver contraseña"
-              }
-              accessibilityHint="Muestra u oculta los caracteres de la contraseña"
-            >
-              <Ionicons
-                name={visible ? "eye-outline" : "eye-off-outline"}
-                size={24}
-                color={colorSecundario}
-              />
-            </Pressable>
-          )}
-        </View>
-        {error && textoError ? (
-          <Text style={estilos.textoError}>{textoError}</Text>
-        ) : null}
+        <TextInput
+          style={[estilos.entrada, esClaro && estilos.entradaClara, style]}
+          placeholderTextColor={colorSecundario}
+          secureTextEntry={esPassword ? !visible : rest.secureTextEntry}
+          accessibilityLabel={rest.placeholder || "Campo de texto"}
+          onFocus={(e) => { setEnFoco(true); onFocus?.(e); }}
+          onBlur={(e) => { setEnFoco(false); onBlur?.(e); }}
+          {...rest}
+        />
+
+        {esPassword && (
+          <Pressable
+            onPress={() => setVisible((prev) => !prev)}
+            style={estilos.botonOjo}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={visible ? "Ocultar contraseña" : "Ver contraseña"}
+          >
+            <Ionicons
+              name={visible ? "eye-outline" : "eye-off-outline"}
+              size={24}
+              color={colorSecundario}
+            />
+          </Pressable>
+        )}
       </View>
-    );
+
+      {error && !!textoError && (
+        <View style={estilos.filaError}>
+          <Ionicons name="alert-circle-outline" size={18} color={paletaColores.error} />
+          <Text style={estilos.textoError}>{textoError}</Text>
+        </View>
+      )}
+    </View>
+  );
 };
 
 const estilos = StyleSheet.create({
@@ -92,28 +98,38 @@ const estilos = StyleSheet.create({
   },
   contenedor: {
     width: "100%",
-    minHeight: 60,
-    paddingVertical: 10,
+    minHeight: 62,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 16,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.14)",
-    borderRadius: 16,
-    backgroundColor: paletaColores.input,
+    borderColor: paletaColores.surfaceBorder,
+    borderRadius: 14,
+    backgroundColor: paletaColores.surface,
   },
   contenedorClaro: {
     backgroundColor: paletaColores.inputClaro,
     borderColor: paletaColores.bordeClaro,
   },
+  contenedorFoco: {
+    borderColor: paletaColores.primary,
+    backgroundColor: paletaColores.surfaceElevated,
+  },
   contenedorError: {
-    borderColor: "#FF5E5E",
+    borderColor: paletaColores.error,
+    backgroundColor: paletaColores.errorMuted,
+  },
+  iconoIzquierdo: {
+    marginRight: 2,
   },
   entrada: {
     flex: 1,
-    fontSize: 18,
-    color: paletaColores.texto,
+    fontSize: 19,
+    lineHeight: 24,
+    color: paletaColores.textPrimary,
+    paddingVertical: 0,
   },
   entradaClara: {
     color: paletaColores.textoClaro,
@@ -124,11 +140,19 @@ const estilos = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  textoError: {
-    color: "#FF5E5E",
-    fontSize: 15,
-    fontWeight: "600",
+  filaError: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     marginTop: 6,
-    marginLeft: 8,
+    marginLeft: 4,
+  },
+  textoError: {
+    color: paletaColores.error,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "500",
   },
 });
+
+export default CampoTexto;

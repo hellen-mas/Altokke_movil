@@ -1,8 +1,8 @@
-import { Image, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { paletaColores } from "@/paletaColores";
+import { Image, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
-interface PropsEncabezadoLogo {
-  variante?: "oscuro" | "claro";
+export interface PropsEncabezadoLogo {
+  variante?: "oscuro" | "claro" | string;
   sinMargenSuperior?: boolean;
   estilo?: StyleProp<ViewStyle>;
 }
@@ -15,59 +15,41 @@ export const EncabezadoLogo = ({
   const esClaro = variante === "claro";
 
   return (
-    <View
-      style={[
-        estilos.contenedorLogo,
-        !sinMargenSuperior && estilos.conMargenSuperior,
-        estilo,
-      ]}
-    >
+    <View style={[estilos.contenedor, !sinMargenSuperior && { marginTop: 36 }, estilo]}>
       <Image
         source={require("@/assets/images/logo-altokke-v2.png")}
-        style={estilos.imagenLogo}
+        style={estilos.imagen}
         resizeMode="contain"
+        accessibilityRole="image"
+        accessibilityLabel="Logotipo de Altokke"
       />
-
-      <Text
-        style={[
-          estilos.logo,
-          esClaro && estilos.logoClaro,
-        ]}
-      >
-        Altokke
-      </Text>
+      <Text style={[estilos.logo, esClaro && estilos.logoClaro]}>Altokke</Text>
     </View>
   );
 };
 
 const estilos = StyleSheet.create({
-  contenedorLogo: {
+  contenedor: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
-    marginTop: 12,
-    marginBottom: 20,
-    gap: 8,
+    marginTop: 6,
+    marginBottom: 16,
+    gap: 12,
   },
-
-  conMargenSuperior: {
-    marginTop: 50,
+  imagen: {
+    width: 42,
+    height: 42,
   },
-
-  imagenLogo: {
-    width: 36,
-    height: 36,
-  },
-
   logo: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
-    color: paletaColores.texto,
+    color: paletaColores.textPrimary,
     letterSpacing: -0.5,
   },
-
   logoClaro: {
     color: paletaColores.textoClaro,
   },
 });
+
+export default EncabezadoLogo;

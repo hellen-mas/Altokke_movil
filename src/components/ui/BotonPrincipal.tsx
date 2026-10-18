@@ -20,6 +20,8 @@ export interface PropsBotonPrincipal {
   tamanoIcono?: number;
   cargando?: boolean;
   disabled?: boolean;
+  mostrarIcono?: boolean;
+  icono?: keyof typeof Ionicons.glyphMap;
 }
 
 export function BotonPrincipal({
@@ -28,40 +30,46 @@ export function BotonPrincipal({
   alPresionar,
   estilo,
   estiloTexto,
-  tamanoIcono,
-  cargando,
-  disabled
+  tamanoIcono = 22,
+  cargando = false,
+  disabled = false,
+  mostrarIcono = false,
+  icono = "arrow-forward",
 }: PropsBotonPrincipal) {
-  const funcionAccion = onPress || alPresionar;
+  const bloqueado = disabled || cargando;
 
   return (
     <Pressable
       style={({ pressed }) => [
         estilos.boton,
         estilo,
-        (disabled || cargando) && estilos.disabled,
-        pressed && !disabled && !cargando && { backgroundColor: paletaColores.botonPresionado },
-        pressed && estilos.presionado,
+        bloqueado && estilos.disabled,
+        pressed && !bloqueado && estilos.presionado,
       ]}
-      disabled={disabled || cargando}
-      onPress={funcionAccion}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      disabled={bloqueado}
+      onPress={onPress || alPresionar}
+      hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={titulo}
-      accessibilityState={{ disabled: disabled || cargando, busy: cargando }}
+      accessibilityState={{ disabled: bloqueado, busy: cargando }}
     >
       {cargando ? (
-        <ActivityIndicator color={paletaColores.textoOscuro} />
+        <ActivityIndicator color={paletaColores.textOnPrimary} size="small" />
       ) : (
         <View style={estilos.contenido}>
-          <Text style={[estilos.texto, estiloTexto]} numberOfLines={2}>
+          <Text
+            style={[estilos.texto, bloqueado && estilos.textoDisabled, estiloTexto]}
+            numberOfLines={2}
+          >
             {titulo}
           </Text>
-          <Ionicons
-            name="arrow-forward"
-            size={tamanoIcono ?? 24}
-            color={paletaColores.textoOscuro}
-          />
+          {mostrarIcono && (
+            <Ionicons
+              name={icono}
+              size={tamanoIcono}
+              color={bloqueado ? paletaColores.disabledText : paletaColores.textOnPrimary}
+            />
+          )}
         </View>
       )}
     </Pressable>
@@ -71,33 +79,38 @@ export function BotonPrincipal({
 const estilos = StyleSheet.create({
   boton: {
     width: "100%",
-    minHeight: 60,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    minHeight: 64,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.boton,
-    borderRadius: 18,
-    marginTop: 3,
+    backgroundColor: paletaColores.primary,
+    borderRadius: 16,
   },
   texto: {
-    fontSize: 21,
-    fontWeight: "900",
-    letterSpacing: 0.2,
-    color: paletaColores.textoOscuro,
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    color: paletaColores.textOnPrimary,
     textAlign: "center",
   },
+  textoDisabled: {
+    color: paletaColores.disabledText,
+  },
   disabled: {
-    backgroundColor: "#A0A0A0",
+    backgroundColor: paletaColores.primaryMuted,
+    opacity: 0.8,
   },
   presionado: {
-    transform: [{ scale: 0.98 }]
+    backgroundColor: paletaColores.primaryHover,
+    opacity: 0.92,
   },
   contenido: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "center",
+    gap: 10,
   },
 });
 

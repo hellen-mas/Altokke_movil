@@ -2,17 +2,16 @@ import {
   BotonPrincipal,
   CampoTexto,
   ContenedorPantalla,
-  EncabezadoLogo,
   EncabezadoPagina,
   PiePaginaAutenticacion,
 } from "@/components/ui";
-import { supabase } from "@/lib/supabase";
+import { paletaColores } from "@/paletaColores";
+import { authService } from "@/services/authService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
-
-//Guarda cuándo se envio el ultimo codigo a cada correo para evitar que se pueda enviar otro codigo antes de 1 minuto
 
 const ultimoEnvioPorCorreo = new Map<string, number>();
 const ESPERA_MS = 60000;
@@ -22,113 +21,93 @@ export default function RecuperarPasswordScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleContinuar = async () => {
-    if (loading) return; // Evita múltiples envíos mientras se está cargando
-    if (!correo.trim()) {
-      Alert.alert(
-        "Campo incompleto",
-        "Por favor, ingresa tu correo electrónico para continuar.",
-      );
+    if (loading) return;
+    const normalizado = correo.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizado)) {
+      Alert.alert("Correo inválido", "Por favor ingresa un correo electrónico válido para continuar.");
       return;
     }
 
-    const correoNormalizado = correo.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(correoNormalizado)) {
-      Alert.alert(
-        "Correo inválido",
-        "Por favor, ingresa un correo electrónico válido.",
-      );
-      return;
-    }
-
-    const ultimoEnvio = ultimoEnvioPorCorreo.get(correoNormalizado);
-
-    if (ultimoEnvio && Date.now() - ultimoEnvio < ESPERA_MS) {
-      const segundos = Math.ceil(
-        (ESPERA_MS - (Date.now() - ultimoEnvio)) / 1000,
-      );
-      Alert.alert(
-        "Espera un momento",
-        `Ya enviamos un código a este correo hace menos de un minuto. Podrás solicitar otro en ${segundos} segundos`,
-      );
+    const ultimo = ultimoEnvioPorCorreo.get(normalizado);
+    if (ultimo && Date.now() - ultimo < ESPERA_MS) {
+      const seg = Math.ceil((ESPERA_MS - (Date.now() - ultimo)) / 1000);
+      Alert.alert("Espera un momento", `Podrás solicitar otro código en ${seg} segundos.`);
       return;
     }
 
     setLoading(true);
-
-    // Pido a Supabase el envío del código OTP para restablecer la contraseña
-    const { error } = await supabase.auth.resetPasswordForEmail(correoNormalizado);
-
-    setLoading(false);
-
-    if (error) {
+    try {
+      await authService.solicitarRecuperacionPassword(normalizado);
+      ultimoEnvioPorCorreo.set(normalizado, Date.now());
+      router.push(`/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(normalizado)}`);
+    } catch (error: any) {
       Alert.alert(
         "Error al enviar código",
-        traducirErrorAuth(
-          error,
-          "No se pudo enviar el código. Revisa que el correo esté registrado e inténtalo nuevamente."
-        )
+        traducirErrorAuth(error, "No se pudo enviar el código. Revisa que el correo esté registrado.")
       );
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    ultimoEnvioPorCorreo.set(correoNormalizado, Date.now());
-
-    // Envío el correo como parámetro codificado
-    router.push(
-      `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(correoNormalizado)}`,
-    );
   };
 
+
   return (
-    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-      <View style={styles.topSection}>
-        <EncabezadoLogo sinMargenSuperior />
+    <LinearGradient
+      colors={["#1d5538ff", paletaColores.background]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.7 }}
+      style={styles.pantalla}
+    >
+      <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+        <View style={styles.topSection}>
+          <View style={styles.headerContainer}>
+            <EncabezadoPagina
+              titulo={"Recuperar "}
+              tituloDestacado="cuenta"
+              descripcion="Ingresa tu correo para recibir un código de recuperación."
+            />
+          </View>
 
-        <View style={styles.headerContainer}>
-          <EncabezadoPagina
-            titulo={"Recuperar "}
-            tituloDestacado="cuenta"
-            descripcion="Ingresa tu correo para recibir un código de recuperación."
-          />
+          <View style={styles.formContainer}>
+            <CampoTexto
+              nombreIcono="mail-outline"
+              placeholder="Correo electrónico"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              value={correo}
+              onChangeText={setCorreo}
+            />
+
+            <BotonPrincipal
+              titulo="Continuar"
+              cargando={loading}
+              onPress={handleContinuar}
+              disabled={loading}
+            />
+          </View>
         </View>
 
-        <View style={styles.formContainer}>
-          <CampoTexto
-            nombreIcono="mail-outline"
-            placeholder="Correo electrónico"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            textContentType="emailAddress"
-            value={correo}
-            onChangeText={setCorreo}
-          />
-
-          <BotonPrincipal
-            titulo="Continuar"
-            cargando={loading}
-            onPress={handleContinuar}
-            disabled={loading}
+        <View style={styles.bottomContainer}>
+          <PiePaginaAutenticacion
+            textoPregunta="¿Recordaste tu contraseña?"
+            textoEnlace="Iniciar sesión"
+            ruta="/login"
           />
         </View>
-      </View>
-
-      <View style={styles.bottomContainer}>
-        <PiePaginaAutenticacion
-          textoPregunta="¿Recordaste tu contraseña?"
-          textoEnlace="Iniciar sesión"
-          ruta="/login"
-        />
-      </View>
-    </ContenedorPantalla>
+      </ContenedorPantalla>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  pantalla: {
+    flex: 1,
+  },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 16,
     paddingBottom: 32,
     flexGrow: 1,
   },
@@ -148,3 +127,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+
