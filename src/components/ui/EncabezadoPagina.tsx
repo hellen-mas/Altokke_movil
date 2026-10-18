@@ -59,17 +59,17 @@ export const EncabezadoPagina = ({
 const estilos = StyleSheet.create({
   encabezado: {
     width: "100%",
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: "700",
-    color: paletaColores.texto,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: "800",
+    color: "#FFFFFF",
     marginBottom: 6,
     marginTop: 0,
     letterSpacing: -0.5,
   },
 
   conMargen: {
-    marginTop: 16,
+    marginTop: 18,
   },
 
   encabezadoClaro: {
@@ -77,22 +77,23 @@ const estilos = StyleSheet.create({
   },
 
   resaltado: {
-    color: paletaColores.texto,
-    fontWeight: "700",
+    color: "#FFFFFF",
+    fontWeight: "800",
   },
 
   descripcion: {
     width: "100%",
-    fontSize: 15,
-    lineHeight: 22,
-    color: paletaColores.textoSecundario,
+    fontSize: 17,
+    lineHeight: 24,
+    color: "#D0DFD6",
     fontWeight: "400",
-    marginTop: 2,
-    letterSpacing: -0.1,
+    marginTop: 6,
+    letterSpacing: -0.2,
   },
 
   descripcionClara: {
     color: paletaColores.textoSecundarioClaro,
   },
 });
+
 

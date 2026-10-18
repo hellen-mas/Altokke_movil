@@ -84,20 +84,20 @@ export function BotonPrincipal({
 const estilos = StyleSheet.create({
   boton: {
     width: "100%",
-    minHeight: 52,
-    paddingVertical: 14,
+    minHeight: 58,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: paletaColores.boton,
-    borderRadius: 14,
-    marginTop: 4,
+    borderRadius: 16,
+    marginTop: 6,
   },
   texto: {
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 0.1,
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: 0.2,
     color: paletaColores.textoOscuro,
     textAlign: "center",
   },
@@ -109,7 +109,7 @@ const estilos = StyleSheet.create({
   },
   presionado: {
     backgroundColor: paletaColores.botonPresionado,
-    transform: [{ scale: 0.99 }],
+    transform: [{ scale: 0.985 }],
   },
   contenido: {
     flexDirection: "row",
@@ -118,6 +118,7 @@ const estilos = StyleSheet.create({
     gap: 8,
   },
 });
+
 
 export default BotonPrincipal;
 

@@ -128,15 +128,15 @@ const estilos = StyleSheet.create({
   },
   contenedor: {
     width: "100%",
-    minHeight: 52,
-    paddingVertical: 8,
+    minHeight: 58,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    borderWidth: 1,
+    gap: 12,
+    borderWidth: 1.5,
     borderColor: paletaColores.borde,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: paletaColores.input,
   },
   contenedorClaro: {
@@ -152,11 +152,11 @@ const estilos = StyleSheet.create({
     backgroundColor: paletaColores.errorFondo,
   },
   iconoIzquierdo: {
-    marginRight: 2,
+    marginRight: 4,
   },
   entrada: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     color: paletaColores.texto,
     paddingVertical: 0,
   },
@@ -164,8 +164,8 @@ const estilos = StyleSheet.create({
     color: paletaColores.textoClaro,
   },
   botonOjo: {
-    minWidth: 40,
-    minHeight: 40,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -174,12 +174,13 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     marginTop: 6,
-    marginLeft: 4,
+    marginLeft: 6,
   },
   textoError: {
     color: paletaColores.error,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "500",
   },
 });
+
 
