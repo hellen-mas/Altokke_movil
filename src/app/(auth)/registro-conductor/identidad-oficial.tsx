@@ -2,7 +2,6 @@ import { useRegistroConductor } from "@/context/RegistroConductorContext";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { paletaColores } from "@/paletaColores";
-import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
 import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { router } from "expo-router";
@@ -70,15 +69,8 @@ export default function IdentidadOficialConductor() {
                 return;
             }
 
-            if (tipo === "frente") {
-                setDniFrente(imagen.uri);
-            }
-            if (tipo === "reverso") {
-                setDniReverso(imagen.uri);
-            }
-            if (tipo === "selfie") {
-                setSelfie(imagen.uri);
-            }
+            const setters = { frente: setDniFrente, reverso: setDniReverso, selfie: setSelfie };
+            setters[tipo](imagen.uri);
         } catch {
             Alert.alert(
                 "Error de cámara",
@@ -90,28 +82,14 @@ export default function IdentidadOficialConductor() {
     };
 
     const continuar = () => {
-        if (!dniFrente) {
-            Alert.alert(
-            "DNI frontal pendiente",
-            "Debes tomar una fotografía del frente de tu DNI."
-            );
-            return;
-        }
+        const pendientes: [string | null, string, string][] = [
+            [dniFrente, "DNI frontal pendiente", "Debes tomar una fotografía del frente de tu DNI."],
+            [dniReverso, "DNI posterior pendiente", "Debes tomar una fotografía del reverso de tu DNI."],
+            [selfie, "Selfie pendiente", "Debes tomar una fotografía sosteniendo tu documento."],
+        ];
 
-        if (!dniReverso) {
-            Alert.alert(
-            "DNI posterior pendiente",
-            "Debes tomar una fotografía del reverso de tu DNI."
-            );
-            return;
-        }
-
-        if (!selfie) {
-            Alert.alert(
-            "Selfie pendiente",
-            "Debes tomar una fotografía sosteniendo tu documento."
-            );
-            return;
+        for (const [foto, titulo, msg] of pendientes) {
+            if (!foto) return Alert.alert(titulo, msg);
         }
 
         router.push("/registro-conductor/documentos");
@@ -127,8 +105,6 @@ export default function IdentidadOficialConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <EncabezadoLogo variante="claro"/>
-
                 <EncabezadoPagina
                     titulo={"Identidad \n"}
                     tituloDestacado="oficial"

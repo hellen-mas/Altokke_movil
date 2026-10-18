@@ -30,40 +30,35 @@ export function BotonPrincipal({
   alPresionar,
   estilo,
   estiloTexto,
-  tamanoIcono = 24,
-  cargando,
-  disabled,
+  tamanoIcono = 22,
+  cargando = false,
+  disabled = false,
   mostrarIcono = false,
   icono = "arrow-forward",
 }: PropsBotonPrincipal) {
-  const funcionAccion = onPress || alPresionar;
-  const estaDeshabilitado = disabled || cargando;
+  const bloqueado = disabled || cargando;
 
   return (
     <Pressable
       style={({ pressed }) => [
         estilos.boton,
         estilo,
-        estaDeshabilitado && estilos.disabled,
-        pressed && !estaDeshabilitado && estilos.presionado,
+        bloqueado && estilos.disabled,
+        pressed && !bloqueado && estilos.presionado,
       ]}
-      disabled={estaDeshabilitado}
-      onPress={funcionAccion}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      disabled={bloqueado}
+      onPress={onPress || alPresionar}
+      hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={titulo}
-      accessibilityState={{ disabled: estaDeshabilitado, busy: cargando }}
+      accessibilityState={{ disabled: bloqueado, busy: cargando }}
     >
       {cargando ? (
-        <ActivityIndicator color={paletaColores.textoOscuro} />
+        <ActivityIndicator color={paletaColores.textOnPrimary} size="small" />
       ) : (
         <View style={estilos.contenido}>
           <Text
-            style={[
-              estilos.texto,
-              estaDeshabilitado && estilos.textoDisabled,
-              estiloTexto,
-            ]}
+            style={[estilos.texto, bloqueado && estilos.textoDisabled, estiloTexto]}
             numberOfLines={2}
           >
             {titulo}
@@ -72,7 +67,7 @@ export function BotonPrincipal({
             <Ionicons
               name={icono}
               size={tamanoIcono}
-              color={estaDeshabilitado ? paletaColores.disabledTexto : paletaColores.textoOscuro}
+              color={bloqueado ? paletaColores.disabledText : paletaColores.textOnPrimary}
             />
           )}
         </View>
@@ -84,41 +79,39 @@ export function BotonPrincipal({
 const estilos = StyleSheet.create({
   boton: {
     width: "100%",
-    minHeight: 58,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    minHeight: 64,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.boton,
+    backgroundColor: paletaColores.primary,
     borderRadius: 16,
-    marginTop: 6,
   },
   texto: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    color: paletaColores.textoOscuro,
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    color: paletaColores.textOnPrimary,
     textAlign: "center",
   },
   textoDisabled: {
-    color: paletaColores.disabledTexto,
+    color: paletaColores.disabledText,
   },
   disabled: {
-    backgroundColor: paletaColores.disabled,
+    backgroundColor: paletaColores.primaryMuted,
+    opacity: 0.8,
   },
   presionado: {
-    backgroundColor: paletaColores.botonPresionado,
-    transform: [{ scale: 0.985 }],
+    backgroundColor: paletaColores.primaryHover,
+    opacity: 0.92,
   },
   contenido: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 10,
   },
 });
 
-
 export default BotonPrincipal;
-

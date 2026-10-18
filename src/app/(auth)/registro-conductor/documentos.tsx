@@ -1,7 +1,6 @@
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
 import { Ionicons } from "@expo/vector-icons";
 import { paletaColores } from "@/paletaColores";
-import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
 import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { router } from "expo-router";
@@ -53,28 +52,15 @@ export default function DocumentosConductor() {
             tipo: archivo.mimeType,
         };
 
-        if (tipo === "licencia") {
-            setLicenciaConducir(documento);
-        }
-        if (tipo === "soat") {
-            setSoat(documento);
-        }
-        if (tipo === "antecedentes") {
-            setAntecedentesPenales(documento);
-        }
+        const setters = { licencia: setLicenciaConducir, soat: setSoat, antecedentes: setAntecedentesPenales };
+        setters[tipo](documento);
     };
 
     const continuar = () => {
         if (!licenciaConducir || !soat || !antecedentesPenales) {
-            Alert.alert(
-                "Documentos incompletos",
-                "Debes subir todos los documentos requeridos para continuar."
-            );
-
-            return;
+            return Alert.alert("Documentos incompletos", "Debes subir todos los documentos requeridos para continuar.");
         }
-
-        router.push("/registro-conductor/vehiculo")
+        router.push("/registro-conductor/vehiculo");
     };
 
     return (
@@ -87,8 +73,6 @@ export default function DocumentosConductor() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <EncabezadoLogo variante="claro"/>
-
                 <EncabezadoPagina
                     titulo={"Documentos del\n"}
                     tituloDestacado="conductor"

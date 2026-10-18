@@ -1,6 +1,5 @@
 import {
   BotonPrincipal,
-  EncabezadoLogo,
   EncabezadoPagina,
   PiePaginaAutenticacion,
 } from "@/components/ui";
@@ -9,17 +8,15 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const { height: ALTO_PANTALLA } = Dimensions.get("window");
 
 export default function PantallaBienvenida() {
   return (
     <LinearGradient
-      colors={["#0E1C15", paletaColores.fondo]}
+      colors={["#1d5538ff", paletaColores.background]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 0.7 }}
       style={styles.pantalla}
@@ -32,18 +29,11 @@ export default function PantallaBienvenida() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.topSection}>
-            <EncabezadoLogo
-              sinMargenSuperior
-              estilo={styles.encabezadoLogoAjuste}
+            <EncabezadoPagina
+              titulo="Tu mototaxi en "
+              tituloDestacado="minutos"
+              descripcion="Pide tu viaje al instante o genera ingresos conduciendo."
             />
-
-            <View style={styles.headerContainer}>
-              <EncabezadoPagina
-                titulo="Tu mototaxi, "
-                tituloDestacado="cuando lo necesites."
-                descripcion="Pide tu viaje al instante o genera ingresos conduciendo."
-              />
-            </View>
           </View>
 
           <View style={styles.imageContainer}>
@@ -60,17 +50,13 @@ export default function PantallaBienvenida() {
           <View style={styles.bottomSection}>
             <BotonPrincipal
               titulo="Empezar ahora"
-              mostrarIcono
               onPress={() => router.push("/crear-cuenta")}
             />
-
-            <View style={styles.footerWrap}>
-              <PiePaginaAutenticacion
-                textoPregunta="¿Ya tienes cuenta?"
-                ruta="/login"
-                textoEnlace="Iniciar sesión"
-              />
-            </View>
+            <PiePaginaAutenticacion
+              textoPregunta="¿Ya tienes cuenta?"
+              ruta="/login"
+              textoEnlace="Iniciar sesión"
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -81,7 +67,7 @@ export default function PantallaBienvenida() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondo,
+    backgroundColor: paletaColores.background,
   },
   safeArea: {
     flex: 1,
@@ -94,38 +80,22 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   topSection: {
-    gap: 6,
-  },
-  encabezadoLogoAjuste: {
-    width: "auto",
-    marginBottom: 2,
-    marginTop: 4,
-  },
-  headerContainer: {
-    marginTop: 4,
-    marginBottom: 8,
+    gap: 12,
   },
   imageContainer: {
     flex: 1,
-    minHeight: 230,
-    maxHeight: 340,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 12,
+    width: "100%",
+    marginVertical: 8,
   },
   ilustracion: {
-    width: "92%",
-    height: "100%",
+    width: "120%",
+    height: Math.min(Math.max(ALTO_PANTALLA * 0.46, 342), 418),
     alignSelf: "center",
   },
   bottomSection: {
     gap: 16,
     paddingTop: 8,
   },
-  footerWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
 });
-

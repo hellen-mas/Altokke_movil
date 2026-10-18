@@ -1,65 +1,22 @@
 import {
-  BarraNavegacionSuperior,
+  AvisoInformativo,
   BotonPrincipal,
   ContenedorPantalla,
   EncabezadoPagina,
   IndicadorPasos,
+  TarjetaOpcion,
 } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
 import { supabase } from "@/lib/supabase";
 import { paletaColores } from "@/paletaColores";
-import { subirFotoAvatar } from "@/utils/avatar";
+import { authService } from "@/services/authService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-
-interface OpcionPreferenciaProps {
-  icono: keyof typeof Ionicons.glyphMap;
-  titulo: string;
-  descripcion: string;
-  value: boolean;
-  alCambiar: (valor: boolean) => void;
-}
-
-function OpcionPreferencia({
-  icono,
-  titulo,
-  descripcion,
-  value,
-  alCambiar,
-}: OpcionPreferenciaProps) {
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.opcionCard,
-        value && styles.opcionCardActiva,
-        pressed && { opacity: 0.8 },
-      ]}
-      onPress={() => alCambiar(!value)}
-      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-    >
-      <View style={[styles.iconContainer, value && styles.iconContainerActivo]}>
-        <Ionicons
-          name={icono}
-          size={22}
-          color={value ? paletaColores.textoOscuro : paletaColores.textoSecundario}
-        />
-      </View>
-      <View style={styles.opcionTextos}>
-        <Text style={styles.opcionTitulo}>{titulo}</Text>
-        <Text style={styles.opcionDescripcion}>{descripcion}</Text>
-      </View>
-      <Ionicons
-        name={value ? "checkmark-circle" : "ellipse-outline"}
-        size={24}
-        color={value ? paletaColores.boton : paletaColores.borde}
-      />
-    </Pressable>
-  );
-}
 
 export default function PasajeroPreferenciasScreen() {
   const [notificaciones, setNotificaciones] = useState(true);
@@ -74,39 +31,37 @@ export default function PasajeroPreferenciasScreen() {
   const handleTerms = () => {
     Alert.alert(
       "Términos y Condiciones",
-      "1. Mayoría de edad: Declaras bajo juramento ser mayor de 18 años y contar con plena capacidad para solicitar y pagar servicios de transporte.\n2. Uso responsable: Queda estrictamente prohibido realizar pedidos falsos, bromas o cancelaciones indebidas a los mototaxistas.\n3. Cuentas y Seguridad: Eres responsable de la veracidad de tus datos y del resguardo de tus credenciales.\n4. Sanciones: El mal uso del servicio conllevará el bloqueo permanente de la cuenta.",
-      [{ text: "Entendido", style: "default" }]
+      "1. Mayoría de edad (+18 años).\n2. Uso responsable del servicio de mototaxi.\n3. Veracidad de tus datos.\n4. El mal uso conlleva suspensión de la cuenta."
     );
   };
 
   const handlePrivacy = () => {
     Alert.alert(
       "Política de Privacidad",
-      "Protegemos tu información:\n\n1. Recopilación: Solo recolectamos los datos necesarios (correo, nombre, viajes) para la prestación del servicio.\n2. Seguridad: Tus credenciales y datos viajan cifrados bajo estándares de alta seguridad.\n3. Derechos: Tienes control total sobre tu cuenta y puedes gestionar tus datos en cualquier momento.",
-      [{ text: "Entendido", style: "default" }]
+      "Cuidamos tu información. Solo recopilamos los datos esenciales para tus viajes bajo estrictos estándares de seguridad cifrada."
     );
   };
 
-  const opciones: OpcionPreferenciaProps[] = [
+  const opciones = [
     {
-      icono: "notifications-outline",
+      icono: "notifications-outline" as const,
       titulo: "Notificaciones del viaje",
       descripcion: "Avisos sobre el estado del viaje, llegada y mensajes del conductor.",
-      value: notificaciones,
+      activa: notificaciones,
       alCambiar: setNotificaciones,
     },
     {
-      icono: "location-outline",
+      icono: "location-outline" as const,
       titulo: "Ubicación en tiempo real",
       descripcion: "Permite seguir tu trayecto durante el viaje para mayor seguridad.",
-      value: ubicacion,
+      activa: ubicacion,
       alCambiar: setUbicacion,
     },
     {
-      icono: "gift-outline",
+      icono: "gift-outline" as const,
       titulo: "Novedades y promociones",
       descripcion: "Beneficios exclusivos, descuentos y novedades para ti.",
-      value: promociones,
+      activa: promociones,
       alCambiar: setPromociones,
     },
   ];
@@ -114,208 +69,139 @@ export default function PasajeroPreferenciasScreen() {
   const handleCrearCuenta = async () => {
     if (loading) return;
     if (!terminos) {
-      Alert.alert(
-        "Acción requerida",
-        "Debes aceptar los términos y condiciones y la política de privacidad para continuar."
-      );
-      return;
+      return Alert.alert("Acción requerida", "Debes aceptar los términos y condiciones y la política de privacidad.");
     }
 
-    if (
-      !datosPersonales.nombres ||
-      !datosPersonales.apellidos ||
-      !datosPersonales.telefono ||
-      !datosPersonales.dni ||
-      !datosPersonales.fechaNacimiento
-    ) {
-      Alert.alert(
-        "Datos incompletos",
-        "Faltan datos obligatorios. Por favor regresa a los pasos anteriores y completa tu información."
-      );
-      return;
+    const { nombres, apellidos, telefono, dni, fechaNacimiento, correo, contrasena, fotoPerfil, fotoBase64 } = datosPersonales;
+    if (!nombres || !apellidos || !telefono || !dni || !fechaNacimiento) {
+      return Alert.alert("Datos incompletos", "Faltan datos obligatorios. Regresa a los pasos anteriores para completarlos.");
     }
 
     setLoading(true);
-
-    // Si el usuario ingresó correo y contraseña, ejecuto el registro con signUp
-    if (datosPersonales.correo && datosPersonales.contrasena) {
-      // Cierro cualquier sesión previa residual para que el registro sea limpio
-      await supabase.auth.signOut();
-
-      const { data: signUpData, error } = await supabase.auth.signUp({
-        email: datosPersonales.correo.trim().toLowerCase(),
-        password: datosPersonales.contrasena,
-        options: {
-          data: {
-            nombre: datosPersonales.nombres,
-            apellidos: datosPersonales.apellidos,
-            telefono: datosPersonales.telefono,
-            dni: datosPersonales.dni,
-            fecha_nacimiento: datosPersonales.fechaNacimiento,
-            notificaciones,
-            ubicacion,
-            promociones,
-            rol: "pasajero",
-          },
-        },
-      });
-
-      setLoading(false);
-
-      if (error) {
-        console.log("Error en signUp de Supabase:", error.message);
-        Alert.alert(
-          "No se pudo crear la cuenta",
-          traducirErrorAuth(
-            error,
-            "No fue posible registrar tu cuenta. Por favor verifica tus datos e inténtalo nuevamente."
-          )
-        );
-        return;
-      }
-
-      console.log("Usuario registrado con éxito en Supabase:", signUpData.user?.email);
-
-      // Si el usuario seleccionó una foto de perfil en el registro, la subimos a la Edge Function
-      if (signUpData.user?.id && datosPersonales.fotoPerfil) {
-        try {
-          const resFoto = await subirFotoAvatar(
-            datosPersonales.fotoPerfil,
-            signUpData.user.id,
-            datosPersonales.fotoBase64 || undefined
-          );
-          console.log("Resultado subida foto registro:", resFoto);
-        } catch (fotoErr) {
-          console.warn("Aviso al subir foto inicial:", fotoErr);
-        }
-      }
-
-      Alert.alert(
-        "¡Cuenta creada exitosamente!",
-        "Tu cuenta ha sido creada con éxito. Ya puedes iniciar sesión con tus credenciales."
-      );
-      clearRegistro();
-      router.replace("/login");
-    } else {
-      // Si no ingresó contraseña es porque inició sesión con Google OAuth
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session) {
-        const { error } = await supabase.auth.updateUser({
-          data: {
-            nombre: datosPersonales.nombres,
-            apellidos: datosPersonales.apellidos,
-            telefono: datosPersonales.telefono,
-            dni: datosPersonales.dni,
-            fecha_nacimiento: datosPersonales.fechaNacimiento,
-            notificaciones,
-            ubicacion,
-            promociones,
-            rol: "pasajero",
-          },
+    try {
+      if (correo && contrasena) {
+        await authService.registrarPasajero({
+          correo,
+          contrasena,
+          nombres,
+          apellidos,
+          telefono,
+          dni,
+          fechaNacimiento,
+          notificaciones,
+          ubicacion,
+          promociones,
+          fotoPerfil,
+          fotoBase64,
         });
 
-        if (sessionData.session.user.id && datosPersonales.fotoPerfil) {
-          try {
-            await subirFotoAvatar(
-              datosPersonales.fotoPerfil,
-              sessionData.session.user.id,
-              datosPersonales.fotoBase64 || undefined
-            );
-          } catch (fotoErr) {
-            console.warn("Aviso al subir foto inicial OAuth:", fotoErr);
-          }
-        }
-
-        setLoading(false);
-
-        if (error) {
-          Alert.alert(
-            "Error de registro",
-            traducirErrorAuth(error, "No se pudo actualizar la información de tu cuenta.")
-          );
-        } else {
-          login("pasajero");
-          clearRegistro();
-          router.replace("/mapa");
-        }
+        Alert.alert("¡Cuenta creada exitosamente!", "Ya puedes iniciar sesión con tus credenciales.");
+        clearRegistro();
+        router.replace("/login");
       } else {
-        setLoading(false);
-        Alert.alert("Datos incompletos", "Por favor ingresa tu correo y contraseña para continuar.");
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session) {
+          throw new Error("No hay una sesión activa para completar el registro.");
+        }
+
+        await authService.actualizarPerfilOAuth(sessionData.session.user.id, {
+          nombres,
+          apellidos,
+          telefono,
+          dni,
+          fechaNacimiento,
+          notificaciones,
+          ubicacion,
+          promociones,
+          fotoPerfil,
+          fotoBase64,
+        });
+
+        login("pasajero");
+        clearRegistro();
+        router.replace("/mapa");
       }
+    } catch (error: any) {
+      Alert.alert("No se pudo crear la cuenta", traducirErrorAuth(error, "No fue posible registrar tu cuenta."));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-      <BarraNavegacionSuperior titulo="Registro" />
-
-      <View style={styles.headerContainer}>
-        <EncabezadoPagina
-          titulo={"Preferencias\n"}
-          tituloDestacado="y seguridad"
-          descripcion="Ajusta tu experiencia antes de empezar a viajar."
-        />
-      </View>
-
-      <IndicadorPasos pasoActual={3} totalPasos={3} />
-
-      <View style={styles.opcionesContainer}>
-        {opciones.map((opcion, i) => (
-          <OpcionPreferencia key={i} {...opcion} />
-        ))}
-      </View>
-
-      <View style={styles.infoCard}>
-        <View style={styles.infoIconWrapper}>
-          <Ionicons name="shield-checkmark" size={22} color={paletaColores.boton} />
+    <LinearGradient
+      colors={["#1d5538ff", paletaColores.background]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.7 }}
+      style={styles.pantalla}
+    >
+      <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Preferencias\n"}
+            tituloDestacado="y seguridad"
+            descripcion="Ajusta tu experiencia antes de empezar a viajar."
+          />
         </View>
-        <View style={styles.infoTextos}>
-          <Text style={styles.infoTitulo}>Tu privacidad está protegida</Text>
-          <Text style={styles.infoDescripcion}>
-            Cuidamos tus datos conforme a ley y los usamos únicamente para brindarte un servicio seguro.
-          </Text>
+
+        <IndicadorPasos pasoActual={3} totalPasos={3} />
+
+        <View style={styles.opcionesContainer}>
+          {opciones.map((opcion, i) => (
+            <TarjetaOpcion key={i} {...opcion} />
+          ))}
         </View>
-      </View>
 
-      <Pressable
-        style={styles.checkboxContainer}
-        onPress={() => setTerminos(!terminos)}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons
-          name={terminos ? "checkbox" : "square-outline"}
-          size={24}
-          color={terminos ? paletaColores.boton : paletaColores.textoSecundario}
+        <AvisoInformativo
+          titulo="Tu privacidad está protegida"
+          texto="Cuidamos tus datos conforme a ley y los usamos únicamente para brindarte un servicio seguro."
+          variante="oscuro"
+          style={styles.infoCard}
         />
-        <Text style={styles.checkboxText}>
-          Acepto los{" "}
-          <Text onPress={handleTerms} style={styles.linkText}>
-            términos y condiciones
-          </Text>{" "}
-          y la{" "}
-          <Text onPress={handlePrivacy} style={styles.linkText}>
-            política de privacidad
+
+        <Pressable
+          style={styles.checkboxContainer}
+          onPress={() => setTerminos(!terminos)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={terminos ? "checkbox" : "square-outline"}
+            size={24}
+            color={terminos ? paletaColores.boton : paletaColores.textoSecundario}
+          />
+          <Text style={styles.checkboxText}>
+            Acepto los{" "}
+            <Text onPress={handleTerms} style={styles.linkText}>
+              términos y condiciones
+            </Text>{" "}
+            y la{" "}
+            <Text onPress={handlePrivacy} style={styles.linkText}>
+              política de privacidad
+            </Text>
+            .
           </Text>
-          .
-        </Text>
-      </Pressable>
+        </Pressable>
 
-      <View style={styles.bottomContainer}>
-        <BotonPrincipal
-          titulo="Crear cuenta"
-          cargando={loading}
-          disabled={!terminos || loading}
-          onPress={handleCrearCuenta}
-        />
-      </View>
-    </ContenedorPantalla>
+        <View style={styles.bottomContainer}>
+          <BotonPrincipal
+            titulo="Crear cuenta"
+            cargando={loading}
+            disabled={!terminos || loading}
+            onPress={handleCrearCuenta}
+          />
+        </View>
+      </ContenedorPantalla>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  pantalla: {
+    flex: 1,
+  },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 16,
     paddingBottom: 28,
     flexGrow: 1,
   },
@@ -327,78 +213,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 18,
   },
-  opcionCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: paletaColores.borde,
-    borderRadius: 16,
-    backgroundColor: paletaColores.input,
-  },
-  opcionCardActiva: {
-    borderColor: paletaColores.boton,
-    backgroundColor: "rgba(46, 206, 121, 0.08)",
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  iconContainerActivo: {
-    backgroundColor: paletaColores.boton,
-  },
-  opcionTextos: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  opcionTitulo: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  opcionDescripcion: {
-    fontSize: 14,
-    color: "#C2D4CB",
-    lineHeight: 20,
-  },
   infoCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#13231B",
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "rgba(46, 206, 121, 0.2)",
     marginBottom: 20,
-    gap: 14,
-  },
-  infoIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(46, 206, 121, 0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  infoTextos: {
-    flex: 1,
-  },
-  infoTitulo: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 3,
-  },
-  infoDescripcion: {
-    fontSize: 13.5,
-    color: "#A8BCB2",
-    lineHeight: 19,
   },
   checkboxContainer: {
     flexDirection: "row",

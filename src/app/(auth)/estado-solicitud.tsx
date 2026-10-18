@@ -1,22 +1,42 @@
-
-import { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { BotonPrincipal, ContenedorPantalla } from "@/components/ui";
+import { paletaColores } from "@/paletaColores";
+import { authService } from "@/services/authService";
+import { EstadoConductor, obtenerEstadoConductor } from "@/services/estadoConductor";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { supabase } from "@/lib/supabase";
-import {
-  obtenerEstadoConductor,
+const CONFIG_ESTADOS: Record<
   EstadoConductor,
-} from "@/services/estadoConductor";
+  { titulo: string; descripcion: string; icono: keyof typeof Ionicons.glyphMap; color: string }
+> = {
+  aprobado: {
+    titulo: "¡Solicitud aprobada!",
+    descripcion: "Tu cuenta fue aprobada. Ya puedes comenzar a conducir con Altokke.",
+    icono: "checkmark-circle",
+    color: paletaColores.boton,
+  },
+  pendiente: {
+    titulo: "Tu solicitud está en revisión",
+    descripcion: "Estamos revisando tus datos y documentos. Por ahora no puedes recibir viajes.",
+    icono: "time-outline",
+    color: "#F59E0B",
+  },
+  rechazado: {
+    titulo: "Tu solicitud tiene observaciones",
+    descripcion: "Encontramos observaciones en tu solicitud. Debes corregirlas antes de comenzar.",
+    icono: "alert-circle-outline",
+    color: "#EF4444",
+  },
+  suspendido: {
+    titulo: "Tu cuenta está suspendida",
+    descripcion: "Tu acceso como conductor está temporalmente suspendido.",
+    icono: "alert-circle-outline",
+    color: "#EF4444",
+  },
+};
 
 export default function EstadoSolicitudScreen() {
   const [estado, setEstado] = useState<EstadoConductor | null>(null);
@@ -24,25 +44,16 @@ export default function EstadoSolicitudScreen() {
 
   const consultarEstado = useCallback(async () => {
     setCargando(true);
-
     try {
-      const { data: { user } } =
-        await supabase.auth.getUser();
-
+      const user = await authService.obtenerUsuarioActual();
       if (!user) {
         router.replace("/login");
         return;
       }
-
-      const estadoActual =
-        await obtenerEstadoConductor(user.id);
-
+      const estadoActual = await obtenerEstadoConductor(user.id);
       setEstado(estadoActual);
     } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error.message || "No se pudo consultar tu solicitud."
-      );
+      Alert.alert("Error", error.message || "No se pudo consultar tu solicitud.");
     } finally {
       setCargando(false);
     }
@@ -53,159 +64,128 @@ export default function EstadoSolicitudScreen() {
   }, [consultarEstado]);
 
   const cerrarSesion = async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      Alert.alert("Error", error.message);
-      return;
-    }
-
+    await authService.cerrarSesion();
     router.replace("/login");
   };
 
+
+  const pantallaFondo = (contenido: React.ReactNode) => (
+    <LinearGradient
+      colors={["#1d5538ff", paletaColores.background]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.7 }}
+      style={styles.pantalla}
+    >
+      <ContenedorPantalla estiloContenedorContenido={styles.container}>{contenido}</ContenedorPantalla>
+    </LinearGradient>
+  );
+
   if (cargando) {
-    return (
+    return pantallaFondo(
       <View style={styles.centro}>
-        <ActivityIndicator size="large" color="#168451" />
-        <Text>Consultando tu solicitud...</Text>
+        <ActivityIndicator size="large" color={paletaColores.boton} />
+        <Text style={styles.textoCargando}>Consultando tu solicitud...</Text>
       </View>
     );
   }
 
-  if (!estado) {
-    return (
+  if (!estado || !CONFIG_ESTADOS[estado]) {
+    return pantallaFondo(
       <View style={styles.centro}>
-        <Text>No se pudo cargar tu solicitud.</Text>
-        <BotonPrincipal
-          titulo="Reintentar"
-          onPress={consultarEstado}
-        />
-        <BotonPrincipal
-          titulo="Cerrar sesión"
-          onPress={cerrarSesion}
-        />
+        <Text style={styles.descripcion}>No se pudo cargar tu solicitud.</Text>
+        <BotonPrincipal titulo="Reintentar" onPress={consultarEstado} />
+        <BotonPrincipal titulo="Cerrar sesión" onPress={cerrarSesion} />
       </View>
     );
   }
 
-  const aprobado = estado === "aprobado";
-  const pendiente = estado === "pendiente";
-  const rechazado = estado === "rechazado";
+  const { titulo, descripcion, icono, color } = CONFIG_ESTADOS[estado];
+  const esAprobado = estado === "aprobado";
 
-  const titulo = aprobado
-    ? "¡Solicitud aprobada!"
-    : pendiente
-      ? "Tu solicitud está en revisión"
-      : rechazado
-        ? "Tu solicitud tiene observaciones"
-        : "Tu cuenta está suspendida";
-
-  const descripcion = aprobado
-    ? "Tu cuenta fue aprobada. Ya puedes comenzar a conducir con Altokke."
-    : pendiente
-      ? "Estamos revisando tus datos y documentos. Por ahora no puedes recibir viajes."
-      : rechazado
-        ? "Encontramos observaciones en tu solicitud. Debes corregirlas antes de comenzar."
-        : "Tu acceso como conductor está suspendido.";
-
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Ionicons
-        name={
-          aprobado
-            ? "checkmark-circle"
-            : pendiente
-              ? "time-outline"
-              : "alert-circle-outline"
-        }
-        size={76}
-        color={aprobado ? "#168451" : "#D69B22"}
-      />
-
+  return pantallaFondo(
+    <View style={styles.contenido}>
+      <Ionicons name={icono} size={80} color={color} />
       <Text style={styles.titulo}>{titulo}</Text>
       <Text style={styles.descripcion}>{descripcion}</Text>
 
       <View style={styles.tarjeta}>
-        <Text style={styles.etiqueta}>
-          Estado de tu solicitud
-        </Text>
-        <Text style={styles.estado}>
-          {estado.toUpperCase()}
-        </Text>
+        <Text style={styles.etiqueta}>Estado de tu solicitud</Text>
+        <Text style={[styles.estado, { color }]}>{estado.toUpperCase()}</Text>
       </View>
 
-      {aprobado ? (
-        <BotonPrincipal
-          titulo="Empezar a conducir"
-          onPress={() => router.replace("/inicio")}
-        />
-      ) : (
-        <BotonPrincipal
-          titulo="Actualizar estado"
-          onPress={consultarEstado}
-        />
-      )}
-
-      <View style={styles.separador} />
-
-      <BotonPrincipal
-        titulo="Cerrar sesión"
-        onPress={cerrarSesion}
-      />
-    </ScrollView>
+      <View style={styles.acciones}>
+        {esAprobado ? (
+          <BotonPrincipal titulo="Empezar a conducir" onPress={() => router.replace("/inicio")} />
+        ) : (
+          <BotonPrincipal titulo="Actualizar estado" onPress={consultarEstado} />
+        )}
+        <BotonPrincipal titulo="Cerrar sesión" onPress={cerrarSesion} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  pantalla: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
-    backgroundColor: "#FFFFFF",
     paddingHorizontal: 24,
-    paddingTop: 90,
+    paddingTop: 60,
     paddingBottom: 40,
+    justifyContent: "center",
+  },
+  contenido: {
     alignItems: "center",
-    gap: 20,
+    gap: 18,
   },
   centro: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     gap: 20,
-    padding: 24,
+  },
+  textoCargando: {
+    color: "#C2D4CB",
+    fontSize: 16,
   },
   titulo: {
     fontSize: 26,
     fontWeight: "800",
     textAlign: "center",
-    color: "#172D25",
+    color: "#FFFFFF",
   },
   descripcion: {
     fontSize: 15,
     textAlign: "center",
-    lineHeight: 23,
-    color: "#64748B",
+    lineHeight: 22,
+    color: "#C2D4CB",
   },
   tarjeta: {
     width: "100%",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 14,
+    backgroundColor: paletaColores.input,
+    borderWidth: 1.5,
+    borderColor: paletaColores.borde,
+    borderRadius: 16,
     padding: 20,
-    marginVertical: 20,
+    marginVertical: 10,
+    alignItems: "center",
   },
   etiqueta: {
     fontSize: 13,
-    color: "#64748B",
+    color: paletaColores.textoSecundario,
   },
   estado: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#168451",
-    marginTop: 8,
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 6,
+    letterSpacing: 1,
   },
-  separador: {
-    height: 1,
+  acciones: {
     width: "100%",
-    backgroundColor: "#E2E8F0",
+    gap: 14,
+    marginTop: 10,
   },
 });
+

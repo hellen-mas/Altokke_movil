@@ -1,11 +1,11 @@
 import { paletaColores } from "@/paletaColores";
-import { StyleProp, StyleSheet, Text, TextStyle } from "react-native";
+import { StyleProp, StyleSheet, Text, TextStyle, View } from "react-native";
 
-interface PropsEncabezadoPagina {
+export interface PropsEncabezadoPagina {
   titulo: string;
   tituloDestacado?: string;
   descripcion?: string;
-  variante?: "oscuro" | "claro";
+  variante?: "oscuro" | "claro" | string;
   estiloTitulo?: StyleProp<TextStyle>;
   estiloResaltado?: StyleProp<TextStyle>;
   estiloDescripcion?: StyleProp<TextStyle>;
@@ -25,75 +25,63 @@ export const EncabezadoPagina = ({
   const esClaro = variante === "claro";
 
   return (
-    <>
+    <View style={estilos.contenedor}>
       <Text
         style={[
           estilos.encabezado,
-          !sinMargenSuperior && estilos.conMargen,
+          !sinMargenSuperior && { marginTop: 18 },
           esClaro && estilos.encabezadoClaro,
           estiloTitulo,
         ]}
         accessibilityRole="header"
       >
         {titulo}
-        {tituloDestacado ? (
+        {tituloDestacado && (
           <Text style={[estilos.resaltado, estiloResaltado]}>{tituloDestacado}</Text>
-        ) : null}
+        )}
       </Text>
 
-      {descripcion ? (
-        <Text
-          style={[
-            estilos.descripcion,
-            esClaro && estilos.descripcionClara,
-            estiloDescripcion,
-          ]}
-        >
+      {!!descripcion && (
+        <Text style={[estilos.descripcion, esClaro && estilos.descripcionClara, estiloDescripcion]}>
           {descripcion}
         </Text>
-      ) : null}
-    </>
+      )}
+    </View>
   );
 };
 
 const estilos = StyleSheet.create({
+  contenedor: {
+    width: "100%",
+  },
   encabezado: {
     width: "100%",
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 38,
+    lineHeight: 44,
     fontWeight: "800",
-    color: paletaColores.texto,
+    color: paletaColores.textPrimary,
     marginBottom: 8,
-    marginTop: 0,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
-
-  conMargen: {
-    marginTop: 20,
-  },
-
   encabezadoClaro: {
     color: paletaColores.textoClaro,
   },
-
   resaltado: {
-    color: paletaColores.boton,
+    color: paletaColores.primary,
     fontWeight: "800",
   },
-
   descripcion: {
     width: "100%",
     fontSize: 18,
-    lineHeight: 28, // 18px * 1.55-1.6 para lectura descansada y sin sobrecarga cognitiva
-    color: paletaColores.textoSecundario,
-    fontWeight: "500", // Peso medio sólido para evitar que se desvanezca en pantalla o bajo luz solar
-    marginTop: 8,
+    lineHeight: 26,
+    color: paletaColores.textSecondary,
+    fontWeight: "500",
+    marginTop: 6,
     letterSpacing: -0.2,
   },
-
   descripcionClara: {
     color: paletaColores.textoSecundarioClaro,
   },
 });
 
-
+export default EncabezadoPagina;

@@ -1,10 +1,10 @@
 import { CampoTexto } from "@/components/ui/CampoTexto";
-import { EncabezadoLogo } from "@/components/ui/EncabezadoLogo";
 import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
+import { seleccionarFotoGaleria } from "@/utils/avatar";
+import { esTelefonoValido, sanitizarTelefono } from "@/utils/validaciones";
 import { router } from "expo-router";
 import {
     Alert,
@@ -35,66 +35,28 @@ export default function VerificacionContactoConductor() {
   } = useRegistroConductor();
 
   const cambiarTelefono = (texto: string) => {
-    const numero = texto.replace(/\D/g, "").slice(0, 9);
-
-    setTelefono(numero);
+    setTelefono(sanitizarTelefono(texto));
   };
 
   const seleccionarFoto = async () => {
-    const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permiso.granted) {
-      Alert.alert(
-        "Permiso necesario",
-        "Debes permitir el acceso a tus fotos para seleccionar una imagen.",
-      );
-      return;
-    }
-
-    const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!resultado.canceled) {
-      setFoto(resultado.assets[0].uri);
+    try {
+      const res = await seleccionarFotoGaleria();
+      if (res?.uri) setFoto(res.uri);
+    } catch (e: any) {
+      Alert.alert("Permiso de fotos", e.message || "No se pudo seleccionar la foto.");
     }
   };
 
   const continuar = () => {
-     // Validar los campos obligatorios
     if (!telefono.trim() || !direccion.trim() || !foto) {
-      Alert.alert(
-        "Campos incompletos",
-        "Completa tu teléfono, dirección y fotografía de perfil."
-      );
-      return;
+      return Alert.alert("Campos incompletos", "Completa tu teléfono, dirección y fotografía de perfil.");
     }
-
-    // Validar número celular peruano
-    if (!/^9\d{8}$/.test(telefono.trim())) {
-      Alert.alert(
-        "Teléfono inválido",
-        "Ingresa un número celular peruano de 9 dígitos."
-      );
-      return;
+    if (!esTelefonoValido(telefono.trim())) {
+      return Alert.alert("Teléfono inválido", "Ingresa un número celular peruano de 9 dígitos.");
     }
-
-    // Validar correo de respaldo si se ingresó
-    if (
-      correoRespaldo.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRespaldo.trim())
-    ) {
-      Alert.alert(
-        "Correo inválido",
-        "Ingresa un correo de respaldo válido."
-      );
-      return;
+    if (correoRespaldo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRespaldo.trim())) {
+      return Alert.alert("Correo inválido", "Ingresa un correo de respaldo válido.");
     }
-
-    // Continuar sin verificación SMS temporalmente
     router.push("/registro-conductor/identidad-oficial");
   };
 
@@ -108,8 +70,6 @@ export default function VerificacionContactoConductor() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <EncabezadoLogo variante="claro" />
-
         <EncabezadoPagina
           titulo={"Verificación y\n"}
           tituloDestacado="contacto"
