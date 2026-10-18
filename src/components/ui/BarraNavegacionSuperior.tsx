@@ -36,7 +36,7 @@ export function BarraNavegacionSuperior({
         accessibilityRole="button"
         accessibilityLabel="Regresar a la pantalla anterior"
       >
-        <Ionicons name="arrow-back" size={22} color={paletaColores.texto} />
+        <Ionicons name="arrow-back" size={24} color={paletaColores.texto} />
       </Pressable>
 
       <View style={estilos.contenedorTitulo} pointerEvents="none">
@@ -54,17 +54,17 @@ export function BarraNavegacionSuperior({
 
 const estilos = StyleSheet.create({
   cabeceraSuperior: {
-    height: 48,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     position: "relative",
-    marginBottom: 8,
+    marginBottom: 10,
     marginTop: 2,
   },
   botonAtras: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     justifyContent: "center",
     alignItems: "flex-start",
     zIndex: 1,
@@ -80,20 +80,20 @@ const estilos = StyleSheet.create({
   },
   tituloCabecera: {
     textAlign: "center",
-    fontSize: 17,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
     color: paletaColores.texto,
     letterSpacing: -0.3,
   },
   contenedorDerecho: {
-    minWidth: 44,
-    height: 44,
+    minWidth: 48,
+    height: 48,
     justifyContent: "center",
     alignItems: "flex-end",
     zIndex: 1,
   },
   espacioDerecho: {
-    width: 44,
+    width: 48,
   },
 });
 

@@ -60,16 +60,16 @@ const estilos = StyleSheet.create({
   encabezado: {
     width: "100%",
     fontSize: 32,
-    lineHeight: 38,
+    lineHeight: 40,
     fontWeight: "800",
-    color: "#FFFFFF",
-    marginBottom: 6,
+    color: paletaColores.texto,
+    marginBottom: 8,
     marginTop: 0,
     letterSpacing: -0.5,
   },
 
   conMargen: {
-    marginTop: 18,
+    marginTop: 20,
   },
 
   encabezadoClaro: {
@@ -77,17 +77,17 @@ const estilos = StyleSheet.create({
   },
 
   resaltado: {
-    color: "#FFFFFF",
+    color: paletaColores.boton,
     fontWeight: "800",
   },
 
   descripcion: {
     width: "100%",
-    fontSize: 17,
-    lineHeight: 24,
-    color: "#D0DFD6",
-    fontWeight: "400",
-    marginTop: 6,
+    fontSize: 18,
+    lineHeight: 28, // 18px * 1.55-1.6 para lectura descansada y sin sobrecarga cognitiva
+    color: paletaColores.textoSecundario,
+    fontWeight: "500", // Peso medio sólido para evitar que se desvanezca en pantalla o bajo luz solar
+    marginTop: 8,
     letterSpacing: -0.2,
   },
 

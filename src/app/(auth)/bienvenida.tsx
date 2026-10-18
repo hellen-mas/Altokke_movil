@@ -39,7 +39,8 @@ export default function PantallaBienvenida() {
 
             <View style={styles.headerContainer}>
               <EncabezadoPagina
-                titulo="Tu mototaxi en minutos"
+                titulo="Tu mototaxi, "
+                tituloDestacado="cuando lo necesites."
                 descripcion="Pide tu viaje al instante o genera ingresos conduciendo."
               />
             </View>
@@ -59,6 +60,7 @@ export default function PantallaBienvenida() {
           <View style={styles.bottomSection}>
             <BotonPrincipal
               titulo="Empezar ahora"
+              mostrarIcono
               onPress={() => router.push("/crear-cuenta")}
             />
 
@@ -88,37 +90,37 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     justifyContent: "space-between",
-    paddingBottom: 20,
-    paddingTop: 8,
+    paddingBottom: 24,
+    paddingTop: 12,
   },
   topSection: {
-    gap: 4,
+    gap: 6,
   },
   encabezadoLogoAjuste: {
     width: "auto",
-    marginBottom: 0,
+    marginBottom: 2,
     marginTop: 4,
   },
   headerContainer: {
-    marginTop: 2,
+    marginTop: 4,
     marginBottom: 8,
   },
   imageContainer: {
     flex: 1,
-    minHeight: 220,
+    minHeight: 230,
     maxHeight: 340,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: 12,
   },
   ilustracion: {
-    width: "90%",
+    width: "92%",
     height: "100%",
     alignSelf: "center",
   },
   bottomSection: {
-    gap: 14,
-    paddingTop: 4,
+    gap: 16,
+    paddingTop: 8,
   },
   footerWrap: {
     alignItems: "center",

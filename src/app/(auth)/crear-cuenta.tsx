@@ -68,6 +68,7 @@ export default function CrearCuentaScreen() {
       <View style={styles.bottomContainer}>
         <BotonPrincipal
           titulo="Continuar"
+          mostrarIcono
           onPress={handleContinue}
         />
 
@@ -84,8 +85,8 @@ export default function CrearCuentaScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingTop: 12,
+    paddingBottom: 28,
     flexGrow: 1,
     justifyContent: "space-between",
   },
@@ -94,15 +95,15 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   cardsContainer: {
     marginTop: 6,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   bottomContainer: {
     marginTop: "auto",
-    paddingTop: 16,
+    paddingTop: 20,
     gap: 16,
   },
 });

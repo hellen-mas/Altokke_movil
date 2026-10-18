@@ -41,7 +41,7 @@ export function TarjetaRol({
       >
         <Ionicons
           name={nombreIcono}
-          size={22}
+          size={26}
           color={seleccionado ? paletaColores.boton : paletaColores.textoSecundario}
         />
       </View>
@@ -71,7 +71,7 @@ export function TarjetaRol({
         {seleccionado ? (
           <Ionicons
             name="checkmark-circle"
-            size={24}
+            size={26}
             color={paletaColores.boton}
           />
         ) : (
@@ -86,14 +86,15 @@ const estilos = StyleSheet.create({
   tarjeta: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 90,
+    minHeight: 96,
     paddingVertical: 18,
     paddingHorizontal: 18,
-    borderRadius: 18,
-    marginBottom: 14,
+    borderRadius: 20,
+    marginBottom: 16,
   },
   tarjetaPresionada: {
-    opacity: 0.85,
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
   tarjetaSeleccionada: {
     borderWidth: 2,
@@ -103,17 +104,17 @@ const estilos = StyleSheet.create({
   tarjetaNoSeleccionada: {
     borderWidth: 1.5,
     borderColor: paletaColores.borde,
-    backgroundColor: paletaColores.superficie,
+    backgroundColor: paletaColores.tarjeta,
   },
   contenedorIcono: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
   },
   contenedorIconoSeleccionado: {
-    backgroundColor: "rgba(36, 166, 101, 0.15)",
+    backgroundColor: "rgba(36, 166, 101, 0.16)",
   },
   contenedorIconoNoSeleccionado: {
     backgroundColor: "rgba(255, 255, 255, 0.05)",
@@ -130,33 +131,33 @@ const estilos = StyleSheet.create({
     letterSpacing: -0.2,
   },
   tituloSeleccionado: {
-    color: "#FFFFFF",
+    color: paletaColores.texto,
   },
   tituloNoSeleccionado: {
-    color: "#FFFFFF",
+    color: paletaColores.texto,
   },
   subtitulo: {
     fontSize: 15,
-    lineHeight: 21,
+    lineHeight: 24, // Permite leer con comodidad cada descripción
     letterSpacing: -0.1,
   },
   subtituloSeleccionado: {
-    color: "#D0DFD6",
+    color: paletaColores.textoSecundario,
   },
   subtituloNoSeleccionado: {
-    color: "#9BB0A5",
+    color: paletaColores.textoSecundario,
   },
   contenedorCheck: {
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     justifyContent: "center",
     alignItems: "center",
   },
   radioInactivo: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
     borderColor: paletaColores.bordeFuerte,
   },
 });

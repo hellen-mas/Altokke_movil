@@ -83,8 +83,8 @@ export const PiePaginaAutenticacion = ({
 const estilos = StyleSheet.create({
   contenedor: {
     width: "100%",
-    paddingVertical: 6,
-    minHeight: 48,
+    paddingVertical: 8,
+    minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -93,20 +93,20 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 6,
+    gap: 8,
   },
   textoPregunta: {
     fontSize: 16,
-    lineHeight: 22,
-    color: "#B6C9BF",
-    fontWeight: "400",
+    lineHeight: 24,
+    color: paletaColores.textoSecundario,
+    fontWeight: "500",
   },
   textoPreguntaClaro: {
     color: paletaColores.textoSecundarioClaro,
   },
   textoEnlace: {
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
     fontWeight: "700",
     color: paletaColores.boton,
   },

@@ -26,6 +26,8 @@ export const EncabezadoLogo = ({
         source={require("@/assets/images/logo-altokke-v2.png")}
         style={estilos.imagenLogo}
         resizeMode="contain"
+        accessibilityRole="image"
+        accessibilityLabel="Logotipo de Altokke"
       />
 
       <Text
@@ -47,8 +49,8 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     marginTop: 8,
-    marginBottom: 14,
-    gap: 10,
+    marginBottom: 16,
+    gap: 12,
   },
 
   conMargenSuperior: {
@@ -56,13 +58,13 @@ const estilos = StyleSheet.create({
   },
 
   imagenLogo: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
   },
 
   logo: {
-    fontSize: 21,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "800",
     color: paletaColores.texto,
     letterSpacing: -0.4,
   },

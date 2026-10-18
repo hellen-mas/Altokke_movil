@@ -30,7 +30,7 @@ export function BotonPrincipal({
   alPresionar,
   estilo,
   estiloTexto,
-  tamanoIcono = 20,
+  tamanoIcono = 24,
   cargando,
   disabled,
   mostrarIcono = false,

@@ -68,7 +68,7 @@ export const CampoTexto = ({
         {nombreIcono && (
           <Ionicons
             name={nombreIcono}
-            size={20}
+            size={24}
             color={colorIcono}
             style={estilos.iconoIzquierdo}
           />
@@ -101,7 +101,7 @@ export const CampoTexto = ({
           >
             <Ionicons
               name={visible ? "eye-outline" : "eye-off-outline"}
-              size={20}
+              size={24}
               color={colorSecundario}
             />
           </Pressable>
@@ -111,8 +111,8 @@ export const CampoTexto = ({
       {error && textoError ? (
         <View style={estilos.filaError}>
           <Ionicons
-            name="alert-circle-outline"
-            size={14}
+            name="alert-circle"
+            size={18}
             color={paletaColores.error}
           />
           <Text style={estilos.textoError}>{textoError}</Text>
@@ -129,7 +129,7 @@ const estilos = StyleSheet.create({
   contenedor: {
     width: "100%",
     minHeight: 58,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -156,7 +156,8 @@ const estilos = StyleSheet.create({
   },
   entrada: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 18,
+    lineHeight: 24,
     color: paletaColores.texto,
     paddingVertical: 0,
   },
@@ -164,22 +165,23 @@ const estilos = StyleSheet.create({
     color: paletaColores.textoClaro,
   },
   botonOjo: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 48,
+    minHeight: 48,
     justifyContent: "center",
     alignItems: "center",
   },
   filaError: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 6,
-    marginLeft: 6,
+    gap: 8,
+    marginTop: 8,
+    marginLeft: 4,
   },
   textoError: {
     color: paletaColores.error,
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "600",
   },
 });
 
