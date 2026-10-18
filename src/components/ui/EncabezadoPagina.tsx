@@ -3,8 +3,8 @@ import { StyleProp, StyleSheet, Text, TextStyle } from "react-native";
 
 interface PropsEncabezadoPagina {
   titulo: string;
-  tituloDestacado: string;
-  descripcion: string;
+  tituloDestacado?: string;
+  descripcion?: string;
   variante?: "oscuro" | "claro";
   estiloTitulo?: StyleProp<TextStyle>;
   estiloResaltado?: StyleProp<TextStyle>;
@@ -36,18 +36,22 @@ export const EncabezadoPagina = ({
         accessibilityRole="header"
       >
         {titulo}
-        <Text style={[estilos.resaltado, estiloResaltado]}>{tituloDestacado}</Text>
+        {tituloDestacado ? (
+          <Text style={[estilos.resaltado, estiloResaltado]}>{tituloDestacado}</Text>
+        ) : null}
       </Text>
 
-      <Text
-        style={[
-          estilos.descripcion,
-          esClaro && estilos.descripcionClara,
-          estiloDescripcion,
-        ]}
-      >
-        {descripcion}
-      </Text>
+      {descripcion ? (
+        <Text
+          style={[
+            estilos.descripcion,
+            esClaro && estilos.descripcionClara,
+            estiloDescripcion,
+          ]}
+        >
+          {descripcion}
+        </Text>
+      ) : null}
     </>
   );
 };
@@ -55,16 +59,17 @@ export const EncabezadoPagina = ({
 const estilos = StyleSheet.create({
   encabezado: {
     width: "100%",
-    fontSize: 42,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    marginBottom: 8,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "700",
+    color: paletaColores.texto,
+    marginBottom: 6,
     marginTop: 0,
-    letterSpacing: -0.9,
+    letterSpacing: -0.5,
   },
 
   conMargen: {
-    marginTop: 20,
+    marginTop: 16,
   },
 
   encabezadoClaro: {
@@ -72,20 +77,22 @@ const estilos = StyleSheet.create({
   },
 
   resaltado: {
-    color: "#2ECE79",
-    fontWeight: "900",
+    color: paletaColores.texto,
+    fontWeight: "700",
   },
 
   descripcion: {
     width: "100%",
-    fontSize: 20,
-    color: "#EDF5F0",
-    fontWeight: "500",
+    fontSize: 15,
+    lineHeight: 22,
+    color: paletaColores.textoSecundario,
+    fontWeight: "400",
     marginTop: 2,
-    lineHeight: 28,
+    letterSpacing: -0.1,
   },
 
   descripcionClara: {
     color: paletaColores.textoSecundarioClaro,
   },
 });
+

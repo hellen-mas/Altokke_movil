@@ -20,6 +20,8 @@ export interface PropsBotonPrincipal {
   tamanoIcono?: number;
   cargando?: boolean;
   disabled?: boolean;
+  mostrarIcono?: boolean;
+  icono?: keyof typeof Ionicons.glyphMap;
 }
 
 export function BotonPrincipal({
@@ -28,40 +30,51 @@ export function BotonPrincipal({
   alPresionar,
   estilo,
   estiloTexto,
-  tamanoIcono,
+  tamanoIcono = 20,
   cargando,
-  disabled
+  disabled,
+  mostrarIcono = false,
+  icono = "arrow-forward",
 }: PropsBotonPrincipal) {
   const funcionAccion = onPress || alPresionar;
+  const estaDeshabilitado = disabled || cargando;
 
   return (
     <Pressable
       style={({ pressed }) => [
         estilos.boton,
         estilo,
-        (disabled || cargando) && estilos.disabled,
-        pressed && !disabled && !cargando && { backgroundColor: paletaColores.botonPresionado },
-        pressed && estilos.presionado,
+        estaDeshabilitado && estilos.disabled,
+        pressed && !estaDeshabilitado && estilos.presionado,
       ]}
-      disabled={disabled || cargando}
+      disabled={estaDeshabilitado}
       onPress={funcionAccion}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       accessibilityRole="button"
       accessibilityLabel={titulo}
-      accessibilityState={{ disabled: disabled || cargando, busy: cargando }}
+      accessibilityState={{ disabled: estaDeshabilitado, busy: cargando }}
     >
       {cargando ? (
         <ActivityIndicator color={paletaColores.textoOscuro} />
       ) : (
         <View style={estilos.contenido}>
-          <Text style={[estilos.texto, estiloTexto]} numberOfLines={2}>
+          <Text
+            style={[
+              estilos.texto,
+              estaDeshabilitado && estilos.textoDisabled,
+              estiloTexto,
+            ]}
+            numberOfLines={2}
+          >
             {titulo}
           </Text>
-          <Ionicons
-            name="arrow-forward"
-            size={tamanoIcono ?? 24}
-            color={paletaColores.textoOscuro}
-          />
+          {mostrarIcono && (
+            <Ionicons
+              name={icono}
+              size={tamanoIcono}
+              color={estaDeshabilitado ? paletaColores.disabledTexto : paletaColores.textoOscuro}
+            />
+          )}
         </View>
       )}
     </Pressable>
@@ -71,34 +84,40 @@ export function BotonPrincipal({
 const estilos = StyleSheet.create({
   boton: {
     width: "100%",
-    minHeight: 60,
+    minHeight: 52,
     paddingVertical: 14,
     paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: paletaColores.boton,
-    borderRadius: 18,
-    marginTop: 3,
+    borderRadius: 14,
+    marginTop: 4,
   },
   texto: {
-    fontSize: 21,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 0.1,
     color: paletaColores.textoOscuro,
     textAlign: "center",
   },
+  textoDisabled: {
+    color: paletaColores.disabledTexto,
+  },
   disabled: {
-    backgroundColor: "#A0A0A0",
+    backgroundColor: paletaColores.disabled,
   },
   presionado: {
-    transform: [{ scale: 0.98 }]
+    backgroundColor: paletaColores.botonPresionado,
+    transform: [{ scale: 0.99 }],
   },
   contenido: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "center",
+    gap: 8,
   },
 });
 
 export default BotonPrincipal;
+

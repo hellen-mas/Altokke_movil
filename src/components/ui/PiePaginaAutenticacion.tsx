@@ -19,12 +19,13 @@ export const PiePaginaAutenticacion = ({
   textoEnlace,
   ruta,
   alineacion = "center",
-  mostrarBorde = false,
+  mostrarBorde,
   variante = "oscuro",
   tamanoTexto,
   estiloPregunta,
   estiloEnlace,
 }: PropsPiePaginaAutenticacion) => {
+
   const esClaro = variante === "claro";
   const estiloTamano = tamanoTexto ? { fontSize: tamanoTexto } : null;
 
@@ -32,9 +33,14 @@ export const PiePaginaAutenticacion = ({
     <View
       style={[
         estilos.contenedor,
-        mostrarBorde ? estilos.contenedorBorde : estilos.contenedorSinBorde,
-        esClaro && estilos.contenedorClaro,
-        { justifyContent: alineacion === "center" ? "center" : alineacion === "left" ? "flex-start" : "flex-end" },
+        {
+          justifyContent:
+            alineacion === "center"
+              ? "center"
+              : alineacion === "left"
+              ? "flex-start"
+              : "flex-end",
+        },
       ]}
     >
       <View style={estilos.fila}>
@@ -50,12 +56,12 @@ export const PiePaginaAutenticacion = ({
         </Text>
         <Pressable
           onPress={() => router.push(ruta)}
-          hitSlop={{ top: 12, bottom: 12, left: 10, right: 12 }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="link"
           accessibilityLabel={`${textoPregunta} ${textoEnlace}`}
-          accessibilityHint="Navega a la pantalla para iniciar sesión"
+          accessibilityHint="Navega a la pantalla para continuar"
           style={({ pressed }) => [
-            pressed && { opacity: 0.6 },
+            pressed && { opacity: 0.7 },
           ]}
         >
           <Text
@@ -77,47 +83,34 @@ export const PiePaginaAutenticacion = ({
 const estilos = StyleSheet.create({
   contenedor: {
     width: "100%",
-    flexDirection: "row",
+    paddingVertical: 4,
+    minHeight: 40,
     alignItems: "center",
-  },
-  contenedorBorde: {
-    minHeight: 56,
-    borderWidth: 1,
-    borderColor: paletaColores.borde,
-    borderRadius: 12,
-    marginTop: 10,
-    marginBottom: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  contenedorSinBorde: {
-    paddingVertical: 6,
-    minHeight: 48,
-    justifyContent: "center",
-  },
-  contenedorClaro: {
-    borderColor: paletaColores.bordeClaro,
   },
   fila: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
     justifyContent: "center",
+    gap: 4,
   },
   textoPregunta: {
-    fontSize: 19,
-    color: "#C2D4CB",
-    fontWeight: "500",
+    fontSize: 14,
+    lineHeight: 20,
+    color: paletaColores.textoSecundario,
+    fontWeight: "400",
   },
   textoPreguntaClaro: {
     color: paletaColores.textoSecundarioClaro,
   },
   textoEnlace: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#2ECE79",
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
+    color: paletaColores.boton,
   },
   textoEnlaceClaro: {
     color: paletaColores.verde,
   },
 });
+

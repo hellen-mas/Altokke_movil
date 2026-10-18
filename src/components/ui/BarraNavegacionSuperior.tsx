@@ -14,7 +14,7 @@ export function BarraNavegacionSuperior({
   titulo = "Altokke",
   alRegresar,
   componenteDerecho,
-  estilo
+  estilo,
 }: Props) {
   const manejarRegreso = () => {
     if (alRegresar) {
@@ -28,18 +28,23 @@ export function BarraNavegacionSuperior({
     <View style={[estilos.cabeceraSuperior, estilo]}>
       <Pressable
         onPress={manejarRegreso}
-        style={estilos.botonAtras}
-        hitSlop={8}
+        style={({ pressed }) => [
+          estilos.botonAtras,
+          pressed && { opacity: 0.7 },
+        ]}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityRole="button"
         accessibilityLabel="Regresar a la pantalla anterior"
       >
-        <Ionicons name="arrow-back" size={24} color={paletaColores.texto} />
+        <Ionicons name="arrow-back" size={22} color={paletaColores.texto} />
       </Pressable>
-      
-      <Text style={estilos.tituloCabecera} numberOfLines={1}>
-        {titulo}
-      </Text>
-      
+
+      <View style={estilos.contenedorTitulo} pointerEvents="none">
+        <Text style={estilos.tituloCabecera} numberOfLines={1}>
+          {titulo}
+        </Text>
+      </View>
+
       <View style={estilos.contenedorDerecho}>
         {componenteDerecho ?? <View style={estilos.espacioDerecho} />}
       </View>
@@ -49,32 +54,46 @@ export function BarraNavegacionSuperior({
 
 const estilos = StyleSheet.create({
   cabeceraSuperior: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingTop: 6,
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    position: "relative",
+    marginBottom: 8,
+    marginTop: 2,
   },
   botonAtras: {
     width: 44,
     height: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    justifyContent: "center",
+    alignItems: "flex-start",
+    zIndex: 1,
+  },
+  contenedorTitulo: {
+    position: "absolute",
+    left: 48,
+    right: 48,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
   },
   tituloCabecera: {
-    flex: 1,
     textAlign: "center",
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: "600",
     color: paletaColores.texto,
+    letterSpacing: -0.3,
   },
   contenedorDerecho: {
-    width: 44,
+    minWidth: 44,
     height: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+    justifyContent: "center",
+    alignItems: "flex-end",
+    zIndex: 1,
   },
   espacioDerecho: {
     width: 44,
   },
 });
+
