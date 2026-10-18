@@ -112,6 +112,7 @@ export default function PasajeroPreferenciasScreen() {
   ];
 
   const handleCrearCuenta = async () => {
+    if (loading) return;
     if (!terminos) {
       Alert.alert(
         "Acción requerida",
@@ -142,7 +143,7 @@ export default function PasajeroPreferenciasScreen() {
       await supabase.auth.signOut();
 
       const { data: signUpData, error } = await supabase.auth.signUp({
-        email: datosPersonales.correo.trim(),
+        email: datosPersonales.correo.trim().toLowerCase(),
         password: datosPersonales.contrasena,
         options: {
           data: {
