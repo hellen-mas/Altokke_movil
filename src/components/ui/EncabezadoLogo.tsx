@@ -46,28 +46,29 @@ const estilos = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    marginTop: 12,
-    marginBottom: 20,
-    gap: 8,
+    marginTop: 8,
+    marginBottom: 14,
+    gap: 10,
   },
 
   conMargenSuperior: {
-    marginTop: 50,
+    marginTop: 40,
   },
 
   imagenLogo: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
   },
 
   logo: {
-    fontSize: 26,
-    fontWeight: "800",
+    fontSize: 21,
+    fontWeight: "700",
     color: paletaColores.texto,
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
 
   logoClaro: {
     color: paletaColores.textoClaro,
   },
 });
+

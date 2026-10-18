@@ -1,3 +1,4 @@
+import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -19,7 +20,7 @@ export function TarjetaRol({
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       accessibilityRole="radio"
       accessibilityState={{ selected: seleccionado }}
       accessibilityLabel={`${titulo}: ${subtitulo}`}
@@ -40,10 +41,11 @@ export function TarjetaRol({
       >
         <Ionicons
           name={nombreIcono}
-          size={30}
-          color={seleccionado ? "#051A10" : "#8A9C92"}
+          size={22}
+          color={seleccionado ? paletaColores.boton : paletaColores.textoSecundario}
         />
       </View>
+
       <View style={estilos.contenedorTexto}>
         <Text
           style={[
@@ -64,19 +66,16 @@ export function TarjetaRol({
           {subtitulo}
         </Text>
       </View>
+
       <View style={estilos.contenedorCheck}>
         {seleccionado ? (
           <Ionicons
             name="checkmark-circle"
-            size={32}
-            color="#2ECE79"
+            size={22}
+            color={paletaColores.boton}
           />
         ) : (
-          <Ionicons
-            name="ellipse-outline"
-            size={32}
-            color="rgba(255, 255, 255, 0.22)"
-          />
+          <View style={estilos.radioInactivo} />
         )}
       </View>
     </Pressable>
@@ -87,70 +86,78 @@ const estilos = StyleSheet.create({
   tarjeta: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 104,
-    paddingVertical: 22,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginBottom: 18,
+    minHeight: 76,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 10,
   },
   tarjetaPresionada: {
-    opacity: 0.82,
-    transform: [{ scale: 0.985 }],
+    opacity: 0.85,
   },
   tarjetaSeleccionada: {
-    borderWidth: 2,
-    borderColor: "#2ECE79",
-    backgroundColor: "rgba(46, 206, 121, 0.13)",
+    borderWidth: 1.5,
+    borderColor: paletaColores.boton,
+    backgroundColor: paletaColores.superficieElevada,
   },
   tarjetaNoSeleccionada: {
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.09)",
-    backgroundColor: "rgba(255, 255, 255, 0.035)",
+    borderWidth: 1,
+    borderColor: paletaColores.borde,
+    backgroundColor: paletaColores.superficie,
   },
   contenedorIcono: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
   },
   contenedorIconoSeleccionado: {
-    backgroundColor: "#2ECE79",
+    backgroundColor: "rgba(36, 166, 101, 0.12)",
   },
   contenedorIconoNoSeleccionado: {
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
   },
   contenedorTexto: {
     flex: 1,
-    marginLeft: 16,
-    marginRight: 12,
+    marginLeft: 12,
+    marginRight: 10,
   },
   titulo: {
-    fontSize: 21,
-    marginBottom: 6,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 2,
+    letterSpacing: -0.2,
   },
   tituloSeleccionado: {
-    color: "#FFFFFF",
-    fontWeight: "900",
+    color: paletaColores.texto,
   },
   tituloNoSeleccionado: {
-    color: "#E2ECE6",
-    fontWeight: "700",
+    color: paletaColores.texto,
   },
   subtitulo: {
-    fontSize: 17,
-    lineHeight: 24,
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: -0.1,
   },
   subtituloSeleccionado: {
-    color: "#EDF7F2",
-    fontWeight: "500",
+    color: paletaColores.textoSecundario,
   },
   subtituloNoSeleccionado: {
-    color: "#C2D4CB",
-    fontWeight: "400",
+    color: paletaColores.textoTerciario,
   },
   contenedorCheck: {
+    width: 24,
+    height: 24,
     justifyContent: "center",
     alignItems: "center",
   },
+  radioInactivo: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: paletaColores.bordeFuerte,
+  },
 });
+

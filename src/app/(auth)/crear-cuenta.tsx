@@ -42,24 +42,23 @@ export default function CrearCuentaScreen() {
 
         <View style={styles.headerContainer}>
           <EncabezadoPagina
-            titulo={"Crear "}
-            tituloDestacado="cuenta"
-            descripcion="Elige cómo deseas comenzar."
+            titulo="Elige tu tipo de cuenta"
+            descripcion="Selecciona si deseas viajar como pasajero o generar ingresos conduciendo."
           />
         </View>
 
         <View style={styles.cardsContainer}>
           <TarjetaRol
             titulo="Cuenta de pasajero"
-            subtitulo="Pide mototaxis para ti y tu familia de forma rápida."
+            subtitulo="Pide viajes rápidos y seguros para ti y tu familia."
             nombreIcono="people-outline"
             seleccionado={selectedRole === "pasajero"}
             onPress={() => setSelectedRole("pasajero")}
           />
           <TarjetaRol
             titulo="Cuenta de conductor"
-            subtitulo="Regístrate para ofrecer viajes y generar ingresos."
-            nombreIcono="car-outline"
+            subtitulo="Ofrece viajes en tu mototaxi y genera ingresos diarios."
+            nombreIcono="speedometer-outline"
             seleccionado={selectedRole === "conductor"}
             onPress={() => setSelectedRole("conductor")}
           />
@@ -86,22 +85,25 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 8,
-    paddingBottom: 32,
+    paddingBottom: 24,
     flexGrow: 1,
+    justifyContent: "space-between",
   },
   topSection: {
     gap: 4,
   },
   headerContainer: {
-    marginTop: 8,
-    marginBottom: 22,
+    marginTop: 4,
+    marginBottom: 16,
   },
   cardsContainer: {
     marginTop: 6,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   bottomContainer: {
-    marginTop: 24,
-    gap: 32,
+    marginTop: "auto",
+    paddingTop: 16,
+    gap: 16,
   },
 });
+

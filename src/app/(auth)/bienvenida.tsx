@@ -4,6 +4,7 @@ import {
   EncabezadoPagina,
   PiePaginaAutenticacion,
 } from "@/components/ui";
+import { paletaColores } from "@/paletaColores";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -18,9 +19,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function PantallaBienvenida() {
   return (
     <LinearGradient
-      colors={["#05150E", "#0A2217", "#06150E", "#040D08"]}
-      start={{ x: 0.15, y: 0 }}
-      end={{ x: 0.85, y: 1 }}
+      colors={["#0E1C15", paletaColores.fondo]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 0.7 }}
       style={styles.pantalla}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -38,9 +39,8 @@ export default function PantallaBienvenida() {
 
             <View style={styles.headerContainer}>
               <EncabezadoPagina
-                titulo={"Tu mototaxi,\n"}
-                tituloDestacado="cuando lo necesites."
-                descripcion="Pide tu viaje de forma rápida, segura y sencilla."
+                titulo="Tu mototaxi en minutos"
+                descripcion="Pide tu viaje al instante o genera ingresos conduciendo."
               />
             </View>
           </View>
@@ -50,15 +50,15 @@ export default function PantallaBienvenida() {
               source={require("@/assets/images/imagen-central-v2.png")}
               style={styles.ilustracion}
               contentFit="contain"
-              transition={300}
+              transition={250}
               accessibilityRole="image"
-              accessibilityLabel="Ilustración de mototaxi"
+              accessibilityLabel="Ilustración de mototaxi Altokke"
             />
           </View>
 
           <View style={styles.bottomSection}>
             <BotonPrincipal
-              titulo="Continuar"
+              titulo="Empezar ahora"
               onPress={() => router.push("/crear-cuenta")}
             />
 
@@ -79,6 +79,7 @@ export default function PantallaBienvenida() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
+    backgroundColor: paletaColores.fondo,
   },
   safeArea: {
     flex: 1,
@@ -87,42 +88,42 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     justifyContent: "space-between",
-    paddingBottom: 24,
+    paddingBottom: 20,
     paddingTop: 8,
   },
   topSection: {
-    gap: 6,
+    gap: 4,
   },
   encabezadoLogoAjuste: {
     width: "auto",
     marginBottom: 0,
-    marginTop: 8,
+    marginTop: 4,
   },
   headerContainer: {
-    marginTop: 4,
-    marginBottom: 4,
+    marginTop: 2,
+    marginBottom: 8,
   },
   imageContainer: {
     flex: 1,
     minHeight: 220,
+    maxHeight: 340,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 14,
+    marginVertical: 10,
   },
   ilustracion: {
-    width: "100%",
+    width: "90%",
     height: "100%",
     alignSelf: "center",
-    transform: [{ scale: 1.18 }],
   },
   bottomSection: {
-    gap: 20,
+    gap: 14,
     paddingTop: 4,
   },
   footerWrap: {
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    paddingTop: 2,
   },
 });
+
