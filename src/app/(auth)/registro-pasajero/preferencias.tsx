@@ -13,71 +13,97 @@ import { paletaColores } from "@/paletaColores";
 import { authService } from "@/services/authService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { 
+  Alert, 
+  Pressable, 
+  StyleSheet, 
+  Text, 
+  View 
+} from "react-native";
 
 export default function PasajeroPreferenciasScreen() {
   const [notificaciones, setNotificaciones] = useState(true);
   const [ubicacion, setUbicacion] = useState(true);
   const [promociones, setPromociones] = useState(false);
   const [terminos, setTerminos] = useState(false);
-
-  const { datosPersonales, clearRegistro } = useRegistroPasajero();
   const [loading, setLoading] = useState(false);
+
+  const enviando = useRef(false);
+  
+  const { datosPersonales, clearRegistro } = useRegistroPasajero();
+  
   const { login } = useAuth();
 
   const handleTerms = () => {
     Alert.alert(
-      "Términos y Condiciones",
-      "1. Mayoría de edad (+18 años).\n2. Uso responsable del servicio de mototaxi.\n3. Veracidad de tus datos.\n4. El mal uso conlleva suspensión de la cuenta."
+      "Términos y condiciones",
+      "1. Mayoría de edad (+18 años).\n" +
+        "2. Uso responsable del servicio de mototaxi.\n" +
+        "3. Veracidad de los datos proporcionados.\n" +
+        "4. El uso indebido puede ocasionar la suspensión de la cuenta.",
+      [{ text: "Entendido" }]
     );
   };
 
   const handlePrivacy = () => {
     Alert.alert(
-      "Política de Privacidad",
-      "Cuidamos tu información. Solo recopilamos los datos esenciales para tus viajes bajo estrictos estándares de seguridad cifrada."
+      "Política de privacidad",
+      "Altokke utiliza la información proporcionada " +
+        "para gestionar tu cuenta y prestar el servicio " +
+        "de transporte. Consulta la política completa " +
+        "para conocer el tratamiento de tus datos.",
+      [{ text: "Entendido" }]
     );
   };
 
   const opciones = [
     {
       icono: "notifications-outline" as const,
-      titulo: "Notificaciones del viaje",
-      descripcion: "Avisos sobre el estado del viaje, llegada y mensajes del conductor.",
+      titulo: "Notificaciones",
+      descripcion: "Avisos sobre el estado del viaje y más",
       activa: notificaciones,
       alCambiar: setNotificaciones,
     },
     {
       icono: "location-outline" as const,
       titulo: "Ubicación en tiempo real",
-      descripcion: "Permite seguir tu trayecto durante el viaje para mayor seguridad.",
+      descripcion: "Seguridad durante el viaje",
       activa: ubicacion,
       alCambiar: setUbicacion,
     },
     {
       icono: "gift-outline" as const,
       titulo: "Novedades y promociones",
-      descripcion: "Beneficios exclusivos, descuentos y novedades para ti.",
+      descripcion: "Beneficios, descuentos y novedades",
       activa: promociones,
       alCambiar: setPromociones,
     },
   ];
 
   const handleCrearCuenta = async () => {
-    if (loading) return;
-    if (!terminos) {
-      return Alert.alert("Acción requerida", "Debes aceptar los términos y condiciones y la política de privacidad.");
-    }
+    if (enviando.current || !terminos) return;
 
-    const { nombres, apellidos, telefono, dni, fechaNacimiento, correo, contrasena, fotoPerfil, fotoBase64 } = datosPersonales;
+    const {
+      nombres, 
+      apellidos, 
+      telefono, 
+      dni, 
+      fechaNacimiento, 
+      correo, 
+      contrasena, 
+      fotoPerfil, 
+      fotoBase64 
+    } = datosPersonales;
+
     if (!nombres || !apellidos || !telefono || !dni || !fechaNacimiento) {
       return Alert.alert("Datos incompletos", "Faltan datos obligatorios. Regresa a los pasos anteriores para completarlos.");
     }
 
+    enviando.current= true;
     setLoading(true);
+
     try {
       if (correo && contrasena) {
         await authService.registrarPasajero({
@@ -95,9 +121,20 @@ export default function PasajeroPreferenciasScreen() {
           fotoBase64,
         });
 
-        Alert.alert("¡Cuenta creada exitosamente!", "Ya puedes iniciar sesión con tus credenciales.");
         clearRegistro();
-        router.replace("/login");
+
+        Alert.alert(
+          "¡Cuenta creada!",
+          "Tu registro se completó correctamente. Ya puedes iniciar sesión.",
+          [
+            {
+              text: "Ir a iniciar sesión",
+              onPress: () => router.replace("/login"),
+            },
+          ],
+          { cancelable: false }
+        );
+
       } else {
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData?.session) {
@@ -124,118 +161,187 @@ export default function PasajeroPreferenciasScreen() {
     } catch (error: any) {
       Alert.alert("No se pudo crear la cuenta", traducirErrorAuth(error, "No fue posible registrar tu cuenta."));
     } finally {
+      enviando.current = false;
       setLoading(false);
     }
   };
 
   return (
-    <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
-    >
-      <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <ContenedorPantalla 
+        estilo = {styles.pantalla}
+        estiloContenedorContenido={styles.scrollContent}
+      >
         <View style={styles.headerContainer}>
           <EncabezadoPagina
             titulo={"Preferencias\n"}
             tituloDestacado="y seguridad"
-            descripcion="Ajusta tu experiencia antes de empezar a viajar."
+            descripcion="Personaliza tu experiencia."
+            variante="claro"
           />
         </View>
 
-        <IndicadorPasos pasoActual={3} totalPasos={3} />
+        <IndicadorPasos pasoActual={3} totalPasos={3} variante="claro" />
 
-        <View style={styles.opcionesContainer}>
-          {opciones.map((opcion, i) => (
-            <TarjetaOpcion key={i} {...opcion} />
-          ))}
+        <View style={styles.seccionPreferencias}>
+          <View style={styles.opcionesContainer}>
+            {opciones.map((opcion) => (
+              <TarjetaOpcion key={opcion.titulo} {...opcion} variante="claro" />
+            ))}
+          </View>
         </View>
 
         <AvisoInformativo
-          titulo="Tu privacidad está protegida"
-          texto="Cuidamos tus datos conforme a ley y los usamos únicamente para brindarte un servicio seguro."
-          variante="oscuro"
+          texto="Tus datos están protegidos"
+          icono="shield-checkmark-outline"
+          variante="claro"
           style={styles.infoCard}
         />
 
-        <Pressable
-          style={styles.checkboxContainer}
-          onPress={() => setTerminos(!terminos)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons
-            name={terminos ? "checkbox" : "square-outline"}
-            size={24}
-            color={terminos ? paletaColores.boton : paletaColores.textoSecundario}
-          />
-          <Text style={styles.checkboxText}>
-            Acepto los{" "}
-            <Text onPress={handleTerms} style={styles.linkText}>
-              términos y condiciones
-            </Text>{" "}
-            y la{" "}
-            <Text onPress={handlePrivacy} style={styles.linkText}>
-              política de privacidad
+        <View style={styles.terminosContainer}>
+          <Pressable
+            style={styles.filaTerminos}
+            onPress={() => setTerminos((valor) => !valor)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: terminos }}
+            accessibilityLabel="He leído y acepto los términos y la política de privacidad"
+          >
+            <Ionicons
+              name={terminos ? "checkbox" : "square-outline"}
+              size={26}
+              color={
+                terminos
+                  ? paletaColores.primary
+                  : paletaColores.textoSecundarioClaro
+              }
+            />
+            <Text style={styles.checkboxText}>
+              He leído y acepto los términos y condiciones
+              y la política de privacidad.
             </Text>
-            .
-          </Text>
-        </Pressable>
+          </Pressable>
+
+          <View style={styles.enlacesContainer}>
+            <Pressable
+              onPress={handleTerms}
+              accessibilityRole="link"
+              hitSlop={6}
+            >
+              <Text style={styles.linkText}>
+                Leer términos y condiciones
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handlePrivacy}
+              accessibilityRole="link"
+              hitSlop={6}
+            >
+              <Text style={styles.linkText}>
+                Leer política de privacidad
+              </Text>
+            </Pressable>
+          </View>
+        </View>
 
         <View style={styles.bottomContainer}>
           <BotonPrincipal
-            titulo="Crear cuenta"
+            titulo={loading ? "Creando cuenta..." : "Crear cuenta"}
+            mostrarIcono={!loading}
+            icono="arrow-forward"
             cargando={loading}
             disabled={!terminos || loading}
             onPress={handleCrearCuenta}
+            estilo={styles.botonFinal}
           />
         </View>
       </ContenedorPantalla>
-    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  pantalla: {
+   pantalla: {
     flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
     flexGrow: 1,
+    backgroundColor: paletaColores.fondoClaro,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   headerContainer: {
+    marginTop: 8,
     marginBottom: 8,
   },
+  seccionPreferencias: {
+    marginTop: 14,
+    gap: 10,
+  },
+  encabezadoSeccion: {
+    gap: 5,
+  },
+  tituloSeccion: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: paletaColores.textoClaro,
+  },
+  descripcionSeccion: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: paletaColores.textoSecundarioClaro,
+  },
   opcionesContainer: {
-    gap: 12,
-    marginTop: 18,
-    marginBottom: 18,
+    gap: 10,
   },
   infoCard: {
-    marginBottom: 20,
+    marginTop: 16,
+    marginBottom: 16,
   },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-    paddingHorizontal: 4,
+  terminosContainer: {
+    backgroundColor: paletaColores.superficieClara,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: paletaColores.bordeClaro,
+    padding: 14,
     gap: 10,
+  },
+  filaTerminos: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    minHeight: 44,
   },
   checkboxText: {
     flex: 1,
-    fontSize: 15,
-    color: "#EDF5F0",
-    lineHeight: 22,
+    color: paletaColores.textoClaro,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "500",
+  },
+  enlacesContainer: {
+    marginLeft: 38,
+    gap: 10,
+    alignItems: "flex-start",
   },
   linkText: {
-    color: paletaColores.boton,
+    color: paletaColores.primaryHover,
+    fontSize: 13,
     fontWeight: "700",
     textDecorationLine: "underline",
   },
   bottomContainer: {
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 20,
+    gap: 8,
+  },
+  botonFinal: {
+    minHeight: 58,
+  },
+  mensajeFinal: {
+    color: paletaColores.textoSecundarioClaro,
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    paddingHorizontal: 8,
   },
 });

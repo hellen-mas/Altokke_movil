@@ -11,17 +11,27 @@ import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
 import { paletaColores } from "@/paletaColores";
 import { esquemaPaso1 } from "@/utils/validaciones";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Alert, Keyboard, StyleSheet, View } from "react-native";
+import { 
+  Keyboard, 
+  StyleSheet, 
+  Text,
+  View 
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PasajeroDatosPersonalesScreen() {
   const { datosPersonales, setDatosPersonales } = useRegistroPasajero();
 
-  const { control, handleSubmit } = useForm({
+  const { 
+    control, 
+    handleSubmit,
+    formState: { errors, isSubmitting }, 
+  } = useForm({
     resolver: yupResolver(esquemaPaso1),
+    mode: "onChange",
     defaultValues: {
       correo: datosPersonales.correo || "",
       contrasena: datosPersonales.contrasena || "",
@@ -31,38 +41,36 @@ export default function PasajeroDatosPersonalesScreen() {
 
   const contrasenaActual = useWatch({ control, name: "contrasena" }) || "";
 
+  const confirmarActual =
+    useWatch({
+      control,
+      name: "confirmarContrasena",
+    }) || "";
+
+  const coinciden =
+    contrasenaActual.length > 0 &&
+    confirmarActual.length > 0 &&
+    contrasenaActual === confirmarActual;
+
+
   const onSubmit = (data: any) => {
     Keyboard.dismiss();
     setDatosPersonales({ ...datosPersonales, ...data });
     router.push("/registro-pasajero/verificacion");
   };
 
-  const onError = (errors: any) => {
-    Alert.alert(
-      errors?.confirmarContrasena ? "Las contraseñas no coinciden" : "Campos incompletos",
-      errors?.confirmarContrasena
-        ? "Por favor asegúrate de que ambas contraseñas sean idénticas."
-        : "Por favor completa correctamente tu correo y una contraseña segura para continuar."
-    );
-  };
-
   return (
-    <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
-    >
-      <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <ContenedorPantalla estilo={styles.pantalla} estiloContenedorContenido={styles.scrollContent}>
         <View style={styles.headerContainer}>
           <EncabezadoPagina
-            titulo={"Crea tu cuenta de "}
-            tituloDestacado="pasajero"
-            descripcion="Ingresa tus credenciales de acceso para comenzar."
+            titulo="Crea tu "
+            tituloDestacado="cuenta"
+            descripcion="Empieza a viajar con Altokke"
+            variante="claro"
           />
         </View>
 
-        <IndicadorPasos pasoActual={1} totalPasos={3} />
+        <IndicadorPasos pasoActual={1} totalPasos={3} variante="claro" />
 
         <View style={styles.formContainer}>
           <CampoTextoHookForm
@@ -74,6 +82,7 @@ export default function PasajeroDatosPersonalesScreen() {
             autoCapitalize="none"
             autoComplete="email"
             textContentType="emailAddress"
+            variante="claro"
           />
 
           <View style={styles.passwordContainer}>
@@ -81,10 +90,16 @@ export default function PasajeroDatosPersonalesScreen() {
               control={control}
               name="contrasena"
               nombreIcono="lock-closed-outline"
-              placeholder="Contraseña segura"
+              placeholder="Contraseña"
               esPassword
               autoCapitalize="none"
               textContentType="newPassword"
+              variante="claro"
+            />
+
+            <MedidorPasswordSeguro
+              contrasena={contrasenaActual}
+              variante="claro"
             />
 
             <CampoTextoHookForm
@@ -95,54 +110,112 @@ export default function PasajeroDatosPersonalesScreen() {
               esPassword
               autoCapitalize="none"
               textContentType="newPassword"
+              variante="claro"
             />
-
-            <MedidorPasswordSeguro contrasena={contrasenaActual} />
           </View>
+
+          {Object.keys(errors).length > 0 && (
+            <View style={styles.avisoValidacion}>
+              <Ionicons
+                name="information-circle-outline"
+                size={19}
+                color={paletaColores.primaryHover}
+              />
+              <Text style={styles.textoValidacion}>
+                Revisa los campos señalados antes de continuar.
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.bottomContainer}>
           <BotonPrincipal
             titulo="Continuar"
-            onPress={handleSubmit(onSubmit, onError)}
+            mostrarIcono
+            icono="arrow-forward"
+            cargando={isSubmitting}
+            onPress={handleSubmit(onSubmit)}
           />
 
           <PiePaginaAutenticacion
             textoPregunta="¿Ya tienes una cuenta?"
             textoEnlace="Iniciar sesión"
             ruta="/login"
+            variante="claro"
           />
         </View>
       </ContenedorPantalla>
-    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
+    paddingTop: 20,
+    paddingBottom: 36,
     flexGrow: 1,
   },
   headerContainer: {
     marginTop: 8,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   formContainer: {
-    gap: 16,
-    marginTop: 18,
-    marginBottom: 20,
+    gap: 14,
+    marginTop: 14,
+    marginBottom: 18,
+  },
+  seccionTitulo: {
+    gap: 6,
+    marginBottom: 4,
+  },
+  tituloSeccion: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: paletaColores.textoClaro,
+  },
+  descripcionSeccion: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: paletaColores.textoSecundarioClaro,
   },
   passwordContainer: {
-    gap: 14,
+    gap: 12,
+  },
+  mensajeCoincidencia: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 4,
+  },
+  textoCoincidencia: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: paletaColores.primaryHover,
+  },
+  avisoValidacion: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: 14,
+    backgroundColor: "#EAF4EE",
+    borderColor: "#C8E4D3",
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  textoValidacion: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: paletaColores.textoClaro,
   },
   bottomContainer: {
-    marginTop: 16,
-    gap: 20,
+    marginTop: "auto",
+    paddingTop: 24,
+    gap: 12,
   },
 });
 

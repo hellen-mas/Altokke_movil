@@ -1,54 +1,80 @@
-import { Fragment } from "react";
 import { paletaColores } from "@/paletaColores";
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { 
+  StyleProp, 
+  StyleSheet, 
+  Text, 
+  View, 
+  ViewStyle,
+} from "react-native";
 
 export interface PropsIndicadorPasos {
   pasoActual: number;
   totalPasos: number;
   estilo?: StyleProp<ViewStyle>;
+  variante?: "oscuro" | "claro";
+  etiquetas?: string[];
 }
 
-export function IndicadorPasos({ pasoActual, totalPasos, estilo }: PropsIndicadorPasos) {
-  const pasos = Array.from({ length: totalPasos }, (_, i) => i + 1);
+export function IndicadorPasos({ 
+  pasoActual, 
+  totalPasos, 
+  estilo,
+  variante = "oscuro",
+  etiquetas = ["Cuenta", "Identidad", "Preferencias"],
+}: PropsIndicadorPasos) {
+  const esClaro = variante === "claro";
+  const pasoSeguro = Math.max(
+    1,
+    Math.min(pasoActual, totalPasos)
+  );
+  const nombrePaso =
+    etiquetas[pasoSeguro - 1] || `Paso ${pasoSeguro}`;
 
   return (
     <View style={[estilos.contenedor, estilo]}>
-      <View style={estilos.progreso}>
-        {pasos.map((paso) => {
-          const completado = paso < pasoActual;
-          const activo = paso === pasoActual;
+      <View style={estilos.encabezado}>
+        <Text
+          style={[
+            estilos.contador,
+            esClaro && estilos.contadorClaro,
+          ]}
+        >
+          PASO {pasoSeguro} DE {totalPasos}
+        </Text>
 
-          return (
-            <Fragment key={paso}>
-              <View
-                style={[
-                  estilos.circulo,
-                  completado && estilos.circuloCompletado,
-                  activo && estilos.circuloActivo,
-                ]}
-              >
-                <Text
-                  style={[
-                    estilos.numero,
-                    completado && estilos.numeroCompletado,
-                    activo && estilos.numeroActivo,
-                  ]}
-                >
-                  {paso}
-                </Text>
-              </View>
+        <Text
+          style={[
+            estilos.nombre,
+            esClaro && estilos.nombreClaro,
+          ]}
+        >
+          {nombrePaso}
+        </Text>
+      </View>
 
-              {paso < totalPasos && (
-                <View
-                  style={[
-                    estilos.linea,
-                    paso < pasoActual && estilos.lineaCompletada,
-                  ]}
-                />
-              )}
-            </Fragment>
-          );
-        })}
+      <View
+        style={estilos.barras}
+        accessibilityRole="progressbar"
+        accessibilityValue={{
+          min: 0,
+          max: totalPasos,
+          now: pasoSeguro,
+        }}
+      >
+        {Array.from(
+          { length: totalPasos },
+          (_, indice) => (
+            <View
+              key={indice}
+              style={[
+                estilos.barra,
+                esClaro && estilos.barraClara,
+                indice < pasoSeguro &&
+                  estilos.barraCompletada,
+              ]}
+            />
+          )
+        )}
       </View>
     </View>
   );
@@ -57,52 +83,47 @@ export function IndicadorPasos({ pasoActual, totalPasos, estilo }: PropsIndicado
 const estilos = StyleSheet.create({
   contenedor: {
     width: "100%",
-    marginVertical: 10,
+    marginTop: 12,
+    marginBottom: 12,
   },
-  progreso: {
-    width: "100%",
+  encabezado: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 10,
   },
-  circulo: {
-    width: 27,
-    height: 27,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: paletaColores.borde,
-    backgroundColor: paletaColores.input,
-  },
-  circuloCompletado: {
-    backgroundColor: paletaColores.boton,
-    borderColor: paletaColores.boton,
-  },
-  circuloActivo: {
-    borderWidth: 2,
-    borderColor: paletaColores.boton,
-    backgroundColor: "rgba(53, 233, 130, 0.15)",
-  },
-  numero: {
-    color: paletaColores.textoSecundario,
+  contador: {
     fontSize: 12,
     fontWeight: "600",
+    color: paletaColores.textoSecundario,
+    letterSpacing: 0.5,
   },
-  numeroCompletado: {
-    color: paletaColores.textoOscuro,
+  contadorClaro: {
+    color: paletaColores.textoSecundarioClaro,
+  },
+  nombre: {
+    fontSize: 12,
     fontWeight: "700",
+    color: paletaColores.primary,
   },
-  numeroActivo: {
-    color: paletaColores.verde,
-    fontWeight: "800",
+  nombreClaro: {
+    color: paletaColores.primaryHover,
   },
-  linea: {
+  barras: {
+    flexDirection: "row",
+    gap: 5,
+    width: "100%",
+  },
+  barra: {
     flex: 1,
-    height: 1,
+    height: 5,
+    borderRadius: 5,
     backgroundColor: paletaColores.borde,
   },
-  lineaCompletada: {
-    height: 2,
-    backgroundColor: paletaColores.boton,
+  barraClara: {
+    backgroundColor: "#DCE5DF",
+  },
+  barraCompletada: {
+    backgroundColor: paletaColores.primary,
   },
 });

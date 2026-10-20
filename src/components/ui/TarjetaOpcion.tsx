@@ -1,7 +1,14 @@
 import { paletaColores } from "@/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { 
+  Pressable, 
+  StyleProp, 
+  StyleSheet, 
+  Text, 
+  View, 
+  ViewStyle 
+} from "react-native";
 
 export interface TarjetaOpcionProps {
   icono: keyof typeof Ionicons.glyphMap;
@@ -10,6 +17,7 @@ export interface TarjetaOpcionProps {
   activa: boolean;
   alCambiar: (activa: boolean) => void;
   estilo?: StyleProp<ViewStyle>;
+  variante?: "oscuro" | "claro";
 }
 
 export function TarjetaOpcion({
@@ -19,77 +27,137 @@ export function TarjetaOpcion({
   activa,
   alCambiar,
   estilo,
+  variante="oscuro",
 }: TarjetaOpcionProps) {
+  const esClaro = variante === "claro";
+
   return (
     <Pressable
       style={({ pressed }) => [
-        styles.opcionCard,
-        activa && styles.opcionCardActiva,
-        pressed && { opacity: 0.8 },
+        styles.card,
+        esClaro && styles.cardClaro,
+        activa && styles.cardActiva,
+        activa && esClaro && styles.cardActivaClara,
+        pressed && styles.presionada,
         estilo,
       ]}
       onPress={() => alCambiar(!activa)}
-      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: activa }}
+      accessibilityLabel={titulo}
+      hitSlop={4}
     >
-      <View style={[styles.iconContainer, activa && styles.iconContainerActivo]}>
+      <View style={[
+        styles.iconContainer, 
+        esClaro && styles.iconContainerClaro,
+        ]}
+      >
         <Ionicons
           name={icono}
           size={22}
-          color={activa ? paletaColores.textoOscuro : paletaColores.textoSecundario}
+          color={
+            esClaro 
+              ? paletaColores.primaryHover 
+              : paletaColores.primary
+            }
         />
       </View>
-      <View style={styles.opcionTextos}>
-        <Text style={styles.opcionTitulo}>{titulo}</Text>
-        <Text style={styles.opcionDescripcion}>{descripcion}</Text>
+
+      <View style={styles.textos}>
+        <Text
+          style={[
+            styles.titulo,
+            esClaro && styles.tituloClaro,
+          ]}
+        >
+          {titulo}
+        </Text>
+
+        <Text
+          style={[
+            styles.descripcion,
+            esClaro && styles.descripcionClara,
+          ]}
+        >
+          {descripcion}
+        </Text>
       </View>
+
       <Ionicons
-        name={activa ? "checkmark-circle" : "ellipse-outline"}
+        name={
+          activa 
+            ? "checkmark-circle" 
+            : "ellipse-outline"
+          }
         size={24}
-        color={activa ? paletaColores.boton : paletaColores.borde}
+        color={
+          activa 
+            ? paletaColores.primary
+            : esClaro 
+              ? paletaColores.textoSecundarioClaro
+              : paletaColores.textoSecundario
+        }
       />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  opcionCard: {
+  card: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 78,
+    borderWidth: 1,
     borderColor: paletaColores.borde,
-    borderRadius: 16,
-    backgroundColor: paletaColores.input,
+    borderRadius: 14,
+    backgroundColor: paletaColores.surface,
+    gap: 12,
   },
-  opcionCardActiva: {
-    borderColor: paletaColores.boton,
-    backgroundColor: "rgba(46, 206, 121, 0.08)",
+  cardClaro: {
+    backgroundColor: paletaColores.superficieClara,
+    borderColor: paletaColores.bordeClaro,
+  },
+  cardActiva: {
+    borderColor: paletaColores.primary,
+  },
+  cardActivaClara: {
+    borderColor: "#B4DCC6",
+    backgroundColor: "#F5FBF7",
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: paletaColores.surfaceElevated,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
   },
-  iconContainerActivo: {
-    backgroundColor: paletaColores.boton,
+  iconContainerClaro: {
+    backgroundColor: "#EAF5EF",
   },
-  opcionTextos: {
+  textos: {
     flex: 1,
-    paddingRight: 8,
+    gap: 3,
   },
-  opcionTitulo: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  opcionDescripcion: {
+  titulo: {
     fontSize: 14,
-    color: "#C2D4CB",
-    lineHeight: 20,
+    fontWeight: "700",
+    color: paletaColores.texto,
+  },
+  tituloClaro: {
+    color: paletaColores.textoClaro,
+  },
+  descripcion: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: paletaColores.textoSecundario,
+  },
+  descripcionClara: {
+    color: paletaColores.textoSecundarioClaro,
+  },
+  presionada: {
+    opacity: 0.75,
   },
 });
