@@ -1,6 +1,6 @@
 import {
   BotonPrincipal,
-  CampoTexto,
+  CampoTextoHookForm,
   ContenedorPantalla,
   EncabezadoPagina,
   PiePaginaAutenticacion,
@@ -11,19 +11,23 @@ import { paletaColores } from "@/paletaColores";
 import { authService } from "@/services/authService";
 import { obtenerEstadoConductor } from "@/services/estadoConductor";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
+import { esquemaLogin, TipoDatosLogin } from "@/utils/validaciones";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Alert, Keyboard, Pressable, StyleSheet, Text, View } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
-  const [correo, setCorreo] = useState("");
-  const [contrasena, setContrasena] = useState("");
-  const [correoError, setCorreoError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { control, handleSubmit } = useForm<TipoDatosLogin>({
+    resolver: yupResolver(esquemaLogin),
+    defaultValues: { correo: "", contrasena: "" },
+  });
   const { login } = useAuth();
 
   const handleSession = async (user: any) => {
@@ -48,22 +52,14 @@ export default function LoginScreen() {
     throw new Error("Rol de usuario no reconocido.");
   };
 
-  const handleLogin = async () => {
+  // handleSubmit solo llama a esta función si los datos pasan esquemaLogin
+  const handleLogin = async ({ correo, contrasena }: TipoDatosLogin) => {
     if (loading) return;
     Keyboard.dismiss();
-    setCorreoError(false);
-
-    const normalizado = correo.trim().toLowerCase();
-    if (!normalizado || !contrasena.trim()) {
-      return Alert.alert("Campos incompletos", "Ingresa tu correo y contraseña.");
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizado)) {
-      return setCorreoError(true);
-    }
 
     setLoading(true);
     try {
-      const user = await authService.loginConPassword(normalizado, contrasena);
+      const user = await authService.loginConPassword(correo, contrasena);
       await handleSession(user);
     } catch (error: any) {
       Alert.alert("No se pudo iniciar sesión", traducirErrorAuth(error, "Comprueba tus datos e inténtalo nuevamente."));
@@ -118,27 +114,25 @@ export default function LoginScreen() {
           />
 
           <View style={styles.formContainer}>
-            <CampoTexto
+            <CampoTextoHookForm
+              control={control}
+              name="correo"
               nombreIcono="mail-outline"
               placeholder="Correo electrónico"
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
               textContentType="emailAddress"
-              value={correo}
-              onChangeText={setCorreo}
-              error={correoError}
-              textoError={correoError ? "Ingresa un correo electrónico válido" : undefined}
             />
 
-            <CampoTexto
+            <CampoTextoHookForm
+              control={control}
+              name="contrasena"
               nombreIcono="lock-closed-outline"
               placeholder="Contraseña"
               esPassword
               autoComplete="password"
               textContentType="password"
-              value={contrasena}
-              onChangeText={setContrasena}
             />
 
             <Pressable
@@ -154,7 +148,7 @@ export default function LoginScreen() {
             <BotonPrincipal
               titulo="Iniciar sesión"
               cargando={loading}
-              onPress={handleLogin}
+              onPress={handleSubmit(handleLogin)}
               disabled={loading}
             />
           </View>
