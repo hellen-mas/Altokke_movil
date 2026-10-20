@@ -14,106 +14,106 @@ export function MedidorPasswordSeguro({
   longitudMinima = 8,
   variante = "oscuro",
 }: Props) {
-  const tieneMinLongitud = contrasena.length >= longitudMinima;
-  const tieneMayuscula = /[A-Z]/.test(contrasena);
-  const tieneMinuscula = /[a-z]/.test(contrasena);
-  const tieneNumero = /[0-9]/.test(contrasena);
-  const tieneSimbolo = /[^A-Za-z0-9]/.test(contrasena);
+  const esClaro = variante === "claro";
 
-  const reglasCumplidas = [
-    tieneMinLongitud,
-    tieneMayuscula,
-    tieneMinuscula,
-    tieneNumero,
-    tieneSimbolo
-  ].filter(Boolean).length;
+  const requisitos = [
+    contrasena.length >= longitudMinima,
+    /[A-Z]/.test(contrasena),
+    /[a-z]/.test(contrasena),
+    /[0-9]/.test(contrasena),
+    /[^A-Za-z0-9]/.test(contrasena),
+  ];
 
-  let nivel = 0; 
-  if (contrasena.length === 0) {
-    nivel = 0;
-  } else if (reglasCumplidas <= 2) {
-    nivel = 1;
-  } else if (reglasCumplidas === 3) {
-    nivel = 2;
-  } else if (reglasCumplidas === 4) {
-    nivel = 3;
-  } else if (reglasCumplidas === 5) {
-    nivel = 4;
-  }
+  const cumplidos = requisitos.filter(Boolean).length;
 
-  const colores = {
-    0: paletaColores.borde,
-    1: paletaColores.error,
-    2: paletaColores.advertencia,
-    3: '#8bc34a', 
-    4: paletaColores.exito, 
-  };
+  const nivel =
+    contrasena.length === 0 ? 0 :
+    cumplidos <= 2 ? 1 :
+    cumplidos === 3 ? 2 :
+    cumplidos === 4 ? 3 : 4;
 
-  const etiquetas = {
-    0: 'Ingresa una contraseña',
-    1: 'Débil',
-    2: 'Regular',
-    3: 'Buena',
-    4: 'Excelente',
-  };
+  const colores = [
+    paletaColores.bordeClaro,
+    paletaColores.error,
+    paletaColores.advertencia,
+    "#729A35",
+    paletaColores.exito,
+  ];
 
-  const colorActual = colores[nivel as keyof typeof colores];
+  const etiquetas = [
+    "Sin evaluar",
+    "Débil",
+    "Regular",
+    "Buena",
+    "Excelente",
+  ];
 
-  const colorTexto = variante === "claro"
-    ? paletaColores.textoClaro
-    : paletaColores.texto;
-
-  const colorSecundario = variante === "claro"
-    ? paletaColores.textoSecundarioClaro
-    : paletaColores.textoSecundario;
-
-  const renderRequisito = (cumplido: boolean, texto: string) => (
-    <View style={styles.requisitoFila}>
-      <Ionicons 
-        name={cumplido ? 'checkmark-circle' : 'ellipse-outline'} 
-        size={18} 
-        color={cumplido ? paletaColores.exito : colorSecundario} 
-      />
-      <Text 
-        style={[
-          styles.textoRequisito, 
-          { color: cumplido ? colorTexto : colorSecundario },
-          cumplido && { fontWeight: "500" },
-        ]}>
-        {texto}
-      </Text>
-    </View>
-  );
+  const colorActual = colores[nivel];
 
   return (
     <View style={styles.contenedor}>
-      <View style={styles.barrasContainer}>
-        {[1, 2, 3, 4].map((index) => (
+      <View style={styles.encabezado}>
+        <Text
+          style={[
+            styles.titulo,
+            esClaro && styles.tituloClaro,
+          ]}
+        >
+          Seguridad de contraseña
+        </Text>
+
+        <Text
+          style={[
+            styles.nivel,
+            { color: nivel === 0
+                ? esClaro
+                  ? paletaColores.textoSecundarioClaro
+                  : paletaColores.textoSecundario
+                : colorActual
+            },
+          ]}
+        >
+          {etiquetas[nivel]}
+        </Text>
+      </View>
+
+      <View style={styles.barras}>
+        {[1, 2, 3, 4].map((indice) => (
           <View
-            key={index}
+            key={indice}
             style={[
               styles.barra,
-              { backgroundColor: nivel >= index ? colorActual : paletaColores.borde }
+              { backgroundColor: 
+                nivel >= indice 
+                  ? colorActual 
+                  : esClaro
+                    ? "#DCE5DF"
+                    : paletaColores.borde, 
+              },
             ]}
           />
         ))}
       </View>
-      
-      <View style={styles.textoContainer}>
-        <Text 
-          style={[
-            styles.textoFuerza, 
-            { color: nivel > 0 ? colorActual : colorSecundario },
-          ]}>
-          {etiquetas[nivel as keyof typeof etiquetas]}
-        </Text>
-      </View>
 
-      <View style={styles.requisitosContainer}>
-        {renderRequisito(tieneMinLongitud,  `Mínimo ${longitudMinima} caracteres`)}
-        {renderRequisito(tieneMayuscula && tieneMinuscula, 'Mayúsculas (A-Z) y minúsculas (a-z)')}
-        {renderRequisito(tieneNumero, 'Al menos un número (0-9)')}
-        {renderRequisito(tieneSimbolo, 'Símbolo especial (!, @, #, $, etc)')}
+      <View style={styles.ayuda}>
+        <Ionicons
+          name="information-circle-outline"
+          size={15}
+          color={
+            esClaro
+              ? paletaColores.textoSecundarioClaro
+              : paletaColores.textoSecundario
+          }
+        />
+        <Text
+          style={[
+            styles.descripcion,
+            esClaro && styles.descripcionClara,
+          ]}
+        >
+          Mín. {longitudMinima} caracteres,
+          mayúsculas, números y símbolos.
+        </Text>
       </View>
     </View>
   );
@@ -121,42 +121,50 @@ export function MedidorPasswordSeguro({
 
 const styles = StyleSheet.create({
   contenedor: {
-    marginTop: 8,
-    marginBottom: 8,
-    paddingHorizontal: 4,
+    width: "100%",
+    marginTop: 2,
+    marginBottom: 4,
   },
-  barrasContainer: {
-    flexDirection: 'row',
-    gap: 6,
-    height: 4,
-    marginBottom: 8,
+  encabezado: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  titulo: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: paletaColores.texto,
+  },
+  tituloClaro: {
+    color: paletaColores.textoClaro,
+  },
+  nivel: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  barras: {
+    flexDirection: "row",
+    gap: 5,
+    height: 5,
   },
   barra: {
     flex: 1,
-    borderRadius: 2,
+    borderRadius: 5,
   },
-  textoContainer: {
-    marginBottom: 12,
+  ayuda: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 7,
+    marginTop: 10,
   },
-  textoFuerza: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  requisitosContainer: {
-    flexDirection: 'column',
-    gap: 10,
-  },
-  requisitoFila: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  textoRequisito: {
-    fontSize: 13,
+  descripcion: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
     color: paletaColores.textoSecundario,
   },
-  textoCumplido: {
-    color: paletaColores.texto,
-    fontWeight: '500',
+  descripcionClara: {
+    color: paletaColores.textoSecundarioClaro,
   },
 });

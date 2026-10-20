@@ -43,7 +43,9 @@ export const CampoTexto = ({
           estilos.contenedor,
           esClaro && estilos.contenedorClaro,
           enFoco && estilos.contenedorFoco,
+          enFoco && esClaro && estilos.contenedorFocoClaro,
           error && estilos.contenedorError,
+          error && esClaro && estilos.contenedorErrorClaro,
         ]}
       >
         {nombreIcono && (
@@ -98,15 +100,15 @@ const estilos = StyleSheet.create({
   },
   contenedor: {
     width: "100%",
-    minHeight: 62,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    minHeight: 56,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderWidth: 1.5,
+    gap: 10,
+    borderWidth: 1,
     borderColor: paletaColores.surfaceBorder,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: paletaColores.surface,
   },
   contenedorClaro: {
@@ -117,17 +119,26 @@ const estilos = StyleSheet.create({
     borderColor: paletaColores.primary,
     backgroundColor: paletaColores.surfaceElevated,
   },
+  contenedorFocoClaro: {
+    backgroundColor: paletaColores.inputClaro,
+    borderColor: paletaColores.primary,
+    borderWidth: 1.5,
+  },
   contenedorError: {
     borderColor: paletaColores.error,
     backgroundColor: paletaColores.errorMuted,
   },
+  contenedorErrorClaro: {
+    backgroundColor: "#FFF8F8",
+    borderColor: paletaColores.error,
+  },
   iconoIzquierdo: {
-    marginRight: 2,
+    marginRight: 0,
   },
   entrada: {
     flex: 1,
-    fontSize: 19,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     color: paletaColores.textPrimary,
     paddingVertical: 0,
   },
