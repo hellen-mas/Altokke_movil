@@ -5,11 +5,13 @@ interface PropsCampoTextoHookForm<T extends FieldValues>
   extends Omit<PropsCampoTexto, "value" | "onChangeText" | "error" | "textoError"> {
   name: Path<T>;
   control: Control<T, any>;
+  transformar?: (texto: string) => string;
 }
 
 export function CampoTextoHookForm<T extends FieldValues>({
   name,
   control,
+  transformar,
   ...rest
 }: PropsCampoTextoHookForm<T>) {
   return (
@@ -19,7 +21,7 @@ export function CampoTextoHookForm<T extends FieldValues>({
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <CampoTexto
           value={value}
-          onChangeText={onChange}
+          onChangeText={(texto) => onChange(transformar ? transformar(texto) : texto)}
           error={!!error}
           textoError={error?.message}
           {...rest}

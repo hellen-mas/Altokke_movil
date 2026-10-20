@@ -101,7 +101,7 @@ export default function VerificacionContactoConductor() {
                   value={telefono}
                   onChangeText={cambiarTelefono}
                   keyboardType="phone-pad"
-                  maxLength={9}
+                  maxLength={15}
                 />
               </View>
             </View>

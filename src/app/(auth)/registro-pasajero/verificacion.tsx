@@ -12,7 +12,7 @@ import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
 import { paletaColores } from "@/paletaColores";
 import { usuarioService } from "@/services/usuarioService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
-import { esquemaPaso2 } from "@/utils/validaciones";
+import { esquemaPaso2, sanitizarDNI, sanitizarTelefono } from "@/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
@@ -193,7 +193,8 @@ export default function PasajeroIdentidadScreen() {
                 nombreIcono="card-outline"
                 placeholder="Número de DNI (8 dígitos)"
                 keyboardType="numeric"
-                maxLength={8}
+                maxLength={15}
+                transformar={sanitizarDNI}
                 variante="claro"
               />
               {loadingDni && (
@@ -267,7 +268,8 @@ export default function PasajeroIdentidadScreen() {
               nombreIcono="call-outline"
               placeholder="Número de celular (9 dígitos)"
               keyboardType="phone-pad"
-              maxLength={9}
+              maxLength={15}
+              transformar={sanitizarTelefono}
               variante="claro"
             />
 

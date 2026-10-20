@@ -155,7 +155,7 @@ export default function DatosPersonalesConductor() {
               value={dni}
               onChangeText={cambiarDni}
               keyboardType="number-pad"
-              maxLength={8}
+              maxLength={15}
               variante="claro"
               error={!!errorDni}
               textoError={errorDni}
