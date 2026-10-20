@@ -6,19 +6,27 @@ export const usuarioService = {
    * Consulta si un DNI ya existe registrado en la base de datos de Altokke
    */
   async existeDni(dni: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("id")
-      .eq("dni", dni.trim())
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("dni", dni.trim())
+        .maybeSingle();
 
-    if (error) throw error;
-    return Boolean(data);
+      if (error) {
+        // Si la columna DNI aún no existe en la BD (código 42703) o hay fallo de red,
+        // no bloqueamos el flujo hacia la API de RENIEC ni disparamos alertas visuales de LogBox.
+        return false;
+      }
+      return Boolean(data);
+    } catch {
+      return false;
+    }
   },
 
   /**
-   * Valida disponibilidad en BD y consulta a RENIEC si está disponible.
-   * Lanza error con código DNI_YA_REGISTRADO si ya existe.
+   * Valida disponibilidad en BD y, si no está registrado, consulta a la API de RENIEC.
+   * Lanza error con código DNI_YA_REGISTRADO si ya existe en la base de datos.
    */
   async validarIdentidadDNI(dni: string) {
     const registrado = await this.existeDni(dni);

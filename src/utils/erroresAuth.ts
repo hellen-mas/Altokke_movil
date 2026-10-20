@@ -56,7 +56,7 @@ const REGLAS_ERRORES: [string[], string][] = [
     "El correo electrónico ingresado no tiene un formato válido.",
   ],
   [
-    ["dni"],
+    ["no se encontraron datos registrados", "dni no encontrado", "dni not found"],
     "No se encontraron datos para el número de DNI ingresado. Por favor verifica los 8 dígitos.",
   ],
 ];
