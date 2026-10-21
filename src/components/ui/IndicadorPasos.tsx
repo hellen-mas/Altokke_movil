@@ -12,7 +12,6 @@ export interface PropsIndicadorPasos {
   totalPasos: number;
   estilo?: StyleProp<ViewStyle>;
   variante?: "oscuro" | "claro";
-  etiquetas?: string[];
 }
 
 export function IndicadorPasos({ 
@@ -20,15 +19,12 @@ export function IndicadorPasos({
   totalPasos, 
   estilo,
   variante = "oscuro",
-  etiquetas = ["Cuenta", "Identidad", "Preferencias"],
 }: PropsIndicadorPasos) {
   const esClaro = variante === "claro";
   const pasoSeguro = Math.max(
     1,
     Math.min(pasoActual, totalPasos)
   );
-  const nombrePaso =
-    etiquetas[pasoSeguro - 1] || `Paso ${pasoSeguro}`;
 
   return (
     <View style={[estilos.contenedor, estilo]}>
@@ -40,15 +36,6 @@ export function IndicadorPasos({
           ]}
         >
           PASO {pasoSeguro} DE {totalPasos}
-        </Text>
-
-        <Text
-          style={[
-            estilos.nombre,
-            esClaro && estilos.nombreClaro,
-          ]}
-        >
-          {nombrePaso}
         </Text>
       </View>
 
@@ -83,12 +70,11 @@ export function IndicadorPasos({
 const estilos = StyleSheet.create({
   contenedor: {
     width: "100%",
-    marginTop: 12,
+    marginTop: 10,
     marginBottom: 12,
   },
   encabezado: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
   },

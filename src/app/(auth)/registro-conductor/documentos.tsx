@@ -1,23 +1,31 @@
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
-import { Ionicons } from "@expo/vector-icons";
-import { paletaColores } from "@/paletaColores";
+import { DocumentoArchivo } from "@/components/conductor/DocumentoArchivo";
+import { IndicadorPasos } from "@/components/ui";
 import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { Ionicons } from "@expo/vector-icons";
+import { paletaColores } from "@/paletaColores";
+import { ArchivoDocumento } from "@/types/conductor";
+
+import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useRef, useState } from "react";
+
 import {
     Alert,
-    KeyboardAvoidingView,
-    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     View,
 } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
-import { DocumentoArchivo } from "@/components/conductor/DocumentoArchivo";
-import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+type TipoDocumento =
+  | "licencia"
+  | "soat"
+  | "antecedentes";
 
 export default function DocumentosConductor() {
     const {
@@ -29,139 +37,254 @@ export default function DocumentosConductor() {
         setAntecedentesPenales
     } = useRegistroConductor();
 
-    const seleccionarArchivo = async(tipo: "licencia" | "soat" | "antecedentes") => {
-        const resultado = await DocumentPicker.getDocumentAsync({
-            type: [
-                "application/pdf",
-                "image/jpg",
-                "image/png",
-            ],
-            copyToCacheDirectory: true,
-            multiple: false,
-        });
+    const [seleccionando, setSeleccionando] = useState(false);
+    const seleccionEnCurso = useRef(false);
 
-        if (resultado.canceled) {
-            return;
+    const seleccionarArchivo = async(tipo: TipoDocumento) => {
+        if (seleccionEnCurso.current) return;
+
+        seleccionEnCurso.current = true;
+        setSeleccionando(true);
+
+        try {
+            const resultado = await DocumentPicker.getDocumentAsync({
+                type: [
+                    "application/pdf",
+                    "image/jpg",
+                    "image/png",
+                ],
+                copyToCacheDirectory: true,
+                multiple: false,
+            });
+
+            if (resultado.canceled || !resultado.assets?.length) {
+                return;
+            }
+
+            const archivo = resultado.assets[0];
+
+            if (!archivo.uri) {
+                Alert.alert(
+                "Archivo no disponible",
+                "No se pudo acceder al documento seleccionado."
+                );
+                return;
+            }
+
+            const documento: ArchivoDocumento = {
+                uri: archivo.uri,
+                nombre: archivo.name,
+                tipo: archivo.mimeType,
+            };
+
+            switch (tipo) {
+                case "licencia":
+                    setLicenciaConducir(documento);
+                    break;
+
+                case "soat":
+                    setSoat(documento);
+                    break;
+
+                case "antecedentes":
+                    setAntecedentesPenales(documento);
+                    break;
+            }
+        } catch (error) {
+            Alert.alert(
+                "No se pudo adjuntar",
+                "Ocurrió un problema al seleccionar el archivo. Inténtalo nuevamente."
+            );
+        } finally {
+            seleccionEnCurso.current = false;
+            setSeleccionando(false);
         }
-
-        const archivo = resultado.assets[0];
-
-        const documento = {
-            uri: archivo.uri,
-            nombre: archivo.name,
-            tipo: archivo.mimeType,
-        };
-
-        const setters = { licencia: setLicenciaConducir, soat: setSoat, antecedentes: setAntecedentesPenales };
-        setters[tipo](documento);
     };
 
+    const documentosCompletados = [
+        licenciaConducir,
+        soat,
+        antecedentesPenales,
+    ].filter(Boolean).length;
+
     const continuar = () => {
+        if (seleccionEnCurso.current) return;
+
         if (!licenciaConducir || !soat || !antecedentesPenales) {
-            return Alert.alert("Documentos incompletos", "Debes subir todos los documentos requeridos para continuar.");
+            return Alert.alert("Documentos pendientes", "Debes subir todos los documentos requeridos para continuar.");
         }
         router.push("/registro-conductor/vehiculo");
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+        <SafeAreaView
+            style={styles.areaSegura}
+            edges={["top", "bottom"]}
         >
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-            >
-                <EncabezadoPagina
-                    titulo={"Documentos del\n"}
-                    tituloDestacado="conductor"
-                    descripcion="Carga los documentos requeridos para conducir en Altokke"
-                    variante="claro"
-                />
-
-                <ProgresoRegistro pasoActual={4}/>
-
-                {/* Documentos */}
-                <View style={styles.documentosContainer}>
-                    <DocumentoArchivo
-                        titulo="Licencia de conducir"
-                        icono="document-text-outline"
-                        archivo={licenciaConducir}
-                        onPress={() => seleccionarArchivo("licencia")}
-                    />
-
-                    <DocumentoArchivo
-                        titulo="Soat"
-                        icono="shield-checkmark-outline"
-                        archivo={soat}
-                        onPress={() => seleccionarArchivo("soat")}
-                    />
-
-                    <DocumentoArchivo
-                        titulo="Certificado de antecedentes penales"
-                        icono="document-text-outline"
-                        archivo={antecedentesPenales}
-                        onPress={() => seleccionarArchivo("antecedentes")}
-                    />
-                </View>
-
-                {/* Aviso */}
-                <AvisoInformativo
-                    texto="Asegúrate de que los documentos estén vigentes y sean legibles."
-                />
-
-                <BotonPrincipal
-                    titulo="Continuar"
-                    onPress={continuar}
-                />
-                
-                <Pressable
-                    style={styles.atras}
-                    onPress={() => router.back()}
+            <StatusBar style="dark"/>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 >
-                    <Ionicons
-                        name="arrow-back"
-                        size={20}
-                        color={paletaColores.textoSecundarioClaro}
+                    <EncabezadoPagina
+                        titulo={"Tus "}
+                        tituloDestacado="documentos"
+                        descripcion="Adjunta los documentos requeridos"
+                        variante="claro"
                     />
-                
-                    <Text style={styles.atrasTexto}>
-                        Atrás
-                    </Text>
-                </Pressable>
-            </ScrollView>
-        </KeyboardAvoidingView>
+
+                    <IndicadorPasos
+                        pasoActual={4}
+                        totalPasos={5}
+                        variante="claro"
+                    />
+
+                    {/* Documentos */}
+                    <View style={styles.documentosContainer}>
+                        <View style={styles.filaSeccion}>
+                            <Text style={styles.tituloSeccion}>
+                            Documentos requeridos
+                            </Text>
+
+                            <Text style={styles.contador}>
+                            {documentosCompletados} de 3
+                            </Text>
+                        </View>
+
+                        <DocumentoArchivo
+                            titulo="Licencia de conducir"
+                            icono="id-card-outline"
+                            archivo={licenciaConducir}
+                            onPress={() => seleccionarArchivo("licencia")}
+                            deshabilitado={seleccionando}
+                        />
+
+                        <DocumentoArchivo
+                            titulo="SOAT"
+                            icono="shield-checkmark-outline"
+                            archivo={soat}
+                            onPress={() => seleccionarArchivo("soat")}
+                            deshabilitado={seleccionando}
+                        />
+
+                        <DocumentoArchivo
+                            titulo="Antecedentes penales"
+                            icono="document-text-outline"
+                            archivo={antecedentesPenales}
+                            onPress={() => seleccionarArchivo("antecedentes")}
+                            deshabilitado={seleccionando}
+                        />
+                    </View>
+                    
+                    <View style={styles.consejo}>
+                        <Ionicons
+                            name="information-circle-outline"
+                            size={17}
+                            color={paletaColores.textoSecundarioClaro}
+                        />
+                        <Text style={styles.consejoTexto}>
+                            Archivos legibles y vigentes. PDF, JPG o PNG.
+                        </Text>
+                    </View>
+
+                    <View style={styles.navegacion}>
+                        <BotonPrincipal
+                            titulo="Continuar"
+                            mostrarIcono
+                            icono="arrow-forward"
+                            onPress={continuar}
+                            disabled={seleccionando}
+                        />
+
+                        <Pressable
+                            style={styles.botonVolver}
+                            onPress={() => router.back()}
+                            accessibilityRole="button"
+                            accessibilityLabel="Volver al paso anterior"
+                        >
+                            <Ionicons
+                            name="arrow-back-outline"
+                            size={18}
+                            color={paletaColores.textoSecundarioClaro}
+                            />
+
+                            <Text style={styles.textoVolver}>
+                            Volver
+                            </Text>
+                        </Pressable>
+                    </View>
+                </ScrollView>
+        </SafeAreaView>
+        
     )
 }
 
 const styles = StyleSheet.create ({
-    container: {
-        flex: 1,
-        backgroundColor: paletaColores.fondoClaro,
-    },
-
-    scrollContent: {
-        paddingHorizontal: 24,
-        paddingBottom: 40,
-    },
-
-    documentosContainer: {
-        width: "100%",
-        gap: 12,
-    },
-
-    atras: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 8,
-        marginTop: 16,
-    },
-
-    atrasTexto: {
-        color: paletaColores.textoSecundarioClaro,
-        fontSize: 14,
-        fontWeight: "600",
-    },
+  areaSegura: {
+    flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    backgroundColor: paletaColores.fondoClaro,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 36,
+  },
+  encabezado: {
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  documentosContainer: {
+    width: "100%",
+    gap: 12,
+    marginTop: 16,
+  },
+  filaSeccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  tituloSeccion: {
+    color: paletaColores.textoClaro,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  contador: {
+    color: paletaColores.primaryHover,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  consejo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 3,
+    marginTop: 18,
+  },
+  consejoTexto: {
+    flex: 1,
+    color: paletaColores.textoSecundarioClaro,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  navegacion: {
+    marginTop: "auto",
+    paddingTop: 28,
+    gap: 12,
+  },
+  botonVolver: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 44,
+  },
+  textoVolver: {
+    color: paletaColores.textoSecundarioClaro,
+    fontSize: 14,
+    fontWeight: "600",
+  },
 })
