@@ -137,7 +137,7 @@ export default function LoginScreen() {
 
             <Pressable
               onPress={() => router.push("/recuperar-cuenta")}
-              hitSlop={12}
+              hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
               accessibilityRole="link"
               accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
               style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
@@ -214,8 +214,8 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     color: paletaColores.primary,
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "600",
     textAlign: "right",
   },
   dividerContainer: {
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
   },
   divider: {
     flex: 1,
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    height: 1.5,
+    backgroundColor: paletaColores.borde,
   },
   dividerText: {
     color: paletaColores.textSecondary,
@@ -248,11 +248,10 @@ const styles = StyleSheet.create({
     color: paletaColores.textSecondary,
     fontSize: 15,
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 24,
   },
   legalLink: {
     color: paletaColores.primary,
     fontWeight: "700",
-    textDecorationLine: "underline",
   },
 });
