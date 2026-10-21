@@ -1,5 +1,4 @@
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
-import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
+import { IndicadorPasos } from "@/components/ui";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { CampoTexto } from "@/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
@@ -8,9 +7,12 @@ import { paletaColores } from "@/paletaColores";
 import { conductorService } from "@/services/conductorService";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { StatusBar } from "expo-status-bar";
+import React, { useRef, useState } from "react";
+
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,9 +21,12 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VehiculoConductor() {
   const [enviando, setEnviando] = useState(false);
+  const envioEnCurso = useRef(false);
+
   const {
     placa,
     setPlaca,
@@ -52,27 +57,49 @@ export default function VehiculoConductor() {
     antecedentesPenales,
   } = useRegistroConductor();
 
-  const validarFormulario = () => {
+  const anioActual = new Date().getFullYear();
+
+  const validarFormulario = (): boolean => {
     if (!placa.trim() || !marca.trim() || !modelo.trim() || !anio.trim() || !color.trim() || !capacidad.trim()) {
-      Alert.alert("Campos incompletos", "Completa todos los datos del vehículo para continuar.");
+      Alert.alert(
+        "Datos incompletos",
+        "Completa todos los datos del vehículo."
+      );
       return false;
     }
 
     const anioNumero = Number(anio);
-    const anioActual = new Date().getFullYear();
-    if (anio.length !== 4 || Number.isNaN(anioNumero) || anioNumero < 1980 || anioNumero > anioActual) {
-      Alert.alert("Año inválido", `Ingresa un año válido entre 1980 y ${anioActual}.`);
+
+    if (
+      !/^\d{4}$/.test(anio) ||
+      anioNumero < 1980 ||
+      anioNumero > anioActual
+    ) {
+      Alert.alert(
+        "Año inválido",
+        `Ingresa un año entre 1980 y ${anioActual}.`
+      );
       return false;
     }
 
     const capacidadNumero = Number(capacidad);
-    if (Number.isNaN(capacidadNumero) || capacidadNumero < 1 || capacidadNumero > 4) {
-      Alert.alert("Capacidad inválida", "Ingresa una capacidad válida de pasajeros (1 a 4).");
+
+     if (
+      !/^[1-4]$/.test(capacidad) ||
+      !Number.isInteger(capacidadNumero)
+    ) {
+      Alert.alert(
+        "Capacidad inválida",
+        "La capacidad debe ser de 1 a 4 pasajeros."
+      );
       return false;
     }
 
     if (!confirmacionVeracidad) {
-      Alert.alert("Confirmación requerida", "Debes confirmar que la información proporcionada es verdadera.");
+      Alert.alert(
+        "Confirmación requerida",
+        "Confirma que los datos ingresados son correctos."
+      );
       return false;
     }
 
@@ -80,9 +107,15 @@ export default function VehiculoConductor() {
   };
 
   const enviarSolicitud = async () => {
-    if (enviando || !validarFormulario()) return;
+    if (envioEnCurso.current) return;
 
+    Keyboard.dismiss();
+
+    if (!validarFormulario()) return;
+
+    envioEnCurso.current = true;
     setEnviando(true);
+
     try {
       await conductorService.completarRegistroConductor({
         correo,
@@ -110,8 +143,13 @@ export default function VehiculoConductor() {
 
       Alert.alert(
         "Solicitud enviada",
-        "Tus documentos y vehículo fueron registrados. Tu cuenta está pendiente de aprobación.",
-        [{ text: "Aceptar", onPress: () => router.replace("/registro-conductor/solicitud-enviada") }]
+        "Recibimos tu información. Tu cuenta pasará por revisión.",
+        [{ 
+          text: "Endendido", 
+          onPress: () => 
+            router.replace("/registro-conductor/solicitud-enviada"), 
+        }],
+        { cancelable: false }
       );
     } catch (error: any) {
       if (error?.message === "CONFIRMAR_CORREO") {
@@ -120,166 +158,286 @@ export default function VehiculoConductor() {
         Alert.alert("Error de registro", error?.message || "No se pudo completar el registro.");
       }
     } finally {
+      envioEnCurso.current = false;
       setEnviando(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <SafeAreaView
+      style={styles.areaSegura}
+      edges={["top", "bottom"]}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <EncabezadoPagina
-          titulo={"Vehículo y\n"}
-          tituloDestacado="solicitud"
-          descripcion="Completa los datos de tu mototaxi y envía tu solicitud."
-          variante="claro"
-        />
-
-        <ProgresoRegistro pasoActual={5} />
-
-        <View style={styles.formulario}>
-          <CampoTexto
-            placeholder="Placa"
-            nombreIcono="card-outline"
-            value={placa}
-            onChangeText={(texto) => setPlaca(texto.toUpperCase())}
-            autoCapitalize="characters"
-            maxLength={10}
-            variante="claro"
-          />
-          <CampoTexto
-            placeholder="Marca"
-            nombreIcono="car-outline"
-            value={marca}
-            onChangeText={setMarca}
-            autoCapitalize="words"
-            variante="claro"
-          />
-          <CampoTexto
-            placeholder="Modelo"
-            nombreIcono="settings-outline"
-            value={modelo}
-            onChangeText={setModelo}
-            autoCapitalize="words"
-            variante="claro"
-          />
-          <CampoTexto
-            placeholder="Año"
-            nombreIcono="calendar-outline"
-            value={anio}
-            onChangeText={setAnio}
-            keyboardType="numeric"
-            maxLength={4}
-            variante="claro"
-          />
-          <CampoTexto
-            placeholder="Color"
-            nombreIcono="color-palette-outline"
-            value={color}
-            onChangeText={setColor}
-            autoCapitalize="words"
-            variante="claro"
-          />
-          <CampoTexto
-            placeholder="Capacidad de pasajeros"
-            nombreIcono="people-outline"
-            value={capacidad}
-            onChangeText={setCapacidad}
-            keyboardType="numeric"
-            maxLength={1}
-            variante="claro"
-          />
-        </View>
-
-        <Pressable
-          style={styles.confirmacion}
-          onPress={() => setConfirmacionVeracidad((v) => !v)}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios"
+              ? "interactive"
+              : "on-drag"
+          }
         >
-          <View style={[styles.checkbox, confirmacionVeracidad && styles.checkboxActivo]}>
-            {confirmacionVeracidad && <Ionicons name="checkmark" size={17} color="#FFFFFF" />}
+          <View style={styles.encabezado}>
+            <EncabezadoPagina
+              titulo="Vehículo y  "
+              tituloDestacado="solicitud"
+              descripcion="Completa los datos de tu mototaxi y envía tu solicitud."
+              variante="claro"
+            />
           </View>
-          <Text style={styles.confirmacionTexto}>
-            Confirmo que la información proporcionada es verdadera.
-          </Text>
-        </Pressable>
 
-        <AvisoInformativo
-          icono="shield-checkmark-outline"
-          texto="Tu cuenta será revisada antes de ser activada."
-        />
+          <IndicadorPasos
+            pasoActual={5}
+            totalPasos={5}
+            variante="claro"
+          />
 
-        <BotonPrincipal
-          titulo={enviando ? "Guardando archivos..." : "Enviar solicitud"}
-          onPress={enviarSolicitud}
-          disabled={enviando}
-        />
+          <View style={styles.formulario}>
+            <CampoTexto
+              placeholder="Placa"
+              nombreIcono="card-outline"
+              value={placa}
+              onChangeText={(texto) => setPlaca(texto.toUpperCase())}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={10}
+              variante="claro"
+            />
+            <CampoTexto
+              placeholder="Marca"
+              nombreIcono="car-outline"
+              value={marca}
+              onChangeText={setMarca}
+              autoCapitalize="words"
+              variante="claro"
+            />
+            <CampoTexto
+              placeholder="Modelo"
+              nombreIcono="settings-outline"
+              value={modelo}
+              onChangeText={setModelo}
+              autoCapitalize="words"
+              variante="claro"
+            />
+            <View style={styles.filaDoble}>
+              <View style={styles.campoMitad}>
+                <CampoTexto
+                  placeholder="Año"
+                  nombreIcono="calendar-outline"
+                  value={anio}
+                  onChangeText={(texto) =>
+                    setAnio(texto.replace(/\D/g, ""))
+                  }
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  variante="claro"
+                />
+              </View>
 
-        <Pressable style={styles.atras} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={paletaColores.textoSecundarioClaro} />
-          <Text style={styles.atrasTexto}>Atrás</Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+              <View style={styles.campoMitad}>
+                <CampoTexto
+                  placeholder="Color"
+                  nombreIcono="color-palette-outline"
+                  value={color}
+                  onChangeText={setColor}
+                  autoCapitalize="words"
+                  variante="claro"
+                />
+              </View>
+            </View>
+
+            <CampoTexto
+              placeholder="Capacidad de pasajeros (1 a 4)"
+              nombreIcono="people-outline"
+              value={capacidad}
+              onChangeText={(texto) =>
+                setCapacidad(texto.replace(/[^1-4]/g, ""))
+              }
+              keyboardType="number-pad"
+              maxLength={1}
+              variante="claro"
+            />
+          </View>
+
+          <Pressable
+            style={styles.confirmacion}
+            onPress={() =>
+              setConfirmacionVeracidad((valor) => !valor)
+            }
+            accessibilityRole="checkbox"
+            accessibilityState={{
+              checked: confirmacionVeracidad,
+            }}
+            accessibilityLabel="Confirmo que los datos del vehículo son correctos"
+          >
+            <View
+              style={[
+                styles.checkbox,
+                confirmacionVeracidad &&
+                  styles.checkboxActivo,
+              ]}
+            >
+              {confirmacionVeracidad && (
+                <Ionicons
+                  name="checkmark"
+                  size={16}
+                  color="#FFFFFF"
+                />
+              )}
+            </View>
+
+            <Text style={styles.confirmacionTexto}>
+              Confirmo que los datos son correctos.
+            </Text>
+          </Pressable>
+
+           <View style={styles.aviso}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={18}
+              color={paletaColores.primaryHover}
+            />
+
+            <Text style={styles.avisoTexto}>
+              Tu solicitud pasará por revisión.
+            </Text>
+          </View>
+
+          <View style={styles.navegacion}>
+            <BotonPrincipal
+              titulo={
+                enviando
+                  ? "Enviando solicitud..."
+                  : "Enviar solicitud"
+              }
+              mostrarIcono={!enviando}
+              icono="arrow-forward"
+              cargando={enviando}
+              disabled={enviando}
+              onPress={enviarSolicitud}
+            />
+
+            <Pressable
+              style={styles.botonVolver}
+              onPress={() => router.back()}
+              disabled={enviando}
+              accessibilityRole="button"
+              accessibilityLabel="Volver al paso anterior"
+            >
+              <Ionicons
+                name="arrow-back-outline"
+                size={18}
+                color={paletaColores.textoSecundarioClaro}
+              />
+
+              <Text style={styles.textoVolver}>
+                Volver
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+    
   );
 }
 
 const styles = StyleSheet.create({
+  areaSegura: {
+    flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
+  },
   container: {
     flex: 1,
     backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 36,
+    backgroundColor: paletaColores.fondoClaro,
+  },
+  encabezado: {
+    marginTop: 6,
+    marginBottom: 8,
   },
   formulario: {
     width: "100%",
     gap: 12,
+    marginTop: 16,
+  },
+  filaDoble: {
+    width: "100%",
+    flexDirection: "row",
+    gap: 10,
+  },
+  campoMitad: {
+    flex: 1,
+    minWidth: 0,
   },
   confirmacion: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginTop: 18,
-    marginBottom: 14,
+    gap: 12,
+    marginTop: 24,
+    paddingVertical: 12,
     paddingHorizontal: 4,
+    minHeight: 48,
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
     borderWidth: 1.5,
     borderColor: paletaColores.bordeClaro,
+    backgroundColor: paletaColores.inputClaro,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.inputClaro,
   },
   checkboxActivo: {
-    backgroundColor: paletaColores.verde,
-    borderColor: paletaColores.verde,
+    backgroundColor: paletaColores.primary,
+    borderColor: paletaColores.primary,
   },
   confirmacionTexto: {
     flex: 1,
     color: paletaColores.textoClaro,
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
+  },
+  aviso: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginTop: 12,
+    paddingHorizontal: 4,
+  },
+  avisoTexto: {
+    flex: 1,
+    color: paletaColores.textoSecundarioClaro,
+    fontSize: 12,
     lineHeight: 18,
   },
-  atras: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 18,
+  navegacion: {
+    marginTop: "auto",
+    paddingTop: 28,
+    gap: 12,
   },
-  atrasTexto: {
+  botonVolver: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 44,
+  },
+  textoVolver: {
     color: paletaColores.textoSecundarioClaro,
     fontSize: 14,
     fontWeight: "600",

@@ -14,6 +14,7 @@ interface DocumentoFotoProps {
     foto: string | null;
     onPress: () => void;
     onVerFoto?: () => void;
+    deshabilitado: boolean;
 }
 
 export function DocumentoFoto({
@@ -22,9 +23,17 @@ export function DocumentoFoto({
     foto,
     onPress,
     onVerFoto,
+    deshabilitado = false,
 } : DocumentoFotoProps) {
+    const tieneFoto = Boolean(foto);
+
     return (
-        <View style={styles.card}>
+        <View 
+            style={[
+                styles.card,
+                tieneFoto && styles.cardCompletada,
+            ]}
+        >
             <Pressable
                 style={styles.previewContainer}
                 onPress={onVerFoto}
@@ -40,102 +49,136 @@ export function DocumentoFoto({
                     />
                 ) : (
                     <Ionicons
-                    name="image-outline"
-                    size={28}
-                    color={paletaColores.textoSecundarioClaro}
+                        name={
+                            titulo.toLowerCase().includes("selfie")
+                                ? "person-outline"
+                                : "id-card-outline"
+                            }
+                        size={26}
+                        color={paletaColores.primaryHover}
                     />
                 )}
             </Pressable>
 
             <View style={styles.informacion}>
-                <Text style={styles.titulo}>
-                    {titulo}
+                <View style={styles.filaTitulo}>
+                    <Text style={styles.titulo}>
+                        {titulo}
+                    </Text>
+
+                    {tieneFoto && (
+                        <Ionicons
+                        name="checkmark-circle"
+                        size={17}
+                        color={paletaColores.primary}
+                        />
+                    )}
+                </View>
+                
+                <Text style={styles.descripcion} numberOfLines={2}>
+                    {tieneFoto ? "Foto registrada" : descripcion }
                 </Text>
 
-                <Text style={styles.descripcion}>
-                    {foto 
-                        ? "Fotografía registrada"
-                        : descripcion}
-                </Text>
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.boton,
+                        pressed && styles.presionado,
+                    ]}
+                    onPress={onPress}
+                    disabled={deshabilitado}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                        tieneFoto
+                        ? `Repetir fotografía de ${titulo}`
+                        : `Tomar fotografía de ${titulo}`
+                    }
+                    >
+                    <Ionicons
+                        name={
+                        tieneFoto
+                            ? "refresh-outline"
+                            : "camera-outline"
+                        }
+                        size={16}
+                        color={paletaColores.primaryHover}
+                    />
+
+                    <Text style={styles.botonTexto}>
+                        {tieneFoto ? "Repetir foto" : "Tomar foto"}
+                    </Text>
+                    </Pressable>
             </View>
-
-            <Pressable
-                style={styles.boton}
-                onPress={onPress}
-            >
-                <Ionicons
-                    name="camera-outline"
-                    size={17}
-                    color={paletaColores.verde}
-                />
-
-                <Text style={styles.botonTexto}>
-                    {foto ? "Repetir" : "Tomar foto"}
-                </Text>
-            </Pressable>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        width: "100%",
-        minHeight: 82,
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 11,
-        gap: 10,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: paletaColores.bordeClaro,
-        backgroundColor: paletaColores.superficieClara,
-    },
-
-    previewContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 10,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#EEF3F0",
-        overflow: "hidden",
-    },
-
-    preview: {
-        width: "100%",
-        height: "100%",
-    },
-
-    informacion: {
-        flex: 1,
-    },
-
-    titulo: {
-        color: paletaColores.textoClaro,
-        fontSize: 12,
-        fontWeight: "700",
-    },
-
-    descripcion: {
-        marginTop: 3,
-        color: paletaColores.textoSecundarioClaro,
-        fontSize: 9,
-        lineHeight: 13,
-    },
-
-    boton: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 9,
-        paddingVertical: 7,
-        borderRadius: 14,
-        backgroundColor: "#E8F4ED",
-    },
-
-    botonTexto: {
-        color: paletaColores.verde,
-        fontSize: 9,
-        fontWeight: "600",
-    },
+   card: {
+    width: "100%",
+    minHeight: 90,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 13,
+    gap: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: paletaColores.bordeClaro,
+    backgroundColor: paletaColores.superficieClara,
+  },
+  cardCompletada: {
+    borderColor: "#B4DCC6",
+    backgroundColor: "#FAFDFB",
+  },
+  previewContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EAF5EF",
+    overflow: "hidden",
+  },
+  preview: {
+    width: "100%",
+    height: "100%",
+  },
+  informacion: {
+    flex: 1,
+    gap: 5,
+    alignItems: "flex-start",
+  },
+  filaTitulo: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  titulo: {
+    flexShrink: 1,
+    color: paletaColores.textoClaro,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  descripcion: {
+    color: paletaColores.textoSecundarioClaro,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  boton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: 38,
+    paddingVertical: 8,
+    paddingHorizontal: 2,
+    marginTop: 1,
+  },
+  botonTexto: {
+    color: paletaColores.primaryHover,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  presionado: {
+    opacity: 0.65,
+  },
 });

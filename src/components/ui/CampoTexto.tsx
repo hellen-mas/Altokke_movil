@@ -16,14 +16,17 @@ export interface PropsCampoTexto extends TextInputProps {
   variante?: "oscuro" | "claro" | string;
   error?: boolean;
   textoError?: string;
+  etiqueta?: string;
 }
 
 export const CampoTexto = ({
   nombreIcono,
-  esPassword,
+  esPassword = false,
   variante = "oscuro",
   error = false,
   textoError,
+  etiqueta,
+  placeholder,
   style,
   onFocus,
   onBlur,
@@ -33,61 +36,125 @@ export const CampoTexto = ({
   const [enFoco, setEnFoco] = useState(false);
 
   const esClaro = variante === "claro";
-  const colorSecundario = esClaro ? paletaColores.textoSecundarioClaro : paletaColores.textSecondary;
-  const colorIcono = error ? paletaColores.error : enFoco ? paletaColores.primary : colorSecundario;
+  const colorSecundario = esClaro
+    ? "#878E89"
+    : paletaColores.textSecondary;
+  const tituloCampo = etiqueta || placeholder || "Campo";
 
   return (
-    <View style={estilos.envoltorio}>
+    <View style={estilos.wrapper}>
       <View
         style={[
-          estilos.contenedor,
-          esClaro && estilos.contenedorClaro,
-          enFoco && estilos.contenedorFoco,
-          enFoco && esClaro && estilos.contenedorFocoClaro,
-          error && estilos.contenedorError,
-          error && esClaro && estilos.contenedorErrorClaro,
+          estilos.campo,
+          esClaro && estilos.campoClaro,
+          enFoco && (
+            esClaro
+              ? estilos.campoClaroFoco
+              : estilos.campoOscuroFoco
+          ),
+          error && estilos.campoError,
         ]}
       >
-        {nombreIcono && (
-          <Ionicons
-            name={nombreIcono}
-            size={24}
-            color={colorIcono}
-            style={estilos.iconoIzquierdo}
-          />
-        )}
+        {esClaro ? (
+          <View style={estilos.contenidoClaro}>
+            <Text
+              style={[
+                estilos.etiqueta,
+                enFoco && estilos.etiquetaFoco,
+                error && estilos.etiquetaError,
+              ]}
+              numberOfLines={1}
+            >
+              {tituloCampo}
+            </Text>
 
-        <TextInput
-          style={[estilos.entrada, esClaro && estilos.entradaClara, style]}
-          placeholderTextColor={colorSecundario}
-          secureTextEntry={esPassword ? !visible : rest.secureTextEntry}
-          accessibilityLabel={rest.placeholder || "Campo de texto"}
-          onFocus={(e) => { setEnFoco(true); onFocus?.(e); }}
-          onBlur={(e) => { setEnFoco(false); onBlur?.(e); }}
-          {...rest}
-        />
+            <TextInput
+              {...rest}
+              style={[
+                estilos.input,
+                estilos.inputClaro,
+                style,
+              ]}
+              placeholder=""
+              placeholderTextColor={colorSecundario}
+              secureTextEntry={
+                esPassword
+                  ? !visible
+                  : rest.secureTextEntry
+              }
+              accessibilityLabel={tituloCampo}
+              onFocus={(evento) => {
+                setEnFoco(true);
+                onFocus?.(evento);
+              }}
+              onBlur={(evento) => {
+                setEnFoco(false);
+                onBlur?.(evento);
+              }}
+              selectionColor={paletaColores.primary}
+              underlineColorAndroid="transparent"
+            />
+          </View>
+        ) : (
+          <>
+            {nombreIcono && (
+              <Ionicons
+                name={nombreIcono}
+                size={22}
+                color={
+                  error
+                    ? paletaColores.error
+                    : enFoco
+                    ? paletaColores.primary
+                    : colorSecundario
+                }
+              />
+            )}
+
+            <TextInput
+              {...rest}
+              style={[estilos.input, style]}
+              placeholder={placeholder}
+              placeholderTextColor={colorSecundario}
+              secureTextEntry={
+                esPassword
+                  ? !visible
+                  : rest.secureTextEntry
+              }
+              accessibilityLabel={tituloCampo}
+              onFocus={(evento) => {
+                setEnFoco(true);
+                onFocus?.(evento);
+              }}
+              onBlur={(evento) => {
+                setEnFoco(false);
+                onBlur?.(evento);
+              }}
+            />
+          </>
+        )}
 
         {esPassword && (
           <Pressable
-            onPress={() => setVisible((prev) => !prev)}
             style={estilos.botonOjo}
-            hitSlop={8}
+            onPress={() => setVisible((v) => !v)}
+            hitSlop={6}
             accessibilityRole="button"
-            accessibilityLabel={visible ? "Ocultar contraseña" : "Ver contraseña"}
+            accessibilityLabel={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
           >
             <Ionicons
               name={visible ? "eye-outline" : "eye-off-outline"}
-              size={24}
+              size={20}
               color={colorSecundario}
             />
           </Pressable>
         )}
       </View>
 
-      {error && !!textoError && (
-        <View style={estilos.filaError}>
-          <Ionicons name="alert-circle-outline" size={18} color={paletaColores.error} />
-          <Text style={estilos.textoError}>{textoError}</Text>
+      {error && Boolean(textoError) && (
+        <View style={estilos.errorFila}>
+          <Ionicons name="alert-circle-outline" size={15} color={paletaColores.error} />
+          <Text style={estilos.errorTexto}>{textoError}</Text>
         </View>
       )}
     </View>
@@ -95,74 +162,109 @@ export const CampoTexto = ({
 };
 
 const estilos = StyleSheet.create({
-  envoltorio: {
+  wrapper: {
     width: "100%",
   },
-  contenedor: {
+
+  campo: {
     width: "100%",
     minHeight: 56,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 16,
     gap: 10,
-    borderWidth: 1,
-    borderColor: paletaColores.surfaceBorder,
     borderRadius: 12,
+    borderWidth: 1,
     backgroundColor: paletaColores.surface,
   },
-  contenedorClaro: {
-    backgroundColor: paletaColores.inputClaro,
-    borderColor: paletaColores.bordeClaro,
+
+  campoClaro: {
+    minHeight: 58,
+    borderWidth: 0,
+    borderColor: "transparent",
+    borderRadius: 30,
+    backgroundColor: "#E9EEEA",
+    paddingHorizontal: 19,
+    paddingVertical: 6,
+    gap: 0,
   },
-  contenedorFoco: {
+
+  campoClaroFoco: {
+    backgroundColor: "#E7ECE8",
+    borderWidth: 0,
+    borderColor: "transparent",
+  },
+
+  campoOscuroFoco: {
     borderColor: paletaColores.primary,
-    backgroundColor: paletaColores.surfaceElevated,
   },
-  contenedorFocoClaro: {
-    backgroundColor: paletaColores.inputClaro,
-    borderColor: paletaColores.primary,
-    borderWidth: 1.5,
+
+  campoError: {
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "#F6EDED",
   },
-  contenedorError: {
-    borderColor: paletaColores.error,
-    backgroundColor: paletaColores.errorMuted,
-  },
-  contenedorErrorClaro: {
-    backgroundColor: "#FFF8F8",
-    borderColor: paletaColores.error,
-  },
-  iconoIzquierdo: {
-    marginRight: 0,
-  },
-  entrada: {
+
+  contenidoClaro: {
     flex: 1,
+    justifyContent: "center",
+    minWidth: 0,
+  },
+
+  etiqueta: {
+    fontSize: 12,
+    lineHeight: 15,
+    fontWeight: "500",
+    color: "#596C60",
+    marginBottom: 0,
+  },
+
+  etiquetaFoco: {
+    color: "#16804D",
+  },
+
+  etiquetaError: {
+    color: paletaColores.error,
+  },
+
+  input: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 16,
-    lineHeight: 22,
     color: paletaColores.textPrimary,
     paddingVertical: 0,
   },
-  entradaClara: {
-    color: paletaColores.textoClaro,
-  },
-  botonOjo: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  filaError: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 6,
-    marginLeft: 4,
-  },
-  textoError: {
-    color: paletaColores.error,
+
+  inputClaro: {
+    flex: 0,
+    minHeight: 20,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "500",
+    color: "#17251C",
+    paddingVertical: 0,
+  },
+
+  botonOjo: {
+    width: 38,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  errorFila: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 7,
+    paddingHorizontal: 10,
+  },
+
+  errorTexto: {
+    flex: 1,
+    color: paletaColores.error,
+    fontSize: 12,
+    lineHeight: 17,
   },
 });
 

@@ -91,7 +91,7 @@ const estilos = StyleSheet.create({
     gap: 6,
   },
   textoPregunta: {
-    fontSize: 17,
+    fontSize: 15,
     lineHeight: 24,
     color: paletaColores.textSecondary,
     fontWeight: "500",
