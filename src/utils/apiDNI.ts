@@ -1,3 +1,7 @@
+// Convierte el texto a título (primera letra de cada palabra en mayúscula)
+const aTitulo = (texto: string) =>
+  texto.toLowerCase().replace(/(^|\s)\S/g, (letra) => letra.toUpperCase());
+
 // Consulto a api.apiperu.dev por POST para traer los datos de la persona con su DNI
 export async function buscarDNI(dni: string) {
   const token = process.env.EXPO_PUBLIC_DNI_API_TOKEN?.trim();
@@ -31,8 +35,8 @@ export async function buscarDNI(dni: string) {
     const apellidos = [apellido_paterno, apellido_materno].filter(Boolean).join(" ");
 
     return {
-      nombres: nombres.trim(),
-      apellidos: apellidos.trim(),
+      nombres: aTitulo(nombres.trim()),
+      apellidos: aTitulo(apellidos.trim()),
     };
   } catch (err: any) {
     if (err?.name === "AbortError") {

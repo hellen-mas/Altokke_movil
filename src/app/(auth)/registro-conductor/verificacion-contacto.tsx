@@ -179,8 +179,9 @@ export default function VerificacionContactoConductor() {
                   keyboardType="phone-pad"
                   textContentType="telephoneNumber"
                   autoComplete="tel"
-                  maxLength={9}
+                  maxLength={15}
                   accessibilityLabel="Número de celular"
+
                 />
               </View>
 
