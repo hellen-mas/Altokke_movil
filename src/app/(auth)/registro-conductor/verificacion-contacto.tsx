@@ -1,26 +1,31 @@
 import { CampoTexto } from "@/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
+import { IndicadorPasos } from "@/components/ui";
+import { SelectorFotoPerfil } from "@/components/ui";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { paletaColores } from "@/paletaColores";
-import { Ionicons } from "@expo/vector-icons";
-import { seleccionarFotoGaleria } from "@/utils/avatar";
-import { esTelefonoValido, sanitizarTelefono } from "@/utils/validaciones";
-import { router } from "expo-router";
-import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-} from "react-native";
 import { useRegistroConductor } from "@/context/RegistroConductorContext";
-import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
+import { 
+  esTelefonoValido, 
+  sanitizarTelefono 
+} from "@/utils/validaciones";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState } from "react";
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VerificacionContactoConductor() {
   const {
@@ -34,306 +39,341 @@ export default function VerificacionContactoConductor() {
     setFoto,
   } = useRegistroConductor();
 
+  const [telefonoEnFoco, setTelefonoEnFoco] =
+    useState(false);
+
+  const [intentoContinuar, setIntentoContinuar] =
+    useState(false);
+
+  const telefonoCorrecto = esTelefonoValido(
+    telefono.trim()
+  );
+
+  const mostrarErrorTelefono = intentoContinuar && !telefonoCorrecto;
+
   const cambiarTelefono = (texto: string) => {
     setTelefono(sanitizarTelefono(texto));
   };
 
-  const seleccionarFoto = async () => {
-    try {
-      const res = await seleccionarFotoGaleria();
-      if (res?.uri) setFoto(res.uri);
-    } catch (e: any) {
-      Alert.alert("Permiso de fotos", e.message || "No se pudo seleccionar la foto.");
-    }
-  };
-
   const continuar = () => {
-    if (!telefono.trim() || !direccion.trim() || !foto) {
-      return Alert.alert("Campos incompletos", "Completa tu teléfono, dirección y fotografía de perfil.");
+    Keyboard.dismiss();
+    setIntentoContinuar(true);
+
+    if (!telefonoCorrecto) {
+      return;
     }
-    if (!esTelefonoValido(telefono.trim())) {
-      return Alert.alert("Teléfono inválido", "Ingresa un número celular peruano de 9 dígitos.");
+
+    if (!direccion.trim()) {
+      Alert.alert(
+        "Dirección requerida",
+        "Ingresa tu dirección actual."
+      );
+      return;
     }
-    if (correoRespaldo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoRespaldo.trim())) {
-      return Alert.alert("Correo inválido", "Ingresa un correo de respaldo válido.");
+
+    if (!foto) {
+      Alert.alert(
+        "Foto requerida",
+        "Selecciona una fotografía de perfil."
+      );
+      return;
     }
+
+    if (
+      correoRespaldo.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        correoRespaldo.trim()
+      )
+    ) {
+      Alert.alert(
+        "Correo inválido",
+        "Revisa tu correo alternativo."
+      );
+      return;
+    }
+
     router.push("/registro-conductor/identidad-oficial");
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <SafeAreaView
+      style={styles.areaSegura}
+      edges={["top", "bottom"]}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <StatusBar style="dark"/>
+
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <EncabezadoPagina
-          titulo={"Verificación y\n"}
-          tituloDestacado="contacto"
-          descripcion="Confirma tu información de contacto para continuar con el registro"
-          variante="claro"
-        />
-
-        <ProgresoRegistro pasoActual={2}/>
-
-        {/* Formulario */}
-        <View style={styles.formulario}>
-          <View style={styles.telefonoContainer}>
-            <Ionicons
-              name="call-outline"
-              size={23}
-              color={paletaColores.textoSecundarioClaro}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios"
+              ? "interactive"
+              : "on-drag"
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.encabezado}>
+            <EncabezadoPagina
+              titulo={"Verificación y "}
+              tituloDestacado="contacto"
+              descripcion="¿Cómo podemos contactarte?"
+              variante="claro"
             />
-
-            <View style={styles.telefonoContenido}>
-              <Text style={styles.inputLabel}>Número de teléfono</Text>
-
-              <View style={styles.numeroFila}>
-                <Text style={styles.prefijo}>+51</Text>
-
-                <TextInput
-                  style={styles.telefonoTextInput}
-                  placeholder="987654321"
-                  placeholderTextColor={paletaColores.textoSecundarioClaro}
-                  value={telefono}
-                  onChangeText={cambiarTelefono}
-                  keyboardType="phone-pad"
-                  maxLength={15}
-                />
-              </View>
-            </View>
           </View>
 
-          <CampoTexto
-            placeholder="Correo de respaldo (opcional)"
-            nombreIcono="mail-outline"
-            value={correoRespaldo}
-            onChangeText={setCorreoRespaldo}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
+          <IndicadorPasos
+            pasoActual={2}
+            totalPasos={5}
             variante="claro"
+            etiquetas={[
+              "Datos personales",
+              "Contacto",
+              "Identidad",
+              "Documentos",
+              "Vehículo",
+            ]}
           />
-          <CampoTexto
-            placeholder="Dirección actual"
-            nombreIcono="location-outline"
-            value={direccion}
-            onChangeText={setDireccion}
-            variante="claro"
-          />
-        </View>
 
-        {/* Foto de perfil */}
-        <View style={styles.fotoCard}>
-          <Pressable style={styles.fotoContainer} onPress={seleccionarFoto}>
-            {foto ? (
-              <Image source={{ uri: foto }} style={styles.foto} />
-            ) : (
-              <Ionicons
-                name="camera-outline"
-                size={32}
-                color={paletaColores.textoSecundarioClaro}
-              />
-            )}
+          {/* Formulario */}
+          <View style={styles.formulario}>
+            <View>
+              <View 
+                style={[
+                  styles.telefonoContainer,
+                  telefonoEnFoco &&
+                    styles.telefonoEnFoco,
+                  mostrarErrorTelefono && 
+                    styles.telefonoError
+                ]}
+              >
+                <Ionicons
+                  name="call-outline"
+                  size={22}
+                  color={
+                    telefonoEnFoco
+                      ? paletaColores.primary
+                      : paletaColores.textoSecundarioClaro
+                  }
+                />
 
-            <View style={styles.botonMas}>
-              <Text style={styles.botonMasTexto}>+</Text>
+                <Text style={styles.prefijo}>
+                  +51
+                </Text>
+
+                <View style={styles.separador} />
+
+                <TextInput
+                  style={styles.telefonoInput}
+                  placeholder="Número de celular"
+                  placeholderTextColor={
+                    paletaColores.textoSecundarioClaro
+                  }
+                  value={telefono}
+                  onChangeText={cambiarTelefono}
+                  onFocus={() => setTelefonoEnFoco(true)}
+                  onBlur={() => setTelefonoEnFoco(false)}
+                  keyboardType="phone-pad"
+                  textContentType="telephoneNumber"
+                  autoComplete="tel"
+                  maxLength={15}
+                  accessibilityLabel="Número de celular"
+
+                />
+              </View>
+
+              {mostrarErrorTelefono && (
+                <View style={styles.mensajeError}>
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={16}
+                    color={paletaColores.error}
+                  />
+                  <Text style={styles.textoError}>
+                    Ingresa un celular peruano válido
+                    de 9 dígitos.
+                  </Text>
+                </View>
+              )}
             </View>
-          </Pressable>
+            
 
-          <View style={styles.fotoInformacion}>
-            <Text style={styles.fotoTitulo}>Foto de perfil</Text>
-            <Text style={styles.fotoDescripcion}>
-              Sube una foto clara de tu rostro para identificación.
-            </Text>
+            <CampoTexto
+              placeholder="Correo de respaldo (opcional)"
+              nombreIcono="mail-outline"
+              value={correoRespaldo}
+              onChangeText={setCorreoRespaldo}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              variante="claro"
+            />
+            <CampoTexto
+              placeholder="Dirección actual"
+              nombreIcono="location-outline"
+              value={direccion}
+              onChangeText={setDireccion}
+              autoCapitalize="sentences"
+              variante="claro"
+            />
+          </View>
 
-            <Pressable style={styles.botonSubirFoto} onPress={seleccionarFoto}>
-              <Text style={styles.textoSubirFoto}>
-                {foto ? "Cambiar foto" : "Subir foto de perfil"}
+          {/* Foto de perfil */}
+          <View style={styles.seccionFoto}>
+            <SelectorFotoPerfil
+              fotoUri={foto}
+              descripcion="Para que puedan reconocerte."
+              alCambiarFoto={(uri) => setFoto(uri)}
+              variante="claro"
+            />
+          </View>
+            
+          {/* Navegación */}
+          <View style={styles.navegacion}>
+            <BotonPrincipal
+              titulo="Continuar"
+              mostrarIcono
+              icono="arrow-forward"
+              onPress={continuar}
+            />
+
+            <Pressable
+              style={styles.botonVolver}
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Volver al paso anterior"
+            >
+              <Ionicons
+                name="arrow-back-outline"
+                size={18}
+                color={
+                  paletaColores.textoSecundarioClaro
+                }
+              />
+
+              <Text style={styles.textoVolver}>
+                Volver
               </Text>
             </Pressable>
           </View>
-        </View>
-
-        {/* Información */}
-        <AvisoInformativo
-          icono="shield-checkmark-outline"
-          texto="Tu número de teléfono será validado posteriormente. Asegúrate de ingresar información correcta."
-        />
-
-        <BotonPrincipal titulo="Continuar" onPress={continuar} />
-        <Pressable
-          style={styles.atras}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={20}
-            color={paletaColores.textoSecundarioClaro}
-          />
-          <Text style={styles.atrasTexto}>Atrás</Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView> 
   );
 }
 
 const styles = StyleSheet.create({
+  areaSegura: {
+    flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
+  },
+
   container: {
     flex: 1,
     backgroundColor: paletaColores.fondoClaro,
   },
 
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 36,
+    backgroundColor: paletaColores.fondoClaro,
+  },
+
+  encabezado: {
+    marginTop: 6,
+    marginBottom: 8,
   },
 
   formulario: {
     width: "100%",
-    gap: 12,
-  },
-
-  telefonoContainer: {
-    width: "100%",
-    height: 72,
-
-    flexDirection: "row",
-    alignItems: "center",
-
-    paddingHorizontal: 16,
-    gap: 12,
-
-    borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    borderRadius: 14,
-
-    backgroundColor: paletaColores.inputClaro,
-  },
-
-  telefonoContenido: {
-    flex: 1,
-    justifyContent: "center",
-  },
-
-  inputLabel: {
-    fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
-    marginBottom: 2,
-  },
-
-  numeroFila: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  prefijo: {
-    fontSize: 16,
-    color: paletaColores.textoClaro,
-    marginRight: 6,
-  },
-
-  telefonoTextInput: {
-    flex: 1,
-    padding: 0,
-    margin: 0,
-    fontSize: 16,
-    color: paletaColores.textoClaro,
-  },
-
-  fotoCard: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    borderRadius: 16,
-    backgroundColor: paletaColores.inputClaro,
-    gap: 16,
-  },
-
-  fotoContainer: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#EEF2F4",
-  },
-
-  foto: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 44,
-  },
-
-  botonMas: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: paletaColores.verde,
-  },
-
-  botonMasTexto: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-    lineHeight: 20,
-  },
-
-  fotoInformacion: {
-    flex: 1,
-  },
-
-  fotoTitulo: {
-    color: paletaColores.textoClaro,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  fotoDescripcion: {
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 3,
-    marginBottom: 10,
-  },
-
-  botonSubirFoto: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 15,
-    paddingVertical: 9,
-    borderRadius: 18,
-    backgroundColor: "#DDF7EA",
-  },
-
-  textoSubirFoto: {
-    color: paletaColores.textoClaro,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-
-  atras: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
+    gap: 14,
     marginTop: 16,
   },
 
-  atrasTexto: {
-    color: paletaColores.textoSecundarioClaro,
+  telefonoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    minHeight: 56,
+    paddingHorizontal: 16,
+    gap: 10,
+    backgroundColor: paletaColores.inputClaro,
+    borderColor: paletaColores.bordeClaro,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+
+  telefonoEnFoco: {
+    borderColor: paletaColores.primary,
+    borderWidth: 1.5,
+    backgroundColor: paletaColores.inputClaro,
+  },
+
+  telefonoError: {
+    borderColor: paletaColores.error,
+    backgroundColor: "#FFF8F8",
+  },
+
+  prefijo: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: paletaColores.textoClaro,
+  },
+
+  separador: {
+    height: 22,
+    width: 1,
+    backgroundColor: paletaColores.bordeClaro,
+  },
+
+  telefonoInput: {
+    flex: 1,
+    fontSize: 16,
+    color: paletaColores.textoClaro,
+    paddingVertical: 12,
+  },
+
+  mensajeError: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 7,
+    paddingHorizontal: 4,
+  },
+
+  textoError: {
+    flex: 1,
+    color: paletaColores.error,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  seccionFoto: {
+    marginTop: 20,
+  },
+
+  navegacion: {
+    marginTop: "auto",
+    paddingTop: 28,
+    gap: 12,
+  },
+
+  botonVolver: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 44,
+  },
+
+  textoVolver: {
     fontSize: 14,
     fontWeight: "600",
+    color: paletaColores.textoSecundarioClaro,
   },
 });

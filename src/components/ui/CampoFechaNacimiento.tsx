@@ -32,10 +32,12 @@ export function CampoFechaNacimiento({
   const esMayor = Boolean(fechaObj && edad >= 18);
 
   const textoFecha = fechaObj
-    ? `${fechaObj.getDate().toString().padStart(2, "0")}/${(fechaObj.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}/${fechaObj.getFullYear()} (${edad} años)`
-    : null;
+  ? fechaObj.toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+  : null;
 
   const hoy = new Date();
   const fechaMaximaNacimiento = new Date(hoy.getFullYear() - 18, hoy.getMonth(), hoy.getDate());
@@ -68,24 +70,10 @@ export function CampoFechaNacimiento({
           esClaro && styles.containerClaro,
           pressed && { opacity: 0.8 },
           error ? styles.containerError : null,
-          esMayor ? (esClaro ? styles.containerValidoClaro : styles.containerValido) : null,
         ]}
         onPress={() => setMostrar(true)}
       >
         <View style={styles.fila}>
-          <Ionicons
-            name="calendar-outline"
-            size={22}
-            color={
-              esMayor
-                ? paletaColores.boton
-                : error
-                ? "#FF5E5E"
-                : esClaro
-                ? paletaColores.textoSecundarioClaro
-                : paletaColores.textoSecundario
-            }
-          />
           <View style={styles.textos}>
             <Text style={[styles.label, esClaro && styles.labelClaro]}>{label}</Text>
             <Text
@@ -95,12 +83,12 @@ export function CampoFechaNacimiento({
                 !textoFecha && (esClaro ? styles.placeholderClaro : styles.placeholder),
               ]}
             >
-              {textoFecha || "Selecciona tu fecha de nacimiento"}
+              {textoFecha || "Seleccionar fecha"}
             </Text>
           </View>
         </View>
         <Ionicons
-          name={esMayor ? "checkmark-circle" : "chevron-forward"}
+          name= "chevron-forward"
           size={20}
           color={esMayor ? paletaColores.boton : esClaro ? paletaColores.textoSecundarioClaro : paletaColores.textoSecundario}
         />
@@ -126,19 +114,21 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   container: {
+    width: "100%",
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: paletaColores.input,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: paletaColores.borde,
+    borderRadius: 30,
+    paddingHorizontal: 19,
+    paddingVertical: 6,
+    borderWidth: 0,
+    borderColor: "transparent",
   },
   containerClaro: {
-    backgroundColor: paletaColores.inputClaro,
-    borderColor: paletaColores.bordeClaro,
+    backgroundColor: "#ECEFEB",
+    borderColor: "transparent",
   },
   containerValido: {
     borderColor: paletaColores.boton,
@@ -149,7 +139,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(46, 206, 121, 0.08)",
   },
   containerError: {
-    borderColor: "#FF5E5E",
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "#F6EDED",
   },
   fila: {
     flexDirection: "row",
@@ -159,22 +151,27 @@ const styles = StyleSheet.create({
   },
   textos: {
     flex: 1,
+    justifyContent: "center",
+    gap: 0,
   },
   label: {
     fontSize: 12,
+    lineHeight: 15,
+    fontWeight: "500",
     color: paletaColores.textoSecundario,
-    marginBottom: 2,
+    marginBottom: 0,
   },
   labelClaro: {
-    color: paletaColores.textoSecundarioClaro,
+    color: "#596C60",
   },
   valor: {
     fontSize: 15,
+    lineHeight: 20,
     color: "#FFFFFF",
-    fontWeight: "600",
+    fontWeight: "500",
   },
   valorClaro: {
-    color: paletaColores.textoClaro,
+    color: "#17251C",
   },
   placeholder: {
     color: paletaColores.textoSecundario,

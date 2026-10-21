@@ -1,5 +1,4 @@
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
-import { ProgresoRegistro } from "@/components/conductor/ProgresoRegistro";
+import { IndicadorPasos } from "@/components/ui";
 import BotonPrincipal from "@/components/ui/BotonPrincipal";
 import { CampoFechaNacimiento } from "@/components/ui/CampoFechaNacimiento";
 import { CampoTexto } from "@/components/ui/CampoTexto";
@@ -12,6 +11,7 @@ import { usuarioService } from "@/services/usuarioService";
 import { calcularEdad, sanitizarDNI } from "@/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,6 +24,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DatosPersonalesConductor() {
   const {
@@ -96,16 +97,16 @@ export default function DatosPersonalesConductor() {
   const continuar = () => {
     Keyboard.dismiss();
     if (consultandoDni) {
-      return Alert.alert("Consulta en proceso", "Espera mientras verificamos los datos de tu DNI.");
+      return Alert.alert("Consulta en proceso", "Espera mientras verificamos tu DNI.");
     }
     if (dniVerificado !== dni || dni.length !== 8) {
-      return Alert.alert("DNI requerido", "Ingresa un DNI válido de 8 dígitos y espera la verificación.");
+      return Alert.alert("DNI requerido", "Ingresa un DNI válido y espera la verificación.");
     }
     if (!nombre.trim() || !apellidos.trim() || !fechaNacimiento || !correo.trim() || !contrasena || !confirmarContrasena.trim()) {
       return Alert.alert("Campos incompletos", "Completa todos los campos para continuar.");
     }
     if (calcularEdad(fechaNacimiento) < 18) {
-      return Alert.alert("Edad no permitida", "Debes tener al menos 18 años para registrarte como conductor.");
+      return Alert.alert("Edad no permitida", "Debes tener al menos 18 años.");
     }
 
     const requisitosContrasena = [
@@ -118,157 +119,190 @@ export default function DatosPersonalesConductor() {
     if (!requisitosContrasena.every(Boolean)) {
       return Alert.alert(
         "Contraseña poco segura",
-        "Tu contraseña debe tener al menos 12 caracteres, una mayúscula, una minúscula, un número y un símbolo."
+        "Utiliza al menos 12 caracteres, una mayúscula, una minúscula, un número y un símbolo."
       );
     }
     if (contrasena !== confirmarContrasena) {
-      return Alert.alert("Contraseñas diferentes", "Las contraseñas ingresadas no coinciden.");
+      return Alert.alert("Contraseñas diferentes", "Las contraseñas no coinciden.");
     }
 
     router.push("/registro-conductor/verificacion-contacto");
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <SafeAreaView
+      style={styles.areaSegura}
+      edges={["top", "bottom"]}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <StatusBar style="dark"/>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <EncabezadoPagina
-          titulo={"Registro de\n"}
-          tituloDestacado="conductor"
-          descripcion="Completa tus datos para empezar a conducir con Altokke."
-          variante="claro"
-        />
-
-        <ProgresoRegistro pasoActual={1} />
-
-        <View style={styles.formulario}>
-          <View style={styles.contenedorDni}>
-            <CampoTexto
-              placeholder="Número de DNI"
-              nombreIcono="card-outline"
-              value={dni}
-              onChangeText={cambiarDni}
-              keyboardType="number-pad"
-              maxLength={15}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+        >
+          <View style={styles.encabezado}>
+            <EncabezadoPagina
+              titulo={"Tus datos "}
+              tituloDestacado="personales"
+              descripcion="Comencemos con tu información."
               variante="claro"
-              error={!!errorDni}
-              textoError={errorDni}
             />
-            {consultandoDni && (
-              <ActivityIndicator style={styles.indicadorDni} size="small" color={paletaColores.verde} />
-            )}
           </View>
 
-          {dniVerificado === dni && dni.length === 8 && (
-            <View style={styles.mensajeExito}>
-              <Ionicons name="checkmark-circle" size={18} color={paletaColores.verde} />
-              <Text style={styles.textoExito}>Datos encontrados correctamente</Text>
+          <IndicadorPasos
+            pasoActual={1}
+            totalPasos={5}
+            variante="claro"
+          
+          />
+
+          <View style={styles.formulario}>
+            <View style={styles.contenedorDni}>
+              <CampoTexto
+                placeholder="Número de DNI"
+                nombreIcono="card-outline"
+                value={dni}
+                onChangeText={cambiarDni}
+                keyboardType="number-pad"
+                maxLength={15}
+                variante="claro"
+                error={!!errorDni}
+                textoError={errorDni}
+              />
+              {consultandoDni && (
+                <ActivityIndicator style={styles.indicadorDni} size="small" color={paletaColores.primary} />
+              )}
             </View>
-          )}
 
-          <CampoTexto
-            placeholder="Nombre completo"
-            nombreIcono="person-outline"
-            value={nombre}
-            editable={false}
-            variante="claro"
-          />
+            {dniVerificado === dni &&
+              dni.length === 8 &&
+              !consultandoDni &&
+              nombre.trim() !== "" &&
+              apellidos.trim() !== "" && (
+                <View style={styles.tarjetaVerificada}>
+                  <View style={styles.cabeceraVerificada}>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={18}
+                      color={paletaColores.primary}
+                    />
+                    <Text style={styles.tituloVerificado}>
+                      Datos verificados
+                    </Text>
+                  </View>
 
-          <CampoTexto
-            placeholder="Apellidos"
-            nombreIcono="person-outline"
-            value={apellidos}
-            editable={false}
-            variante="claro"
-          />
+                  <Text style={styles.nombreVerificado}>
+                    {`${nombre} ${apellidos}`}
+                  </Text>
+                </View>
+              )}
 
-          <CampoFechaNacimiento
-            valorFecha={fechaNacimiento}
-            alCambiarFecha={setFechaNacimiento}
-            variante="claro"
-          />
+            <CampoFechaNacimiento
+              valorFecha={fechaNacimiento}
+              alCambiarFecha={setFechaNacimiento}
+              label="Fecha de nacimiento"
+              variante="claro"
+            />
 
-          <CampoTexto
-            placeholder="Correo electrónico"
-            nombreIcono="mail-outline"
-            value={correo}
-            onChangeText={setCorreo}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            variante="claro"
-          />
+            <CampoTexto
+              placeholder="Correo electrónico"
+              nombreIcono="mail-outline"
+              value={correo}
+              onChangeText={setCorreo}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              variante="claro"
+            />
 
-          <CampoTexto
-            placeholder="Contraseña"
-            nombreIcono="lock-closed-outline"
-            value={contrasena}
-            onChangeText={setContrasena}
-            esPassword
-            autoCapitalize="none"
-            autoCorrect={false}
-            variante="claro"
-          />
+            <CampoTexto
+              placeholder="Contraseña"
+              nombreIcono="lock-closed-outline"
+              value={contrasena}
+              onChangeText={setContrasena}
+              esPassword
+              autoCapitalize="none"
+              autoCorrect={false}
+              variante="claro"
+            />
 
-          <MedidorPasswordSeguro
-            contrasena={contrasena}
-            longitudMinima={12}
-            variante="claro"
-          />
+            <MedidorPasswordSeguro
+              contrasena={contrasena}
+              longitudMinima={12}
+              variante="claro"
+            />
 
-          <CampoTexto
-            placeholder="Confirmar contraseña"
-            nombreIcono="lock-closed-outline"
-            value={confirmarContrasena}
-            onChangeText={setConfirmarContrasena}
-            esPassword
-            autoCapitalize="none"
-            autoCorrect={false}
-            variante="claro"
-          />
-        </View>
-
-        <AvisoInformativo
-          style={styles.aviso}
-          texto="Tus datos se verificarán con tu documento de identidad en los siguientes pasos."
-        />
-
-        <BotonPrincipal
-          titulo="Continuar"
-          onPress={continuar}
-          disabled={consultandoDni || !nombre || !apellidos}
-        />
-
-        <PiePaginaAutenticacion
-          textoPregunta="¿Ya tienes una cuenta?"
-          textoEnlace="Iniciar sesión"
-          ruta="/login"
-          variante="claro"
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <CampoTexto
+              placeholder="Confirmar contraseña"
+              nombreIcono="lock-closed-outline"
+              value={confirmarContrasena}
+              onChangeText={setConfirmarContrasena}
+              esPassword
+              autoCapitalize="none"
+              autoCorrect={false}
+              variante="claro"
+            />
+          </View>
+          
+          <View style={styles.pieFormulario}>
+             <BotonPrincipal
+              titulo="Continuar"
+              mostrarIcono
+              icono="arrow-forward"
+              onPress={continuar}
+              disabled={
+                consultandoDni ||
+                dniVerificado !== dni ||
+                !nombre ||
+                !apellidos
+              }
+            />
+            <PiePaginaAutenticacion
+              textoPregunta="¿Ya tienes una cuenta?"
+              textoEnlace="Iniciar sesión"
+              ruta="/login"
+              variante="claro"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+    
   );
 }
 
 const styles = StyleSheet.create({
+  areaSegura: {
+    flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
+  },
   container: {
     flex: 1,
     backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 32,
+    backgroundColor: paletaColores.fondoClaro,
+  },
+  encabezado: {
+    marginTop: 6,
+    marginBottom: 8,
   },
   formulario: {
     width: "100%",
     gap: 12,
+    marginTop: 16,
   },
   contenedorDni: {
     position: "relative",
@@ -277,23 +311,35 @@ const styles = StyleSheet.create({
   indicadorDni: {
     position: "absolute",
     right: 18,
-    top: 20,
+    top: 19,
   },
-  mensajeExito: {
+  tarjetaVerificada: {
+    backgroundColor: "#EAF5EF",
+    borderWidth: 1,
+    borderColor: "#C4E5D1",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  cabeceraVerificada: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 4,
-    marginTop: -4,
-    marginBottom: 4,
+    gap: 7,
   },
-  textoExito: {
-    color: paletaColores.verde,
-    fontSize: 13,
-    fontWeight: "600",
+  tituloVerificado: {
+    color: paletaColores.primaryHover,
+    fontSize: 12,
+    fontWeight: "700",
   },
-  aviso: {
-    marginTop: 18,
-    marginBottom: 20,
+  nombreVerificado: {
+    color: paletaColores.textoClaro,
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
+  pieFormulario: {
+    marginTop: 26,
+    gap: 12,
   },
 });
