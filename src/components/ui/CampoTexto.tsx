@@ -17,6 +17,7 @@ export interface PropsCampoTexto extends TextInputProps {
   error?: boolean;
   textoError?: string;
   etiqueta?: string;
+  conBotonLimpiar?: boolean;
 }
 
 export const CampoTexto = ({
@@ -26,6 +27,7 @@ export const CampoTexto = ({
   error = false,
   textoError,
   etiqueta,
+  conBotonLimpiar = false,
   placeholder,
   style,
   onFocus,
@@ -40,7 +42,7 @@ export const CampoTexto = ({
     ? "#878E89"
     : paletaColores.textSecondary;
   const tituloCampo = etiqueta || placeholder || "Campo";
-
+  const mostrarLimpiar = conBotonLimpiar && !esPassword && Boolean(rest.value);
   return (
     <View style={estilos.wrapper}>
       <View
@@ -132,6 +134,21 @@ export const CampoTexto = ({
               }}
             />
           </>
+        )}
+        {mostrarLimpiar &&(
+          <Pressable
+            style = {estilos.botonOjo}
+            onPress={()=> rest.onChangeText?.("")}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel={`Borrar ${tituloCampo}`}
+          >
+            <Ionicons
+              name="close-circle"
+              size = {20}
+              color={colorSecundario}
+            />
+          </Pressable>
         )}
 
         {esPassword && (

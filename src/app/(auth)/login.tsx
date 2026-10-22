@@ -118,6 +118,7 @@ export default function LoginScreen() {
             <CampoTextoHookForm
               control={control}
               name="correo"
+              conBotonLimpiar
               nombreIcono="mail-outline"
               placeholder="Correo electrónico"
               keyboardType="email-address"
