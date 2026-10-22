@@ -1,8 +1,9 @@
 import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { seleccionarFotoGaleria } from "@/utils/avatar";
+import { seleccionarFotoGaleria, validarFotoModeracion } from "@/utils/avatar";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import { 
+  ActivityIndicator,
   Alert, 
   Image, 
   Pressable, 
@@ -17,6 +18,7 @@ export interface SelectorFotoPerfilProps {
   titulo?: string;
   descripcion?: string;
   variante?: "oscuro" | "claro";
+  obligatoria?: boolean;
 }
 
 export function SelectorFotoPerfil({
@@ -24,16 +26,32 @@ export function SelectorFotoPerfil({
   alCambiarFoto,
   titulo = "Foto de perfil",
   descripcion = "Una foto clara de tu rostro ayuda a que el mototaxista te identifique fácilmente.",
+  obligatoria = false,
 }: SelectorFotoPerfilProps) {
   const { colores } = useAltokkeTheme();
+  const [validando, setValidando] = useState(false);
 
   const elegirFoto = async () => {
+    if (validando) return;
     try {
       const resultado = await seleccionarFotoGaleria();
-      if (resultado) {
-        alCambiarFoto(resultado.uri, resultado.base64 || null);
+      if (!resultado) return;
+
+      setValidando(true);
+      const moderacion = await validarFotoModeracion(resultado);
+      setValidando(false);
+
+      if (!moderacion.ok) {
+        Alert.alert(
+          "Foto no permitida",
+          moderacion.error || "Esta foto no está permitida. Por favor, selecciona una foto apropiada de tu rostro (no se permite desnudez, armas ni sustancias ilícitas)."
+        );
+        return;
       }
+
+      alCambiarFoto(resultado.uri, resultado.base64 || null);
     } catch (error: any) {
+      setValidando(false);
       Alert.alert("Foto de perfil", error?.message || "No se pudo seleccionar la imagen.");
     }
   };
@@ -58,10 +76,13 @@ export function SelectorFotoPerfil({
           pressed && styles.presionado,
         ]}
         onPress={elegirFoto}
+        disabled={validando}
         accessibilityRole="button"
         accessibilityLabel="Seleccionar foto de perfil"
       >
-        {fotoUri ? (
+        {validando ? (
+          <ActivityIndicator size="small" color={colores.primario} />
+        ) : fotoUri ? (
           <Image source={{ uri: fotoUri }} style={styles.foto} />
         ) : (
           <Ionicons name="person-outline" size={27} 
@@ -77,27 +98,38 @@ export function SelectorFotoPerfil({
             },
           ]}
         >
-          <Ionicons name="camera-outline" size={14} color="#FFFFFF" />
+          {validando ? (
+            <Ionicons name="hourglass-outline" size={13} color="#FFFFFF" />
+          ) : (
+            <Ionicons name="camera-outline" size={14} color="#FFFFFF" />
+          )}
         </View>
       </Pressable>
 
       <View style={styles.info}>
-        <Text
-          style={[
-            styles.titulo,
-            { color: colores.texto },
-          ]}
-        >
-          {titulo}
-        </Text>
+        <View style={styles.tituloRow}>
+          <Text
+            style={[
+              styles.titulo,
+              { color: colores.texto },
+            ]}
+          >
+            {titulo}
+          </Text>
+          {obligatoria && (
+            <View style={[styles.badgeObligatorio, { backgroundColor: colores.errorFondo }]}>
+              <Text style={[styles.textoObligatorio, { color: colores.error }]}>* Requerida</Text>
+            </View>
+          )}
+        </View>
 
         <Text
           style={[
             styles.descripcion,
-            { color: colores.secundario },
+            { color: validando ? colores.primario : colores.secundario },
           ]}
         >
-          {descripcion}
+          {validando ? "Verificando foto..." : descripcion}
         </Text>
         
         <Pressable 
@@ -165,6 +197,20 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     gap: 5,
+  },
+  tituloRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  badgeObligatorio: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  textoObligatorio: {
+    fontSize: 11,
+    fontWeight: "700",
   },
   titulo: {
     fontSize: 15,

@@ -1,7 +1,10 @@
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as aesjs from "aes-js";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
+
+const memoryStorage = new Map<string, string>();
 
 // Guardo la sesion cifrada en AsyncStorage y su llave en SecureStore, porque SecureStore solo acepta valores pequeños (como 2 KB) y la sesion es mas grande
 class AlmacenamientoSeguro {
@@ -29,17 +32,39 @@ class AlmacenamientoSeguro {
   }
 
   async getItem(clave: string) {
+    if (typeof window === "undefined") {
+      return memoryStorage.get(clave) ?? null;
+    }
+    if (Platform.OS === "web") {
+      return AsyncStorage.getItem(clave);
+    }
     const valorCifrado = await AsyncStorage.getItem(clave);
     if (!valorCifrado) return null;
     return this.descifrar(clave, valorCifrado);
   }
 
   async setItem(clave: string, valor: string) {
+    if (typeof window === "undefined") {
+      memoryStorage.set(clave, valor);
+      return;
+    }
+    if (Platform.OS === "web") {
+      await AsyncStorage.setItem(clave, valor);
+      return;
+    }
     const valorCifrado = await this.cifrar(clave, valor);
     await AsyncStorage.setItem(clave, valorCifrado);
   }
 
   async removeItem(clave: string) {
+    if (typeof window === "undefined") {
+      memoryStorage.delete(clave);
+      return;
+    }
+    if (Platform.OS === "web") {
+      await AsyncStorage.removeItem(clave);
+      return;
+    }
     await AsyncStorage.removeItem(clave);
     await SecureStore.deleteItemAsync(clave);
   }

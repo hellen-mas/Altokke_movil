@@ -19,16 +19,18 @@ Deno.serve(async (req: Request) => {
     let userId: string | null = null
     let fileName: string = ''
     let mimeType: string = 'image/jpeg'
+    let validateOnly: boolean = false
 
     const contentType = req.headers.get('content-type') || ''
 
     if (contentType.includes('application/json')) {
       const jsonBody = await req.json()
       userId = jsonBody.userId || null
+      validateOnly = Boolean(jsonBody.validateOnly)
       const base64Data = jsonBody.base64 || ''
       mimeType = jsonBody.mimeType || 'image/jpeg'
       const ext = mimeType.split('/')[1] || 'jpg'
-      fileName = `${userId}-${Date.now()}.${ext}`
+      fileName = `${userId || 'temp'}-${Date.now()}.${ext}`
 
       if (base64Data) {
         const pureBase64 = base64Data.replace(/^data:image\/\w+;base64,/, '')
@@ -43,12 +45,13 @@ Deno.serve(async (req: Request) => {
       const formData = await req.formData()
       file = formData.get('file') as File | null
       userId = formData.get('userId') as string | null
+      validateOnly = formData.get('validateOnly') === 'true'
       const ext = file?.name?.split('.').pop()?.toLowerCase() || 'jpg'
-      fileName = `${userId}-${Date.now()}.${ext}`
+      fileName = `${userId || 'temp'}-${Date.now()}.${ext}`
       mimeType = file?.type || 'image/jpeg'
     }
 
-    if (!file || !userId) {
+    if (!file || (!validateOnly && !userId)) {
       return new Response(
         JSON.stringify({ error: 'Faltan datos requeridos (imagen o id de usuario)' }),
         { 
@@ -58,46 +61,66 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // 1. Validar la imagen con la API de Sightengine
-    const apiUser = Deno.env.get('SIGHTENGINE_USER') || '872585028'
-    const apiSecret = Deno.env.get('SIGHTENGINE_SECRET') || 'Qo9kKUe4jUwUWaFaCNE5oPetocWgJq4U'
+    // 1. Validar la imagen con la API de Sightengine usando los Secretos de Supabase
+    const apiUser = Deno.env.get('SIGHTENGINE_USER')
+    const apiSecret = Deno.env.get('SIGHTENGINE_SECRET')
 
-    if (apiUser && apiSecret) {
-      const sightengineForm = new FormData()
-      sightengineForm.append('media', file)
-      sightengineForm.append('models', 'nudity-2.0,wad')
-      sightengineForm.append('api_user', apiUser)
-      sightengineForm.append('api_secret', apiSecret)
-
-      try {
-        const moderationRes = await fetch('https://api.sightengine.com/1.0/check.json', {
-          method: 'POST',
-          body: sightengineForm,
-        })
-        const moderationData = await moderationRes.json()
-
-        if (moderationData.status === 'failure') {
-          console.warn('Aviso de Sightengine:', moderationData.error?.message)
-        } else {
-          const nudityNone = typeof moderationData.nudity?.none === 'number' ? moderationData.nudity.none : 1
-          const weaponScore = typeof moderationData.weapon === 'number' ? moderationData.weapon : 0
-          const drugsScore = typeof moderationData.drugs === 'number' ? moderationData.drugs : 0
-
-          const isNsfw = nudityNone < 0.4 || weaponScore > 0.6 || drugsScore > 0.6
-
-          if (isNsfw) {
-            return new Response(
-              JSON.stringify({ error: 'La foto seleccionada contiene material no permitido.' }),
-              { 
-                status: 400, 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-              }
-            )
-          }
+    if (!apiUser || !apiSecret) {
+      console.error('Faltan los secretos SIGHTENGINE_USER y SIGHTENGINE_SECRET en Supabase.')
+      return new Response(
+        JSON.stringify({ error: 'El servicio de moderación de imágenes no está configurado.' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
-      } catch (modErr) {
-        console.warn('Error al conectar con Sightengine:', modErr)
+      )
+    }
+
+    const sightengineForm = new FormData()
+    sightengineForm.append('media', file)
+    sightengineForm.append('models', 'nudity-2.0,wad')
+    sightengineForm.append('api_user', apiUser)
+    sightengineForm.append('api_secret', apiSecret)
+
+    try {
+      const moderationRes = await fetch('https://api.sightengine.com/1.0/check.json', {
+        method: 'POST',
+        body: sightengineForm,
+      })
+      const moderationData = await moderationRes.json()
+
+      if (moderationData.status === 'failure') {
+        console.warn('Aviso de Sightengine:', moderationData.error?.message)
+      } else {
+        const nudityNone = typeof moderationData.nudity?.none === 'number' ? moderationData.nudity.none : 1
+        const weaponScore = typeof moderationData.weapon === 'number' ? moderationData.weapon : 0
+        const drugsScore = typeof moderationData.drugs === 'number' ? moderationData.drugs : 0
+
+        const isNsfw = nudityNone < 0.4 || weaponScore > 0.6 || drugsScore > 0.6
+
+        if (isNsfw) {
+          return new Response(
+            JSON.stringify({ error: 'La foto seleccionada contiene material no permitido (desnudez, armas o drogas).' }),
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
+        }
       }
+    } catch (modErr) {
+      console.warn('Error al conectar con Sightengine:', modErr)
+    }
+
+    // Si solo es validación previa al registro, respondemos exitosamente sin guardar en BD ni Storage
+    if (validateOnly) {
+      return new Response(
+        JSON.stringify({ ok: true, valid: true, message: 'Foto verificada y permitida' }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     // 2. Conectar a Supabase usando permisos de servicio administrativo

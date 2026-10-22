@@ -1,7 +1,7 @@
 import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { calcularEdad } from "@/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -48,9 +48,9 @@ export function CampoFechaNacimiento({
       ? fechaObj
       : fechaMaximaNacimiento;
 
-  const manejarCambio = (event: DateTimePickerEvent, fecha?: Date) => {
+  const aplicarFecha = (fecha?: Date) => {
     if (Platform.OS === "android") setMostrar(false);
-    if (event.type === "dismissed" || !fecha) return;
+    if (!fecha) return;
 
     if (calcularEdad(fecha) < 18) {
       Alert.alert("Restricción de edad (+18)", "Debes tener al menos 18 años para registrarte en Altokke.");
@@ -145,7 +145,12 @@ export function CampoFechaNacimiento({
             mode="date"
             display={Platform.OS === "ios" ? "spinner" : "default"}
             maximumDate={fechaMaximaNacimiento}
-            onChange={manejarCambio}
+            onValueChange={(_event, fecha) => {
+              if (fecha) aplicarFecha(fecha);
+            }}
+            onDismiss={() => {
+              if (Platform.OS === "android") setMostrar(false);
+            }}
             themeVariant={
               esOscuro ? "dark" : "light"
             }

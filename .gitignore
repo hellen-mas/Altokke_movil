@@ -55,3 +55,6 @@ graphify-out/
 
 # Supabase local temp
 supabase/.temp/
+
+# Playwright artifacts
+.playwright-cli/

@@ -220,3 +220,190 @@ Las siguientes etapas del proyecto contemplan:
   <strong>🛺 Altokke</strong><br>
   <em>Tu mototaxi, cuando lo necesites.</em>
 </p>
+
+```
+Altokke_movil
+├─ .claude
+│  └─ settings.json
+├─ app.json
+├─ assets
+│  └─ images
+│     ├─ escena-mototaxi.png
+│     ├─ favicon.png
+│     ├─ icon.png
+│     ├─ imagen-central-v2.png
+│     ├─ logo-altokke-v2.png
+│     ├─ logo-glow.png
+│     ├─ pin-altokke.png
+│     └─ tabIcons
+│        ├─ home.png
+│        ├─ home@2x.png
+│        └─ home@3x.png
+├─ env.d.ts
+├─ eslint.config.js
+├─ LICENSE
+├─ package-lock.json
+├─ package.json
+├─ README.md
+├─ src
+│  ├─ app
+│  │  ├─ (auth)
+│  │  │  ├─ bienvenida.tsx
+│  │  │  ├─ crear-cuenta.tsx
+│  │  │  ├─ estado-solicitud.tsx
+│  │  │  ├─ login.tsx
+│  │  │  ├─ recuperar-cuenta
+│  │  │  │  ├─ index.tsx
+│  │  │  │  ├─ nueva-contrasena.tsx
+│  │  │  │  └─ verificar-codigo.tsx
+│  │  │  ├─ registro-conductor
+│  │  │  │  ├─ documentos.tsx
+│  │  │  │  ├─ identidad-oficial.tsx
+│  │  │  │  ├─ index.tsx
+│  │  │  │  ├─ solicitud-enviada.tsx
+│  │  │  │  ├─ vehiculo.tsx
+│  │  │  │  ├─ verificacion-contacto.tsx
+│  │  │  │  └─ _layout.tsx
+│  │  │  ├─ registro-pasajero
+│  │  │  │  ├─ index.tsx
+│  │  │  │  ├─ preferencias.tsx
+│  │  │  │  ├─ verificacion.tsx
+│  │  │  │  └─ _layout.tsx
+│  │  │  └─ _layout.tsx
+│  │  ├─ (conductor)
+│  │  │  ├─ cuenta
+│  │  │  │  ├─ cambiar-contrasena.tsx
+│  │  │  │  ├─ centro-ayuda.tsx
+│  │  │  │  ├─ configuracion.tsx
+│  │  │  │  ├─ documentos.tsx
+│  │  │  │  ├─ historial.tsx
+│  │  │  │  ├─ index.tsx
+│  │  │  │  ├─ informacion-personal.tsx
+│  │  │  │  ├─ reportar-indicente.tsx
+│  │  │  │  ├─ seguridad.tsx
+│  │  │  │  ├─ vehiculo.tsx
+│  │  │  │  └─ _layout.tsx
+│  │  │  ├─ ganancias.tsx
+│  │  │  ├─ inicio.tsx
+│  │  │  ├─ solicitudes.tsx
+│  │  │  ├─ viaje-activo.tsx
+│  │  │  └─ _layout.tsx
+│  │  ├─ (pasajero)
+│  │  │  ├─ actividad.tsx
+│  │  │  ├─ ayuda.tsx
+│  │  │  ├─ buscando-conductor.tsx
+│  │  │  ├─ calificacion.tsx
+│  │  │  ├─ confirmar-viaje.tsx
+│  │  │  ├─ cuenta
+│  │  │  │  ├─ configuracion.tsx
+│  │  │  │  ├─ direcciones.tsx
+│  │  │  │  ├─ index.tsx
+│  │  │  │  ├─ informacion-personal.tsx
+│  │  │  │  ├─ metodos-pago.tsx
+│  │  │  │  ├─ notificaciones.tsx
+│  │  │  │  └─ seguridad.tsx
+│  │  │  ├─ destino.tsx
+│  │  │  ├─ mapa.tsx
+│  │  │  ├─ notificaciones.tsx
+│  │  │  ├─ viaje-activo.tsx
+│  │  │  └─ _layout.tsx
+│  │  ├─ index.tsx
+│  │  └─ _layout.tsx
+│  ├─ components
+│  │  ├─ animated-icon.module.css
+│  │  ├─ animated-icon.tsx
+│  │  ├─ animated-icon.web.tsx
+│  │  ├─ conductor
+│  │  │  ├─ AvisoInformativo.tsx
+│  │  │  ├─ CabeceraConductor.tsx
+│  │  │  ├─ DatoPersonal.tsx
+│  │  │  ├─ DocumentoArchivo.tsx
+│  │  │  ├─ DocumentoFoto.tsx
+│  │  │  ├─ OpcionCuenta.tsx
+│  │  │  ├─ ProgresoRegistro.tsx
+│  │  │  └─ TarjetaPerfilConductor.tsx
+│  │  ├─ cuenta
+│  │  │  ├─ AvatarPerfil.tsx
+│  │  │  ├─ EncabezadoPantalla.tsx
+│  │  │  └─ ItemMenu.tsx
+│  │  ├─ external-link.tsx
+│  │  ├─ pasajero
+│  │  │  ├─ BarraInferior.tsx
+│  │  │  ├─ CabeceraPasajero.tsx
+│  │  │  ├─ IconoMototaxi.tsx
+│  │  │  ├─ MapaBase.tsx
+│  │  │  ├─ MapaBase.web.tsx
+│  │  │  ├─ PulsoBusqueda.tsx
+│  │  │  ├─ TarjetaConductor.tsx
+│  │  │  └─ tiposMapa.ts
+│  │  └─ ui
+│  │     ├─ AvisoInformativo.tsx
+│  │     ├─ BotonPrincipal.tsx
+│  │     ├─ BotonRedesSociales.tsx
+│  │     ├─ CampoCodigoVerificacion.tsx
+│  │     ├─ CampoFechaNacimiento.tsx
+│  │     ├─ CampoTexto.tsx
+│  │     ├─ CampoTextoHookForm.tsx
+│  │     ├─ ContenedorPantalla.tsx
+│  │     ├─ EncabezadoLogo.tsx
+│  │     ├─ EncabezadoPagina.tsx
+│  │     ├─ index.ts
+│  │     ├─ IndicadorPasos.tsx
+│  │     ├─ MedidorPasswordSeguro.tsx
+│  │     ├─ PiePaginaAutenticacion.tsx
+│  │     ├─ SelectorFotoPerfil.tsx
+│  │     ├─ TarjetaOpcion.tsx
+│  │     └─ TarjetaRol.tsx
+│  ├─ constants
+│  │  ├─ conductor.ts
+│  │  ├─ cuenta.ts
+│  │  ├─ pasajero.ts
+│  │  └─ usuarios.ts
+│  ├─ context
+│  │  ├─ AuthContext.tsx
+│  │  ├─ RegistroConductorContext.tsx
+│  │  ├─ RegistroPasajeroContext.tsx
+│  │  └─ ViajeContext.tsx
+│  ├─ hooks
+│  │  ├─ use-color-scheme.ts
+│  │  ├─ use-color-scheme.web.ts
+│  │  ├─ use-nombre-pasajero.ts
+│  │  ├─ use-resumen-viaje.ts
+│  │  └─ useAltokkeTheme.ts
+│  ├─ lib
+│  │  ├─ almacenamientoSeguro.ts
+│  │  └─ supabase.ts
+│  ├─ paletaColores.ts
+│  ├─ services
+│  │  ├─ authService.ts
+│  │  ├─ avatarStorage.ts
+│  │  ├─ conductorOtp.ts
+│  │  ├─ conductorService.ts
+│  │  ├─ documentosStorage.ts
+│  │  ├─ estadoConductor.ts
+│  │  ├─ storageService.ts
+│  │  └─ usuarioService.ts
+│  ├─ types
+│  │  ├─ conductor.ts
+│  │  └─ database.types.ts
+│  └─ utils
+│     ├─ apiDNI.ts
+│     ├─ avatar.ts
+│     ├─ erroresAuth.ts
+│     ├─ validaciones.ts
+│     ├─ validacionesConductor.ts
+│     └─ viaje.ts
+├─ supabase
+│  ├─ config.toml
+│  ├─ functions
+│  │  └─ upload-avatar
+│  │     ├─ .npmrc
+│  │     ├─ deno.json
+│  │     └─ index.ts
+│  ├─ migrations
+│  │  ├─ 20261014180000_agregar_avatar_url_usuarios.sql
+│  │  └─ 20261019190000_agregar_dni_fecha_nacimiento.sql
+│  └─ schema.sql
+└─ tsconfig.json
+
+```
