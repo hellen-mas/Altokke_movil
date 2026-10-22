@@ -5,10 +5,10 @@ import {
   EncabezadoPagina,
   PiePaginaAutenticacion,
 } from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { authService } from "@/services/authService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
-import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -17,6 +17,7 @@ const ultimoEnvioPorCorreo = new Map<string, number>();
 const ESPERA_MS = 60000;
 
 export default function RecuperarPasswordScreen() {
+  const { colores } = useAltokkeTheme();
   const [correo, setCorreo] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -52,67 +53,79 @@ export default function RecuperarPasswordScreen() {
 
 
   return (
-    <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
-    >
-      <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
-        <View style={styles.topSection}>
-          <View style={styles.headerContainer}>
-            <EncabezadoPagina
-              titulo={"Recuperar "}
-              tituloDestacado="cuenta"
-              descripcion="Ingresa tu correo para recibir un código de recuperación."
-            />
-          </View>
-
-          <View style={styles.formContainer}>
-            <CampoTexto
-              nombreIcono="mail-outline"
-              placeholder="Correo electrónico"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-              value={correo}
-              onChangeText={setCorreo}
-            />
-
-            <BotonPrincipal
-              titulo="Continuar"
-              cargando={loading}
-              onPress={handleContinuar}
-              disabled={loading}
-            />
-          </View>
+    <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
+      <View style={styles.topSection}>
+        <View
+          style={[
+            styles.iconoHero,
+            { backgroundColor: colores.exitoFondo, borderColor: colores.linea },
+          ]}
+        >
+          <Ionicons name="mail-unread-outline" size={36} color={colores.exitoTexto} />
         </View>
 
-        <View style={styles.bottomContainer}>
-          <PiePaginaAutenticacion
-            textoPregunta="¿Recordaste tu contraseña?"
-            textoEnlace="Iniciar sesión"
-            ruta="/login"
+        <View style={styles.headerContainer}>
+          <EncabezadoPagina
+            titulo={"Recuperar "}
+            tituloDestacado="cuenta"
+            descripcion="Ingresa tu correo para recibir un código de recuperación."
           />
         </View>
-      </ContenedorPantalla>
-    </LinearGradient>
+
+        <View style={styles.formContainer}>
+          <CampoTexto
+            nombreIcono="mail-outline"
+            placeholder="Correo electrónico"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+            value={correo}
+            onChangeText={setCorreo}
+            conBotonLimpiar
+          />
+
+          <BotonPrincipal
+            titulo="Continuar"
+            mostrarIcono
+            icono="arrow-forward"
+            cargando={loading}
+            onPress={handleContinuar}
+            disabled={loading}
+          />
+        </View>
+      </View>
+
+      <View style={styles.bottomContainer}>
+        <PiePaginaAutenticacion
+          textoPregunta="¿Recordaste tu contraseña?"
+          textoEnlace="Iniciar sesión"
+          ruta="/login"
+        />
+      </View>
+    </ContenedorPantalla>
   );
 }
 
 const styles = StyleSheet.create({
-  pantalla: {
-    flex: 1,
-  },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 24,
     paddingBottom: 32,
     flexGrow: 1,
   },
   topSection: {
     gap: 4,
+  },
+  iconoHero: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
   },
   headerContainer: {
     marginTop: 8,
