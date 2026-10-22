@@ -7,15 +7,15 @@ import {
   Text,
   View,
 } from "react-native";
-import { PASAJERO_DEMO } from "@/constants/cuenta";
+import { PASAJERO_DEMO } from "@/features/pasajeros/constants/cuenta";
 import {
   CENTRO_BAGUA,
   LUGARES_BAGUA,
   ORIGEN_EJEMPLO,
-} from "@/constants/pasajero";
-import { paletaColores } from "@/paletaColores";
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
+} from "@/features/viajes/constants/pasajero";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { router } from "expo-router";
 
 type EstadoSolicitud = "NUEVA" | "ACEPTADA" | "RECHAZADA";

@@ -3,11 +3,11 @@ import {
   CampoTexto,
   ContenedorPantalla,
   EncabezadoPagina,
-  PiePaginaAutenticacion,
-} from "@/components/ui";
-import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { authService } from "@/services/authService";
-import { traducirErrorAuth } from "@/utils/erroresAuth";
+} from "@/shared/components/ui";
+import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { authService } from "@/features/autenticacion/services/authService";
+import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";

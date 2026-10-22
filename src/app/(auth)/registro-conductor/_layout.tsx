@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { RegistroConductorProvider } from "@/context/RegistroConductorContext";
+import { RegistroConductorProvider } from "@/features/conductores/context/RegistroConductorContext";
 
 export default function RegistroConductorLayout() {
     return (

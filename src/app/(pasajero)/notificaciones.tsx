@@ -1,6 +1,6 @@
-import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
-import { NOTIFICACIONES_EJEMPLO } from "@/constants/pasajero";
-import { paletaColores } from "@/paletaColores";
+import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
+import { NOTIFICACIONES_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 

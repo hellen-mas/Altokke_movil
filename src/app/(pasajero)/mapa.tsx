@@ -1,18 +1,18 @@
-import { BarraInferior } from "@/components/pasajero/BarraInferior";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
-import { IconoMototaxi } from "@/components/pasajero/IconoMototaxi";
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
   CONDUCTORES_CERCANOS,
   NOTIFICACIONES_EJEMPLO,
   ORIGEN_EJEMPLO,
-} from "@/constants/pasajero";
-import { TipoServicio, useViaje } from "@/context/ViajeContext";
-import { useNombrePasajero } from "@/hooks/use-nombre-pasajero";
-import { paletaColores } from "@/paletaColores";
+} from "@/features/viajes/constants/pasajero";
+import { TipoServicio, useViaje } from "@/features/viajes/context/ViajeContext";
+import { useNombrePasajero } from "@/features/pasajeros/hooks/use-nombre-pasajero";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { ReactNode } from "react";

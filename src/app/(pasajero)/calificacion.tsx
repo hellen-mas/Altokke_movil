@@ -12,18 +12,18 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
-import { TarjetaConductor } from "@/components/pasajero/TarjetaConductor";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { ORIGEN_EJEMPLO } from "@/constants/pasajero";
-import { useViaje } from "@/context/ViajeContext";
-import { useResumenViaje } from "@/hooks/use-resumen-viaje";
-import { paletaColores } from "@/paletaColores";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import {
   formatearHora,
   formatearSoles,
   NOMBRE_METODO_PAGO,
-} from "@/utils/viaje";
+} from "@/features/viajes/utils/viaje";
 
 const MAX_COMENTARIO = 500;
 const COLOR_ESTRELLA = "#F5B301";

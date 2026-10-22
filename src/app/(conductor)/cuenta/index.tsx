@@ -4,11 +4,11 @@ import {
     StyleSheet,
     View,
 } from "react-native";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
-import { OpcionCuenta } from "@/components/conductor/OpcionCuenta";
-import { TarjetaPerfilConductor } from "@/components/conductor/TarjetaPerfilConductor";
-import { paletaColores } from "@/paletaColores";
-import { CONDUCTOR_EJEMPLO } from "@/constants/conductor";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
+import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { CONDUCTOR_EJEMPLO } from "@/features/conductores/constants/conductor";
 
 export default function CuentaConductor() {
     return (

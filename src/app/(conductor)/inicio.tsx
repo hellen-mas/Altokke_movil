@@ -7,12 +7,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { paletaColores } from "@/paletaColores";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import {
   CONDUCTOR_EJEMPLO,
   RESUMEN_GANANCIAS,
-} from "@/constants/conductor";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
+} from "@/features/conductores/constants/conductor";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 
 export default function InicioConductorScreen() {
   return (

@@ -1,8 +1,8 @@
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
-import { OpcionCuenta } from "@/components/conductor/OpcionCuenta";
-import { useAuth } from "@/context/AuthContext";
-import { paletaColores } from "@/paletaColores";
+import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 

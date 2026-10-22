@@ -9,16 +9,16 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { BarraInferior } from "@/components/pasajero/BarraInferior";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
-import { IconoMototaxi } from "@/components/pasajero/IconoMototaxi";
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { CENTRO_BAGUA, ORIGEN_EJEMPLO } from "@/constants/pasajero";
-import { MetodoPago, useViaje } from "@/context/ViajeContext";
-import { ServicioViaje, useResumenViaje } from "@/hooks/use-resumen-viaje";
-import { paletaColores } from "@/paletaColores";
-import { formatearSoles } from "@/utils/viaje";
+import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { CENTRO_BAGUA, ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { MetodoPago, useViaje } from "@/features/viajes/context/ViajeContext";
+import { ServicioViaje, useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { formatearSoles } from "@/features/viajes/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
