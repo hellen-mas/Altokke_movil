@@ -20,6 +20,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { 
   ActivityIndicator, 
+  Alert,
   Keyboard,
   Pressable, 
   StyleSheet, 
@@ -146,6 +147,14 @@ export default function PasajeroIdentidadScreen() {
     if (!identidadVerificada) {
       setErrorDni(
         "Primero debes validar tu DNI para continuar."
+      );
+      return;
+    }
+
+    if (!fotoLocal) {
+      Alert.alert(
+        "Foto de perfil requerida",
+        "Por seguridad de la comunidad y para que el conductor pueda identificarte, debes seleccionar una fotografía de tu rostro."
       );
       return;
     }
@@ -327,7 +336,8 @@ export default function PasajeroIdentidadScreen() {
 
           <SelectorFotoPerfil
             fotoUri={fotoLocal}
-            descripcion="Ayuda al conductor a reconocerte."
+            descripcion="Una foto clara de tu rostro para que el mototaxista te identifique."
+            obligatoria
             alCambiarFoto={(uri, base64) => {
               setFotoLocal(uri);
               setFotoBase64(base64 || null);

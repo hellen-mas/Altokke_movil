@@ -98,8 +98,8 @@ export default function PasajeroPreferenciasScreen() {
       fotoBase64 
     } = datosPersonales;
 
-    if (!nombres || !apellidos || !telefono || !dni || !fechaNacimiento) {
-      return Alert.alert("Datos incompletos", "Faltan datos obligatorios. Regresa a los pasos anteriores para completarlos.");
+    if (!nombres || !apellidos || !telefono || !dni || !fechaNacimiento || !fotoPerfil) {
+      return Alert.alert("Datos incompletos", "Faltan datos obligatorios (incluyendo tu fotografía de perfil). Regresa a los pasos anteriores para completarlos.");
     }
 
     enviando.current= true;
