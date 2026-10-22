@@ -106,13 +106,14 @@ export default function LoginScreen() {
         estilo={{ backgroundColor: "transparent" }}
         estiloContenedorContenido={styles.scrollContent}
       >
-        <View style={styles.topSection}>
-          <EncabezadoPagina
-            titulo="Iniciar "
-            tituloDestacado="sesión"
-            descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
-          />
 
+        <EncabezadoPagina
+          titulo="Iniciar "
+          tituloDestacado="sesión"
+          descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
+        />
+
+        <View style={styles.topSection}>
           <View style={styles.formContainer}>
             <CampoTextoHookForm
               control={control}
@@ -197,12 +198,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 22,
     paddingBottom: 24,
     justifyContent: "space-between",
   },
   topSection: {
-    gap: 16,
+    flex: 1,
+    justifyContent: "center",
+    gap: 20,
   },
   formContainer: {
     gap: 14,
@@ -246,9 +249,9 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     color: paletaColores.textSecondary,
-    fontSize: 15,
+    fontSize: 13,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: 20,
   },
   legalLink: {
     color: paletaColores.primary,
