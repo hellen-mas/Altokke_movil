@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
@@ -13,7 +13,7 @@ import {
 export interface PropsCampoTexto extends TextInputProps {
   nombreIcono?: keyof typeof Ionicons.glyphMap;
   esPassword?: boolean;
-  variante?: "oscuro" | "claro" | string;
+  variante?: "oscuro" | "claro" | "automatico" | string;
   error?: boolean;
   textoError?: string;
   etiqueta?: string;
@@ -23,7 +23,7 @@ export interface PropsCampoTexto extends TextInputProps {
 export const CampoTexto = ({
   nombreIcono,
   esPassword = false,
-  variante = "oscuro",
+  variante = "automático",
   error = false,
   textoError,
   etiqueta,
@@ -37,33 +37,43 @@ export const CampoTexto = ({
   const [visible, setVisible] = useState(false);
   const [enFoco, setEnFoco] = useState(false);
 
-  const esClaro = variante === "claro";
-  const colorSecundario = esClaro
-    ? "#878E89"
-    : paletaColores.textSecondary;
+  const { esOscuro, colores } = useAltokkeTheme();
+
+  const modoOscuro =
+    variante === "oscuro" ||
+    (variante !== "claro" && esOscuro);
+
+  const modoClaro = !modoOscuro;
   const tituloCampo = etiqueta || placeholder || "Campo";
   const mostrarLimpiar = conBotonLimpiar && !esPassword && Boolean(rest.value);
+
+  const fondoCampo = error
+    ? colores.errorFondo
+    : enFoco
+    ? colores.campoFoco
+    : colores.campo;
+
   return (
     <View style={estilos.wrapper}>
       <View
         style={[
           estilos.campo,
-          esClaro && estilos.campoClaro,
-          enFoco && (
-            esClaro
-              ? estilos.campoClaroFoco
-              : estilos.campoOscuroFoco
-          ),
-          error && estilos.campoError,
+          {
+            backgroundColor: fondoCampo,
+          },
         ]}
       >
-        {esClaro ? (
-          <View style={estilos.contenidoClaro}>
+          <View style={estilos.contenido}>
             <Text
               style={[
                 estilos.etiqueta,
-                enFoco && estilos.etiquetaFoco,
-                error && estilos.etiquetaError,
+                {
+                  color: error 
+                    ? colores.error
+                    : enFoco
+                    ? colores.exitoTexto
+                    : colores.secundario,
+                },
               ]}
               numberOfLines={1}
             >
@@ -74,11 +84,18 @@ export const CampoTexto = ({
               {...rest}
               style={[
                 estilos.input,
-                estilos.inputClaro,
+                {
+                  color: colores.textoCampo,
+                },
                 style,
               ]}
               placeholder=""
-              placeholderTextColor={colorSecundario}
+              placeholderTextColor={colores.secundario}
+              selectionColor={colores.exitoTexto}
+              cursorColor={colores.exitoTexto}
+              keyboardAppearance={
+                modoClaro ? "light" : "dark"
+              }
               secureTextEntry={
                 esPassword
                   ? !visible
@@ -93,48 +110,10 @@ export const CampoTexto = ({
                 setEnFoco(false);
                 onBlur?.(evento);
               }}
-              selectionColor={paletaColores.primary}
               underlineColorAndroid="transparent"
             />
           </View>
-        ) : (
-          <>
-            {nombreIcono && (
-              <Ionicons
-                name={nombreIcono}
-                size={22}
-                color={
-                  error
-                    ? paletaColores.error
-                    : enFoco
-                      ? paletaColores.primary
-                      : colorSecundario
-                }
-              />
-            )}
 
-            <TextInput
-              {...rest}
-              style={[estilos.input, style]}
-              placeholder={placeholder}
-              placeholderTextColor={colorSecundario}
-              secureTextEntry={
-                esPassword
-                  ? !visible
-                  : rest.secureTextEntry
-              }
-              accessibilityLabel={tituloCampo}
-              onFocus={(evento) => {
-                setEnFoco(true);
-                onFocus?.(evento);
-              }}
-              onBlur={(evento) => {
-                setEnFoco(false);
-                onBlur?.(evento);
-              }}
-            />
-          </>
-        )}
         {mostrarLimpiar && (
           <Pressable
             style={estilos.botonOjo}
@@ -145,8 +124,8 @@ export const CampoTexto = ({
           >
             <Ionicons
               name="close-circle"
-              size={20}
-              color={colorSecundario}
+              size={19}
+              color={colores.secundario}
             />
           </Pressable>
         )}
@@ -155,14 +134,13 @@ export const CampoTexto = ({
           <Pressable
             style={estilos.botonOjo}
             onPress={() => setVisible((v) => !v)}
-            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
           >
             <Ionicons
               name={visible ? "eye-outline" : "eye-off-outline"}
-              size={20}
-              color={colorSecundario}
+              size={19}
+              color={colores.secundario}
             />
           </Pressable>
         )}
@@ -170,8 +148,11 @@ export const CampoTexto = ({
 
       {error && Boolean(textoError) && (
         <View style={estilos.errorFila}>
-          <Ionicons name="alert-circle-outline" size={15} color={paletaColores.error} />
-          <Text style={estilos.errorTexto}>{textoError}</Text>
+          <Ionicons name="alert-circle-outline" size={15} color={colores.error} />
+          <Text style={[
+            estilos.errorTexto,
+            { color: colores.error },
+          ]}>{textoError}</Text>
         </View>
       )}
     </View>
@@ -185,44 +166,17 @@ const estilos = StyleSheet.create({
 
   campo: {
     width: "100%",
-    minHeight: 56,
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    backgroundColor: paletaColores.surface,
-  },
-
-  campoClaro: {
-    minHeight: 58,
-    borderWidth: 0,
-    borderColor: "transparent",
-    borderRadius: 30,
-    backgroundColor: "#E9EEEA",
     paddingHorizontal: 19,
     paddingVertical: 6,
-    gap: 0,
-  },
-
-  campoClaroFoco: {
-    backgroundColor: "#E7ECE8",
+    borderRadius: 30,
     borderWidth: 0,
-    borderColor: "transparent",
+    gap: 6,
   },
 
-  campoOscuroFoco: {
-    borderColor: paletaColores.primary,
-  },
-
-  campoError: {
-    borderWidth: 0,
-    borderColor: "transparent",
-    backgroundColor: "#F6EDED",
-  },
-
-  contenidoClaro: {
+  contenido: {
     flex: 1,
     justifyContent: "center",
     minWidth: 0,
@@ -232,33 +186,14 @@ const estilos = StyleSheet.create({
     fontSize: 12,
     lineHeight: 15,
     fontWeight: "500",
-    color: "#596C60",
     marginBottom: 0,
   },
 
-  etiquetaFoco: {
-    color: "#16804D",
-  },
-
-  etiquetaError: {
-    color: paletaColores.error,
-  },
-
   input: {
-    flex: 1,
-    minWidth: 0,
-    fontSize: 16,
-    color: paletaColores.textPrimary,
-    paddingVertical: 0,
-  },
-
-  inputClaro: {
-    flex: 0,
     minHeight: 20,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: "500",
-    color: "#17251C",
     paddingVertical: 0,
   },
 
@@ -279,7 +214,6 @@ const estilos = StyleSheet.create({
 
   errorTexto: {
     flex: 1,
-    color: paletaColores.error,
     fontSize: 12,
     lineHeight: 17,
   },

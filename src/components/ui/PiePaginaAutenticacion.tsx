@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Href, router } from "expo-router";
 import {
   Pressable,
@@ -33,19 +33,36 @@ export const PiePaginaAutenticacion = ({
   estiloPregunta,
   estiloEnlace,
 }: PropsPiePaginaAutenticacion) => {
-  const esClaro = variante === "claro";
+  const { colores } = useAltokkeTheme();
 
   return (
     <View
       style={[
         estilos.contenedor,
-        mostrarBorde && (esClaro ? estilos.bordeClaro : estilos.bordeOscuro),
-        { justifyContent: alineacion === "left" ? "flex-start" : alineacion === "right" ? "flex-end" : "center" },
+        mostrarBorde && {
+          borderTopWidth: 1,
+          borderTopColor: colores.linea,
+          marginTop: 12,
+          paddingTop: 16,
+        },
+        {
+          justifyContent:
+            alineacion === "left"
+              ? "flex-start"
+              : alineacion === "right"
+              ? "flex-end"
+              : "center",
+        },
         estilo,
       ]}
     >
       <View style={estilos.fila}>
-        <Text style={[estilos.textoPregunta, esClaro && estilos.textoPreguntaClaro, estiloPregunta]}>
+        <Text 
+          style={[
+            estilos.textoPregunta, 
+            { color: colores.secundario },
+            estiloPregunta,
+          ]}>
           {textoPregunta}{" "}
         </Text>
         <Pressable
@@ -55,7 +72,12 @@ export const PiePaginaAutenticacion = ({
           accessibilityLabel={`${textoPregunta} ${textoEnlace}`}
           style={({ pressed }) => [pressed && { opacity: 0.75 }]}
         >
-          <Text style={[estilos.textoEnlace, esClaro && estilos.textoEnlaceClaro, estiloEnlace]}>
+          <Text 
+            style={[
+              estilos.textoEnlace, 
+              { color: colores.exitoTexto },
+              estiloEnlace,
+            ]}>
             {textoEnlace}
           </Text>
         </Pressable>
@@ -71,18 +93,6 @@ const estilos = StyleSheet.create({
     minHeight: 52,
     alignItems: "center",
   },
-  bordeOscuro: {
-    borderTopWidth: 1,
-    borderTopColor: paletaColores.surfaceBorder,
-    marginTop: 12,
-    paddingTop: 16,
-  },
-  bordeClaro: {
-    borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
-    marginTop: 12,
-    paddingTop: 16,
-  },
   fila: {
     flexDirection: "row",
     alignItems: "center",
@@ -93,20 +103,12 @@ const estilos = StyleSheet.create({
   textoPregunta: {
     fontSize: 15,
     lineHeight: 24,
-    color: paletaColores.textSecondary,
     fontWeight: "500",
-  },
-  textoPreguntaClaro: {
-    color: paletaColores.textoSecundarioClaro,
   },
   textoEnlace: {
     fontSize: 17,
     lineHeight: 24,
     fontWeight: "700",
-    color: paletaColores.primary,
-  },
-  textoEnlaceClaro: {
-    color: paletaColores.primaryHover,
   },
 });
 

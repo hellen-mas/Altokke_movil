@@ -3,6 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/changa-one": "^0.4.1",
+    "@expo-google-fonts/outfit": "^0.4.3",
+    "@expo-google-fonts/quicksand": "^0.4.1",
     "@expo/ui": "~57.0.25",
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.9.1",

@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
 import { supabase } from "@/lib/supabase";
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { authService } from "@/services/authService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,6 +24,7 @@ import {
 } from "react-native";
 
 export default function PasajeroPreferenciasScreen() {
+  const { colores } = useAltokkeTheme();
   const [notificaciones, setNotificaciones] = useState(true);
   const [ubicacion, setUbicacion] = useState(true);
   const [promociones, setPromociones] = useState(false);
@@ -168,8 +169,14 @@ export default function PasajeroPreferenciasScreen() {
 
   return (
       <ContenedorPantalla 
-        estilo = {styles.pantalla}
-        estiloContenedorContenido={styles.scrollContent}
+        estilo={[
+          styles.pantalla,
+          { backgroundColor: colores.fondo },
+        ]}
+        estiloContenedorContenido={[
+          styles.scrollContent,
+          { backgroundColor: colores.fondo },
+        ]}
       >
         <View style={styles.headerContainer}>
           <EncabezadoPagina
@@ -197,7 +204,15 @@ export default function PasajeroPreferenciasScreen() {
           style={styles.infoCard}
         />
 
-        <View style={styles.terminosContainer}>
+        <View 
+          style={[
+            styles.terminosContainer,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
           <Pressable
             style={styles.filaTerminos}
             onPress={() => setTerminos((valor) => !valor)}
@@ -210,11 +225,11 @@ export default function PasajeroPreferenciasScreen() {
               size={26}
               color={
                 terminos
-                  ? paletaColores.primary
-                  : paletaColores.textoSecundarioClaro
+                  ? colores.exitoTexto
+                  : colores.secundario
               }
             />
-            <Text style={styles.checkboxText}>
+            <Text style={[styles.checkboxText, { color: colores.texto },]}>
               He leído y acepto los términos y condiciones
               y la política de privacidad.
             </Text>
@@ -226,7 +241,7 @@ export default function PasajeroPreferenciasScreen() {
               accessibilityRole="link"
               hitSlop={6}
             >
-              <Text style={styles.linkText}>
+              <Text style={[styles.linkText, { color: colores.exitoTexto },]}>
                 Leer términos y condiciones
               </Text>
             </Pressable>
@@ -236,7 +251,7 @@ export default function PasajeroPreferenciasScreen() {
               accessibilityRole="link"
               hitSlop={6}
             >
-              <Text style={styles.linkText}>
+              <Text style={[styles.linkText, { color: colores.exitoTexto },]}>
                 Leer política de privacidad
               </Text>
             </Pressable>
@@ -261,11 +276,9 @@ export default function PasajeroPreferenciasScreen() {
 const styles = StyleSheet.create({
    pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
     flexGrow: 1,
-    backgroundColor: paletaColores.fondoClaro,
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
@@ -284,12 +297,10 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     fontSize: 17,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
   descripcionSeccion: {
     fontSize: 13,
     lineHeight: 19,
-    color: paletaColores.textoSecundarioClaro,
   },
   opcionesContainer: {
     gap: 10,
@@ -299,10 +310,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   terminosContainer: {
-    backgroundColor: paletaColores.superficieClara,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
     padding: 14,
     gap: 10,
   },
@@ -314,7 +323,6 @@ const styles = StyleSheet.create({
   },
   checkboxText: {
     flex: 1,
-    color: paletaColores.textoClaro,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "500",
@@ -325,7 +333,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   linkText: {
-    color: paletaColores.primaryHover,
     fontSize: 13,
     fontWeight: "700",
     textDecorationLine: "underline",
@@ -338,7 +345,6 @@ const styles = StyleSheet.create({
     minHeight: 58,
   },
   mensajeFinal: {
-    color: paletaColores.textoSecundarioClaro,
     textAlign: "center",
     fontSize: 12,
     lineHeight: 18,

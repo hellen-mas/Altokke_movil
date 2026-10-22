@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { 
   StyleProp, 
   StyleSheet, 
@@ -12,36 +12,39 @@ export interface PropsIndicadorPasos {
   totalPasos: number;
   estilo?: StyleProp<ViewStyle>;
   variante?: "oscuro" | "claro";
+  etiquetas?: string[];
 }
 
 export function IndicadorPasos({ 
   pasoActual, 
   totalPasos, 
   estilo,
-  variante = "oscuro",
 }: PropsIndicadorPasos) {
-  const esClaro = variante === "claro";
+  const { colores } = useAltokkeTheme();
+
+  const totalSeguro = Math.max(1, totalPasos);
   const pasoSeguro = Math.max(
     1,
-    Math.min(pasoActual, totalPasos)
+    Math.min(pasoActual, totalSeguro)
   );
 
   return (
     <View style={[estilos.contenedor, estilo]}>
-      <View style={estilos.encabezado}>
         <Text
           style={[
             estilos.contador,
-            esClaro && estilos.contadorClaro,
+            {
+              color: colores.secundario
+            },
           ]}
         >
           PASO {pasoSeguro} DE {totalPasos}
         </Text>
-      </View>
 
       <View
         style={estilos.barras}
         accessibilityRole="progressbar"
+        accessibilityLabel="Progreso del registro"
         accessibilityValue={{
           min: 0,
           max: totalPasos,
@@ -55,9 +58,12 @@ export function IndicadorPasos({
               key={indice}
               style={[
                 estilos.barra,
-                esClaro && estilos.barraClara,
-                indice < pasoSeguro &&
-                  estilos.barraCompletada,
+                {
+                  backgroundColor:
+                    indice < pasoSeguro
+                      ? colores.exitoTexto
+                      : colores.progresoInactivo,
+                },
               ]}
             />
           )
@@ -73,27 +79,11 @@ const estilos = StyleSheet.create({
     marginTop: 10,
     marginBottom: 12,
   },
-  encabezado: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
   contador: {
     fontSize: 12,
     fontWeight: "600",
-    color: paletaColores.textoSecundario,
     letterSpacing: 0.5,
-  },
-  contadorClaro: {
-    color: paletaColores.textoSecundarioClaro,
-  },
-  nombre: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: paletaColores.primary,
-  },
-  nombreClaro: {
-    color: paletaColores.primaryHover,
+    marginBottom: 10,
   },
   barras: {
     flexDirection: "row",
@@ -104,12 +94,5 @@ const estilos = StyleSheet.create({
     flex: 1,
     height: 5,
     borderRadius: 5,
-    backgroundColor: paletaColores.borde,
-  },
-  barraClara: {
-    backgroundColor: "#DCE5DF",
-  },
-  barraCompletada: {
-    backgroundColor: paletaColores.primary,
   },
 });

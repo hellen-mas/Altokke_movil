@@ -7,13 +7,12 @@ import {
 } from "@/components/ui";
 import { BotonRedesSociales } from "@/components/ui/BotonRedesSociales";
 import { useAuth } from "@/context/AuthContext";
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { authService } from "@/services/authService";
 import { obtenerEstadoConductor } from "@/services/estadoConductor";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { esquemaLogin, TipoDatosLogin } from "@/utils/validaciones";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
@@ -23,6 +22,7 @@ import { Alert, Keyboard, Pressable, StyleSheet, Text, View } from "react-native
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
+  const { colores } = useAltokkeTheme();
   const [loading, setLoading] = useState(false);
   const { control, handleSubmit } = useForm<TipoDatosLogin>({
     resolver: yupResolver(esquemaLogin),
@@ -96,15 +96,12 @@ export default function LoginScreen() {
     );
 
   return (
-    <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
-    >
       <ContenedorPantalla
-        estilo={{ backgroundColor: "transparent" }}
-        estiloContenedorContenido={styles.scrollContent}
+        estilo={{ backgroundColor: colores.fondo }}
+        estiloContenedorContenido={[
+          styles.scrollContent,
+          { backgroundColor: colores.fondo },
+        ]}
       >
 
         <EncabezadoPagina
@@ -123,6 +120,7 @@ export default function LoginScreen() {
               placeholder="Correo electrónico"
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               autoComplete="email"
               textContentType="emailAddress"
             />
@@ -133,6 +131,7 @@ export default function LoginScreen() {
               nombreIcono="lock-closed-outline"
               placeholder="Contraseña"
               esPassword
+              autoCapitalize="none"
               autoComplete="password"
               textContentType="password"
             />
@@ -144,11 +143,18 @@ export default function LoginScreen() {
               accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
               style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
             >
-              <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+              <Text 
+                style={[
+                  styles.forgotPasswordText,
+                  { color: colores.exitoTexto },
+                ]}
+              >¿Olvidaste tu contraseña?</Text>
             </Pressable>
 
             <BotonPrincipal
               titulo="Iniciar sesión"
+              mostrarIcono
+              icono="arrow-forward"
               cargando={loading}
               onPress={handleSubmit(handleLogin)}
               disabled={loading}
@@ -156,9 +162,14 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>O continúa con</Text>
-            <View style={styles.divider} />
+            <View 
+              style={[
+                styles.divider,
+                { backgroundColor: colores.linea },
+              ]}
+            />
+            <Text style={[styles.dividerText, { color: colores.secundario },]}>O continúa con</Text>
+            <View style={[styles.divider, { backgroundColor: colores.linea },]} />
           </View>
 
           <BotonRedesSociales
@@ -178,70 +189,60 @@ export default function LoginScreen() {
           />
 
           <View style={styles.legalContainer}>
-            <Text style={styles.disclaimerText}>
+            <Text style={[styles.disclaimerText, { color: colores.secundario }, ]}>
               Al iniciar sesión, aceptas nuestros{" "}
-              <Text onPress={handleTerms} style={styles.legalLink}>Términos de servicio</Text>
+              <Text onPress={handleTerms} style={[styles.legalLink, { color: colores.exitoTexto },]}>Términos de servicio</Text>
               {" "}y{" "}
-              <Text onPress={handlePrivacy} style={styles.legalLink}>Política de privacidad</Text>.
+              <Text onPress={handlePrivacy} style={[styles.legalLink, { color: colores.exitoTexto },]}>Política de privacidad</Text>.
             </Text>
           </View>
         </View>
       </ContenedorPantalla>
-    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  pantalla: {
-    flex: 1,
-    backgroundColor: paletaColores.background,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 22,
-    paddingBottom: 24,
-    justifyContent: "space-between",
+    paddingTop: 24,
+    paddingBottom: 32,
   },
   topSection: {
     flex: 1,
     justifyContent: "center",
-    gap: 20,
+    gap: 24,
   },
   formContainer: {
     gap: 14,
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 4,
   },
   forgotPasswordText: {
-    color: paletaColores.primary,
     fontSize: 16,
     fontWeight: "600",
-    textAlign: "right",
   },
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 4,
+    marginVertical: 2,
   },
   divider: {
     flex: 1,
     height: 1.5,
-    backgroundColor: paletaColores.borde,
   },
   dividerText: {
-    color: paletaColores.textSecondary,
     paddingHorizontal: 14,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "500",
   },
   bottomContainer: {
     marginTop: "auto",
-    paddingTop: 12,
-    gap: 10,
+    paddingTop: 28,
+    gap: 8,
     alignItems: "center",
   },
   legalContainer: {
@@ -249,13 +250,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   disclaimerText: {
-    color: paletaColores.textSecondary,
     fontSize: 13,
     textAlign: "center",
     lineHeight: 20,
   },
   legalLink: {
-    color: paletaColores.primary,
     fontWeight: "700",
   },
 });
