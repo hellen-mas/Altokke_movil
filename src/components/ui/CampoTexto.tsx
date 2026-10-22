@@ -107,8 +107,8 @@ export const CampoTexto = ({
                   error
                     ? paletaColores.error
                     : enFoco
-                    ? paletaColores.primary
-                    : colorSecundario
+                      ? paletaColores.primary
+                      : colorSecundario
                 }
               />
             )}
@@ -135,17 +135,17 @@ export const CampoTexto = ({
             />
           </>
         )}
-        {mostrarLimpiar &&(
+        {mostrarLimpiar && (
           <Pressable
-            style = {estilos.botonOjo}
-            onPress={()=> rest.onChangeText?.("")}
+            style={estilos.botonOjo}
+            onPress={() => rest.onChangeText?.("")}
             hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={`Borrar ${tituloCampo}`}
           >
             <Ionicons
               name="close-circle"
-              size = {20}
+              size={20}
               color={colorSecundario}
             />
           </Pressable>
