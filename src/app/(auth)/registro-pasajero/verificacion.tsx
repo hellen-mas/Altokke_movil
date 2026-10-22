@@ -9,7 +9,7 @@ import {
   SelectorFotoPerfil,
 } from "@/components/ui";
 import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { usuarioService } from "@/services/usuarioService";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { esquemaPaso2, sanitizarDNI, sanitizarTelefono } from "@/utils/validaciones";
@@ -28,6 +28,8 @@ import {
 } from "react-native";
 
 export default function PasajeroIdentidadScreen() {
+  const { colores } = useAltokkeTheme();
+
   const { datosPersonales, setDatosPersonales } = useRegistroPasajero();
   const [loadingDni, setLoadingDni] = useState(false);
   const [dniValidado, setDniValidado] = useState<string>("");
@@ -160,8 +162,14 @@ export default function PasajeroIdentidadScreen() {
 
   return (
       <ContenedorPantalla 
-        estilo={styles.pantalla}
-        estiloContenedorContenido={styles.scrollContent}
+        estilo={[
+          styles.pantalla,
+          { backgroundColor: colores.fondo },
+        ]}
+        estiloContenedorContenido={[
+          styles.scrollContent,
+          { backgroundColor: colores.fondo },
+        ]}
       >
         <View style={styles.headerContainer}>
           <EncabezadoPagina
@@ -199,8 +207,13 @@ export default function PasajeroIdentidadScreen() {
               />
               {loadingDni && (
                 <View style={styles.statusRow}>
-                  <ActivityIndicator size="small" color={paletaColores.primary} />
-                  <Text style={styles.statusText}>Consultando RENIEC...</Text>
+                  <ActivityIndicator size="small" color={colores.exitoTexto} />
+                  <Text 
+                    style={[
+                      styles.statusText,
+                      { color: colores.secundario },
+                    ]}
+                  >Consultando RENIEC...</Text>
                 </View>
               )}
               {identidadVerificada && (
@@ -208,29 +221,52 @@ export default function PasajeroIdentidadScreen() {
                   <Ionicons
                     name="checkmark-circle"
                     size={18}
-                    color={paletaColores.exito}
+                    color={colores.exitoTexto}
                   />
-                  <Text style={styles.statusSuccessText}>DNI verificado correctamente</Text>
+                  <Text 
+                    style={[
+                      styles.statusSuccessText,
+                      { color: colores.exitoTexto },
+                    ]}
+                  >DNI verificado correctamente</Text>
                 </View>
               )}
 
               {!!errorDni && (
-                <View style={styles.errorContainer}>
+                <View 
+                  style={[
+                    styles.errorContainer,
+                    {
+                      backgroundColor: colores.errorFondo,
+                      borderColor: colores.errorFondo,
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="alert-circle-outline"
                     size={19}
-                    color={paletaColores.error}
+                    color={colores.error}
                   />
 
                   <View style={styles.errorContenido}>
-                    <Text style={styles.errorText}>{errorDni}</Text>
+                    <Text 
+                      style={[
+                        styles.errorText,
+                        { color: colores.error },
+                      ]}
+                    >{errorDni}</Text>
 
                     {errorDni.includes("ya está registrado") && (
                       <Pressable
                         onPress={() => router.replace("/login")}
                         accessibilityRole="link"
                       >
-                        <Text style={styles.enlace}>Ir a iniciar sesión</Text>
+                        <Text 
+                          style={[
+                            styles.enlace,
+                            { color: colores.exitoTexto },
+                          ]}
+                        >Ir a iniciar sesión</Text>
                       </Pressable>
                     )}
                   </View>
@@ -241,19 +277,27 @@ export default function PasajeroIdentidadScreen() {
             {identidadVerificada &&
             nombresActual &&
             apellidosActual && (
-              <View style={styles.verifiedCard}>
+              <View 
+                style={[
+                  styles.verifiedCard,
+                  {
+                    backgroundColor: colores.exitoFondo,
+                    borderColor: colores.linea,
+                  },
+                ]}
+              >
                 <View style={styles.verifiedHeader}>
                   <Ionicons
                     name="checkmark-circle"
                     size={18}
-                    color={paletaColores.exito}
+                    color={colores.exitoTexto}
                   />
-                  <Text style={styles.verifiedTitle}>
+                  <Text style={[styles.verifiedTitle, { color: colores.exitoTexto },]}>
                     Datos verificados
                   </Text>
                 </View>
 
-                <Text style={styles.verifiedName}>
+                <Text style={[styles.verifiedName, { color: colores.texto },]}>
                   {`${nombresActual} ${apellidosActual}`}
                 </Text>
               </View>
@@ -261,7 +305,7 @@ export default function PasajeroIdentidadScreen() {
           </View>
 
           <View style={styles.seccion}>
-            <Text style={styles.tituloSeccion}>Información adicional</Text>
+            <Text style={[styles.tituloSeccion, { color: colores.texto }]}>Información adicional</Text>
             <CampoTextoHookForm
               control={control}
               name="telefono"
@@ -309,11 +353,9 @@ export default function PasajeroIdentidadScreen() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
     flexGrow: 1,
-    backgroundColor: paletaColores.fondoClaro,
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
@@ -332,7 +374,6 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     fontSize: 17,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
   dniSection: {
     gap: 6,
@@ -344,11 +385,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   statusText: {
-    color: paletaColores.textoSecundarioClaro,
     fontSize: 13,
   },
   statusSuccessText: {
-    color: paletaColores.primaryHover,
     fontSize: 13,
     fontWeight: "600",
   },
@@ -372,7 +411,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   enlace: {
-    color: paletaColores.primaryHover,
     fontSize: 13,
     fontWeight: "700",
     textDecorationLine: "underline",
@@ -392,17 +430,14 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   verifiedTitle: {
-    color: paletaColores.primaryHover,
     fontSize: 12,
     fontWeight: "700",
   },
   verifiedName: {
-    color: paletaColores.textoClaro,
     fontSize: 16,
     fontWeight: "700",
   },
   verifiedDescription: {
-    color: paletaColores.textoSecundarioClaro,
     fontSize: 12,
   },
   autoFillNote: {
@@ -413,7 +448,6 @@ const styles = StyleSheet.create({
   },
   autoFillText: {
     flex: 1,
-    color: paletaColores.textoSecundarioClaro,
     fontSize: 13,
     lineHeight: 19,
   },

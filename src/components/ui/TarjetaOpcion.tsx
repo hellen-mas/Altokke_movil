@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { 
@@ -27,17 +27,22 @@ export function TarjetaOpcion({
   activa,
   alCambiar,
   estilo,
-  variante="oscuro",
 }: TarjetaOpcionProps) {
-  const esClaro = variante === "claro";
+  const { colores } = useAltokkeTheme();
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        esClaro && styles.cardClaro,
-        activa && styles.cardActiva,
-        activa && esClaro && styles.cardActivaClara,
+        {
+          backgroundColor: activa
+            ? colores.exitoFondo
+            : colores.superficie,
+
+          borderColor: activa
+            ? colores.exitoTexto
+            : colores.linea,
+        },
         pressed && styles.presionada,
         estilo,
       ]}
@@ -49,17 +54,13 @@ export function TarjetaOpcion({
     >
       <View style={[
         styles.iconContainer, 
-        esClaro && styles.iconContainerClaro,
+        { backgroundColor: colores.campo },
         ]}
       >
         <Ionicons
           name={icono}
           size={22}
-          color={
-            esClaro 
-              ? paletaColores.primaryHover 
-              : paletaColores.primary
-            }
+          color={colores.exitoTexto}
         />
       </View>
 
@@ -67,7 +68,7 @@ export function TarjetaOpcion({
         <Text
           style={[
             styles.titulo,
-            esClaro && styles.tituloClaro,
+            { color: colores.texto }
           ]}
         >
           {titulo}
@@ -76,7 +77,7 @@ export function TarjetaOpcion({
         <Text
           style={[
             styles.descripcion,
-            esClaro && styles.descripcionClara,
+            { color: colores.secundario }
           ]}
         >
           {descripcion}
@@ -92,10 +93,8 @@ export function TarjetaOpcion({
         size={24}
         color={
           activa 
-            ? paletaColores.primary
-            : esClaro 
-              ? paletaColores.textoSecundarioClaro
-              : paletaColores.textoSecundario
+            ? colores.exitoTexto
+            : colores.secundario
         }
       />
     </Pressable>
@@ -110,32 +109,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     minHeight: 78,
     borderWidth: 1,
-    borderColor: paletaColores.borde,
     borderRadius: 14,
-    backgroundColor: paletaColores.surface,
     gap: 12,
-  },
-  cardClaro: {
-    backgroundColor: paletaColores.superficieClara,
-    borderColor: paletaColores.bordeClaro,
-  },
-  cardActiva: {
-    borderColor: paletaColores.primary,
-  },
-  cardActivaClara: {
-    borderColor: "#B4DCC6",
-    backgroundColor: "#F5FBF7",
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: paletaColores.surfaceElevated,
     alignItems: "center",
     justifyContent: "center",
-  },
-  iconContainerClaro: {
-    backgroundColor: "#EAF5EF",
   },
   textos: {
     flex: 1,
@@ -144,18 +126,10 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.texto,
-  },
-  tituloClaro: {
-    color: paletaColores.textoClaro,
   },
   descripcion: {
     fontSize: 12,
     lineHeight: 17,
-    color: paletaColores.textoSecundario,
-  },
-  descripcionClara: {
-    color: paletaColores.textoSecundarioClaro,
   },
   presionada: {
     opacity: 0.75,

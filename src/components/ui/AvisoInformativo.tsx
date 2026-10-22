@@ -1,6 +1,6 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { use } from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 export interface AvisoInformativoProps {
@@ -15,28 +15,39 @@ export function AvisoInformativo({
   texto,
   titulo,
   icono = "shield-checkmark-outline",
-  variante = "claro",
   style,
 }: AvisoInformativoProps) {
-  const esOscuro = variante === "oscuro";
+  const { colores } = useAltokkeTheme();
 
   return (
-    <View style={[styles.container, esOscuro && styles.containerOscuro, style]}>
-      <View style={[styles.iconoContainer, esOscuro && styles.iconoContainerOscuro]}>
+    <View 
+      style={[
+        styles.container,
+        {
+          backgroundColor: colores.exitoFondo,
+          borderWidth: 0,
+        },
+        style,
+      ]}>
+      <View 
+        style={[
+          styles.iconoContainer, 
+          { backgroundColor: colores.campo },
+        ]}>
         <Ionicons
           name={icono}
-          size={esOscuro ? 22 : 19}
-          color={esOscuro ? paletaColores.boton : paletaColores.verde}
+          size={19}
+          color={colores.exitoTexto}
         />
       </View>
 
       <View style={styles.informacion}>
         {titulo && (
-          <Text style={[styles.titulo, esOscuro && styles.tituloOscuro]}>
+          <Text style={[styles.titulo, { color: colores.texto }]}>
             {titulo}
           </Text>
         )}
-        <Text style={[styles.texto, esOscuro && styles.textoOscuro]}>
+        <Text style={[styles.texto, { color: colores.secundario }]}>
           {texto}
         </Text>
       </View>
@@ -55,13 +66,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#EAF5EF",
   },
-  containerOscuro: {
-    backgroundColor: "#13231B",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    borderColor: "rgba(46, 206, 121, 0.2)",
-  },
   iconoContainer: {
     width: 32,
     height: 32,
@@ -70,35 +74,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#DDEEE5",
   },
-  iconoContainerOscuro: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(46, 206, 121, 0.15)",
-  },
   informacion: {
     flex: 1,
   },
   titulo: {
-    color: paletaColores.textoClaro,
     fontSize: 12,
     fontWeight: "700",
     marginBottom: 2,
   },
-  tituloOscuro: {
-    color: "#FFFFFF",
-    fontSize: 14.5,
-    fontWeight: "700",
-    marginBottom: 3,
-  },
   texto: {
-    color: paletaColores.textoSecundarioClaro,
     fontSize: 12,
     lineHeight: 17,
-  },
-  textoOscuro: {
-    color: "#C2D4CB",
-    fontSize: 13.5,
-    lineHeight: 19,
   },
 });

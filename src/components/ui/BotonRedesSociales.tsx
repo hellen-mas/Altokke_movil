@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text } from "react-native";
 
@@ -10,47 +10,52 @@ interface PropsBotonRedesSociales {
   onPress?: () => void;
 }
 
-export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, onPress, disabled }: PropsBotonRedesSociales) {
+export function BotonRedesSociales({ titulo, nombreIcono, colorIcono, onPress, disabled=false, }: PropsBotonRedesSociales) {
+  const { colores } = useAltokkeTheme();
+
   return (
     <Pressable 
       style={({ pressed }) => [
-        estilos.botonRedSocial,
-        pressed && estilos.botonPresionado
+        estilos.boton,
+        {
+          backgroundColor: colores.superficie,
+          borderColor: colores.linea,
+          opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
+        },
       ]} 
       disabled={disabled}
       onPress={onPress}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={titulo}
+      accessibilityState={{ disabled }}
     >
-      <Ionicons name={nombreIcono} size={26} color={colorIcono} />
-      <Text style={estilos.textoBotonRedSocial}>{titulo}</Text>
+      <Ionicons name={nombreIcono} size={22} color={colorIcono} />
+      <Text 
+        style={[
+          estilos.texto,
+          { color: colores.texto },
+        ]}
+      >{titulo}</Text>
     </Pressable>
   );
 }
 
 const estilos = StyleSheet.create({
-  botonRedSocial: {
+  boton: {
     width: "100%",
-    minHeight: 60,
+    minHeight: 52,
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.14)",
-    borderRadius: 16,
-    backgroundColor: paletaColores.input,
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 30,
   },
-  botonPresionado: {
-    opacity: 0.7,
-    backgroundColor: paletaColores.tarjeta,
-  },
-  textoBotonRedSocial: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
+  texto: {
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
