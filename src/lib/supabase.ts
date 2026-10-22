@@ -3,8 +3,14 @@ import 'react-native-url-polyfill/auto';
 import type { Database } from '@/types/database.types';
 import { almacenamientoSeguro } from '@/lib/almacenamientoSeguro';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || "placeholder_key";
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Faltan las credenciales de Supabase. Revisa tu archivo .env"
+  );
+}
 
 // Inicializo el cliente de Supabase guardando la sesion en el almacenamiento seguro (AsyncStorage + SecureStore) para que la sesion persista entre reinicios de la app
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {

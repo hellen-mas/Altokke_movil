@@ -70,7 +70,6 @@ export const authService = {
    * Registra un nuevo pasajero con correo y contraseña
    */
   async registrarPasajero(datos: RegistroPasajeroInput) {
-    await supabase.auth.signOut();
 
     const metadata = {
       nombre: datos.nombres,
