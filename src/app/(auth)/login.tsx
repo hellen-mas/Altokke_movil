@@ -13,7 +13,6 @@ import { obtenerEstadoConductor } from "@/services/estadoConductor";
 import { traducirErrorAuth } from "@/utils/erroresAuth";
 import { esquemaLogin, TipoDatosLogin } from "@/utils/validaciones";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
@@ -104,17 +103,19 @@ export default function LoginScreen() {
           { backgroundColor: colores.fondo },
         ]}
       >
-        <View style={styles.topSection}>
-          <EncabezadoPagina
-            titulo="Iniciar "
-            tituloDestacado="sesión"
-            descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
-          />
 
+        <EncabezadoPagina
+          titulo="Iniciar "
+          tituloDestacado="sesión"
+          descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
+        />
+
+        <View style={styles.topSection}>
           <View style={styles.formContainer}>
             <CampoTextoHookForm
               control={control}
               name="correo"
+              conBotonLimpiar
               nombreIcono="mail-outline"
               placeholder="Correo electrónico"
               keyboardType="email-address"
@@ -137,7 +138,7 @@ export default function LoginScreen() {
 
             <Pressable
               onPress={() => router.push("/recuperar-cuenta")}
-              hitSlop={12}
+              hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
               accessibilityRole="link"
               accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
               style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
@@ -208,6 +209,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   topSection: {
+    flex: 1,
+    justifyContent: "center",
     gap: 24,
   },
   formContainer: {
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   forgotPasswordText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "600",
   },
   dividerContainer: {
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     flex: 1,
-    height: 1,
+    height: 1.5,
   },
   dividerText: {
     paddingHorizontal: 14,
@@ -247,12 +250,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   disclaimerText: {
-    fontSize: 12,
+    fontSize: 13,
     textAlign: "center",
-    lineHeight: 19,
+    lineHeight: 20,
   },
   legalLink: {
     fontWeight: "700",
-    textDecorationLine: "underline",
   },
 });
