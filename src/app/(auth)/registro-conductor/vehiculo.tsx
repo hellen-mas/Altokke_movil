@@ -1,10 +1,10 @@
-import { IndicadorPasos } from "@/components/ui";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { CampoTexto } from "@/components/ui/CampoTexto";
-import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
-import { useRegistroConductor } from "@/context/RegistroConductorContext";
-import { paletaColores } from "@/paletaColores";
-import { conductorService } from "@/services/conductorService";
+import { IndicadorPasos } from "@/shared/components/ui";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { CampoTexto } from "@/shared/components/ui/CampoTexto";
+import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
+import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { conductorService } from "@/features/conductores/services/conductorService";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";

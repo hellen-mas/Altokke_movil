@@ -8,9 +8,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
-import { paletaColores } from "@/paletaColores";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
+import { paletaColores } from "@/shared/theme/paletaColores";
 
 interface PreguntaProps {
   pregunta: string;

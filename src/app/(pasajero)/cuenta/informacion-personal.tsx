@@ -9,13 +9,13 @@ import {
   Text,
   View,
 } from "react-native";
-import { AvatarPerfil } from "@/components/cuenta/AvatarPerfil";
-import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
-import { PASAJERO_DEMO } from "@/constants/cuenta";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { paletaColores } from "@/paletaColores";
-import { seleccionarFotoGaleria, subirFotoAvatar } from "@/utils/avatar";
+import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
+import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
+import { PASAJERO_DEMO } from "@/features/pasajeros/constants/cuenta";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { supabase } from "@/shared/api/supabase";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { seleccionarFotoGaleria, subirFotoAvatar } from "@/shared/utils/avatar";
 
 export default function InformacionPersonal() {
   const { userId, user } = useAuth();

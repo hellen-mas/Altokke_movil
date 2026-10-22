@@ -1,14 +1,14 @@
-import { CampoTexto } from "@/components/ui/CampoTexto";
-import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
-import { IndicadorPasos } from "@/components/ui";
-import { SelectorFotoPerfil } from "@/components/ui";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { paletaColores } from "@/paletaColores";
-import { useRegistroConductor } from "@/context/RegistroConductorContext";
+import { CampoTexto } from "@/shared/components/ui/CampoTexto";
+import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
+import { IndicadorPasos } from "@/shared/components/ui";
+import { SelectorFotoPerfil } from "@/shared/components/ui";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
 import { 
   esTelefonoValido, 
   sanitizarTelefono 
-} from "@/utils/validaciones";
+} from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";

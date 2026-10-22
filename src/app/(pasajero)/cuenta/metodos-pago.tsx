@@ -1,6 +1,6 @@
-import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
-import { IdMetodoPago, METODOS_PAGO } from "@/constants/cuenta";
-import { paletaColores } from "@/paletaColores";
+import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
+import { IdMetodoPago, METODOS_PAGO } from "@/features/pasajeros/constants/cuenta";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";

@@ -1,12 +1,12 @@
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
-import { PASAJERO_DEMO } from "@/constants/cuenta";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { PASAJERO_DEMO } from "@/features/pasajeros/constants/cuenta";
 import {
   CENTRO_BAGUA,
   LUGARES_BAGUA,
   ORIGEN_EJEMPLO,
-} from "@/constants/pasajero";
-import { paletaColores } from "@/paletaColores";
+} from "@/features/viajes/constants/pasajero";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {

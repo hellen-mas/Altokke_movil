@@ -9,10 +9,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
-import { AvisoInformativo } from "@/components/conductor/AvisoInformativo";
-import { CONDUCTOR_EJEMPLO } from "@/constants/conductor";
-import { paletaColores } from "@/paletaColores";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
+import { CONDUCTOR_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 
 interface FilaSeguridadProps {

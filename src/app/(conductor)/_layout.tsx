@@ -3,10 +3,10 @@ import { Tabs } from "expo-router";
 import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { supabase } from "@/lib/supabase";
-import { obtenerEstadoConductor } from "@/services/estadoConductor";
+import { supabase } from "@/shared/api/supabase";
+import { obtenerEstadoConductor } from "@/features/conductores/services/estadoConductor";
 
-import { paletaColores } from "@/paletaColores";
+import { paletaColores } from "@/shared/theme/paletaColores";
 
 export default function ConductorLayout() {
   const [verificando, setVerificando] = useState(true);

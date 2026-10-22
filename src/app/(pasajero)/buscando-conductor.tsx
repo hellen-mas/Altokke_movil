@@ -10,20 +10,20 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import { PulsoBusqueda } from "@/components/pasajero/PulsoBusqueda";
-import { TarjetaConductor } from "@/components/pasajero/TarjetaConductor";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import { PulsoBusqueda } from "@/features/viajes/components/PulsoBusqueda";
+import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
-} from "@/constants/pasajero";
-import { useViaje } from "@/context/ViajeContext";
-import { useResumenViaje } from "@/hooks/use-resumen-viaje";
-import { paletaColores } from "@/paletaColores";
-import { formatearSoles, NOMBRE_METODO_PAGO } from "@/utils/viaje";
+} from "@/features/viajes/constants/pasajero";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;

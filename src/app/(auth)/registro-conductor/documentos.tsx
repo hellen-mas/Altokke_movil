@@ -1,11 +1,11 @@
-import { useRegistroConductor } from "@/context/RegistroConductorContext";
-import { DocumentoArchivo } from "@/components/conductor/DocumentoArchivo";
-import { IndicadorPasos } from "@/components/ui";
-import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { DocumentoArchivo } from "@/features/conductores/components/DocumentoArchivo";
+import { IndicadorPasos } from "@/shared/components/ui";
+import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { Ionicons } from "@expo/vector-icons";
-import { paletaColores } from "@/paletaColores";
-import { ArchivoDocumento } from "@/types/conductor";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { ArchivoDocumento } from "@/features/conductores/types/conductor";
 
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";

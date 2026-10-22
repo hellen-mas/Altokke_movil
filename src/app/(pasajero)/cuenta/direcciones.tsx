@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
-import { DIRECCIONES_DEMO } from "@/constants/cuenta";
-import { paletaColores } from "@/paletaColores";
+import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
+import { DIRECCIONES_DEMO } from "@/features/pasajeros/constants/cuenta";
+import { paletaColores } from "@/shared/theme/paletaColores";
 
 export default function DireccionesGuardadas() {
   return (
