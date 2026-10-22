@@ -3,13 +3,12 @@ import {
   CampoTextoHookForm,
   ContenedorPantalla,
   EncabezadoPagina,
-  MedidorPasswordSeguro,
-  PiePaginaAutenticacion,
-} from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
-import { authService } from "@/services/authService";
-import { traducirErrorAuth } from "@/utils/erroresAuth";
-import { esquemaNuevaContrasena } from "@/utils/validaciones";
+} from "@/shared/components/ui";
+import { MedidorPasswordSeguro, PiePaginaAutenticacion } from "@/features/autenticacion/components";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { authService } from "@/features/autenticacion/services/authService";
+import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { esquemaNuevaContrasena } from "@/features/autenticacion/utils/validacionesAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";

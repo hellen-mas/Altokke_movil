@@ -1,15 +1,15 @@
-import { BarraInferior } from "@/components/pasajero/BarraInferior";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   Lugar,
   LUGARES_BAGUA,
   ORIGEN_EJEMPLO,
-} from "@/constants/pasajero";
-import { useViaje } from "@/context/ViajeContext";
-import { paletaColores } from "@/paletaColores";
+} from "@/features/viajes/constants/pasajero";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";

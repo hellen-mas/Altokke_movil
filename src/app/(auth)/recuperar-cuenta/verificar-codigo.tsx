@@ -3,11 +3,11 @@ import {
   CampoCodigoVerificacion,
   ContenedorPantalla,
   EncabezadoPagina,
-  PiePaginaAutenticacion,
-} from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
-import { authService } from "@/services/authService";
-import { traducirErrorAuth } from "@/utils/erroresAuth";
+} from "@/shared/components/ui";
+import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { authService } from "@/features/autenticacion/services/authService";
+import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";

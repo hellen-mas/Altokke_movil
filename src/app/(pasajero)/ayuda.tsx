@@ -8,10 +8,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
-import { ItemMenu } from "@/components/cuenta/ItemMenu";
-import { BarraInferior } from "@/components/pasajero/BarraInferior";
-import { paletaColores } from "@/paletaColores";
+import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
+import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
+import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+import { paletaColores } from "@/shared/theme/paletaColores";
 
 const TEMAS = [
   { icono: "car-outline", titulo: "Problemas con un viaje" },

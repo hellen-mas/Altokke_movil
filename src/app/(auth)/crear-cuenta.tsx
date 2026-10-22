@@ -2,11 +2,11 @@ import {
   BotonPrincipal,
   ContenedorPantalla,
   EncabezadoPagina,
-  PiePaginaAutenticacion,
   TarjetaRol,
-} from "@/components/ui";
-import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { authService } from "@/services/authService";
+} from "@/shared/components/ui";
+import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { authService } from "@/features/autenticacion/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";

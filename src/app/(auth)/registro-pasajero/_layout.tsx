@@ -1,4 +1,4 @@
-import { RegistroPasajeroProvider } from "@/context/RegistroPasajeroContext";
+import { RegistroPasajeroProvider } from "@/features/pasajeros/context/RegistroPasajeroContext";
 import { Stack } from "expo-router";
 
 export default function RegistroPasajeroLayout() {

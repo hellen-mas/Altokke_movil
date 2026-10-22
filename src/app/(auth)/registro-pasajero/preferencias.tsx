@@ -5,13 +5,13 @@ import {
   EncabezadoPagina,
   IndicadorPasos,
   TarjetaOpcion,
-} from "@/components/ui";
-import { useAuth } from "@/context/AuthContext";
-import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
-import { supabase } from "@/lib/supabase";
-import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { authService } from "@/services/authService";
-import { traducirErrorAuth } from "@/utils/erroresAuth";
+} from "@/shared/components/ui";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
+import { supabase } from "@/shared/api/supabase";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { authService } from "@/features/autenticacion/services/authService";
+import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";

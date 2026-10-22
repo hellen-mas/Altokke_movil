@@ -1,11 +1,11 @@
-import { useRegistroConductor } from "@/context/RegistroConductorContext";
-import { DocumentoFoto } from "@/components/conductor/DocumentoFoto";
-import { IndicadorPasos } from "@/components/ui";
-import { EncabezadoPagina } from "@/components/ui/EncabezadoPagina";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { DocumentoFoto } from "@/features/conductores/components/DocumentoFoto";
+import { IndicadorPasos } from "@/shared/components/ui";
+import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { paletaColores } from "@/paletaColores";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";

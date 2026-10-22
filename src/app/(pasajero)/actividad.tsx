@@ -2,16 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { BarraInferior } from "@/components/pasajero/BarraInferior";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
+import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import {
   COLOR_CABECERA,
   LUGARES_BAGUA,
   ViajeHistorial,
-} from "@/constants/pasajero";
-import { useViaje } from "@/context/ViajeContext";
-import { paletaColores } from "@/paletaColores";
-import { formatearFechaHora, formatearSoles } from "@/utils/viaje";
+} from "@/features/viajes/constants/pasajero";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { formatearFechaHora, formatearSoles } from "@/features/viajes/utils/viaje";
 
 type Filtro = "todos" | "completado" | "cancelado";
 

@@ -1,7 +1,7 @@
-import { BotonPrincipal, ContenedorPantalla } from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
-import { authService } from "@/services/authService";
-import { EstadoConductor, obtenerEstadoConductor } from "@/services/estadoConductor";
+import { BotonPrincipal, ContenedorPantalla } from "@/shared/components/ui";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { authService } from "@/features/autenticacion/services/authService";
+import { EstadoConductor, obtenerEstadoConductor } from "@/features/conductores/services/estadoConductor";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";

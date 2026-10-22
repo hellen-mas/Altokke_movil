@@ -1,6 +1,6 @@
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { paletaColores } from "@/paletaColores";
-import { authService } from "@/services/authService";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import { authService } from "@/features/autenticacion/services/authService";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";

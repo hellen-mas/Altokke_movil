@@ -1,10 +1,10 @@
 
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
-import { RESUMEN_GANANCIAS, VIAJES_EJEMPLO } from "@/constants/conductor";
-import { paletaColores } from "@/paletaColores";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { RESUMEN_GANANCIAS, VIAJES_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 
 const ALTURA_MAXIMA_BARRA = 90;
 

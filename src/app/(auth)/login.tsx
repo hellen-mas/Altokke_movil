@@ -3,15 +3,15 @@ import {
   CampoTextoHookForm,
   ContenedorPantalla,
   EncabezadoPagina,
-  PiePaginaAutenticacion,
-} from "@/components/ui";
-import { BotonRedesSociales } from "@/components/ui/BotonRedesSociales";
-import { useAuth } from "@/context/AuthContext";
-import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { authService } from "@/services/authService";
-import { obtenerEstadoConductor } from "@/services/estadoConductor";
-import { traducirErrorAuth } from "@/utils/erroresAuth";
-import { esquemaLogin, TipoDatosLogin } from "@/utils/validaciones";
+} from "@/shared/components/ui";
+import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
+import { BotonRedesSociales } from "@/shared/components/ui/BotonRedesSociales";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { authService } from "@/features/autenticacion/services/authService";
+import { obtenerEstadoConductor } from "@/features/conductores/services/estadoConductor";
+import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { esquemaLogin, TipoDatosLogin } from "@/features/autenticacion/utils/validacionesAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";

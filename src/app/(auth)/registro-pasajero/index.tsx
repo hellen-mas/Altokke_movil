@@ -4,12 +4,11 @@ import {
   ContenedorPantalla,
   EncabezadoPagina,
   IndicadorPasos,
-  MedidorPasswordSeguro,
-  PiePaginaAutenticacion,
-} from "@/components/ui";
-import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
-import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { esquemaPaso1 } from "@/utils/validaciones";
+} from "@/shared/components/ui";
+import { MedidorPasswordSeguro, PiePaginaAutenticacion } from "@/features/autenticacion/components";
+import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { esquemaPaso1 } from "@/features/pasajeros/utils/validacionesPasajero";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
 import React from "react";

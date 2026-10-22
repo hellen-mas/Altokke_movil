@@ -3,14 +3,14 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AvatarPerfil } from "@/components/cuenta/AvatarPerfil";
-import { ItemMenu } from "@/components/cuenta/ItemMenu";
-import { BarraInferior } from "@/components/pasajero/BarraInferior";
-import { COLORES_CUENTA, PASAJERO_DEMO } from "@/constants/cuenta";
-import { paletaColores } from "@/paletaColores";
+import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
+import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
+import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+import { COLORES_CUENTA, PASAJERO_DEMO } from "@/features/pasajeros/constants/cuenta";
+import { paletaColores } from "@/shared/theme/paletaColores";
 
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { supabase } from "@/shared/api/supabase";
 import React, { useEffect, useState } from "react";
 
 const OPCIONES = [

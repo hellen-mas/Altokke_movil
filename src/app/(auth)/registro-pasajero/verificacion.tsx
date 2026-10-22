@@ -7,12 +7,13 @@ import {
   EncabezadoPagina,
   IndicadorPasos,
   SelectorFotoPerfil,
-} from "@/components/ui";
-import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
-import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
-import { usuarioService } from "@/services/usuarioService";
-import { traducirErrorAuth } from "@/utils/erroresAuth";
-import { esquemaPaso2, sanitizarDNI, sanitizarTelefono } from "@/utils/validaciones";
+} from "@/shared/components/ui";
+import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { usuarioService } from "@/features/autenticacion/services/usuarioService";
+import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { esquemaPaso2 } from "@/features/pasajeros/utils/validacionesPasajero";
+import { sanitizarDNI, sanitizarTelefono } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";

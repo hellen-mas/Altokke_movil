@@ -1,7 +1,7 @@
-import { CabeceraConductor } from "@/components/conductor/CabeceraConductor";
-import { RESUMEN_HISTORIAL, VIAJES_EJEMPLO } from "@/constants/conductor";
-import { paletaColores } from "@/paletaColores";
-import type { EstadoViaje } from "@/types/conductor";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { RESUMEN_HISTORIAL, VIAJES_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { paletaColores } from "@/shared/theme/paletaColores";
+import type { EstadoViaje } from "@/features/conductores/types/conductor";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";

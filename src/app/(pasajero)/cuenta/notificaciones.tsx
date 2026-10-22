@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Switch, View } from "react-native";
-import { EncabezadoPantalla } from "@/components/cuenta/EncabezadoPantalla";
-import { ItemMenu } from "@/components/cuenta/ItemMenu";
-import { paletaColores } from "@/paletaColores";
+import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
+import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
+import { paletaColores } from "@/shared/theme/paletaColores";
 
 type Clave =
   | "promociones"

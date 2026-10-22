@@ -11,23 +11,23 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CabeceraPasajero } from "@/components/pasajero/CabeceraPasajero";
-import { MapaBase } from "@/components/pasajero/MapaBase";
-import { TarjetaConductor } from "@/components/pasajero/TarjetaConductor";
-import BotonPrincipal from "@/components/ui/BotonPrincipal";
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
+import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
   CONDUCTOR_EJEMPLO,
   ORIGEN_EJEMPLO,
-} from "@/constants/pasajero";
-import { useResumenViaje } from "@/hooks/use-resumen-viaje";
-import { paletaColores } from "@/paletaColores";
+} from "@/features/viajes/constants/pasajero";
+import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { paletaColores } from "@/shared/theme/paletaColores";
 import {
   formatearHora,
   formatearSoles,
   interpolarRuta,
-} from "@/utils/viaje";
+} from "@/features/viajes/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
