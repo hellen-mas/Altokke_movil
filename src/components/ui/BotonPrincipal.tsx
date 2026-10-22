@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import {
   ActivityIndicator,
@@ -36,15 +36,21 @@ export function BotonPrincipal({
   mostrarIcono = false,
   icono = "arrow-forward",
 }: PropsBotonPrincipal) {
+  const { colores } = useAltokkeTheme();
   const bloqueado = disabled || cargando;
 
   return (
     <Pressable
       style={({ pressed }) => [
         estilos.boton,
+        {
+          backgroundColor: bloqueado
+            ? colores.primarioDeshabilitado
+            : pressed
+            ? colores.primarioPresionado
+            : colores.primario,
+        },
         estilo,
-        bloqueado && estilos.disabled,
-        pressed && !bloqueado && estilos.presionado,
       ]}
       disabled={bloqueado}
       onPress={onPress || alPresionar}
@@ -54,11 +60,15 @@ export function BotonPrincipal({
       accessibilityState={{ disabled: bloqueado, busy: cargando }}
     >
       {cargando ? (
-        <ActivityIndicator color={paletaColores.textOnPrimary} size="small" />
+        <ActivityIndicator color={colores.textoBoton} size="small" />
       ) : (
         <View style={estilos.contenido}>
           <Text
-            style={[estilos.texto, bloqueado && estilos.textoDisabled, estiloTexto]}
+            style={[
+              estilos.texto, 
+              { color: colores.textoBoton },
+              estiloTexto,
+            ]}
             numberOfLines={2}
           >
             {titulo}
@@ -67,7 +77,7 @@ export function BotonPrincipal({
             <Ionicons
               name={icono}
               size={tamanoIcono}
-              color={bloqueado ? paletaColores.disabledText : paletaColores.textOnPrimary}
+              color={colores.textoBoton}
             />
           )}
         </View>
@@ -85,27 +95,14 @@ const estilos = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#246B50",
     borderRadius: 30,
     borderWidth: 0,
   },
   texto: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "600",
     letterSpacing: 0,
-    color: "#FFFFFF",
     textAlign: "center",
-  },
-  textoDisabled: {
-    color: paletaColores.disabledText,
-  },
-  disabled: {
-    backgroundColor: "#A9C8B8",
-    opacity: 1,
-  },
-  presionado: {
-    backgroundColor: "#1B563E",
-    opacity: 0.95,
   },
   contenido: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -17,10 +17,11 @@ export function TarjetaRol({
   seleccionado,
   onPress,
 }: PropsTarjetaRol) {
+  const { colores } = useAltokkeTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={8}
       accessibilityRole="radio"
       accessibilityState={{ selected: seleccionado }}
       accessibilityLabel={`${titulo}: ${subtitulo}`}
@@ -28,37 +29,34 @@ export function TarjetaRol({
       style={({ pressed }) => [
         estilos.tarjeta,
         {
-          borderColor: seleccionado ? paletaColores.primary : paletaColores.surfaceBorder,
-          backgroundColor: seleccionado ? paletaColores.surfaceElevated : paletaColores.surface,
-          opacity: pressed ? 0.88 : 1,
+          backgroundColor: seleccionado
+            ? colores.exitoFondo
+            : colores.superficie,
+          borderColor: seleccionado ? colores.exitoTexto : colores.linea,
+          opacity: pressed ? 0.85 : 1,
         },
       ]}
     >
-      <View
-        style={[
-          estilos.iconoBox,
-          { backgroundColor: seleccionado ? paletaColores.primaryMuted : "rgba(255, 255, 255, 0.04)" },
-        ]}
-      >
+      <View style={[estilos.iconoBox, { backgroundColor: colores.campo }]}>
         <Ionicons
           name={nombreIcono}
           size={28}
-          color={seleccionado ? paletaColores.primary : paletaColores.textSecondary}
+          color={seleccionado ? colores.exitoTexto : colores.secundario}
         />
       </View>
 
       <View style={estilos.textos}>
-        <Text style={estilos.titulo}>{titulo}</Text>
-        <Text style={estilos.subtitulo}>{subtitulo}</Text>
+        <Text style={[estilos.titulo, { color: colores.texto }]}>{titulo}</Text>
+        <Text style={[estilos.subtitulo, { color: colores.secundario }]}>
+          {subtitulo}
+        </Text>
       </View>
 
-      <View style={estilos.checkWrap}>
-        {seleccionado ? (
-          <Ionicons name="checkmark-circle" size={26} color={paletaColores.primary} />
-        ) : (
-          <View style={estilos.radioVacio} />
-        )}
-      </View>
+      <Ionicons
+        name={seleccionado ? "checkmark-circle" : "ellipse-outline"}
+        size={23}
+        color={seleccionado ? colores.exitoTexto : colores.secundario}
+      />
     </Pressable>
   );
 }
@@ -87,7 +85,6 @@ const estilos = StyleSheet.create({
   titulo: {
     fontSize: 21,
     fontWeight: "700",
-    color: paletaColores.textPrimary,
     marginBottom: 4,
     letterSpacing: -0.3,
   },
@@ -96,20 +93,6 @@ const estilos = StyleSheet.create({
     lineHeight: 22,
     letterSpacing: -0.1,
     fontWeight: "500",
-    color: paletaColores.textSecondary,
-  },
-  checkWrap: {
-    width: 28,
-    height: 28,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  radioVacio: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: paletaColores.surfaceBorder,
   },
 });
 

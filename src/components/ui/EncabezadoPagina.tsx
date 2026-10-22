@@ -1,6 +1,5 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { StyleProp, StyleSheet, Text, TextStyle, View } from "react-native";
-
 export interface PropsEncabezadoPagina {
   titulo: string;
   tituloDestacado?: string;
@@ -22,7 +21,7 @@ export const EncabezadoPagina = ({
   estiloDescripcion,
   sinMargenSuperior = true,
 }: PropsEncabezadoPagina) => {
-  const esClaro = variante === "claro";
+  const { colores } = useAltokkeTheme();
 
   return (
     <View style={estilos.contenedor}>
@@ -30,19 +29,29 @@ export const EncabezadoPagina = ({
         style={[
           estilos.encabezado,
           !sinMargenSuperior && { marginTop: 18 },
-          esClaro && estilos.encabezadoClaro,
+          { color: colores.texto },
           estiloTitulo,
         ]}
         accessibilityRole="header"
       >
         {titulo}
         {tituloDestacado && (
-          <Text style={[estilos.resaltado, estiloResaltado]}>{tituloDestacado}</Text>
+          <Text 
+            style={[
+              estilos.resaltado, 
+              { color: colores.exitoTexto },
+              estiloResaltado,
+            ]}>{tituloDestacado}</Text>
         )}
       </Text>
 
       {!!descripcion && (
-        <Text style={[estilos.descripcion, esClaro && estilos.descripcionClara, estiloDescripcion]}>
+        <Text 
+          style={[
+            estilos.descripcion, 
+            { color: colores.secundario },
+            estiloDescripcion,
+          ]}>
           {descripcion}
         </Text>
       )}
@@ -59,28 +68,19 @@ const estilos = StyleSheet.create({
     fontSize: 38,
     lineHeight: 44,
     fontWeight: "800",
-    color: paletaColores.textPrimary,
     marginBottom: 8,
     letterSpacing: -0.6,
   },
-  encabezadoClaro: {
-    color: paletaColores.textoClaro,
-  },
   resaltado: {
-    color: paletaColores.primary,
     fontWeight: "800",
   },
   descripcion: {
     width: "100%",
     fontSize: 18,
     lineHeight: 26,
-    color: paletaColores.textSecondary,
     fontWeight: "500",
     marginTop: 6,
     letterSpacing: -0.2,
-  },
-  descripcionClara: {
-    color: paletaColores.textoSecundarioClaro,
   },
 });
 

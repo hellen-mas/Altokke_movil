@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { paletaColores } from '@/paletaColores';
+import { useAltokkeTheme } from '@/hooks/useAltokkeTheme';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -12,9 +12,8 @@ interface Props {
 export function MedidorPasswordSeguro({ 
   contrasena,
   longitudMinima = 8,
-  variante = "oscuro",
 }: Props) {
-  const esClaro = variante === "claro";
+  const { colores: tema } = useAltokkeTheme();
 
   const requisitos = [
     contrasena.length >= longitudMinima,
@@ -32,12 +31,12 @@ export function MedidorPasswordSeguro({
     cumplidos === 3 ? 2 :
     cumplidos === 4 ? 3 : 4;
 
-  const colores = [
-    paletaColores.bordeClaro,
-    paletaColores.error,
-    paletaColores.advertencia,
+  const coloresSeguridad = [
+    tema.progresoInactivo,
+    tema.error,
+    "#E5A93C",
     "#729A35",
-    paletaColores.exito,
+    tema.exitoTexto,
   ];
 
   const etiquetas = [
@@ -48,7 +47,7 @@ export function MedidorPasswordSeguro({
     "Excelente",
   ];
 
-  const colorActual = colores[nivel];
+  const colorActual = coloresSeguridad[nivel];
 
   return (
     <View style={styles.contenedor}>
@@ -56,7 +55,7 @@ export function MedidorPasswordSeguro({
         <Text
           style={[
             styles.titulo,
-            esClaro && styles.tituloClaro,
+            { color: tema.texto },
           ]}
         >
           Seguridad de contraseña
@@ -65,11 +64,11 @@ export function MedidorPasswordSeguro({
         <Text
           style={[
             styles.nivel,
-            { color: nivel === 0
-                ? esClaro
-                  ? paletaColores.textoSecundarioClaro
-                  : paletaColores.textoSecundario
-                : colorActual
+            {
+              color:
+                nivel === 0
+                  ? tema.secundario
+                  : colorActual,
             },
           ]}
         >
@@ -83,12 +82,11 @@ export function MedidorPasswordSeguro({
             key={indice}
             style={[
               styles.barra,
-              { backgroundColor: 
-                nivel >= indice 
-                  ? colorActual 
-                  : esClaro
-                    ? "#DCE5DF"
-                    : paletaColores.borde, 
+              {
+                backgroundColor:
+                  nivel >= indice
+                    ? colorActual
+                    : tema.progresoInactivo,
               },
             ]}
           />
@@ -99,16 +97,12 @@ export function MedidorPasswordSeguro({
         <Ionicons
           name="information-circle-outline"
           size={15}
-          color={
-            esClaro
-              ? paletaColores.textoSecundarioClaro
-              : paletaColores.textoSecundario
-          }
+          color={tema.secundario}
         />
         <Text
           style={[
             styles.descripcion,
-            esClaro && styles.descripcionClara,
+            { color: tema.secundario },
           ]}
         >
           Mín. {longitudMinima} caracteres,
@@ -134,10 +128,6 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 13,
     fontWeight: "600",
-    color: paletaColores.texto,
-  },
-  tituloClaro: {
-    color: paletaColores.textoClaro,
   },
   nivel: {
     fontSize: 12,
@@ -162,9 +152,5 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 18,
-    color: paletaColores.textoSecundario,
-  },
-  descripcionClara: {
-    color: paletaColores.textoSecundarioClaro,
   },
 });

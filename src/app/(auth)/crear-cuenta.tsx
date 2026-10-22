@@ -5,7 +5,7 @@ import {
   PiePaginaAutenticacion,
   TarjetaRol,
 } from "@/components/ui";
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { authService } from "@/services/authService";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -13,6 +13,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 export default function CrearCuentaScreen() {
+  const { colores } = useAltokkeTheme();
   const [selectedRole, setSelectedRole] = useState<"pasajero" | "conductor">("pasajero");
   const router = useRouter();
 
@@ -26,15 +27,9 @@ export default function CrearCuentaScreen() {
 
 
   return (
-    <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
-    >
       <ContenedorPantalla
-        estilo={{ backgroundColor: "transparent" }}
-        estiloContenedorContenido={styles.scrollContent}
+        estilo={{ backgroundColor: colores.fondo }}
+        estiloContenedorContenido={[styles.scrollContent, { backgroundColor: colores.fondo },]}
       >
         <View style={styles.topSection}>
           <EncabezadoPagina
@@ -62,7 +57,12 @@ export default function CrearCuentaScreen() {
         </View>
 
         <View style={styles.bottomContainer}>
-          <BotonPrincipal titulo="Continuar" onPress={handleContinue} />
+          <BotonPrincipal 
+            titulo="Continuar" 
+            mostrarIcono
+            icono="arrow-forward"
+            onPress={handleContinue} 
+          />
           <PiePaginaAutenticacion
             textoPregunta="¿Ya tienes cuenta?"
             ruta="/login"
@@ -70,24 +70,18 @@ export default function CrearCuentaScreen() {
           />
         </View>
       </ContenedorPantalla>
-    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  pantalla: {
-    flex: 1,
-    backgroundColor: paletaColores.background,
-  },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingTop: 24,
+    paddingBottom: 32,
     flexGrow: 1,
-    justifyContent: "space-between",
   },
   topSection: {
-    gap: 16,
+    gap: 24,
   },
   cardsContainer: {
     gap: 12,
@@ -95,6 +89,6 @@ const styles = StyleSheet.create({
   bottomContainer: {
     marginTop: "auto",
     paddingTop: 16,
-    gap: 16,
+    gap: 12,
   },
 });

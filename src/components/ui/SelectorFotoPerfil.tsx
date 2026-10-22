@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { seleccionarFotoGaleria } from "@/utils/avatar";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
@@ -24,9 +24,8 @@ export function SelectorFotoPerfil({
   alCambiarFoto,
   titulo = "Foto de perfil",
   descripcion = "Una foto clara de tu rostro ayuda a que el mototaxista te identifique fácilmente.",
-  variante = "oscuro"
 }: SelectorFotoPerfilProps) {
-  const esClaro = variante === "claro";
+  const { colores } = useAltokkeTheme();
 
   const elegirFoto = async () => {
     try {
@@ -43,13 +42,19 @@ export function SelectorFotoPerfil({
     <View 
       style={[
         styles.card,
-        esClaro && styles.cardClaro,
+        {
+          backgroundColor: colores.superficie,
+          borderColor: colores.linea,
+        },
       ]}
     >
       <Pressable 
         style={({ pressed }) => [
           styles.avatarContainer, 
-          esClaro && styles.avatarClaro,
+          {
+            backgroundColor: colores.campo,
+            borderColor: colores.linea,
+          },
           pressed && styles.presionado,
         ]}
         onPress={elegirFoto}
@@ -60,14 +65,18 @@ export function SelectorFotoPerfil({
           <Image source={{ uri: fotoUri }} style={styles.foto} />
         ) : (
           <Ionicons name="person-outline" size={27} 
-            color={
-              esClaro 
-                ? paletaColores.primaryHover
-                : paletaColores.textoSecundario
-            } 
+            color={ colores.exitoTexto }
           />
         )}
-        <View style={styles.badgeCamara}>
+        <View 
+          style={[
+            styles.badgeCamara,
+            {
+              backgroundColor: colores.primario,
+              borderColor: colores.superficie,
+            },
+          ]}
+        >
           <Ionicons name="camera-outline" size={14} color="#FFFFFF" />
         </View>
       </Pressable>
@@ -76,7 +85,7 @@ export function SelectorFotoPerfil({
         <Text
           style={[
             styles.titulo,
-            esClaro && styles.tituloClaro,
+            { color: colores.texto },
           ]}
         >
           {titulo}
@@ -85,7 +94,7 @@ export function SelectorFotoPerfil({
         <Text
           style={[
             styles.descripcion,
-            esClaro && styles.descripcionClara,
+            { color: colores.secundario },
           ]}
         >
           {descripcion}
@@ -104,9 +113,14 @@ export function SelectorFotoPerfil({
           <Ionicons 
             name={fotoUri ? "checkmark-circle" : "image-outline"} 
             size={17} 
-            color={paletaColores.primary} 
+            color={colores.exitoTexto} 
           />
-          <Text style={styles.botonTexto}>{fotoUri ? "Cambiar foto" : "Elegir foto de galería"}</Text>
+          <Text 
+            style={[
+              styles.botonTexto,
+              { color: colores.exitoTexto },
+            ]}
+          >{fotoUri ? "Cambiar foto" : "Elegir foto de galería"}</Text>
         </Pressable>
       </View>
     </View>
@@ -118,16 +132,10 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: paletaColores.surface,
     borderWidth: 1,
-    borderColor: paletaColores.borde,
     padding: 15,
     borderRadius: 16,
     gap: 16,
-  },
-  cardClaro: {
-    backgroundColor: paletaColores.superficieClara,
-    borderColor: paletaColores.bordeClaro,
   },
   avatarContainer: {
     width: 64,
@@ -135,13 +143,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.surfaceElevated,
     borderWidth: 1.5,
-    borderColor: paletaColores.borde,
-  },
-  avatarClaro: {
-    backgroundColor: "#EAF5EF",
-    borderColor: "#C4E5D1",
   },
   foto: {
     width: "100%",
@@ -155,7 +157,6 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
     borderRadius: 13,
-    backgroundColor: paletaColores.primary,
     borderWidth: 2,
     borderColor: "#FFFFFF",
     alignItems: "center",
@@ -166,20 +167,12 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   titulo: {
-    color: paletaColores.texto,
     fontSize: 15,
     fontWeight: "700",
   },
-  tituloClaro: {
-    color: paletaColores.textoClaro,
-  },
   descripcion: {
-    color: paletaColores.textoSecundario,
     fontSize: 12,
     lineHeight: 18,
-  },
-  descripcionClara: {
-    color: paletaColores.textoSecundarioClaro,
   },
   boton: {
     flexDirection: "row",
@@ -190,7 +183,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   botonTexto: {
-    color: paletaColores.primary,
     fontSize: 13,
     fontWeight: "700",
   },

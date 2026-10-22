@@ -8,7 +8,7 @@ import {
   PiePaginaAutenticacion,
 } from "@/components/ui";
 import { useRegistroPasajero } from "@/context/RegistroPasajeroContext";
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { esquemaPaso1 } from "@/utils/validaciones";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
@@ -23,6 +23,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 export default function PasajeroDatosPersonalesScreen() {
+  const { colores } = useAltokkeTheme();
   const { datosPersonales, setDatosPersonales } = useRegistroPasajero();
 
   const { 
@@ -60,13 +61,20 @@ export default function PasajeroDatosPersonalesScreen() {
   };
 
   return (
-      <ContenedorPantalla estilo={styles.pantalla} estiloContenedorContenido={styles.scrollContent}>
+      <ContenedorPantalla 
+        estilo={[
+          styles.pantalla,
+          { backgroundColor: colores.fondo },
+        ]} 
+        estiloContenedorContenido={[
+          styles.scrollContent,
+          { backgroundColor: colores.fondo },
+        ]}>
         <View style={styles.headerContainer}>
           <EncabezadoPagina
             titulo="Crea tu "
             tituloDestacado="cuenta"
             descripcion="Empieza a viajar con Altokke"
-            variante="claro"
           />
         </View>
 
@@ -82,7 +90,6 @@ export default function PasajeroDatosPersonalesScreen() {
             autoCapitalize="none"
             autoComplete="email"
             textContentType="emailAddress"
-            variante="claro"
           />
 
           <View style={styles.passwordContainer}>
@@ -94,12 +101,10 @@ export default function PasajeroDatosPersonalesScreen() {
               esPassword
               autoCapitalize="none"
               textContentType="newPassword"
-              variante="claro"
             />
 
             <MedidorPasswordSeguro
               contrasena={contrasenaActual}
-              variante="claro"
             />
 
             <CampoTextoHookForm
@@ -110,18 +115,30 @@ export default function PasajeroDatosPersonalesScreen() {
               esPassword
               autoCapitalize="none"
               textContentType="newPassword"
-              variante="claro"
             />
           </View>
 
           {Object.keys(errors).length > 0 && (
-            <View style={styles.avisoValidacion}>
+            <View 
+              style={[
+                styles.avisoValidacion,
+                {
+                  backgroundColor: colores.exitoFondo,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
               <Ionicons
                 name="information-circle-outline"
                 size={19}
-                color={paletaColores.primaryHover}
+                color={colores.exitoTexto}
               />
-              <Text style={styles.textoValidacion}>
+              <Text 
+                style={[
+                  styles.textoValidacion,
+                  { color: colores.texto },
+                ]}
+              >
                 Revisa los campos señalados antes de continuar.
               </Text>
             </View>
@@ -141,7 +158,6 @@ export default function PasajeroDatosPersonalesScreen() {
             textoPregunta="¿Ya tienes una cuenta?"
             textoEnlace="Iniciar sesión"
             ruta="/login"
-            variante="claro"
           />
         </View>
       </ContenedorPantalla>
@@ -151,7 +167,6 @@ export default function PasajeroDatosPersonalesScreen() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -175,12 +190,10 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     fontSize: 18,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
   descripcionSeccion: {
     fontSize: 14,
     lineHeight: 20,
-    color: paletaColores.textoSecundarioClaro,
   },
   passwordContainer: {
     gap: 12,
@@ -194,7 +207,6 @@ const styles = StyleSheet.create({
   textoCoincidencia: {
     fontSize: 13,
     fontWeight: "500",
-    color: paletaColores.primaryHover,
   },
   avisoValidacion: {
     flexDirection: "row",
@@ -210,7 +222,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 19,
-    color: paletaColores.textoClaro,
   },
   bottomContainer: {
     marginTop: "auto",

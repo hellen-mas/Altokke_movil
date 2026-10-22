@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -16,12 +16,28 @@ export function ContenedorPantalla({
   estiloContenedorContenido,
   conScroll = true,
 }: PropsContenedorPantalla) {
+  const { colores } = useAltokkeTheme();
+
   return (
-    <SafeAreaView style={[estilos.areaSegura, estilo]}>
+    <SafeAreaView 
+      style={[
+        estilos.areaSegura,
+        {
+          backgroundColor: colores.fondo,
+        },
+        estilo,
+      ]}>
       {conScroll ? (
         <KeyboardAwareScrollView
-          style={estilos.vistaTeclado}
-          contentContainerStyle={[estilos.contenidoScroll, estiloContenedorContenido]}
+          style={[
+            estilos.vistaTeclado,
+            { backgroundColor: colores.fondo },
+          ]}
+          contentContainerStyle={[
+            estilos.contenidoScroll,
+            { backgroundColor: colores.fondo },
+            estiloContenedorContenido,
+          ]}
           enableOnAndroid={true}
           enableAutomaticScroll={true}
           keyboardShouldPersistTaps="handled"
@@ -41,7 +57,6 @@ export function ContenedorPantalla({
 const estilos = StyleSheet.create({
   areaSegura: {
     flex: 1,
-    backgroundColor: paletaColores.fondo,
   },
   vistaTeclado: {
     flex: 1,

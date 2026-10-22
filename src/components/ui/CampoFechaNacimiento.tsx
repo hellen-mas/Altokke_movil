@@ -1,4 +1,4 @@
-import { paletaColores } from "@/paletaColores";
+import { useAltokkeTheme } from "@/hooks/useAltokkeTheme";
 import { calcularEdad } from "@/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
@@ -21,27 +21,32 @@ export function CampoFechaNacimiento({
   alCambiar,
   alCambiarFecha,
   error,
-  label = "Fecha de nacimiento (+18 años)",
-  variante = "oscuro",
+  label = "Fecha de nacimiento",
 }: CampoFechaNacimientoProps) {
   const [mostrar, setMostrar] = useState(false);
 
+  const { esOscuro, colores } = useAltokkeTheme();
+
   // Normalizar fecha
   const fechaObj: Date | null = valorFecha || (valorIso ? new Date(`${valorIso}T00:00:00`) : null);
-  const edad = fechaObj ? calcularEdad(fechaObj) : 0;
-  const esMayor = Boolean(fechaObj && edad >= 18);
+  const fechaValida =
+    fechaObj !== null &&
+    !Number.isNaN(fechaObj.getTime());
 
-  const textoFecha = fechaObj
-  ? fechaObj.toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    })
-  : null;
+  const textoFecha = fechaValida && fechaObj
+    ? fechaObj.toLocaleDateString("es-PE", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   const hoy = new Date();
   const fechaMaximaNacimiento = new Date(hoy.getFullYear() - 18, hoy.getMonth(), hoy.getDate());
-  const fechaPicker = fechaObj || fechaMaximaNacimiento;
+  const fechaPicker =
+    fechaValida && fechaObj
+      ? fechaObj
+      : fechaMaximaNacimiento;
 
   const manejarCambio = (event: DateTimePickerEvent, fecha?: Date) => {
     if (Platform.OS === "android") setMostrar(false);
@@ -55,55 +60,117 @@ export function CampoFechaNacimiento({
       alCambiarFecha(fecha);
     }
     if (alCambiar) {
-      const [iso] = fecha.toISOString().split("T");
-      alCambiar(iso);
+      const anio = fecha.getFullYear();
+      const mes = String(
+        fecha.getMonth() + 1
+      ).padStart(2, "0");
+
+      const dia = String(
+        fecha.getDate()
+      ).padStart(2, "0");
+
+      alCambiar(`${anio}-${mes}-${dia}`);
     }
   };
-
-  const esClaro = variante === "claro";
 
   return (
     <View style={styles.wrapper}>
       <Pressable
         style={({ pressed }) => [
           styles.container,
-          esClaro && styles.containerClaro,
-          pressed && { opacity: 0.8 },
-          error ? styles.containerError : null,
+          {
+            backgroundColor: error
+              ? colores.errorFondo
+              : colores.campo,
+            opacity: pressed ? 0.85 : 1,
+          },
         ]}
         onPress={() => setMostrar(true)}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint="Seleccionar fecha de nacimiento"
       >
-        <View style={styles.fila}>
           <View style={styles.textos}>
-            <Text style={[styles.label, esClaro && styles.labelClaro]}>{label}</Text>
+            <Text style={[
+              styles.label, 
+              {
+                color: error 
+                  ? colores.error
+                  : colores.secundario,
+              },
+            ]}
+            numberOfLines={1}>{label}</Text>
             <Text
               style={[
                 styles.valor,
-                esClaro && styles.valorClaro,
-                !textoFecha && (esClaro ? styles.placeholderClaro : styles.placeholder),
+                {
+                  color: textoFecha
+                    ? colores.textoCampo
+                    : colores.secundario,
+                },
               ]}
+              numberOfLines={1}
             >
               {textoFecha || "Seleccionar fecha"}
             </Text>
           </View>
-        </View>
         <Ionicons
           name= "chevron-forward"
           size={20}
-          color={esMayor ? paletaColores.boton : esClaro ? paletaColores.textoSecundarioClaro : paletaColores.textoSecundario}
+          color={colores.secundario}
         />
       </Pressable>
 
-      {Boolean(error) && <Text style={styles.errorTexto}>{error}</Text>}
+      {Boolean(error) && (
+        <Text
+          style={[
+            styles.errorTexto,
+            { color: colores.error },
+          ]}
+        >
+          {error}
+        </Text>
+      )}
 
       {mostrar && (
-        <DateTimePicker
-          value={fechaPicker}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          maximumDate={fechaMaximaNacimiento}
-          onChange={manejarCambio}
-        />
+        <View
+          style={{
+            backgroundColor: colores.fondo,
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          <DateTimePicker
+            value={fechaPicker}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            maximumDate={fechaMaximaNacimiento}
+            onChange={manejarCambio}
+            themeVariant={
+              esOscuro ? "dark" : "light"
+            }
+            textColor={Platform.OS === "ios"
+                ? colores.texto
+                : undefined}
+          />
+
+          {Platform.OS === "ios" && (
+            <Pressable
+              style={styles.botonListo}
+              onPress={() => setMostrar(false)}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.textoListo,
+                  { color: colores.exitoTexto },
+                ]}
+              >
+                Listo
+              </Text>
+            </Pressable>
+          )}
+        </View>
       )}
     </View>
   );
@@ -111,6 +178,7 @@ export function CampoFechaNacimiento({
 
 const styles = StyleSheet.create({
   wrapper: {
+    width: "100%",
     gap: 6,
   },
   container: {
@@ -119,71 +187,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: paletaColores.input,
-    borderRadius: 30,
     paddingHorizontal: 19,
     paddingVertical: 6,
+    borderRadius: 30,
     borderWidth: 0,
     borderColor: "transparent",
-  },
-  containerClaro: {
-    backgroundColor: "#ECEFEB",
-    borderColor: "transparent",
-  },
-  containerValido: {
-    borderColor: paletaColores.boton,
-    backgroundColor: "rgba(46, 206, 121, 0.05)",
-  },
-  containerValidoClaro: {
-    borderColor: paletaColores.verde,
-    backgroundColor: "rgba(46, 206, 121, 0.08)",
-  },
-  containerError: {
-    borderWidth: 0,
-    borderColor: "transparent",
-    backgroundColor: "#F6EDED",
-  },
-  fila: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
   },
   textos: {
     flex: 1,
     justifyContent: "center",
     gap: 0,
+    paddingRight: 10,
   },
   label: {
     fontSize: 12,
     lineHeight: 15,
     fontWeight: "500",
-    color: paletaColores.textoSecundario,
     marginBottom: 0,
-  },
-  labelClaro: {
-    color: "#596C60",
   },
   valor: {
     fontSize: 15,
     lineHeight: 20,
-    color: "#FFFFFF",
     fontWeight: "500",
   },
-  valorClaro: {
-    color: "#17251C",
-  },
-  placeholder: {
-    color: paletaColores.textoSecundario,
-    fontWeight: "400",
-  },
-  placeholderClaro: {
-    color: paletaColores.textoSecundarioClaro,
-    fontWeight: "400",
-  },
   errorTexto: {
-    color: "#FF5E5E",
     fontSize: 12,
-    marginLeft: 8,
+    lineHeight: 17,
+    marginLeft: 10,
+  },
+  botonListo: {
+    alignSelf: "flex-end",
+    minHeight: 44,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textoListo: {
+    fontSize: 15,
+    fontWeight: "700",
   },
 });
