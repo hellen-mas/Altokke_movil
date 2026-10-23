@@ -1,3 +1,17 @@
+import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
+import { ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { viajeService } from "@/features/viajes/services/viajeService";
+import {
+  formatearHora,
+  formatearSoles,
+  NOMBRE_METODO_PAGO,
+} from "@/features/viajes/utils/viaje";
+import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
@@ -12,18 +26,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
-import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
-import { ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
-import { useViaje } from "@/features/viajes/context/ViajeContext";
-import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
-import { paletaColores } from "@/shared/theme/paletaColores";
-import {
-  formatearHora,
-  formatearSoles,
-  NOMBRE_METODO_PAGO,
-} from "@/features/viajes/utils/viaje";
 
 const MAX_COMENTARIO = 500;
 const COLOR_ESTRELLA = "#F5B301";
@@ -33,12 +35,12 @@ const ETIQUETAS: {
   texto: string;
   icono: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { id: "puntual", texto: "Puntual", icono: "time-outline" },
-  { id: "amable", texto: "Amable", icono: "happy-outline" },
-  { id: "seguro", texto: "Conducción segura", icono: "shield-checkmark-outline" },
-  { id: "limpio", texto: "Vehículo limpio", icono: "sparkles-outline" },
-  { id: "ruta", texto: "Buena ruta", icono: "map-outline" },
-];
+    { id: "puntual", texto: "Puntual", icono: "time-outline" },
+    { id: "amable", texto: "Amable", icono: "happy-outline" },
+    { id: "seguro", texto: "Conducción segura", icono: "shield-checkmark-outline" },
+    { id: "limpio", texto: "Vehículo limpio", icono: "sparkles-outline" },
+    { id: "ruta", texto: "Buena ruta", icono: "map-outline" },
+  ];
 
 const TEXTO_CALIFICACION = [
   "",
@@ -52,10 +54,12 @@ const TEXTO_CALIFICACION = [
 function Estrellas({
   valor,
   tamano,
+  colorInactivo = "#D1D5DB",
   onCambiar,
 }: {
   valor: number;
   tamano: number;
+  colorInactivo?: string;
   onCambiar?: (estrellas: number) => void;
 }) {
   return (
@@ -70,7 +74,7 @@ function Estrellas({
           <Ionicons
             name={numero <= valor ? "star" : "star-outline"}
             size={tamano}
-            color={numero <= valor ? COLOR_ESTRELLA : paletaColores.disabled}
+            color={numero <= valor ? COLOR_ESTRELLA : colorInactivo}
           />
         </Pressable>
       ))}
@@ -79,7 +83,9 @@ function Estrellas({
 }
 
 export default function PantallaCalificacion() {
-  const { setDestino, registrarViaje } = useViaje();
+  const { colores } = useAltokkeTheme();
+  const { userId } = useAuth();
+  const { setDestino, registrarViaje, viajeActivoId, setViajeActivoId } = useViaje();
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const [fecha] = useState(() => new Date());
@@ -115,12 +121,26 @@ export default function PantallaCalificacion() {
   };
 
   const irAlInicio = () => {
+    setViajeActivoId(null);
     router.replace("/mapa");
     setDestino(null);
   };
 
-  const enviarCalificacion = () => {
+  const enviarCalificacion = async () => {
     guardarViaje(estrellas);
+    if (viajeActivoId && userId) {
+      try {
+        await viajeService.registrarCalificacion(
+          viajeActivoId,
+          userId,
+          null,
+          estrellas,
+          comentario
+        );
+      } catch (err) {
+        console.warn("Aviso al registrar calificación:", err);
+      }
+    }
     setEnviado(true);
   };
 
@@ -131,7 +151,7 @@ export default function PantallaCalificacion() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.pantalla}
+      style={[styles.pantalla, { backgroundColor: colores.fondo }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
@@ -146,46 +166,96 @@ export default function PantallaCalificacion() {
         />
 
         {/* Viaje finalizado */}
-        <View style={styles.finalizado}>
+        <View
+          style={[
+            styles.finalizado,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
           <Ionicons
             name="checkmark-circle"
             size={34}
-            color={paletaColores.boton}
+            color={colores.exitoTexto}
           />
           <View style={styles.finalizadoTextos}>
-            <Text style={styles.finalizadoTitulo}>Viaje finalizado</Text>
-            <Text style={styles.detalle}>Gracias por viajar con Altokke</Text>
+            <Text
+              style={[styles.finalizadoTitulo, { color: colores.texto }]}
+            >
+              Viaje finalizado
+            </Text>
+            <Text style={[styles.detalle, { color: colores.secundario }]}>
+              Gracias por viajar con Altokke
+            </Text>
           </View>
           <View style={styles.finalizadoFecha}>
-            <Text style={styles.insignia}>Completado</Text>
-            <Text style={styles.detalle}>Hoy, {formatearHora(fecha)}</Text>
+            <Text
+              style={[
+                styles.insignia,
+                {
+                  backgroundColor: colores.exitoFondo,
+                  color: colores.exitoTexto,
+                },
+              ]}
+            >
+              Completado
+            </Text>
+            <Text style={[styles.detalle, { color: colores.secundario }]}>
+              Hoy, {formatearHora(fecha)}
+            </Text>
           </View>
         </View>
 
         {enviado ? (
           <View style={styles.gracias}>
-            <View style={styles.graciasIcono}>
-              <Ionicons name="heart" size={40} color={paletaColores.boton} />
+            <View
+              style={[
+                styles.graciasIcono,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
+              <Ionicons name="heart" size={40} color={colores.exitoTexto} />
             </View>
-            <Text style={styles.graciasTitulo}>¡Gracias por calificar!</Text>
-            <Text style={styles.graciasTexto}>
+            <Text style={[styles.graciasTitulo, { color: colores.texto }]}>
+              ¡Gracias por calificar!
+            </Text>
+            <Text style={[styles.graciasTexto, { color: colores.secundario }]}>
               Tu opinión ayuda a mejorar Altokke.
             </Text>
-            <Estrellas valor={estrellas} tamano={30} />
+            <Estrellas
+              valor={estrellas}
+              tamano={30}
+              colorInactivo={colores.linea}
+            />
           </View>
         ) : (
           <>
             {/* Resumen del viaje */}
-            <Text style={styles.seccion}>Resumen del viaje</Text>
-            <View style={styles.tarjetaResumen}>
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Resumen del viaje
+            </Text>
+            <View
+              style={[
+                styles.tarjetaResumen,
+                {
+                  backgroundColor: colores.campo,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
               <View style={styles.recorrido}>
                 <View style={styles.filaLugar}>
                   <Ionicons
                     name="radio-button-on"
                     size={18}
-                    color={paletaColores.boton}
+                    color={colores.exitoTexto}
                   />
-                  <Text style={styles.lugar} numberOfLines={1}>
+                  <Text
+                    style={[styles.lugar, { color: colores.texto }]}
+                    numberOfLines={1}
+                  >
                     {ORIGEN_EJEMPLO.nombre}
                   </Text>
                 </View>
@@ -193,22 +263,34 @@ export default function PantallaCalificacion() {
                   <Ionicons
                     name="location-sharp"
                     size={18}
-                    color={paletaColores.error}
+                    color={colores.error}
                   />
-                  <Text style={styles.lugar} numberOfLines={1}>
+                  <Text
+                    style={[styles.lugar, { color: colores.texto }]}
+                    numberOfLines={1}
+                  >
                     {destino.nombre}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.tarifaFinal}>
+              <View
+                style={[
+                  styles.tarifaFinal,
+                  { borderLeftColor: colores.linea },
+                ]}
+              >
                 <Ionicons
                   name="cash-outline"
                   size={20}
-                  color={paletaColores.boton}
+                  color={colores.exitoTexto}
                 />
-                <Text style={styles.tarifaValor}>{formatearSoles(tarifa)}</Text>
-                <Text style={styles.detalle}>
+                <Text
+                  style={[styles.tarifaValor, { color: colores.texto }]}
+                >
+                  {formatearSoles(tarifa)}
+                </Text>
+                <Text style={[styles.detalle, { color: colores.secundario }]}>
                   {metodoPago === "efectivo"
                     ? "Pago en efectivo"
                     : `Pago con ${NOMBRE_METODO_PAGO[metodoPago]}`}
@@ -216,16 +298,32 @@ export default function PantallaCalificacion() {
               </View>
             </View>
 
-            <Text style={styles.seccion}>Tu conductor</Text>
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Tu conductor
+            </Text>
             <TarjetaConductor />
 
             {/* Calificación */}
-            <Text style={styles.pregunta}>¿Cómo fue tu viaje?</Text>
-            <Text style={styles.detalle}>Tu opinión ayuda a mejorar Altokke</Text>
+            <Text style={[styles.pregunta, { color: colores.texto }]}>
+              ¿Cómo fue tu viaje?
+            </Text>
+            <Text style={[styles.detalle, { color: colores.secundario }]}>
+              Tu opinión ayuda a mejorar Altokke
+            </Text>
 
             <View style={styles.calificar}>
-              <Estrellas valor={estrellas} tamano={40} onCambiar={setEstrellas} />
-              <Text style={styles.textoCalificacion}>
+              <Estrellas
+                valor={estrellas}
+                tamano={40}
+                colorInactivo={colores.progresoInactivo}
+                onCambiar={setEstrellas}
+              />
+              <Text
+                style={[
+                  styles.textoCalificacion,
+                  { color: colores.secundario },
+                ]}
+              >
                 {TEXTO_CALIFICACION[estrellas] || "Toca una estrella"}
               </Text>
             </View>
@@ -238,21 +336,35 @@ export default function PantallaCalificacion() {
                   <Pressable
                     key={etiqueta.id}
                     onPress={() => alternarEtiqueta(etiqueta.id)}
-                    style={[styles.etiqueta, activa && styles.etiquetaActiva]}
+                    style={[
+                      styles.etiqueta,
+                      {
+                        backgroundColor: activa
+                          ? colores.primario
+                          : colores.campo,
+                        borderColor: activa
+                          ? colores.primario
+                          : colores.linea,
+                      },
+                    ]}
                   >
                     <Ionicons
                       name={etiqueta.icono}
                       size={16}
                       color={
                         activa
-                          ? paletaColores.superficieClara
-                          : paletaColores.boton
+                          ? colores.textoBoton
+                          : colores.secundario
                       }
                     />
                     <Text
                       style={[
                         styles.etiquetaTexto,
-                        activa && styles.etiquetaTextoActiva,
+                        {
+                          color: activa
+                            ? colores.textoBoton
+                            : colores.texto,
+                        },
                       ]}
                     >
                       {etiqueta.texto}
@@ -263,18 +375,28 @@ export default function PantallaCalificacion() {
             </View>
 
             {/* Comentario */}
-            <Text style={styles.seccion}>Deja un comentario (opcional)</Text>
-            <View style={styles.comentario}>
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Deja un comentario (opcional)
+            </Text>
+            <View
+              style={[
+                styles.comentario,
+                {
+                  backgroundColor: colores.campo,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
               <TextInput
                 value={comentario}
                 onChangeText={setComentario}
                 placeholder="Cuéntanos cómo fue tu viaje..."
-                placeholderTextColor={paletaColores.textoSecundarioClaro}
+                placeholderTextColor={colores.secundario}
                 multiline
                 maxLength={MAX_COMENTARIO}
-                style={styles.comentarioInput}
+                style={[styles.comentarioInput, { color: colores.texto }]}
               />
-              <Text style={styles.contador}>
+              <Text style={[styles.contador, { color: colores.secundario }]}>
                 {comentario.length}/{MAX_COMENTARIO}
               </Text>
             </View>
@@ -283,7 +405,14 @@ export default function PantallaCalificacion() {
       </ScrollView>
 
       <View
-        style={[styles.pie, { paddingBottom: Math.max(insets.bottom, 14) }]}
+        style={[
+          styles.pie,
+          {
+            borderTopColor: colores.linea,
+            backgroundColor: colores.superficie,
+            paddingBottom: Math.max(insets.bottom, 14),
+          },
+        ]}
       >
         {enviado ? (
           <BotonPrincipal titulo="Volver al inicio" onPress={irAlInicio} />
@@ -294,20 +423,34 @@ export default function PantallaCalificacion() {
               disabled={estrellas === 0}
               style={({ pressed }) => [
                 styles.botonEnviar,
-                estrellas === 0 && styles.botonEnviarDeshabilitado,
-                pressed && styles.botonEnviarPresionado,
+                {
+                  backgroundColor:
+                    estrellas === 0
+                      ? colores.progresoInactivo
+                      : colores.primario,
+                },
+                pressed && { backgroundColor: colores.primarioPresionado },
               ]}
             >
               <Ionicons
                 name="paper-plane"
                 size={20}
-                color={paletaColores.textoOscuro}
+                color={colores.textoBoton}
               />
-              <Text style={styles.botonEnviarTexto}>Enviar calificación</Text>
+              <Text
+                style={[
+                  styles.botonEnviarTexto,
+                  { color: colores.textoBoton },
+                ]}
+              >
+                Enviar calificación
+              </Text>
             </Pressable>
 
             <Pressable onPress={omitir} hitSlop={8}>
-              <Text style={styles.omitir}>Omitir</Text>
+              <Text style={[styles.omitir, { color: colores.secundario }]}>
+                Omitir
+              </Text>
             </Pressable>
           </>
         )}
@@ -319,7 +462,6 @@ export default function PantallaCalificacion() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   contenido: {
@@ -334,9 +476,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   finalizadoTextos: {
@@ -346,7 +486,6 @@ const styles = StyleSheet.create({
   finalizadoTitulo: {
     fontSize: 16,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   finalizadoFecha: {
@@ -361,13 +500,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     overflow: "hidden",
-    color: paletaColores.botonPresionado,
-    backgroundColor: "#E5F8EF",
   },
 
   detalle: {
     fontSize: 12,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   seccion: {
@@ -376,7 +512,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   tarjetaResumen: {
@@ -386,9 +521,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   recorrido: {
@@ -406,7 +539,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   tarifaFinal: {
@@ -414,13 +546,11 @@ const styles = StyleSheet.create({
     gap: 2,
     paddingLeft: 12,
     borderLeftWidth: 1,
-    borderLeftColor: paletaColores.bordeClaro,
   },
 
   tarifaValor: {
     fontSize: 20,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   pregunta: {
@@ -428,7 +558,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     fontSize: 18,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   calificar: {
@@ -445,7 +574,6 @@ const styles = StyleSheet.create({
   textoCalificacion: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoSecundarioClaro,
   },
 
   etiquetas: {
@@ -461,48 +589,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 12,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#EAF8F1",
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
-    borderColor: "#CFEEDD",
-  },
-
-  etiquetaActiva: {
-    backgroundColor: paletaColores.boton,
-    borderColor: paletaColores.boton,
   },
 
   etiquetaTexto: {
     fontSize: 13,
     fontWeight: "600",
-    color: paletaColores.textoClaro,
-  },
-
-  etiquetaTextoActiva: {
-    color: paletaColores.textoOscuro,
   },
 
   comentario: {
     marginHorizontal: 16,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   comentarioInput: {
     minHeight: 64,
     fontSize: 14,
     textAlignVertical: "top",
-    color: paletaColores.textoClaro,
   },
 
   contador: {
     alignSelf: "flex-end",
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   gracias: {
@@ -518,19 +630,16 @@ const styles = StyleSheet.create({
     borderRadius: 42,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5F8EF",
   },
 
   graciasTitulo: {
     fontSize: 24,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   graciasTexto: {
     marginBottom: 6,
     fontSize: 14,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   pie: {
@@ -538,8 +647,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
   },
 
   botonEnviar: {
@@ -549,27 +656,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     borderRadius: 16,
-    backgroundColor: paletaColores.boton,
-  },
-
-  botonEnviarPresionado: {
-    backgroundColor: paletaColores.botonPresionado,
-  },
-
-  botonEnviarDeshabilitado: {
-    backgroundColor: "#C9D3CE",
   },
 
   botonEnviarTexto: {
     fontSize: 18,
     fontWeight: "700",
-    color: paletaColores.textoOscuro,
   },
 
   omitir: {
     textAlign: "center",
     fontSize: 14,
     fontWeight: "600",
-    color: paletaColores.textoSecundarioClaro,
   },
 });

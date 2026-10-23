@@ -77,7 +77,7 @@ export default function PasajeroDatosPersonalesScreen() {
           />
         </View>
 
-        <IndicadorPasos pasoActual={1} totalPasos={3} variante="claro" />
+        <IndicadorPasos pasoActual={1} totalPasos={3} />
 
         <View style={styles.formContainer}>
           <CampoTextoHookForm

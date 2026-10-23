@@ -6,12 +6,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
 import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
 import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
-import { COLORES_CUENTA, PASAJERO_DEMO } from "@/features/pasajeros/constants/cuenta";
+import { COLORES_CUENTA } from "@/features/pasajeros/constants/cuenta";
 import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
-import { supabase } from "@/shared/api/supabase";
-import React, { useEffect, useState } from "react";
+import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
+import React from "react";
 
 const OPCIONES = [
   {
@@ -60,41 +61,14 @@ const OPCIONES = [
 
 export default function CuentaPasajero() {
   const insets = useSafeAreaInsets();
-  const { logout, userId } = useAuth();
-  const [foto, setFoto] = useState<string | null>(null);
-  const [nombre, setNombre] = useState(PASAJERO_DEMO.nombre);
+  const { colores, esOscuro } = useAltokkeTheme();
+  const { logout } = useAuth();
+  const { perfil } = usePerfilPasajero();
 
-  useEffect(() => {
-    let montado = true;
-
-    async function cargarAvatar() {
-      if (!userId) return;
-
-      try {
-        const { data } = await supabase
-          .from("usuarios")
-          .select("nombre, apellidos, avatar_url, foto_url")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (data && montado) {
-          const avatar = data.avatar_url || data.foto_url;
-          if (avatar) setFoto(avatar);
-
-          const nom = `${data.nombre || ""} ${data.apellidos || ""}`.trim();
-          if (nom) setNombre(nom);
-        }
-      } catch (err) {
-        console.warn("Aviso al cargar avatar de cuenta:", err);
-      }
-    }
-
-    cargarAvatar();
-
-    return () => {
-      montado = false;
-    };
-  }, [userId]);
+  const nombre = perfil?.nombreCompleto || perfil?.primerNombre || "Pasajero";
+  const foto = perfil?.fotoUrl || null;
+  const calificacion = perfil ? perfil.calificacion.toFixed(1) : "5.0";
+  const viajesTexto = perfil ? `(${perfil.viajesCount} viajes)` : "(0 viajes)";
 
   const cerrarSesion = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que quieres salir de tu cuenta?", [
@@ -114,18 +88,21 @@ export default function CuentaPasajero() {
     ]);
   };
 
+  const bgCabecera = esOscuro ? colores.superficie : COLORES_CUENTA.cabecera;
+
   return (
-    <View style={styles.container}>
-      {/* Iconos claros porque la cabecera es verde oscuro */}
+    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <StatusBar style="light" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={[styles.cabecera, { paddingTop: insets.top + 14 }]}>
-          <Text style={styles.logo}>Altokke</Text>
-          <Text style={styles.lema}>Tu movilidad en buenas manos</Text>
+        <View style={[styles.cabecera, { paddingTop: insets.top + 14, backgroundColor: bgCabecera }]}>
+          <Text style={[styles.logo, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>Altokke</Text>
+          <Text style={[styles.lema, { color: esOscuro ? colores.secundario : "rgba(255,255,255,0.75)" }]}>
+            Tu movilidad en buenas manos
+          </Text>
 
           <View style={styles.perfil}>
             <AvatarPerfil
@@ -137,23 +114,29 @@ export default function CuentaPasajero() {
             />
 
             <View style={styles.perfilTextos}>
-              <Text style={styles.nombre}>{nombre}</Text>
+              <Text style={[styles.nombre, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>{nombre}</Text>
 
               <View style={styles.filaInfo}>
                 <Ionicons name="star" size={15} color={paletaColores.advertencia} />
-                <Text style={styles.calificacion}>{PASAJERO_DEMO.calificacion}</Text>
-                <Text style={styles.viajes}>({PASAJERO_DEMO.viajes} viajes)</Text>
+                <Text style={[styles.calificacion, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
+                  {calificacion}
+                </Text>
+                <Text style={[styles.viajes, { color: esOscuro ? colores.secundario : "rgba(255,255,255,0.75)" }]}>
+                  {viajesTexto}
+                </Text>
               </View>
 
               <View style={styles.filaInfo}>
-                <Text style={styles.mensaje}>Tu próxima parada está más cerca</Text>
-                <Ionicons name="heart" size={12} color={paletaColores.verde} />
+                <Text style={[styles.mensaje, { color: colores.exitoTexto }]}>
+                  Tu próxima parada está más cerca
+                </Text>
+                <Ionicons name="heart" size={12} color={colores.exitoTexto} />
               </View>
             </View>
           </View>
         </View>
 
-        <View style={styles.lista}>
+        <View style={[styles.lista, { backgroundColor: colores.fondo }]}>
           {OPCIONES.map((opcion) => (
             <ItemMenu
               key={opcion.titulo}
@@ -184,7 +167,6 @@ export default function CuentaPasajero() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   scrollContent: {
@@ -194,19 +176,16 @@ const styles = StyleSheet.create({
   cabecera: {
     paddingHorizontal: 20,
     paddingBottom: 44,
-    backgroundColor: COLORES_CUENTA.cabecera,
   },
 
   logo: {
     fontSize: 20,
     fontWeight: "800",
-    color: paletaColores.texto,
   },
 
   lema: {
     marginTop: 2,
     fontSize: 12,
-    color: paletaColores.textoSecundario,
   },
 
   perfil: {
@@ -224,7 +203,6 @@ const styles = StyleSheet.create({
   nombre: {
     fontSize: 22,
     fontWeight: "700",
-    color: paletaColores.texto,
   },
 
   filaInfo: {
@@ -236,17 +214,14 @@ const styles = StyleSheet.create({
   calificacion: {
     fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.texto,
   },
 
   viajes: {
     fontSize: 13,
-    color: paletaColores.textoSecundario,
   },
 
   mensaje: {
     fontSize: 12,
-    color: paletaColores.verde,
   },
 
   lista: {
@@ -256,6 +231,5 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    backgroundColor: paletaColores.fondoClaro,
   },
 });

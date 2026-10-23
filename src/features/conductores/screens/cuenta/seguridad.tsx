@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
-import { CONDUCTOR_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 
@@ -102,7 +102,8 @@ function FilaSeguridad({
 }
 
 export default function SeguridadConductor() {
-  const seguridad = CONDUCTOR_EJEMPLO.seguridad;
+  const { perfil } = usePerfilConductor();
+  const seguridad = perfil.seguridad;
 
   const [compartirViaje, setCompartirViaje] = useState(
     seguridad.compartirViaje

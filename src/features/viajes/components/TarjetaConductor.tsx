@@ -1,46 +1,90 @@
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { CONDUCTOR_EJEMPLO } from "@/features/viajes/constants/pasajero";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { IconoMototaxi } from "./IconoMototaxi";
 
+export interface InfoConductor {
+  nombre?: string;
+  calificacion?: number;
+  viajes?: number;
+  vehiculo?: string;
+  placa?: string;
+  color?: string;
+  foto?: string | null;
+}
+
+interface Props {
+  conductor?: InfoConductor | null;
+}
+
 /** Datos del conductor asignado y de su mototaxi */
-export function TarjetaConductor() {
+export function TarjetaConductor({ conductor }: Props) {
+  const { colores } = useAltokkeTheme();
+
+  const nombre = conductor?.nombre || "Conductor Altokke";
+  const calificacion = conductor?.calificacion !== undefined ? conductor.calificacion.toFixed(1) : "5.0";
+  const viajes = conductor?.viajes !== undefined ? conductor.viajes : 0;
+  const vehiculo = conductor?.vehiculo || "Mototaxi Torito";
+  const placa = conductor?.placa || "Verificado";
+  const color = conductor?.color || "Color oficial";
+
   return (
-    <View style={styles.tarjeta}>
-      <View style={styles.avatar}>
+    <View style={[styles.tarjeta, { backgroundColor: colores.campo }]}>
+      <View
+        style={[
+          styles.avatar,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
         <Ionicons
           name="person"
           size={26}
-          color={paletaColores.textoSecundarioClaro}
+          color={colores.secundario}
         />
       </View>
 
       <View style={styles.textos}>
         <View style={styles.fila}>
-          <Text style={styles.nombre} numberOfLines={1}>
-            {CONDUCTOR_EJEMPLO.nombre}
+          <Text style={[styles.nombre, { color: colores.texto }]} numberOfLines={1}>
+            {nombre}
           </Text>
           <Ionicons
             name="checkmark-circle"
             size={16}
-            color={paletaColores.boton}
+            color={colores.exitoTexto}
           />
         </View>
         <View style={styles.fila}>
           <Ionicons name="star" size={14} color="#F5B301" />
-          <Text style={styles.detalle}>
-            {CONDUCTOR_EJEMPLO.calificacion} · {CONDUCTOR_EJEMPLO.viajes} viajes
+          <Text style={[styles.detalle, { color: colores.secundario }]}>
+            {calificacion} · {viajes} viajes
           </Text>
         </View>
       </View>
 
       <View style={styles.vehiculo}>
-        <IconoMototaxi size={30} color={paletaColores.boton} />
-        <Text style={styles.vehiculoTitulo}>{CONDUCTOR_EJEMPLO.vehiculo}</Text>
-        <Text style={styles.vehiculoPlaca}>{CONDUCTOR_EJEMPLO.placa}</Text>
-        <Text style={styles.vehiculoColor} numberOfLines={1}>
-          {CONDUCTOR_EJEMPLO.color}
+        <IconoMototaxi size={30} color={colores.exitoTexto} />
+        <Text style={[styles.vehiculoTitulo, { color: colores.texto }]}>
+          {vehiculo}
+        </Text>
+        <Text
+          style={[
+            styles.vehiculoPlaca,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+              color: colores.secundario,
+            },
+          ]}
+        >
+          {placa}
+        </Text>
+        <Text style={[styles.vehiculoColor, { color: colores.secundario }]} numberOfLines={1}>
+          {color}
         </Text>
       </View>
     </View>
@@ -54,7 +98,6 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#F3F6F4",
   },
 
   avatar: {
@@ -63,9 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   textos: {
@@ -80,44 +121,36 @@ const styles = StyleSheet.create({
   },
 
   nombre: {
-    flexShrink: 1,
-    fontSize: 15,
-    fontWeight: "800",
-    color: paletaColores.textoClaro,
+    fontSize: 16,
+    fontWeight: "700",
   },
 
   detalle: {
-    fontSize: 12,
-    color: paletaColores.textoSecundarioClaro,
+    fontSize: 13,
   },
 
   vehiculo: {
     alignItems: "center",
-    maxWidth: 110,
+    gap: 2,
+    minWidth: 80,
   },
 
   vehiculoTitulo: {
     fontSize: 12,
-    fontWeight: "700",
-    color: paletaColores.textoClaro,
+    fontWeight: "600",
   },
 
   vehiculoPlaca: {
-    marginTop: 2,
-    paddingHorizontal: 8,
+    fontSize: 11,
+    fontWeight: "700",
+    paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 6,
-    fontSize: 10,
-    overflow: "hidden",
-    color: paletaColores.textoSecundarioClaro,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    letterSpacing: 0.5,
   },
 
   vehiculoColor: {
-    marginTop: 2,
     fontSize: 10,
-    color: paletaColores.textoSecundarioClaro,
   },
 });

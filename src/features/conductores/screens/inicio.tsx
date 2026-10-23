@@ -8,18 +8,35 @@ import {
   View,
 } from "react-native";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import {
-  CONDUCTOR_EJEMPLO,
-  RESUMEN_GANANCIAS,
-} from "@/features/conductores/constants/conductor";
+import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { useEffect, useState } from "react";
+import { conductorService } from "@/features/conductores/services/conductorService";
 
 export default function InicioConductorScreen() {
+  const { perfil } = usePerfilConductor();
+  const [resumen, setResumen] = useState({
+    viajesCompletadosHoy: 0,
+    totalHoy: 0,
+  });
+
+  useEffect(() => {
+    if (!perfil.id || perfil.id === "conductor-local") return;
+    conductorService.obtenerResumenGanancias(perfil.id).then((r) => {
+      setResumen({
+        viajesCompletadosHoy: r.viajesCompletadosHoy,
+        totalHoy: r.totalHoy,
+      });
+    }).catch(() => {});
+  }, [perfil.id]);
+
+  const primerNombre = perfil.nombre.split(" ")[0];
+
   return (
     <View style={styles.safeArea}>
 
     <CabeceraConductor
-      titulo={`Hola, ${CONDUCTOR_EJEMPLO.nombre.split(" ")[0]}`}
+      titulo={`Hola, ${primerNombre}`}
       subtitulo="Conductor"
       mostrarMarca
       mostrarAtras={false}
@@ -36,26 +53,26 @@ export default function InicioConductorScreen() {
         <View style={styles.resumenGrid}>
           <ResumenCard
             icono="car-outline"
-            value={String(RESUMEN_GANANCIAS.viajesCompletadosHoy)}
+            value={String(resumen.viajesCompletadosHoy)}
             etiqueta="Viajes hoy"
           />
 
           <ResumenCard
             icono="wallet-outline"
-            value={`S/ ${RESUMEN_GANANCIAS.totalHoy.toFixed(2)}`}
+            value={`S/ ${resumen.totalHoy.toFixed(2)}`}
             etiqueta="Ganancias hoy"
           />
 
           <ResumenCard
             icono="star-outline"
-            value={String(CONDUCTOR_EJEMPLO.calificacion)}
+            value={perfil.calificacion.toFixed(1)}
             etiqueta="Calificación"
           />
 
           <ResumenCard
             icono="time-outline"
-            value="6 h 20 min"
-            etiqueta="Tiempo en línea"
+            value="En línea"
+            etiqueta="Estado"
           />
         </View>
 
@@ -63,6 +80,7 @@ export default function InicioConductorScreen() {
         <Text style={styles.seccionTitulo}>Accesos rápidos</Text>
 
         <View style={styles.accionesRapidas}>
+
           <AccesoRapido
             icono="wallet-outline"
             texto="Ganancias"

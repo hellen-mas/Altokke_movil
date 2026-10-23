@@ -183,16 +183,15 @@ export default function PasajeroPreferenciasScreen() {
             titulo={"Preferencias\n"}
             tituloDestacado="y seguridad"
             descripcion="Personaliza tu experiencia."
-            variante="claro"
           />
         </View>
 
-        <IndicadorPasos pasoActual={3} totalPasos={3} variante="claro" />
+        <IndicadorPasos pasoActual={3} totalPasos={3} />
 
         <View style={styles.seccionPreferencias}>
           <View style={styles.opcionesContainer}>
             {opciones.map((opcion) => (
-              <TarjetaOpcion key={opcion.titulo} {...opcion} variante="claro" />
+              <TarjetaOpcion key={opcion.titulo} {...opcion} />
             ))}
           </View>
         </View>
@@ -200,7 +199,6 @@ export default function PasajeroPreferenciasScreen() {
         <AvisoInformativo
           texto="Tus datos están protegidos"
           icono="shield-checkmark-outline"
-          variante="claro"
           style={styles.infoCard}
         />
 

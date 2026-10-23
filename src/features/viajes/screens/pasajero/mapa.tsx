@@ -12,10 +12,11 @@ import {
 } from "@/features/viajes/constants/pasajero";
 import { TipoServicio, useViaje } from "@/features/viajes/context/ViajeContext";
 import { useNombrePasajero } from "@/features/pasajeros/hooks/use-nombre-pasajero";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const SERVICIOS: {
@@ -46,30 +47,54 @@ const SERVICIOS: {
   },
 ];
 
-const DESTINOS_FRECUENTES: {
-  nombre: string;
-  icono: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { nombre: "Casa", icono: "home" },
-  { nombre: "Trabajo", icono: "briefcase" },
-  { nombre: "Universidad", icono: "school" },
-];
-
 export default function PantallaMapa() {
+  const { colores, esOscuro } = useAltokkeTheme();
   const { tipoServicio, setTipoServicio, destino, setDestino } = useViaje();
   const nombre = useNombrePasajero();
+  const { perfil } = usePerfilPasajero();
+
+  const destinosFrecuentes = useMemo(() => {
+    const guardadas = perfil?.preferencias?.direcciones || [];
+    if (guardadas.length > 0) {
+      return guardadas.slice(0, 3).map((d) => ({
+        nombre: d.nombre,
+        detalle: d.direccion,
+        icono: ((d.icono || "location").replace("-outline", "") as keyof typeof Ionicons.glyphMap),
+        coordenadas: d.coordenadas || { latitude: -5.6389, longitude: -78.5302 },
+        esGuardado: true,
+      }));
+    }
+    return [
+      { nombre: "Casa", detalle: "Toca para agregar", icono: "home" as const, coordenadas: null, esGuardado: false },
+      { nombre: "Trabajo", detalle: "Toca para agregar", icono: "briefcase" as const, coordenadas: null, esGuardado: false },
+      { nombre: "Universidad", detalle: "Toca para agregar", icono: "school" as const, coordenadas: null, esGuardado: false },
+    ];
+  }, [perfil]);
+
+  const seleccionarDestinoFrecuente = (item: (typeof destinosFrecuentes)[number]) => {
+    if (item.esGuardado && item.coordenadas) {
+      setDestino({
+        id: `frecuente-${item.nombre}`,
+        nombre: item.nombre,
+        detalle: item.detalle,
+        coordenadas: item.coordenadas,
+      });
+      router.push("/confirmar-viaje");
+    } else {
+      router.push("/cuenta/direcciones");
+    }
+  };
 
   const irADestino = () => {
     router.push("/destino");
   };
 
-  // Si ya hay un destino elegido se sigue directo a confirmar el viaje
   const solicitarMototaxi = () => {
     router.push(destino ? "/confirmar-viaje" : "/destino");
   };
 
   return (
-    <View style={styles.pantalla}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
@@ -85,26 +110,50 @@ export default function PantallaMapa() {
         />
 
         {/* Origen y destino */}
-        <View style={styles.tarjetaRuta}>
+        <View
+          style={[
+            styles.tarjetaRuta,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
           <View style={styles.filaOrigen}>
-            <View style={styles.iconoOrigen}>
+            <View
+              style={[
+                styles.iconoOrigen,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
               <Ionicons
                 name="radio-button-on"
                 size={20}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
             </View>
 
             <View style={styles.textoOrigen}>
-              <Text style={styles.origenTitulo}>Tu ubicación actual</Text>
-              <Text style={styles.origenDetalle}>Bagua, Amazonas</Text>
+              <Text style={[styles.origenTitulo, { color: colores.texto }]}>
+                Tu ubicación actual
+              </Text>
+              <Text
+                style={[styles.origenDetalle, { color: colores.secundario }]}
+              >
+                Bagua, Amazonas
+              </Text>
             </View>
 
-            <View style={styles.botonIntercambio}>
+            <View
+              style={[
+                styles.botonIntercambio,
+                { backgroundColor: colores.campo },
+              ]}
+            >
               <Ionicons
                 name="swap-vertical"
                 size={18}
-                color={paletaColores.textoSecundarioClaro}
+                color={colores.secundario}
               />
             </View>
           </View>
@@ -113,21 +162,19 @@ export default function PantallaMapa() {
             onPress={irADestino}
             style={({ pressed }) => [
               styles.campoDestino,
-              pressed && styles.campoDestinoPresionado,
+              { backgroundColor: colores.campo },
+              pressed && { opacity: 0.8 },
             ]}
           >
             <Ionicons
               name="location-sharp"
               size={20}
-              color={
-                destino
-                  ? paletaColores.error
-                  : paletaColores.textoSecundarioClaro
-              }
+              color={destino ? colores.error : colores.secundario}
             />
             <Text
               style={[
                 styles.campoDestinoTexto,
+                { color: destino ? colores.texto : colores.secundario },
                 destino && styles.campoDestinoElegido,
               ]}
               numberOfLines={1}
@@ -140,7 +187,7 @@ export default function PantallaMapa() {
                 <Ionicons
                   name="close-circle"
                   size={22}
-                  color={paletaColores.textoSecundarioClaro}
+                  color={colores.secundario}
                 />
               </Pressable>
             )}
@@ -168,12 +215,37 @@ export default function PantallaMapa() {
                 onPress={() => setTipoServicio(servicio.id)}
                 style={[
                   styles.servicio,
-                  seleccionado && styles.servicioSeleccionado,
+                  {
+                    backgroundColor: seleccionado
+                      ? colores.exitoFondo
+                      : colores.superficie,
+                    borderColor: seleccionado
+                      ? colores.primario
+                      : colores.linea,
+                  },
                 ]}
               >
-                {servicio.icono(paletaColores.boton)}
-                <Text style={styles.servicioTitulo}>{servicio.titulo}</Text>
-                <Text style={styles.servicioDescripcion}>
+                {servicio.icono(
+                  seleccionado ? colores.exitoTexto : colores.secundario
+                )}
+                <Text
+                  style={[
+                    styles.servicioTitulo,
+                    {
+                      color: seleccionado
+                        ? colores.exitoTexto
+                        : colores.texto,
+                    },
+                  ]}
+                >
+                  {servicio.titulo}
+                </Text>
+                <Text
+                  style={[
+                    styles.servicioDescripcion,
+                    { color: colores.secundario },
+                  ]}
+                >
                   {servicio.descripcion}
                 </Text>
               </Pressable>
@@ -183,34 +255,50 @@ export default function PantallaMapa() {
 
         {/* Destinos frecuentes */}
         <View style={styles.encabezadoSeccion}>
-          <Text style={styles.seccionTitulo}>Destinos frecuentes</Text>
+          <Text style={[styles.seccionTitulo, { color: colores.texto }]}>
+            Destinos frecuentes
+          </Text>
           <Pressable onPress={irADestino} hitSlop={8}>
-            <Text style={styles.verTodos}>Ver todos ›</Text>
+            <Text style={[styles.verTodos, { color: colores.exitoTexto }]}>
+              Ver todos ›
+            </Text>
           </Pressable>
         </View>
 
         <View style={styles.frecuentes}>
-          {DESTINOS_FRECUENTES.map((destino) => (
+          {destinosFrecuentes.map((item) => (
             <Pressable
-              key={destino.nombre}
-              onPress={irADestino}
-              style={styles.frecuente}
+              key={item.nombre}
+              onPress={() => seleccionarDestinoFrecuente(item)}
+              style={[
+                styles.frecuente,
+                {
+                  backgroundColor: colores.superficie,
+                  borderColor: colores.linea,
+                },
+              ]}
             >
               <Ionicons
-                name={destino.icono}
+                name={item.icono}
                 size={22}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
               <View style={styles.frecuenteTextos}>
                 <Text
-                  style={styles.frecuenteNombre}
+                  style={[styles.frecuenteNombre, { color: colores.texto }]}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 >
-                  {destino.nombre}
+                  {item.nombre}
                 </Text>
-                <Text style={styles.frecuenteDetalle} numberOfLines={2}>
-                  Agregar dirección
+                <Text
+                  style={[
+                    styles.frecuenteDetalle,
+                    { color: colores.secundario },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {item.detalle}
                 </Text>
               </View>
             </Pressable>
@@ -218,17 +306,31 @@ export default function PantallaMapa() {
         </View>
 
         {/* Mensaje de seguridad */}
-        <View style={styles.seguridad}>
+        <View
+          style={[
+            styles.seguridad,
+            {
+              backgroundColor: esOscuro ? colores.superficie : COLOR_CABECERA,
+              borderColor: colores.linea,
+              borderWidth: esOscuro ? 1 : 0,
+            },
+          ]}
+        >
           <Ionicons
             name="shield-checkmark"
             size={38}
-            color={paletaColores.verde}
+            color={colores.exitoTexto}
           />
           <View style={styles.seguridadTextos}>
-            <Text style={styles.seguridadTitulo}>
+            <Text style={[styles.seguridadTitulo, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
               Viaja más seguro en Bagua
             </Text>
-            <Text style={styles.seguridadDetalle}>
+            <Text
+              style={[
+                styles.seguridadDetalle,
+                { color: esOscuro ? colores.secundario : "rgba(255, 255, 255, 0.8)" },
+              ]}
+            >
               Conductores verificados y de confianza
             </Text>
           </View>
@@ -249,38 +351,34 @@ export default function PantallaMapa() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   contenido: {
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
 
   tarjetaRuta: {
     marginTop: -52,
     marginHorizontal: 16,
-    padding: 12,
-    gap: 8,
+    padding: 14,
+    gap: 10,
     borderRadius: 18,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   filaOrigen: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     paddingHorizontal: 4,
   },
 
   iconoOrigen: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5F8EF",
   },
 
   textoOrigen: {
@@ -288,48 +386,39 @@ const styles = StyleSheet.create({
   },
 
   origenTitulo: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   origenDetalle: {
-    fontSize: 12,
-    color: paletaColores.textoSecundarioClaro,
+    fontSize: 13,
   },
 
   botonIntercambio: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F1F5F3",
   },
 
   campoDestino: {
-    height: 48,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: "#F1F5F3",
-  },
-
-  campoDestinoPresionado: {
-    backgroundColor: "#E4EBE7",
   },
 
   campoDestinoTexto: {
     flex: 1,
     fontSize: 16,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   campoDestinoElegido: {
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   mapa: {
@@ -348,30 +437,21 @@ const styles = StyleSheet.create({
 
   servicio: {
     flex: 1,
-    gap: 2,
+    gap: 4,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1.5,
-    borderColor: paletaColores.bordeClaro,
-  },
-
-  servicioSeleccionado: {
-    backgroundColor: "#EAF8F1",
-    borderColor: paletaColores.boton,
   },
 
   servicioTitulo: {
     marginTop: 4,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   servicioDescripcion: {
-    fontSize: 11,
-    lineHeight: 14,
-    color: paletaColores.textoSecundarioClaro,
+    fontSize: 12,
+    lineHeight: 16,
   },
 
   encabezadoSeccion: {
@@ -385,13 +465,11 @@ const styles = StyleSheet.create({
   seccionTitulo: {
     fontSize: 17,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   verTodos: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.boton,
   },
 
   frecuentes: {
@@ -405,11 +483,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "flex-start",
     gap: 6,
-    padding: 10,
+    padding: 12,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   frecuenteTextos: {
@@ -417,14 +493,13 @@ const styles = StyleSheet.create({
   },
 
   frecuenteNombre: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   frecuenteDetalle: {
-    fontSize: 10,
-    color: paletaColores.textoSecundarioClaro,
+    fontSize: 11,
+    lineHeight: 15,
   },
 
   seguridad: {
@@ -435,7 +510,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: COLOR_CABECERA,
   },
 
   seguridadTextos: {
@@ -445,18 +519,16 @@ const styles = StyleSheet.create({
   seguridadTitulo: {
     fontSize: 16,
     fontWeight: "800",
-    color: paletaColores.texto,
   },
 
   seguridadDetalle: {
     marginTop: 2,
-    fontSize: 12,
-    color: paletaColores.textoSecundario,
+    fontSize: 13,
   },
 
   botonSolicitar: {
     width: "auto",
-    marginTop: 14,
+    marginTop: 16,
     marginHorizontal: 16,
   },
 });

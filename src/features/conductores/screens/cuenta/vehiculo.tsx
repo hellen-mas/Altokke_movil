@@ -11,16 +11,17 @@ import {
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
-import { CONDUCTOR_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { paletaColores } from "@/shared/theme/paletaColores";
 
 export default function VehiculoConductor() {
+    const { perfil } = usePerfilConductor();
     const [modoEdicion, setModoEdicion] = useState(false);
-    const vehiculo = CONDUCTOR_EJEMPLO.vehiculo;
+    const vehiculo = perfil.vehiculo;
     const editarDato = (campo: string) => {
         Alert.alert(
-            "Editar información",
-            `Más adelante aquí podrás modificar ${campo}.`
+            "Editar vehículo",
+            `Para actualizar ${campo}, contacta con soporte o sube tu nueva tarjeta de propiedad.`
         );
     };
 
@@ -115,7 +116,7 @@ export default function VehiculoConductor() {
                         <DatoPersonal
                             icono="shield-checkmark-outline"
                             titulo="Estado del vehículo"
-                            valor={vehiculo.estado}
+                            valor="Operativo"
                             editable={false}
                             ultimo
                         />

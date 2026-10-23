@@ -1,5 +1,5 @@
 import { COLOR_CABECERA } from "@/features/viajes/constants/pasajero";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { ReactNode } from "react";
@@ -27,12 +27,19 @@ export function CabeceraPasajero({
   hayNotificaciones = false,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { colores, esOscuro } = useAltokkeTheme();
+
+  const bgCabecera = esOscuro ? colores.superficie : COLOR_CABECERA;
 
   return (
     <View
       style={[
         styles.cabecera,
-        { paddingTop: insets.top + 12, paddingBottom: paddingInferior },
+        {
+          paddingTop: insets.top + 12,
+          paddingBottom: paddingInferior,
+          backgroundColor: bgCabecera,
+        },
       ]}
     >
       <View style={styles.filaLogo}>
@@ -41,23 +48,57 @@ export function CabeceraPasajero({
           style={styles.logoImagen}
           resizeMode="contain"
         />
-        <Text style={styles.logoTexto}>Altokke</Text>
+        <Text style={[styles.logoTexto, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
+          Altokke
+        </Text>
 
         <Pressable
           onPress={() => router.push("/notificaciones")}
-          style={styles.botonNotificaciones}
+          style={[
+            styles.botonNotificaciones,
+            {
+              backgroundColor: esOscuro ? colores.campo : "rgba(255,255,255,0.15)",
+              borderColor: esOscuro ? colores.linea : "rgba(255,255,255,0.25)",
+            },
+          ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Notificaciones"
         >
           <Ionicons
             name="notifications"
             size={22}
-            color={paletaColores.textoSecundario}
+            color={esOscuro ? colores.texto : "#FFFFFF"}
           />
-          {hayNotificaciones && <View style={styles.puntoNuevo} />}
+          {hayNotificaciones && (
+            <View
+              style={[
+                styles.puntoNuevo,
+                {
+                  backgroundColor: colores.error,
+                  borderColor: bgCabecera,
+                },
+              ]}
+            />
+          )}
         </Pressable>
       </View>
 
-      {titulo && <Text style={styles.titulo}>{titulo}</Text>}
-      {subtitulo && <Text style={styles.subtitulo}>{subtitulo}</Text>}
+      {titulo && (
+        <Text style={[styles.titulo, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
+          {titulo}
+        </Text>
+      )}
+      {subtitulo && (
+        <Text
+          style={[
+            styles.subtitulo,
+            { color: esOscuro ? colores.secundario : "rgba(255,255,255,0.8)" },
+          ]}
+        >
+          {subtitulo}
+        </Text>
+      )}
 
       {children}
     </View>
@@ -67,7 +108,6 @@ export function CabeceraPasajero({
 const styles = StyleSheet.create({
   cabecera: {
     paddingHorizontal: 20,
-    backgroundColor: COLOR_CABECERA,
   },
 
   filaLogo: {
@@ -86,7 +126,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 22,
     fontWeight: "700",
-    color: paletaColores.texto,
   },
 
   botonNotificaciones: {
@@ -95,9 +134,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.superficie,
-    borderWidth: 2,
-    borderColor: paletaColores.borde,
+    borderWidth: 1.5,
   },
 
   puntoNuevo: {
@@ -107,20 +144,16 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: paletaColores.error,
     borderWidth: 2,
-    borderColor: COLOR_CABECERA,
   },
 
   titulo: {
     fontSize: 24,
     fontWeight: "800",
-    color: paletaColores.texto,
   },
 
   subtitulo: {
     fontSize: 14,
     marginTop: 2,
-    color: paletaColores.textoSecundario,
   },
 });

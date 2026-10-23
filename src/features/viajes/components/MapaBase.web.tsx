@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { IconoMototaxi } from "./IconoMototaxi";
 import type { MapaBaseProps } from "@/features/viajes/types/tiposMapa";
 
@@ -15,46 +15,68 @@ const POSICIONES_CONDUCTORES = [
 ] as const;
 
 export function MapaBase({ conductores = [], destino, style }: MapaBaseProps) {
+  const { colores, esOscuro } = useAltokkeTheme();
+
   return (
-    <View style={[styles.mapa, style]}>
+    <View style={[styles.mapa, esOscuro && styles.mapaOscuro, style]}>
       {/* Zonas verdes y río */}
-      <View style={[styles.parque, { top: "10%", left: "58%" }]} />
-      <View style={[styles.parque, styles.parqueGrande, { top: "52%", left: "-6%" }]} />
-      <View style={[styles.rio, { top: "6%", left: "-30%" }]} />
+      <View style={[styles.parque, esOscuro && styles.parqueOscuro, { top: "10%", left: "58%" }]} />
+      <View style={[styles.parque, styles.parqueGrande, esOscuro && styles.parqueOscuro, { top: "52%", left: "-6%" }]} />
+      <View style={[styles.rio, esOscuro && styles.rioOscuro, { top: "6%", left: "-30%" }]} />
 
       {/* Calles */}
-      <View style={[styles.calle, styles.calleHorizontal, { top: "26%" }]} />
-      <View style={[styles.calle, styles.calleHorizontal, { top: "50%" }]} />
-      <View style={[styles.calle, styles.calleHorizontal, { top: "76%" }]} />
-      <View style={[styles.calle, styles.calleVertical, { left: "24%" }]} />
-      <View style={[styles.calle, styles.calleVertical, { left: "52%" }]} />
-      <View style={[styles.calle, styles.calleVertical, { left: "80%" }]} />
+      <View style={[styles.calle, styles.calleHorizontal, esOscuro && styles.calleOscura, { top: "26%" }]} />
+      <View style={[styles.calle, styles.calleHorizontal, esOscuro && styles.calleOscura, { top: "50%" }]} />
+      <View style={[styles.calle, styles.calleHorizontal, esOscuro && styles.calleOscura, { top: "76%" }]} />
+      <View style={[styles.calle, styles.calleVertical, esOscuro && styles.calleOscura, { left: "24%" }]} />
+      <View style={[styles.calle, styles.calleVertical, esOscuro && styles.calleOscura, { left: "52%" }]} />
+      <View style={[styles.calle, styles.calleVertical, esOscuro && styles.calleOscura, { left: "80%" }]} />
 
       {/* Conductores cercanos */}
       {conductores.slice(0, POSICIONES_CONDUCTORES.length).map((_, indice) => (
         <View
           key={indice}
-          style={[styles.conductor, POSICIONES_CONDUCTORES[indice]]}
+          style={[
+            styles.conductor,
+            { borderColor: colores.superficie },
+            POSICIONES_CONDUCTORES[indice],
+          ]}
         >
-          <IconoMototaxi size={18} color={paletaColores.textoOscuro} />
+          <IconoMototaxi size={18} color="#1F2937" />
         </View>
       ))}
 
       {/* Destino */}
       {destino && (
         <View style={styles.destino}>
-          <Ionicons name="location-sharp" size={34} color={paletaColores.error} />
+          <Ionicons name="location-sharp" size={34} color={colores.error} />
         </View>
       )}
 
       {/* Ubicación del pasajero */}
       <View style={styles.pasajero}>
         <View style={styles.halo} />
-        <View style={styles.punto} />
+        <View
+          style={[
+            styles.punto,
+            {
+              backgroundColor: colores.primario,
+              borderColor: colores.superficie,
+            },
+          ]}
+        />
       </View>
 
-      <View style={styles.botonCentrar}>
-        <Ionicons name="locate" size={22} color={paletaColores.boton} />
+      <View
+        style={[
+          styles.botonCentrar,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
+        <Ionicons name="locate" size={22} color={colores.primario} />
       </View>
     </View>
   );
@@ -66,9 +88,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#E9EFEB",
   },
 
+  mapaOscuro: {
+    backgroundColor: "#111A15",
+  },
+
   calle: {
     position: "absolute",
     backgroundColor: "#FFFFFF",
+  },
+
+  calleOscura: {
+    backgroundColor: "#1F2F26",
   },
 
   calleHorizontal: {
@@ -91,6 +121,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#CFE8D6",
   },
 
+  parqueOscuro: {
+    backgroundColor: "#193525",
+  },
+
   parqueGrande: {
     width: 150,
     height: 110,
@@ -105,6 +139,10 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "24deg" }],
   },
 
+  rioOscuro: {
+    backgroundColor: "#182E3E",
+  },
+
   conductor: {
     position: "absolute",
     width: 30,
@@ -112,9 +150,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.verde,
+    backgroundColor: "#2FAE73",
     borderWidth: 2,
-    borderColor: paletaColores.superficieClara,
   },
 
   destino: {
@@ -146,22 +183,23 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: paletaColores.boton,
     borderWidth: 3,
-    borderColor: paletaColores.superficieClara,
   },
 
   botonCentrar: {
     position: "absolute",
     top: 12,
     right: 12,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
   },
 });

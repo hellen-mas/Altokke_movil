@@ -10,17 +10,18 @@ import { CabeceraConductor } from "@/features/conductores/components/CabeceraCon
 import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
 import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
-import { CONDUCTOR_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function InformacionPersonalConductor() {
+    const { perfil } = usePerfilConductor();
     const [modoEdicion, setModoEdicion] = useState(false);
     const editarDato = (campo: string) => {
         Alert.alert(
             "Editar información",
-            `Más adelante aquí podrás modificar ${campo}.`
+            `Para actualizar ${campo}, contacta a soporte o guarda tus cambios en perfil.`
         );
     };
 
@@ -40,11 +41,11 @@ export default function InformacionPersonalConductor() {
                 
                 <View style={styles.perfilContainer}>
                     <TarjetaPerfilConductor
-                        nombre={CONDUCTOR_EJEMPLO.nombre}
-                        calificacion={CONDUCTOR_EJEMPLO.calificacion}
-                        viajes={CONDUCTOR_EJEMPLO.viajes}
-                        estado={CONDUCTOR_EJEMPLO.estado}
-                        foto={CONDUCTOR_EJEMPLO.foto}
+                        nombre={perfil.nombre}
+                        calificacion={perfil.calificacion}
+                        viajes={perfil.viajes}
+                        estado={perfil.estado}
+                        foto={perfil.foto}
                         compacta
                     />
                 </View>
@@ -53,49 +54,47 @@ export default function InformacionPersonalConductor() {
                     <DatoPersonal
                         icono="person"
                         titulo="Nombre completo"
-                        valor={CONDUCTOR_EJEMPLO.nombre}
+                        valor={perfil.nombre}
                         editable={false}
                     />
                     <DatoPersonal
                         icono="card"
                         titulo="DNI"
-                        valor={CONDUCTOR_EJEMPLO.dni}
+                        valor={perfil.dni || "Registrado"}
                         editable={false}
                     />
                     <DatoPersonal
                         icono="call"
                         titulo="Teléfono"
-                        valor={CONDUCTOR_EJEMPLO.telefono}
+                        valor={perfil.telefono || "No especificado"}
                         editable={modoEdicion}
                         onEditar={() => editarDato("tu teléfono")}
                     />
                     <DatoPersonal
                         icono="mail"
                         titulo="Correo electrónico"
-                        valor={CONDUCTOR_EJEMPLO.correo}
+                        valor={perfil.correo || "No especificado"}
                         editable={modoEdicion}
                         onEditar={() => editarDato("tu correo electrónico")}
                     />
                     <DatoPersonal
                         icono="calendar"
                         titulo="Fecha de nacimiento"
-                        valor={CONDUCTOR_EJEMPLO.fechaNacimiento}
+                        valor={perfil.fechaNacimiento}
                         editable={false}
                     />
                     <DatoPersonal
                         icono="location"
                         titulo="Ciudad"
-                        valor={CONDUCTOR_EJEMPLO.ciudad}
+                        valor={perfil.ciudad}
                         editable={modoEdicion}
                         onEditar={() => editarDato("tu ciudad")}
                     />
                     <DatoPersonal
                         icono="people"
                         titulo="Contacto de emergencia"
-                        valor={`${CONDUCTOR_EJEMPLO.contactoEmergencia.nombre} (${CONDUCTOR_EJEMPLO.contactoEmergencia.parentesco})`}
-                        valorSecundario={
-                            CONDUCTOR_EJEMPLO.contactoEmergencia.telefono
-                        }
+                        valor={`${perfil.contactoEmergencia.nombre} (${perfil.contactoEmergencia.parentesco})`}
+                        valorSecundario={perfil.contactoEmergencia.telefono}
                         editable={modoEdicion}
                         onEditar={() => editarDato("tu contacto de emergencia")}
                         ultimo

@@ -186,21 +186,18 @@ export default function PasajeroIdentidadScreen() {
             titulo={"Verifica tu "}
             tituloDestacado="identidad"
             descripcion="Un paso más para viajar seguro."
-            variante="claro"
           />
         </View>
 
         <IndicadorPasos 
           pasoActual={2} 
           totalPasos={3} 
-          variante="claro"
         />
 
         <View style={styles.formContainer}>
           <AvisoInformativo
             texto="Verificaremos tu DNI para proteger tu cuenta."
             icono="shield-checkmark-outline"
-            variante="claro"
           />
 
           <View style={styles.seccion}>
@@ -213,7 +210,6 @@ export default function PasajeroIdentidadScreen() {
                 keyboardType="numeric"
                 maxLength={15}
                 transformar={sanitizarDNI}
-                variante="claro"
               />
               {loadingDni && (
                 <View style={styles.statusRow}>
@@ -324,14 +320,12 @@ export default function PasajeroIdentidadScreen() {
               keyboardType="phone-pad"
               maxLength={15}
               transformar={sanitizarTelefono}
-              variante="claro"
             />
 
             <CampoFechaNacimiento
               valorIso={fechaNacimientoActual}
               alCambiar={(iso) => setValue("fechaNacimiento", iso, { shouldValidate: true, shouldDirty: true, })}
               error={errors?.fechaNacimiento?.message as string | undefined}
-              variante="claro"
             />
           </View>
 
@@ -343,7 +337,6 @@ export default function PasajeroIdentidadScreen() {
               setFotoLocal(uri);
               setFotoBase64(base64 || null);
             }}
-            variante="claro"
           />
         </View>
 

@@ -1,36 +1,90 @@
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
 import { NOTIFICACIONES_EJEMPLO } from "@/features/viajes/constants/pasajero";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+interface NotificacionItem {
+  id: string;
+  icono: keyof typeof Ionicons.glyphMap;
+  titulo: string;
+  mensaje: string;
+  hora: string;
+  leida: boolean;
+}
 
 export default function PantallaNotificaciones() {
+  const { colores } = useAltokkeTheme();
+  const [lista, setLista] = useState<NotificacionItem[]>(() => [...NOTIFICACIONES_EJEMPLO]);
+
+  const marcarComoLeida = (id: string) => {
+    setLista((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, leida: true } : item))
+    );
+  };
+
+  const marcarTodasLeidas = () => {
+    setLista((prev) => prev.map((item) => ({ ...item, leida: true })));
+    Alert.alert("Notificaciones", "Todas las notificaciones han sido marcadas como leídas.");
+  };
+
+  const hayNoLeidas = lista.some((n) => !n.leida);
+
   return (
-    <View style={styles.pantalla}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Notificaciones" />
 
       <ScrollView contentContainerStyle={styles.contenido}>
-        {NOTIFICACIONES_EJEMPLO.map((notificacion) => (
-          <View
-            key={notificacion.id}
-            style={[styles.tarjeta, !notificacion.leida && styles.tarjetaNueva]}
+        {hayNoLeidas && (
+          <Pressable
+            style={[styles.botonMarcarTodas, { borderColor: colores.linea }]}
+            onPress={marcarTodasLeidas}
           >
-            <View style={styles.icono}>
+            <Ionicons name="checkmark-done-outline" size={18} color={colores.exitoTexto} />
+            <Text style={[styles.textoMarcarTodas, { color: colores.exitoTexto }]}>
+              Marcar todas como leídas
+            </Text>
+          </Pressable>
+        )}
+
+        {lista.map((notificacion) => (
+          <Pressable
+            key={notificacion.id}
+            onPress={() => marcarComoLeida(notificacion.id)}
+            style={({ pressed }) => [
+              styles.tarjeta,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: notificacion.leida ? colores.linea : colores.primario,
+              },
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <View style={[styles.icono, { backgroundColor: colores.exitoFondo }]}>
               <Ionicons
                 name={notificacion.icono}
                 size={22}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
             </View>
 
             <View style={styles.textos}>
-              <Text style={styles.titulo}>{notificacion.titulo}</Text>
-              <Text style={styles.mensaje}>{notificacion.mensaje}</Text>
-              <Text style={styles.hora}>{notificacion.hora}</Text>
+              <Text style={[styles.titulo, { color: colores.texto }]}>
+                {notificacion.titulo}
+              </Text>
+              <Text style={[styles.mensaje, { color: colores.secundario }]}>
+                {notificacion.mensaje}
+              </Text>
+              <Text style={[styles.hora, { color: colores.secundario }]}>
+                {notificacion.hora}
+              </Text>
             </View>
 
-            {!notificacion.leida && <View style={styles.puntoNuevo} />}
-          </View>
+            {!notificacion.leida && (
+              <View style={[styles.puntoNuevo, { backgroundColor: colores.error }]} />
+            )}
+          </Pressable>
         ))}
       </ScrollView>
     </View>
@@ -40,64 +94,66 @@ export default function PantallaNotificaciones() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   contenido: {
     padding: 16,
-    gap: 10,
+    gap: 12,
+  },
+
+  botonMarcarTodas: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+
+  textoMarcarTodas: {
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   tarjeta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
+    gap: 14,
+    padding: 16,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-  },
-
-  tarjetaNueva: {
-    borderColor: paletaColores.boton,
   },
 
   icono: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E6F5EC",
   },
 
   textos: {
     flex: 1,
+    gap: 4,
   },
 
   titulo: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: paletaColores.textoClaro,
+    fontSize: 16,
+    fontWeight: "600",
   },
 
   mensaje: {
     fontSize: 13,
-    marginTop: 2,
-    color: paletaColores.textoSecundarioClaro,
+    lineHeight: 18,
   },
 
   hora: {
-    fontSize: 12,
-    marginTop: 4,
-    color: paletaColores.textoSecundarioClaro,
+    fontSize: 11,
   },
 
   puntoNuevo: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: paletaColores.error,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });
