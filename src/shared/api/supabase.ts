@@ -4,16 +4,18 @@ import type { Database } from '@/shared/types/database.types';
 import { almacenamientoSeguro } from '@/shared/api/almacenamientoSeguro';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey =
+  process.env.EXPO_PUBLIC_SUPABASE_KEY ||
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseKey) {
   throw new Error(
     "Faltan las credenciales de Supabase. Revisa tu archivo .env"
   );
 }
 
 // Inicializo el cliente de Supabase guardando la sesion en el almacenamiento seguro (AsyncStorage + SecureStore) para que la sesion persista entre reinicios de la app
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   auth: {
     storage: almacenamientoSeguro,
     autoRefreshToken: true,
