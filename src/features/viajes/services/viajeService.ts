@@ -33,7 +33,6 @@ export const viajeService = {
           distancia_km: input.distanciaKm,
           tarifa_estimada: input.tarifaEstimada,
           metodo_pago: input.metodoPago,
-          estado: "buscando",
         })
         .select()
         .single();
@@ -52,55 +51,29 @@ export const viajeService = {
   /**
    * Finaliza el viaje y actualiza su tarifa final
    */
-  async finalizarViaje(viajeId: string, tarifaFinal?: number) {
+  async finalizarViaje(viajeId: string, _tarifaFinal?: number) {
     if (!viajeId) return null;
-
     try {
-      const { data, error } = await supabase
-        .from("viajes")
-        .update({
-          estado: "finalizado",
-          tarifa_final: tarifaFinal,
-          finalizado_en: new Date().toISOString(),
-        })
-        .eq("id", viajeId)
-        .select()
-        .maybeSingle();
-
-      if (error) {
-        console.warn("Aviso al finalizar viaje en Supabase:", error.message);
-        return null;
-      }
+      const { error } = await supabase.rpc("finalizar_viaje", { p_viaje_id: viajeId });
+      if (error) throw error;
+      const { data } = await supabase.from("viajes").select().eq("id", viajeId).maybeSingle();
       return data;
     } catch (err) {
-      console.warn("Excepción al finalizar viaje:", err);
+      console.warn("No se pudo finalizar el viaje:", err);
       return null;
     }
   },
 
-  /**
-   * Cancela el viaje por parte del pasajero
-   */
+  /** Cancela el viaje mediante una transición validada en PostgreSQL. */
   async cancelarViaje(viajeId: string) {
     if (!viajeId) return null;
-
     try {
-      const { data, error } = await supabase
-        .from("viajes")
-        .update({
-          estado: "cancelado_pasajero",
-        })
-        .eq("id", viajeId)
-        .select()
-        .maybeSingle();
-
-      if (error) {
-        console.warn("Aviso al cancelar viaje en Supabase:", error.message);
-        return null;
-      }
+      const { error } = await supabase.rpc("cancelar_viaje_pasajero", { p_viaje_id: viajeId });
+      if (error) throw error;
+      const { data } = await supabase.from("viajes").select().eq("id", viajeId).maybeSingle();
       return data;
     } catch (err) {
-      console.warn("Excepción al cancelar viaje:", err);
+      console.warn("No se pudo cancelar el viaje:", err);
       return null;
     }
   },
@@ -136,7 +109,7 @@ export const viajeService = {
 
       const { data, error } = await supabase
         .from("calificaciones")
-        .upsert(
+        .insert(
           {
             viaje_id: viajeId,
             autor_id: autorId,
@@ -144,7 +117,6 @@ export const viajeService = {
             puntuacion,
             comentario: comentario || null,
           },
-          { onConflict: "viaje_id,autor_id" }
         )
         .select()
         .maybeSingle();
