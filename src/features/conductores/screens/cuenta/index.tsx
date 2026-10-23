@@ -8,9 +8,11 @@ import { CabeceraConductor } from "@/features/conductores/components/CabeceraCon
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { CONDUCTOR_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 
 export default function CuentaConductor() {
+    const { perfil } = usePerfilConductor();
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -25,11 +27,11 @@ export default function CuentaConductor() {
                         mostrarMarca
                     >
                         <TarjetaPerfilConductor
-                            nombre={CONDUCTOR_EJEMPLO.nombre}
-                            calificacion={CONDUCTOR_EJEMPLO.calificacion}
-                            viajes={CONDUCTOR_EJEMPLO.viajes}
-                            estado={CONDUCTOR_EJEMPLO.estado}
-                            foto={CONDUCTOR_EJEMPLO.foto}
+                            nombre={perfil.nombre}
+                            calificacion={perfil.calificacion}
+                            viajes={perfil.viajes}
+                            estado={perfil.estado}
+                            foto={perfil.foto}
                         />
                     </CabeceraConductor>
 

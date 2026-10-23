@@ -1,5 +1,4 @@
-import { COLORES_CUENTA } from "@/features/pasajeros/constants/cuenta";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -27,31 +26,58 @@ export function ItemMenu({
   derecha,
   sinFlecha = false,
 }: Props) {
-  const colorIcono = peligro ? paletaColores.error : paletaColores.boton;
+  const { colores } = useAltokkeTheme();
+  const colorIcono = peligro ? colores.error : colores.exitoTexto;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        variante === "tarjeta" ? styles.tarjeta : styles.fila,
+        variante === "tarjeta"
+          ? [
+              styles.tarjeta,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]
+          : [
+              styles.fila,
+              {
+                borderBottomColor: colores.linea,
+              },
+            ],
         pressed && onPress ? styles.presionado : null,
       ]}
+      accessibilityRole="button"
+      accessibilityLabel={titulo}
     >
       <View
         style={[
           styles.iconoCaja,
-          peligro && { backgroundColor: COLORES_CUENTA.iconoFondoPeligro },
+          {
+            backgroundColor: peligro ? colores.errorFondo : colores.exitoFondo,
+          },
         ]}
       >
         <Ionicons name={icono} size={20} color={colorIcono} />
       </View>
 
       <View style={styles.textos}>
-        <Text style={[styles.titulo, peligro && { color: paletaColores.error }]}>
+        <Text
+          style={[
+            styles.titulo,
+            { color: peligro ? colores.error : colores.texto },
+          ]}
+        >
           {titulo}
         </Text>
-        {subtitulo ? <Text style={styles.subtitulo}>{subtitulo}</Text> : null}
+        {subtitulo ? (
+          <Text style={[styles.subtitulo, { color: colores.secundario }]}>
+            {subtitulo}
+          </Text>
+        ) : null}
       </View>
 
       {derecha}
@@ -60,7 +86,7 @@ export function ItemMenu({
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={paletaColores.textoSecundarioClaro}
+          color={colores.secundario}
         />
       )}
     </Pressable>
@@ -72,6 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    minHeight: 48,
   },
 
   tarjeta: {
@@ -79,18 +106,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
   },
 
   fila: {
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: paletaColores.bordeClaro,
   },
 
   presionado: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
 
   iconoCaja: {
@@ -99,7 +123,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORES_CUENTA.iconoFondo,
   },
 
   textos: {
@@ -109,12 +132,10 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 15,
     fontWeight: "600",
-    color: paletaColores.textoClaro,
   },
 
   subtitulo: {
     marginTop: 2,
     fontSize: 12,
-    color: paletaColores.textoSecundarioClaro,
   },
 });

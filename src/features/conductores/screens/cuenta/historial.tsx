@@ -1,10 +1,21 @@
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
-import { RESUMEN_HISTORIAL, VIAJES_EJEMPLO } from "@/features/conductores/constants/conductor";
+import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
+import { conductorService } from "@/features/conductores/services/conductorService";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import type { EstadoViaje } from "@/features/conductores/types/conductor";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+
+type ViajeReal = {
+  id: string;
+  fecha: string;
+  hora: string;
+  origen: string;
+  destino: string;
+  monto: number;
+  estado: EstadoViaje;
+};
 
 type Filtro = "todos" | EstadoViaje;
 
@@ -15,10 +26,53 @@ const FILTROS: { id: Filtro; titulo: string }[] = [
 ];
 
 export default function HistorialConductor() {
+  const { perfil } = usePerfilConductor();
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [viajes, setViajes] = useState<ViajeReal[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const [totales, setTotales] = useState({ totalViajes: 0, totalGanado: 0 });
 
-    const viajesFiltrados = [...VIAJES_EJEMPLO]
-    .reverse()
+  const cargarHistorial = useCallback(async () => {
+    if (!perfil.id || perfil.id === "conductor-local") return;
+    setCargando(true);
+    try {
+      const resumen = await conductorService.obtenerResumenGanancias(perfil.id);
+      const { data: rows } = await (await import("@/shared/api/supabase")).supabase
+        .from("viajes")
+        .select("id, creado_en, finalizado_en, origen_texto, destino_texto, tarifa_final, tarifa_estimada, estado")
+        .eq("conductor_id", perfil.id)
+        .order("creado_en", { ascending: false });
+
+      if (rows) {
+        const mapeados: ViajeReal[] = rows.map((v) => {
+          const fecha = new Date(v.creado_en);
+          const estado: EstadoViaje = v.estado === "finalizado" ? "Completado" : "Cancelado";
+          return {
+            id: v.id,
+            fecha: fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "short" }),
+            hora: fecha.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }),
+            origen: v.origen_texto,
+            destino: v.destino_texto,
+            monto: Number(v.tarifa_final ?? v.tarifa_estimada ?? 0),
+            estado,
+          };
+        });
+        setViajes(mapeados);
+        setTotales({
+          totalViajes: mapeados.length,
+          totalGanado: resumen.totalSemana,
+        });
+      }
+    } catch (err) {
+      console.warn("Aviso al cargar historial conductor:", err);
+    } finally {
+      setCargando(false);
+    }
+  }, [perfil.id]);
+
+  useEffect(() => { cargarHistorial(); }, [cargarHistorial]);
+
+    const viajesFiltrados = [...viajes]
     .filter((viaje) => filtro === "todos" || viaje.estado === filtro);
 
   return (
@@ -33,7 +87,7 @@ export default function HistorialConductor() {
       <View style={styles.resumen}>
         <View style={styles.resumenDato}>
           <Text style={styles.resumenValor}>
-            {RESUMEN_HISTORIAL.totalViajes}
+            {totales.totalViajes}
           </Text>
           <Text style={styles.resumenEtiqueta}>Total de viajes</Text>
         </View>
@@ -42,7 +96,7 @@ export default function HistorialConductor() {
 
         <View style={styles.resumenDato}>
           <Text style={styles.resumenValor}>
-            S/ {RESUMEN_HISTORIAL.totalGanado.toFixed(2)}
+            S/ {totales.totalGanado.toFixed(2)}
           </Text>
           <Text style={styles.resumenEtiqueta}>Total ganado</Text>
         </View>

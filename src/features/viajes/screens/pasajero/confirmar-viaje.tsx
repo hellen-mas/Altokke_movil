@@ -17,7 +17,9 @@ import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { CENTRO_BAGUA, ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
 import { MetodoPago, useViaje } from "@/features/viajes/context/ViajeContext";
 import { ServicioViaje, useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { viajeService } from "@/features/viajes/services/viajeService";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles } from "@/features/viajes/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
@@ -55,32 +57,34 @@ const METODOS_PAGO: {
   id: MetodoPago;
   titulo: string;
   detalle: string;
-  icono: ReactNode;
+  icono: (color: string) => ReactNode;
 }[] = [
   {
     id: "efectivo",
     titulo: "Efectivo",
     detalle: "Pago al finalizar",
-    icono: (
-      <Ionicons name="cash-outline" size={22} color={paletaColores.boton} />
+    icono: (color) => (
+      <Ionicons name="cash-outline" size={22} color={color} />
     ),
   },
   {
     id: "yape",
     titulo: "Yape",
     detalle: "Pago digital",
-    icono: <Insignia letra="Y" color="#742284" />,
+    icono: () => <Insignia letra="Y" color="#742284" />,
   },
   {
     id: "plin",
     titulo: "Plin",
     detalle: "Pago digital",
-    icono: <Insignia letra="P" color="#00A8E0" />,
+    icono: () => <Insignia letra="P" color="#00A8E0" />,
   },
 ];
 
 export default function PantallaConfirmarViaje() {
-  const { setTipoServicio, metodoPago, setMetodoPago } = useViaje();
+  const { colores } = useAltokkeTheme();
+  const { userId } = useAuth();
+  const { setTipoServicio, metodoPago, setMetodoPago, setViajeActivoId } = useViaje();
   const resumen = useResumenViaje();
   const { height: altoPantalla } = useWindowDimensions();
 
@@ -92,12 +96,34 @@ export default function PantallaConfirmarViaje() {
   const { origen, destino, servicio, kilometros, tarifa, minutos, ruta } =
     resumen;
 
-  const confirmarViaje = () => {
+  const confirmarViaje = async () => {
+    if (userId) {
+      try {
+        const viajeCreado = await viajeService.crearViaje({
+          pasajeroId: userId,
+          origenTexto: ORIGEN_EJEMPLO.nombre,
+          destinoTexto: destino.nombre,
+          origenLat: origen.latitude,
+          origenLng: origen.longitude,
+          destinoLat: destino.coordenadas.latitude,
+          destinoLng: destino.coordenadas.longitude,
+          distanciaKm: kilometros,
+          tarifaEstimada: tarifa,
+          metodoPago,
+        });
+
+        if (viajeCreado?.id) {
+          setViajeActivoId(viajeCreado.id);
+        }
+      } catch (err) {
+        console.warn("Aviso al crear viaje en Supabase:", err);
+      }
+    }
     router.push("/buscando-conductor");
   };
 
   return (
-    <View style={styles.pantalla}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <CabeceraPasajero />
 
       <MapaBase
@@ -109,53 +135,86 @@ export default function PantallaConfirmarViaje() {
         style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
       />
 
-      <View style={styles.panel}>
-        <View style={styles.asa} />
+      <View
+        style={[
+          styles.panel,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
+        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contenido}
         >
-          <Text style={styles.titulo}>Confirma tu viaje</Text>
-          <Text style={styles.subtitulo}>
+          <Text style={[styles.titulo, { color: colores.texto }]}>
+            Confirma tu viaje
+          </Text>
+          <Text style={[styles.subtitulo, { color: colores.secundario }]}>
             Revisa los datos antes de solicitar tu mototaxi.
           </Text>
 
           {/* Origen y destino */}
-          <View style={styles.tarjeta}>
+          <View style={[styles.tarjeta, { backgroundColor: colores.campo }]}>
             <View style={styles.filaLugar}>
-              <View style={styles.iconoLugar}>
+              <View
+                style={[
+                  styles.iconoLugar,
+                  { backgroundColor: colores.exitoFondo },
+                ]}
+              >
                 <Ionicons
                   name="radio-button-on"
                   size={20}
-                  color={paletaColores.boton}
+                  color={colores.exitoTexto}
                 />
               </View>
               <View style={styles.textoLugar}>
-                <Text style={styles.etiqueta}>Origen</Text>
-                <Text style={styles.lugarNombre}>{ORIGEN_EJEMPLO.nombre}</Text>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Origen
+                </Text>
+                <Text style={[styles.lugarNombre, { color: colores.texto }]}>
+                  {ORIGEN_EJEMPLO.nombre}
+                </Text>
               </View>
             </View>
 
-            <View style={styles.separador} />
+            <View
+              style={[styles.separador, { backgroundColor: colores.linea }]}
+            />
 
             <View style={styles.filaLugar}>
-              <View style={[styles.iconoLugar, styles.iconoDestino]}>
+              <View
+                style={[
+                  styles.iconoLugar,
+                  styles.iconoDestino,
+                  { backgroundColor: colores.errorFondo },
+                ]}
+              >
                 <Ionicons
                   name="location-sharp"
                   size={20}
-                  color={paletaColores.error}
+                  color={colores.error}
                 />
               </View>
               <View style={styles.textoLugar}>
-                <Text style={styles.etiqueta}>Destino</Text>
-                <Text style={styles.lugarNombre}>{destino.nombre}</Text>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Destino
+                </Text>
+                <Text style={[styles.lugarNombre, { color: colores.texto }]}>
+                  {destino.nombre}
+                </Text>
               </View>
             </View>
           </View>
 
           {/* Tipo de servicio */}
-          <Text style={styles.seccion}>Tipo de servicio</Text>
+          <Text style={[styles.seccion, { color: colores.texto }]}>
+            Tipo de servicio
+          </Text>
           <View style={styles.opciones}>
             {SERVICIOS.map((opcion) => {
               const seleccionada = opcion.id === servicio;
@@ -166,13 +225,39 @@ export default function PantallaConfirmarViaje() {
                   onPress={() => setTipoServicio(opcion.id)}
                   style={[
                     styles.opcion,
-                    seleccionada && styles.opcionSeleccionada,
+                    {
+                      backgroundColor: seleccionada
+                        ? colores.exitoFondo
+                        : colores.superficie,
+                      borderColor: seleccionada
+                        ? colores.primario
+                        : colores.linea,
+                    },
                   ]}
                 >
-                  {opcion.icono(paletaColores.boton)}
+                  {opcion.icono(
+                    seleccionada ? colores.exitoTexto : colores.secundario
+                  )}
                   <View style={styles.opcionTextos}>
-                    <Text style={styles.opcionTitulo}>{opcion.titulo}</Text>
-                    <Text style={styles.opcionDetalle} numberOfLines={2}>
+                    <Text
+                      style={[
+                        styles.opcionTitulo,
+                        {
+                          color: seleccionada
+                            ? colores.exitoTexto
+                            : colores.texto,
+                        },
+                      ]}
+                    >
+                      {opcion.titulo}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.opcionDetalle,
+                        { color: colores.secundario },
+                      ]}
+                      numberOfLines={2}
+                    >
                       {opcion.descripcion}
                     </Text>
                   </View>
@@ -181,8 +266,8 @@ export default function PantallaConfirmarViaje() {
                     size={18}
                     color={
                       seleccionada
-                        ? paletaColores.boton
-                        : paletaColores.disabled
+                        ? colores.primario
+                        : colores.secundario
                     }
                   />
                 </Pressable>
@@ -191,7 +276,9 @@ export default function PantallaConfirmarViaje() {
           </View>
 
           {/* Método de pago */}
-          <Text style={styles.seccion}>Método de pago</Text>
+          <Text style={[styles.seccion, { color: colores.texto }]}>
+            Método de pago
+          </Text>
           <View style={styles.opciones}>
             {METODOS_PAGO.map((metodo) => {
               const seleccionado = metodo.id === metodoPago;
@@ -202,12 +289,40 @@ export default function PantallaConfirmarViaje() {
                   onPress={() => setMetodoPago(metodo.id)}
                   style={[
                     styles.metodo,
-                    seleccionado && styles.opcionSeleccionada,
+                    {
+                      backgroundColor: seleccionado
+                        ? colores.exitoFondo
+                        : colores.superficie,
+                      borderColor: seleccionado
+                        ? colores.primario
+                        : colores.linea,
+                    },
                   ]}
                 >
-                  <View style={styles.metodoIcono}>{metodo.icono}</View>
-                  <Text style={styles.opcionTitulo}>{metodo.titulo}</Text>
-                  <Text style={styles.opcionDetalle} numberOfLines={1}>
+                  <View style={styles.metodoIcono}>
+                    {metodo.icono(
+                      seleccionado ? colores.exitoTexto : colores.secundario
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.opcionTitulo,
+                      {
+                        color: seleccionado
+                          ? colores.exitoTexto
+                          : colores.texto,
+                      },
+                    ]}
+                  >
+                    {metodo.titulo}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.opcionDetalle,
+                      { color: colores.secundario },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {metodo.detalle}
                   </Text>
                   <Ionicons
@@ -217,8 +332,8 @@ export default function PantallaConfirmarViaje() {
                     size={16}
                     color={
                       seleccionado
-                        ? paletaColores.boton
-                        : paletaColores.disabled
+                        ? colores.primario
+                        : colores.secundario
                     }
                     style={styles.metodoRadio}
                   />
@@ -228,31 +343,55 @@ export default function PantallaConfirmarViaje() {
           </View>
 
           {/* Tarifa */}
-          <View style={styles.tarifa}>
+          <View
+            style={[
+              styles.tarifa,
+              { backgroundColor: colores.exitoFondo },
+            ]}
+          >
             <View style={styles.tarifaMonto}>
-              <View style={styles.tarifaIcono}>
+              <View
+                style={[
+                  styles.tarifaIcono,
+                  { backgroundColor: colores.superficie },
+                ]}
+              >
                 <Ionicons
                   name="ticket-outline"
                   size={22}
-                  color={paletaColores.boton}
+                  color={colores.exitoTexto}
                 />
               </View>
               <View>
-                <Text style={styles.etiqueta}>Tarifa estimada</Text>
-                <Text style={styles.tarifaValor}>{formatearSoles(tarifa)}</Text>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Tarifa estimada
+                </Text>
+                <Text style={[styles.tarifaValor, { color: colores.texto }]}>
+                  {formatearSoles(tarifa)}
+                </Text>
               </View>
             </View>
 
             <View style={styles.tarifaDetalle}>
-              <Text style={styles.tarifaDato}>
+              <Text style={[styles.tarifaDato, { color: colores.texto }]}>
                 {kilometros.toFixed(1)} km · {minutos} min
               </Text>
-              <Text style={styles.etiqueta}>Distancia · Tiempo estimado</Text>
+              <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                Distancia · Tiempo estimado
+              </Text>
             </View>
           </View>
         </ScrollView>
 
-        <View style={styles.pie}>
+        <View
+          style={[
+            styles.pie,
+            {
+              borderTopColor: colores.linea,
+              backgroundColor: colores.superficie,
+            },
+          ]}
+        >
           <BotonPrincipal titulo="Confirmar viaje" onPress={confirmarViaje} />
         </View>
       </View>
@@ -265,7 +404,6 @@ export default function PantallaConfirmarViaje() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   panel: {
@@ -274,9 +412,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    backgroundColor: paletaColores.superficieClara,
     borderTopWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   asa: {
@@ -285,7 +421,6 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: 10,
-    backgroundColor: paletaColores.bordeClaro,
   },
 
   contenido: {
@@ -296,20 +431,17 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 22,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   subtitulo: {
     marginTop: 2,
     marginBottom: 12,
     fontSize: 13,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   tarjeta: {
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#F3F6F4",
   },
 
   filaLugar: {
@@ -324,12 +456,9 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5F8EF",
   },
 
-  iconoDestino: {
-    backgroundColor: "#FDECEC",
-  },
+  iconoDestino: {},
 
   textoLugar: {
     flex: 1,
@@ -339,18 +468,15 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 8,
     marginLeft: 44,
-    backgroundColor: paletaColores.bordeClaro,
   },
 
   etiqueta: {
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   lugarNombre: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   seccion: {
@@ -358,7 +484,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   opciones: {
@@ -373,14 +498,7 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 10,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1.5,
-    borderColor: paletaColores.bordeClaro,
-  },
-
-  opcionSeleccionada: {
-    backgroundColor: "#EAF8F1",
-    borderColor: paletaColores.boton,
   },
 
   opcionTextos: {
@@ -390,13 +508,11 @@ const styles = StyleSheet.create({
   opcionTitulo: {
     fontSize: 13,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   opcionDetalle: {
     fontSize: 10,
     lineHeight: 13,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   metodo: {
@@ -405,9 +521,7 @@ const styles = StyleSheet.create({
     gap: 2,
     padding: 10,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1.5,
-    borderColor: paletaColores.bordeClaro,
   },
 
   metodoIcono: {
@@ -433,7 +547,7 @@ const styles = StyleSheet.create({
   insigniaTexto: {
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.texto,
+    color: "#FFFFFF",
   },
 
   tarifa: {
@@ -444,7 +558,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#EAF8F1",
   },
 
   tarifaMonto: {
@@ -459,13 +572,11 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.superficieClara,
   },
 
   tarifaValor: {
     fontSize: 22,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   tarifaDetalle: {
@@ -475,7 +586,6 @@ const styles = StyleSheet.create({
   tarifaDato: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   pie: {
@@ -483,7 +593,5 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 10,
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
   },
 });

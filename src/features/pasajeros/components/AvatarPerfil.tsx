@@ -1,5 +1,5 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { paletaColores } from "@/shared/theme/paletaColores";
 
 interface Props {
   nombre: string;
@@ -16,6 +16,8 @@ export function AvatarPerfil({
   conBorde = false,
   uri,
 }: Props) {
+  const { colores } = useAltokkeTheme();
+
   const iniciales = nombre
     .split(" ")
     .filter(Boolean)
@@ -29,7 +31,7 @@ export function AvatarPerfil({
     height: tamano,
     borderRadius: tamano / 2,
     borderWidth: conBorde ? 3 : 0,
-    borderColor: "#FFFFFF",
+    borderColor: colores.superficie,
   };
   const punto = Math.max(10, Math.round(tamano * 0.22));
 
@@ -38,8 +40,8 @@ export function AvatarPerfil({
       {uri ? (
         <Image source={{ uri }} style={circulo} />
       ) : (
-        <View style={[styles.iniciales, circulo]}>
-          <Text style={[styles.texto, { fontSize: tamano * 0.36 }]}>
+        <View style={[styles.iniciales, circulo, { backgroundColor: colores.primario }]}>
+          <Text style={[styles.texto, { fontSize: tamano * 0.36, color: colores.textoBoton }]}>
             {iniciales}
           </Text>
         </View>
@@ -49,7 +51,13 @@ export function AvatarPerfil({
         <View
           style={[
             styles.punto,
-            { width: punto, height: punto, borderRadius: punto / 2 },
+            {
+              width: punto,
+              height: punto,
+              borderRadius: punto / 2,
+              backgroundColor: colores.exitoTexto,
+              borderColor: colores.superficie,
+            },
           ]}
         />
       )}
@@ -61,20 +69,16 @@ const styles = StyleSheet.create({
   iniciales: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.verde,
   },
 
   texto: {
     fontWeight: "700",
-    color: paletaColores.textoOscuro,
   },
 
   punto: {
     position: "absolute",
     right: 1,
     bottom: 1,
-    backgroundColor: paletaColores.verde,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
   },
 });

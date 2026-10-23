@@ -18,11 +18,12 @@ import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
-  CONDUCTOR_EJEMPLO,
-  ORIGEN_EJEMPLO,
+  ORIGEN_INICIAL_BAGUA,
 } from "@/features/viajes/constants/pasajero";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { viajeService } from "@/features/viajes/services/viajeService";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import {
   formatearHora,
   formatearSoles,
@@ -51,6 +52,8 @@ const SUBTITULOS_ETAPA = [
 ];
 
 export default function PantallaViajeActivo() {
+  const { colores } = useAltokkeTheme();
+  const { viajeActivoId } = useViaje();
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const { height: altoPantalla } = useWindowDimensions();
@@ -88,16 +91,19 @@ export default function PantallaViajeActivo() {
 
   const compartirViaje = () => {
     Share.share({
-      message: `Sigue mi viaje en Altokke: voy de ${ORIGEN_EJEMPLO.nombre} a ${destino.nombre} con ${CONDUCTOR_EJEMPLO.nombre}. Llegada estimada: ${formatearHora(horaLlegada)}.`,
+      message: `Sigue mi viaje en Altokke: voy de ${ORIGEN_INICIAL_BAGUA.nombre} a ${destino.nombre}. Llegada estimada: ${formatearHora(horaLlegada)}.`,
     }).catch(() => {});
   };
 
   const calificarViaje = () => {
+    if (viajeActivoId) {
+      viajeService.finalizarViaje(viajeActivoId, tarifa).catch(() => {});
+    }
     router.replace("/calificacion");
   };
 
   return (
-    <View style={styles.pantalla}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <CabeceraPasajero
         titulo={terminado ? "Viaje finalizado" : "Viaje en curso"}
         subtitulo={SUBTITULOS_ETAPA[etapa]}
@@ -110,7 +116,10 @@ export default function PantallaViajeActivo() {
               <View
                 style={[
                   styles.pistaRelleno,
-                  { width: `${(etapa / (ETAPAS.length - 1)) * 100}%` },
+                  {
+                    width: `${(etapa / (ETAPAS.length - 1)) * 100}%`,
+                    backgroundColor: colores.primario,
+                  },
                 ]}
               />
             </View>
@@ -120,8 +129,13 @@ export default function PantallaViajeActivo() {
                 <View
                   style={[
                     styles.punto,
-                    indice <= etapa && styles.puntoAlcanzado,
-                    indice === etapa && styles.puntoActual,
+                    indice <= etapa && {
+                      backgroundColor: colores.primario,
+                      borderColor: colores.primario,
+                    },
+                    indice === etapa && {
+                      borderColor: "#FFFFFF",
+                    },
                   ]}
                 />
                 <Text
@@ -156,105 +170,177 @@ export default function PantallaViajeActivo() {
         style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
       />
 
-      <View style={styles.panel}>
-        <View style={styles.asa} />
+      <View
+        style={[
+          styles.panel,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
+        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contenido}
         >
           {terminado && (
-            <View style={styles.avisoLlegada}>
+            <View
+              style={[
+                styles.avisoLlegada,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
               <Ionicons
                 name="flag"
                 size={20}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
-              <Text style={styles.avisoTexto}>¡Llegaste a tu destino!</Text>
+              <Text style={[styles.avisoTexto, { color: colores.texto }]}>
+                ¡Llegaste a tu destino!
+              </Text>
             </View>
           )}
 
-          <Text style={styles.seccion}>Tu conductor</Text>
+          <Text style={[styles.seccion, { color: colores.texto }]}>
+            Tu conductor
+          </Text>
           <TarjetaConductor />
 
           <View style={styles.acciones}>
-            <View style={styles.accion}>
-              <Ionicons name="call" size={18} color={paletaColores.boton} />
-              <Text style={styles.accionTexto}>Llamar</Text>
+            <View
+              style={[
+                styles.accion,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
+              <Ionicons name="call" size={18} color={colores.exitoTexto} />
+              <Text
+                style={[styles.accionTexto, { color: colores.exitoTexto }]}
+              >
+                Llamar
+              </Text>
             </View>
-            <View style={styles.accion}>
+            <View
+              style={[
+                styles.accion,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
               <Ionicons
                 name="chatbubble-ellipses"
                 size={18}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
-              <Text style={styles.accionTexto}>Mensaje</Text>
+              <Text
+                style={[styles.accionTexto, { color: colores.exitoTexto }]}
+              >
+                Mensaje
+              </Text>
             </View>
             <Pressable
               onPress={compartirViaje}
               style={({ pressed }) => [
                 styles.accion,
-                pressed && styles.accionPresionada,
+                { backgroundColor: colores.exitoFondo },
+                pressed && { opacity: 0.8 },
               ]}
             >
               <Ionicons
                 name="share-social"
                 size={18}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
-              <Text style={styles.accionTexto}>Compartir</Text>
+              <Text
+                style={[styles.accionTexto, { color: colores.exitoTexto }]}
+              >
+                Compartir
+              </Text>
             </Pressable>
           </View>
 
           {/* Recorrido */}
-          <View style={styles.tarjetaRecorrido}>
+          <View
+            style={[
+              styles.tarjetaRecorrido,
+              { backgroundColor: colores.campo },
+            ]}
+          >
             <View style={styles.filaLugar}>
               <Ionicons
                 name="radio-button-on"
                 size={20}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
               <View style={styles.lugarTextos}>
-                <Text style={styles.etiqueta}>Origen</Text>
-                <Text style={styles.lugarNombre} numberOfLines={1}>
-                  {ORIGEN_EJEMPLO.nombre}
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Origen
+                </Text>
+                <Text
+                  style={[styles.lugarNombre, { color: colores.texto }]}
+                  numberOfLines={1}
+                >
+                  {ORIGEN_INICIAL_BAGUA.nombre}
                 </Text>
               </View>
-              <Text style={styles.hora}>{formatearHora(horaSalida)}</Text>
+              <Text style={[styles.hora, { color: colores.texto }]}>
+                {formatearHora(horaSalida)}
+              </Text>
             </View>
 
-            <View style={styles.separador} />
+            <View
+              style={[styles.separador, { backgroundColor: colores.linea }]}
+            />
 
             <View style={styles.filaLugar}>
               <Ionicons
                 name="location-sharp"
                 size={20}
-                color={paletaColores.error}
+                color={colores.error}
               />
               <View style={styles.lugarTextos}>
-                <Text style={styles.etiqueta}>Destino</Text>
-                <Text style={styles.lugarNombre} numberOfLines={1}>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Destino
+                </Text>
+                <Text
+                  style={[styles.lugarNombre, { color: colores.texto }]}
+                  numberOfLines={1}
+                >
                   {destino.nombre}
                 </Text>
               </View>
               <View style={styles.llegada}>
-                <Text style={styles.etiqueta}>Llegada estimada</Text>
-                <Text style={styles.hora}>{formatearHora(horaLlegada)}</Text>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Llegada estimada
+                </Text>
+                <Text style={[styles.hora, { color: colores.texto }]}>
+                  {formatearHora(horaLlegada)}
+                </Text>
               </View>
             </View>
           </View>
 
           {/* Tarifa y seguridad */}
-          <View style={styles.tarifa}>
+          <View
+            style={[
+              styles.tarifa,
+              { backgroundColor: colores.exitoFondo },
+            ]}
+          >
             <View style={styles.tarifaMonto}>
               <Ionicons
                 name="ticket-outline"
                 size={24}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
               <View>
-                <Text style={styles.etiqueta}>Tarifa estimada</Text>
-                <Text style={styles.tarifaValor}>{formatearSoles(tarifa)}</Text>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  Tarifa estimada
+                </Text>
+                <Text style={[styles.tarifaValor, { color: colores.texto }]}>
+                  {formatearSoles(tarifa)}
+                </Text>
               </View>
             </View>
 
@@ -262,13 +348,20 @@ export default function PantallaViajeActivo() {
               <Ionicons
                 name="shield-checkmark"
                 size={22}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
               <View style={styles.seguridadTextos}>
-                <Text style={styles.seguridadTitulo}>
+                <Text
+                  style={[
+                    styles.seguridadTitulo,
+                    { color: colores.texto },
+                  ]}
+                >
                   Tu seguridad es primero
                 </Text>
-                <Text style={styles.etiqueta}>¿Necesitas ayuda?</Text>
+                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                  ¿Necesitas ayuda?
+                </Text>
               </View>
             </View>
           </View>
@@ -276,15 +369,18 @@ export default function PantallaViajeActivo() {
           <Pressable
             style={({ pressed }) => [
               styles.reportar,
-              pressed && styles.reportarPresionado,
+              { backgroundColor: colores.errorFondo },
+              pressed && { opacity: 0.8 },
             ]}
           >
-            <Ionicons name="warning-outline" size={20} color={paletaColores.error} />
-            <Text style={styles.reportarTexto}>Reportar un problema</Text>
+            <Ionicons name="warning-outline" size={20} color={colores.error} />
+            <Text style={[styles.reportarTexto, { color: colores.error }]}>
+              Reportar un problema
+            </Text>
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={paletaColores.error}
+              color={colores.error}
             />
           </Pressable>
         </ScrollView>
@@ -293,7 +389,11 @@ export default function PantallaViajeActivo() {
           <View
             style={[
               styles.pie,
-              { paddingBottom: Math.max(insets.bottom, 14) },
+              {
+                borderTopColor: colores.linea,
+                backgroundColor: colores.superficie,
+                paddingBottom: Math.max(insets.bottom, 14),
+              },
             ]}
           >
             <BotonPrincipal titulo="Calificar viaje" onPress={calificarViaje} />
@@ -309,7 +409,6 @@ const TAMANO_PUNTO = 14;
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   progreso: {
@@ -340,7 +439,6 @@ const styles = StyleSheet.create({
 
   pistaRelleno: {
     height: 2,
-    backgroundColor: paletaColores.verde,
   },
 
   paso: {
@@ -358,23 +456,14 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.3)",
   },
 
-  puntoAlcanzado: {
-    backgroundColor: paletaColores.verde,
-    borderColor: paletaColores.verde,
-  },
-
-  puntoActual: {
-    borderColor: paletaColores.texto,
-  },
-
   pasoTexto: {
     fontSize: 10,
-    color: paletaColores.textoSecundario,
+    color: "rgba(255, 255, 255, 0.7)",
   },
 
   pasoTextoAlcanzado: {
     fontWeight: "700",
-    color: paletaColores.texto,
+    color: "#FFFFFF",
   },
 
   tiempo: {
@@ -388,12 +477,12 @@ const styles = StyleSheet.create({
   tiempoValor: {
     fontSize: 16,
     fontWeight: "800",
-    color: paletaColores.texto,
+    color: "#FFFFFF",
   },
 
   tiempoEtiqueta: {
     fontSize: 9,
-    color: paletaColores.textoSecundario,
+    color: "rgba(255, 255, 255, 0.8)",
   },
 
   panel: {
@@ -402,9 +491,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    backgroundColor: paletaColores.superficieClara,
     borderTopWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   asa: {
@@ -413,7 +500,6 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: 10,
-    backgroundColor: paletaColores.bordeClaro,
   },
 
   contenido: {
@@ -427,20 +513,17 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#EAF8F1",
   },
 
   avisoTexto: {
     fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   seccion: {
     marginBottom: 8,
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   acciones: {
@@ -455,26 +538,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    height: 42,
+    height: 44,
     borderRadius: 12,
-    backgroundColor: "#EAF8F1",
-  },
-
-  accionPresionada: {
-    backgroundColor: "#D5F0E3",
   },
 
   accionTexto: {
     fontSize: 13,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   tarjetaRecorrido: {
     marginTop: 12,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#F3F6F4",
   },
 
   filaLugar: {
@@ -489,19 +565,16 @@ const styles = StyleSheet.create({
 
   etiqueta: {
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   lugarNombre: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   hora: {
     fontSize: 13,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   llegada: {
@@ -512,7 +585,6 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 8,
     marginLeft: 30,
-    backgroundColor: paletaColores.bordeClaro,
   },
 
   tarifa: {
@@ -523,7 +595,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#EAF8F1",
   },
 
   tarifaMonto: {
@@ -535,7 +606,6 @@ const styles = StyleSheet.create({
   tarifaValor: {
     fontSize: 20,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   seguridad: {
@@ -553,7 +623,6 @@ const styles = StyleSheet.create({
   seguridadTitulo: {
     fontSize: 12,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   reportar: {
@@ -564,25 +633,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#FDECEC",
-  },
-
-  reportarPresionado: {
-    backgroundColor: "#FAD9D9",
   },
 
   reportarTexto: {
     flex: 1,
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.error,
   },
 
   pie: {
     paddingHorizontal: 16,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
   },
 });

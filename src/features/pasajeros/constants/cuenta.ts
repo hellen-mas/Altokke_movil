@@ -8,20 +8,20 @@ export const PASAJERO_DEMO = {
   id: "pasajero-001",
   rol: "pasajero",
 
-  nombre: "Donina Garro",
-  iniciales: "DG",
-  calificacion: 4.9,
-  viajes: 127,
+  nombre: "Pasajero Altokke",
+  iniciales: "PA",
+  calificacion: 5.0,
+  viajes: 0,
 
-  dni: "75070610",
-  correo: "donigarro@gmail.com",
-  telefono: "+51 913 714 910",
-  fechaNacimiento: "1 de noviembre de 2005",
-  genero: "Femenino",
+  dni: "70000000",
+  correo: "pasajero@altokke.pe",
+  telefono: "+51 900 000 000",
+  fechaNacimiento: "1 de enero de 2000",
+  genero: "No especificado",
 
   contactoEmergencia: {
-    nombre: "Alicia Gomez",
-    telefono: "+51 978 189 389",
+    nombre: "Contacto de Emergencia",
+    telefono: "+51 900 000 001",
   },
 };
 

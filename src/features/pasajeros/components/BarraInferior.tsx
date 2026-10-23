@@ -1,4 +1,4 @@
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -24,6 +24,7 @@ const SECCIONES: {
 
 export function BarraInferior({ activa }: Props) {
   const insets = useSafeAreaInsets();
+  const { colores } = useAltokkeTheme();
 
   const irA = (seccion: Seccion) => {
     if (seccion === activa) return;
@@ -40,18 +41,28 @@ export function BarraInferior({ activa }: Props) {
   };
 
   return (
-    <View style={[styles.barra, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+    <View
+      style={[
+        styles.barra,
+        {
+          backgroundColor: colores.superficie,
+          borderTopColor: colores.linea,
+          paddingBottom: Math.max(insets.bottom, 10),
+        },
+      ]}
+    >
       {SECCIONES.map((seccion) => {
         const esActiva = seccion.id === activa;
         const color = esActiva
-          ? paletaColores.boton
-          : paletaColores.textoSecundarioClaro;
+          ? colores.exitoTexto
+          : colores.secundario;
 
         return (
           <Pressable
             key={seccion.id}
             style={styles.item}
             onPress={() => irA(seccion.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons
               name={esActiva ? seccion.iconoActivo : seccion.icono}
@@ -70,15 +81,15 @@ const styles = StyleSheet.create({
   barra: {
     flexDirection: "row",
     paddingTop: 10,
-    backgroundColor: paletaColores.superficieClara,
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
   },
 
   item: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     gap: 3,
+    minHeight: 44,
   },
 
   titulo: {

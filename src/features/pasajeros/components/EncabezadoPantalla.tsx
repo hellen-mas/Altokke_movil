@@ -1,9 +1,9 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { paletaColores } from "@/shared/theme/paletaColores";
 
 interface Props {
   titulo: string;
@@ -11,6 +11,7 @@ interface Props {
 
 export function EncabezadoPantalla({ titulo }: Props) {
   const insets = useSafeAreaInsets();
+  const { colores, esOscuro } = useAltokkeTheme();
 
   const volver = () => {
     if (router.canGoBack()) {
@@ -21,22 +22,36 @@ export function EncabezadoPantalla({ titulo }: Props) {
   };
 
   return (
-    <View style={[styles.contenedor, { paddingTop: insets.top + 10 }]}>
-      {/* Iconos oscuros porque el fondo de estas pantallas es claro */}
-      <StatusBar style="dark" />
+    <View
+      style={[
+        styles.contenedor,
+        {
+          paddingTop: insets.top + 10,
+          backgroundColor: colores.fondo,
+          borderBottomColor: colores.linea,
+        },
+      ]}
+    >
+      <StatusBar style={esOscuro ? "light" : "dark"} />
 
-      <Pressable onPress={volver} hitSlop={12} style={styles.lado}>
+      <Pressable
+        onPress={volver}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={styles.botonVolver}
+        accessibilityRole="button"
+        accessibilityLabel="Volver atrás"
+      >
         <Ionicons
           name="chevron-back"
           size={24}
-          color={paletaColores.textoClaro}
+          color={colores.texto}
         />
       </Pressable>
 
-      <Text style={styles.titulo}>{titulo}</Text>
+      <Text style={[styles.titulo, { color: colores.texto }]}>{titulo}</Text>
 
-      {/* Espacio vacío para que el título quede centrado */}
-      <View style={styles.lado} />
+      {/* Espacio vacío equilibrado para que el título quede centrado */}
+      <View style={styles.espaciador} />
     </View>
   );
 }
@@ -47,11 +62,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: paletaColores.fondoClaro,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
 
-  lado: {
-    width: 32,
+  botonVolver: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  espaciador: {
+    width: 44,
   },
 
   titulo: {
@@ -59,6 +81,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 });

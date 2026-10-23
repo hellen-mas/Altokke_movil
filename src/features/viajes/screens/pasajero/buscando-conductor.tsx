@@ -22,7 +22,7 @@ import {
 } from "@/features/viajes/constants/pasajero";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
@@ -32,6 +32,7 @@ const PROPORCION_MAPA = 0.3;
 const TIEMPO_BUSQUEDA_MS = 5000;
 
 export default function PantallaBuscandoConductor() {
+  const { colores } = useAltokkeTheme();
   const { setDestino, registrarViaje } = useViaje();
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
@@ -72,7 +73,7 @@ export default function PantallaBuscandoConductor() {
   };
 
   return (
-    <View style={styles.pantalla}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <CabeceraPasajero
         titulo={conductorEncontrado ? "Conductor encontrado" : "Buscando conductor"}
         subtitulo={
@@ -95,8 +96,16 @@ export default function PantallaBuscandoConductor() {
         style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
       />
 
-      <View style={styles.panel}>
-        <View style={styles.asa} />
+      <View
+        style={[
+          styles.panel,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
+        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -104,58 +113,98 @@ export default function PantallaBuscandoConductor() {
         >
           {conductorEncontrado ? (
             <>
-              <View style={styles.avisoEncontrado}>
+              <View
+                style={[
+                  styles.avisoEncontrado,
+                  { backgroundColor: colores.exitoFondo },
+                ]}
+              >
                 <Ionicons
                   name="checkmark-circle"
                   size={22}
-                  color={paletaColores.boton}
+                  color={colores.exitoTexto}
                 />
-                <Text style={styles.avisoTexto}>
+                <Text style={[styles.avisoTexto, { color: colores.texto }]}>
                   ¡Tu mototaxi va en camino!
                 </Text>
               </View>
 
               {/* Conductor */}
-              <Text style={styles.seccion}>Tu conductor</Text>
+              <Text style={[styles.seccion, { color: colores.texto }]}>
+                Tu conductor
+              </Text>
               <TarjetaConductor />
 
               <View style={styles.acciones}>
-                <View style={styles.accion}>
-                  <Ionicons name="call" size={18} color={paletaColores.boton} />
-                  <Text style={styles.accionTexto}>Llamar</Text>
+                <View
+                  style={[
+                    styles.accion,
+                    { backgroundColor: colores.exitoFondo },
+                  ]}
+                >
+                  <Ionicons name="call" size={18} color={colores.exitoTexto} />
+                  <Text
+                    style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                  >
+                    Llamar
+                  </Text>
                 </View>
-                <View style={styles.accion}>
+                <View
+                  style={[
+                    styles.accion,
+                    { backgroundColor: colores.exitoFondo },
+                  ]}
+                >
                   <Ionicons
                     name="chatbubble-ellipses"
                     size={18}
-                    color={paletaColores.boton}
+                    color={colores.exitoTexto}
                   />
-                  <Text style={styles.accionTexto}>Mensaje</Text>
+                  <Text
+                    style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                  >
+                    Mensaje
+                  </Text>
                 </View>
               </View>
             </>
           ) : (
             <View style={styles.buscando}>
               <PulsoBusqueda />
-              <Text style={styles.buscandoTitulo}>
+              <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
                 Buscando el mototaxi más cercano
               </Text>
-              <Text style={styles.buscandoDetalle}>
+              <Text
+                style={[
+                  styles.buscandoDetalle,
+                  { color: colores.secundario },
+                ]}
+              >
                 Esto puede tardar unos segundos. No cierres la aplicación.
               </Text>
             </View>
           )}
 
           {/* Resumen del viaje */}
-          <Text style={styles.seccion}>Resumen del viaje</Text>
-          <View style={styles.tarjetaResumen}>
+          <Text style={[styles.seccion, { color: colores.texto }]}>
+            Resumen del viaje
+          </Text>
+          <View
+            style={[
+              styles.tarjetaResumen,
+              { backgroundColor: colores.campo },
+            ]}
+          >
             <View style={styles.filaLugar}>
               <Ionicons
                 name="radio-button-on"
                 size={18}
-                color={paletaColores.boton}
+                color={colores.exitoTexto}
               />
-              <Text style={styles.lugarTexto} numberOfLines={1}>
+              <Text
+                style={[styles.lugarTexto, { color: colores.texto }]}
+                numberOfLines={1}
+              >
                 {ORIGEN_EJEMPLO.nombre}
               </Text>
             </View>
@@ -164,31 +213,56 @@ export default function PantallaBuscandoConductor() {
               <Ionicons
                 name="location-sharp"
                 size={18}
-                color={paletaColores.error}
+                color={colores.error}
               />
-              <Text style={styles.lugarTexto} numberOfLines={1}>
+              <Text
+                style={[styles.lugarTexto, { color: colores.texto }]}
+                numberOfLines={1}
+              >
                 {destino.nombre}
               </Text>
             </View>
 
-            <View style={styles.separador} />
+            <View
+              style={[styles.separador, { backgroundColor: colores.linea }]}
+            />
 
             <View style={styles.datos}>
               <View style={styles.dato}>
-                <Text style={styles.datoEtiqueta}>Servicio</Text>
-                <Text style={styles.datoValor}>
+                <Text
+                  style={[styles.datoEtiqueta, { color: colores.secundario }]}
+                >
+                  Servicio
+                </Text>
+                <Text
+                  style={[styles.datoValor, { color: colores.texto }]}
+                >
                   {servicio === "express" ? "Express" : "Normal"}
                 </Text>
               </View>
               <View style={styles.dato}>
-                <Text style={styles.datoEtiqueta}>Pago</Text>
-                <Text style={styles.datoValor}>
+                <Text
+                  style={[styles.datoEtiqueta, { color: colores.secundario }]}
+                >
+                  Pago
+                </Text>
+                <Text
+                  style={[styles.datoValor, { color: colores.texto }]}
+                >
                   {NOMBRE_METODO_PAGO[metodoPago]}
                 </Text>
               </View>
               <View style={styles.dato}>
-                <Text style={styles.datoEtiqueta}>Tarifa</Text>
-                <Text style={styles.datoValor}>{formatearSoles(tarifa)}</Text>
+                <Text
+                  style={[styles.datoEtiqueta, { color: colores.secundario }]}
+                >
+                  Tarifa
+                </Text>
+                <Text
+                  style={[styles.datoValor, { color: colores.texto }]}
+                >
+                  {formatearSoles(tarifa)}
+                </Text>
               </View>
             </View>
           </View>
@@ -197,10 +271,13 @@ export default function PantallaBuscandoConductor() {
             onPress={cancelarViaje}
             style={({ pressed }) => [
               styles.botonCancelar,
-              pressed && styles.botonCancelarPresionado,
+              { borderColor: colores.error },
+              pressed && { backgroundColor: colores.errorFondo },
             ]}
           >
-            <Text style={styles.botonCancelarTexto}>Cancelar viaje</Text>
+            <Text style={[styles.botonCancelarTexto, { color: colores.error }]}>
+              Cancelar viaje
+            </Text>
           </Pressable>
         </ScrollView>
 
@@ -208,7 +285,11 @@ export default function PantallaBuscandoConductor() {
           <View
             style={[
               styles.pie,
-              { paddingBottom: Math.max(insets.bottom, 14) },
+              {
+                borderTopColor: colores.linea,
+                backgroundColor: colores.superficie,
+                paddingBottom: Math.max(insets.bottom, 14),
+              },
             ]}
           >
             <BotonPrincipal titulo="Ver mi viaje" onPress={verMiViaje} />
@@ -222,7 +303,6 @@ export default function PantallaBuscandoConductor() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   panel: {
@@ -231,9 +311,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    backgroundColor: paletaColores.superficieClara,
     borderTopWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   asa: {
@@ -242,7 +320,6 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: 10,
-    backgroundColor: paletaColores.bordeClaro,
   },
 
   contenido: {
@@ -260,7 +337,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     textAlign: "center",
-    color: paletaColores.textoClaro,
   },
 
   buscandoDetalle: {
@@ -268,7 +344,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     textAlign: "center",
-    color: paletaColores.textoSecundarioClaro,
   },
 
   avisoEncontrado: {
@@ -277,13 +352,11 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#EAF8F1",
   },
 
   avisoTexto: {
     fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   seccion: {
@@ -291,7 +364,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   acciones: {
@@ -306,22 +378,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    height: 42,
+    height: 44,
     borderRadius: 12,
-    backgroundColor: "#EAF8F1",
   },
 
   accionTexto: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   tarjetaResumen: {
     gap: 8,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: "#F3F6F4",
   },
 
   filaLugar: {
@@ -334,12 +403,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   separador: {
     height: 1,
-    backgroundColor: paletaColores.bordeClaro,
   },
 
   datos: {
@@ -352,21 +419,17 @@ const styles = StyleSheet.create({
 
   datoEtiqueta: {
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   datoValor: {
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   pie: {
     paddingHorizontal: 16,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
   },
 
   botonCancelar: {
@@ -377,16 +440,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: paletaColores.error,
-  },
-
-  botonCancelarPresionado: {
-    backgroundColor: "#FDECEC",
   },
 
   botonCancelarTexto: {
     fontSize: 16,
     fontWeight: "700",
-    color: paletaColores.error,
   },
 });

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import {
@@ -10,7 +10,7 @@ import {
   ViajeHistorial,
 } from "@/features/viajes/constants/pasajero";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearFechaHora, formatearSoles } from "@/features/viajes/utils/viaje";
 
 type Filtro = "todos" | "completado" | "cancelado";
@@ -28,8 +28,20 @@ const MENSAJE_VACIO: Record<Filtro, string> = {
 };
 
 export default function PantallaActividad() {
-  const { historial, setDestino } = useViaje();
+  const { colores, esOscuro } = useAltokkeTheme();
+  const { historial, setDestino, recargarHistorial } = useViaje();
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [refrescando, setRefrescando] = useState(false);
+
+  useEffect(() => {
+    recargarHistorial();
+  }, []);
+
+  const alRefrescar = async () => {
+    setRefrescando(true);
+    await recargarHistorial();
+    setRefrescando(false);
+  };
 
   const viajes =
     filtro === "todos"
@@ -53,20 +65,27 @@ export default function PantallaActividad() {
   };
 
   return (
-    <View style={styles.pantalla}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
+        refreshControl={
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={alRefrescar}
+            tintColor={colores.primario}
+          />
+        }
       >
         <CabeceraPasajero subtitulo="Tu movilidad en buenas manos" />
 
         <View style={styles.encabezado}>
-          <Text style={styles.titulo}>Actividad</Text>
-          <Text style={styles.subtitulo}>Tus viajes recientes</Text>
+          <Text style={[styles.titulo, { color: colores.texto }]}>Actividad</Text>
+          <Text style={[styles.subtitulo, { color: colores.secundario }]}>Tus viajes recientes</Text>
         </View>
 
         {/* Filtros */}
-        <View style={styles.filtros}>
+        <View style={[styles.filtros, { backgroundColor: colores.campo }]}>
           {FILTROS.map((opcion) => {
             const activo = opcion.id === filtro;
 
@@ -74,10 +93,24 @@ export default function PantallaActividad() {
               <Pressable
                 key={opcion.id}
                 onPress={() => setFiltro(opcion.id)}
-                style={[styles.filtro, activo && styles.filtroActivo]}
+                style={[
+                  styles.filtro,
+                  activo && {
+                    backgroundColor: esOscuro ? colores.superficie : COLOR_CABECERA,
+                  },
+                ]}
               >
                 <Text
-                  style={[styles.filtroTexto, activo && styles.filtroTextoActivo]}
+                  style={[
+                    styles.filtroTexto,
+                    {
+                      color: activo
+                        ? esOscuro
+                          ? colores.texto
+                          : "#FFFFFF"
+                        : colores.secundario,
+                    },
+                  ]}
                 >
                   {opcion.titulo}
                 </Text>
@@ -93,9 +126,11 @@ export default function PantallaActividad() {
               <Ionicons
                 name="time-outline"
                 size={40}
-                color={paletaColores.disabled}
+                color={colores.progresoInactivo}
               />
-              <Text style={styles.vacioTexto}>{MENSAJE_VACIO[filtro]}</Text>
+              <Text style={[styles.vacioTexto, { color: colores.secundario }]}>
+                {MENSAJE_VACIO[filtro]}
+              </Text>
             </View>
           )}
 
@@ -103,15 +138,32 @@ export default function PantallaActividad() {
             const completado = viaje.estado === "completado";
 
             return (
-              <View key={viaje.id} style={styles.tarjeta}>
+              <View
+                key={viaje.id}
+                style={[
+                  styles.tarjeta,
+                  {
+                    backgroundColor: colores.superficie,
+                    borderColor: colores.linea,
+                  },
+                ]}
+              >
                 <View style={styles.filaSuperior}>
-                  <Text style={styles.fecha}>
+                  <Text style={[styles.fecha, { color: colores.secundario }]}>
                     {formatearFechaHora(viaje.fecha)}
                   </Text>
                   <Text
                     style={[
                       styles.estado,
-                      completado ? styles.estadoCompletado : styles.estadoCancelado,
+                      completado
+                        ? {
+                            color: colores.exitoTexto,
+                            backgroundColor: colores.exitoFondo,
+                          }
+                        : {
+                            color: colores.error,
+                            backgroundColor: colores.errorFondo,
+                          },
                     ]}
                   >
                     {completado ? "Completado" : "Cancelado"}
@@ -121,14 +173,14 @@ export default function PantallaActividad() {
                 <View style={styles.cuerpo}>
                   <View style={styles.recorrido}>
                     <View style={styles.filaLugar}>
-                      <View style={styles.puntoOrigen} />
-                      <Text style={styles.lugar} numberOfLines={1}>
+                      <View style={[styles.puntoOrigen, { backgroundColor: colores.exitoTexto }]} />
+                      <Text style={[styles.lugar, { color: colores.texto }]} numberOfLines={1}>
                         {viaje.origen}
                       </Text>
                     </View>
                     <View style={styles.filaLugar}>
-                      <View style={styles.puntoDestino} />
-                      <Text style={styles.lugar} numberOfLines={1}>
+                      <View style={[styles.puntoDestino, { borderColor: colores.secundario }]} />
+                      <Text style={[styles.lugar, { color: colores.texto }]} numberOfLines={1}>
                         {viaje.destino}
                       </Text>
                     </View>
@@ -138,7 +190,8 @@ export default function PantallaActividad() {
                     <Text
                       style={[
                         styles.tarifa,
-                        !completado && styles.tarifaCancelada,
+                        { color: colores.texto },
+                        !completado && { color: colores.secundario, textDecorationLine: "line-through" },
                       ]}
                     >
                       {formatearSoles(viaje.tarifa)}
@@ -148,15 +201,18 @@ export default function PantallaActividad() {
                       onPress={() => solicitarDeNuevo(viaje)}
                       style={({ pressed }) => [
                         styles.repetir,
-                        pressed && styles.repetirPresionado,
+                        { backgroundColor: colores.exitoFondo },
+                        pressed && { opacity: 0.7 },
                       ]}
                     >
                       <Ionicons
                         name="refresh"
                         size={14}
-                        color={paletaColores.boton}
+                        color={colores.exitoTexto}
                       />
-                      <Text style={styles.repetirTexto}>Solicitar de nuevo</Text>
+                      <Text style={[styles.repetirTexto, { color: colores.exitoTexto }]}>
+                        Solicitar de nuevo
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -174,7 +230,6 @@ export default function PantallaActividad() {
 const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   contenido: {
@@ -189,12 +244,10 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 26,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 
   subtitulo: {
     fontSize: 14,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   filtros: {
@@ -203,7 +256,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 4,
     borderRadius: 14,
-    backgroundColor: "#E9EEEB",
   },
 
   filtro: {
@@ -214,18 +266,9 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
 
-  filtroActivo: {
-    backgroundColor: COLOR_CABECERA,
-  },
-
   filtroTexto: {
     fontSize: 13,
     fontWeight: "700",
-    color: paletaColores.textoSecundarioClaro,
-  },
-
-  filtroTextoActivo: {
-    color: paletaColores.texto,
   },
 
   lista: {
@@ -242,16 +285,13 @@ const styles = StyleSheet.create({
 
   vacioTexto: {
     fontSize: 14,
-    color: paletaColores.textoSecundarioClaro,
   },
 
   tarjeta: {
     padding: 12,
     gap: 10,
     borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
 
   filaSuperior: {
@@ -265,7 +305,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 12,
     fontWeight: "600",
-    color: paletaColores.textoSecundarioClaro,
   },
 
   estado: {
@@ -275,16 +314,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     overflow: "hidden",
-  },
-
-  estadoCompletado: {
-    color: paletaColores.botonPresionado,
-    backgroundColor: "#E5F8EF",
-  },
-
-  estadoCancelado: {
-    color: paletaColores.error,
-    backgroundColor: "#FDECEC",
   },
 
   cuerpo: {
@@ -308,7 +337,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: paletaColores.boton,
   },
 
   puntoDestino: {
@@ -316,14 +344,12 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: paletaColores.textoSecundarioClaro,
   },
 
   lugar: {
     flex: 1,
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
   },
 
   derecha: {
@@ -334,12 +360,6 @@ const styles = StyleSheet.create({
   tarifa: {
     fontSize: 17,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
-  },
-
-  tarifaCancelada: {
-    color: paletaColores.textoSecundarioClaro,
-    textDecorationLine: "line-through",
   },
 
   repetir: {
@@ -347,18 +367,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     paddingHorizontal: 10,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "#EAF8F1",
-  },
-
-  repetirPresionado: {
-    backgroundColor: "#D5F0E3",
+    height: 32,
+    borderRadius: 16,
   },
 
   repetirTexto: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
-    color: paletaColores.botonPresionado,
   },
 });

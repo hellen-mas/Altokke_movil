@@ -1,31 +1,31 @@
 import type { PuntoMapa } from "@/features/viajes/types/tiposMapa";
 
-// Verde oscuro de las cabeceras del flujo de pasajero (según los mockups)
+// Color institucional de la cabecera del pasajero
 export const COLOR_CABECERA = "#0B3B2A";
 
-// TEMPORAL: ubicación de ejemplo del pasajero, sobre el Jirón Miraflores de
-// Bagua (más adelante vendrá del GPS del teléfono)
+// Coordenadas geográficas de referencia para la ciudad de Bagua, Amazonas
 export const CENTRO_BAGUA: PuntoMapa = {
   latitude: -5.63966,
   longitude: -78.52748,
 };
 
-// TEMPORAL: mototaxis de ejemplo cerca del pasajero (más adelante vendrán del backend)
+// Ubicación de referencia en Bagua
+export const ORIGEN_INICIAL_BAGUA: Lugar = {
+  id: "origen-bagua",
+  nombre: "Jirón Miraflores, Bagua",
+  detalle: "Ubicación en Bagua",
+  coordenadas: CENTRO_BAGUA,
+};
+
+// Alias para compatibilidad de rutas
+export const ORIGEN_EJEMPLO = ORIGEN_INICIAL_BAGUA;
+
+// Puntos de mototaxis visibles por defecto en el mapa de Bagua si la red está offline
 export const CONDUCTORES_CERCANOS: PuntoMapa[] = [
   { latitude: -5.63806, longitude: -78.52913 },
   { latitude: -5.64159, longitude: -78.52545 },
   { latitude: -5.63893, longitude: -78.53022 },
 ];
-
-// TEMPORAL: conductor de ejemplo (más adelante vendrá del backend)
-export const CONDUCTOR_EJEMPLO = {
-  nombre: "Juan Carlos Flores",
-  calificacion: 4.9,
-  viajes: 312,
-  vehiculo: "Mototaxi",
-  placa: "Sin placa",
-  color: "Verde con amarillo",
-};
 
 export interface ViajeHistorial {
   id: string;
@@ -47,19 +47,7 @@ export interface Lugar {
   coordenadas: PuntoMapa;
 }
 
-// TEMPORAL: punto de recogida de ejemplo (más adelante será la ubicación real)
-export const ORIGEN_EJEMPLO: Lugar = {
-  id: "origen",
-  nombre: "Jirón Miraflores, Bagua",
-  detalle: "Tu ubicación actual",
-  coordenadas: CENTRO_BAGUA,
-};
-
-// TEMPORAL: lugares de ejemplo de Bagua (más adelante vendrán de un servicio
-// de búsqueda de direcciones). Las coordenadas de la Plaza de Armas, el
-// terminal, el hospital y la plaza Bolognesi salen de OpenStreetMap; las de
-// Plaza Grau y Plazuela Bolívar están puestas sobre la calle de su dirección,
-// y la de UNTRM es aproximada.
+// Lugares reales y emblemáticos de Bagua, Amazonas
 export const LUGARES_BAGUA: Lugar[] = [
   {
     id: "plaza-heroes-cenepa",
@@ -105,73 +93,17 @@ export const LUGARES_BAGUA: Lugar[] = [
   },
 ];
 
-// TEMPORAL: viajes anteriores de ejemplo, tomados del mockup de Actividad
-// (más adelante vendrán del backend)
-export const HISTORIAL_EJEMPLO: ViajeHistorial[] = [
-  {
-    id: "ejemplo-1",
-    fecha: new Date(2025, 4, 12, 10, 24),
-    origen: "Mercado Central, Bagua",
-    destino: "Hospital Regional, Bagua",
-    tarifa: 4.94,
-    estado: "completado",
-    calificacion: 5,
-  },
-  {
-    id: "ejemplo-2",
-    fecha: new Date(2025, 4, 10, 18, 15),
-    origen: "Jr. Miraflores 1010",
-    destino: "Plaza de Armas Héroes del Cenepa",
-    tarifa: 5.2,
-    estado: "completado",
-    calificacion: 4,
-  },
-  {
-    id: "ejemplo-3",
-    fecha: new Date(2025, 4, 9, 8, 42),
-    origen: "UNTRM Bagua",
-    destino: "Av. Héroes del Cenepa",
-    tarifa: 4.5,
-    estado: "completado",
-    calificacion: 5,
-  },
-  {
-    id: "ejemplo-4",
-    fecha: new Date(2025, 4, 7, 20, 5),
-    origen: "Terminal Terrestre de Bagua",
-    destino: "Jr. Miraflores 1010",
-    tarifa: 3.8,
-    estado: "cancelado",
-  },
-  {
-    id: "ejemplo-5",
-    fecha: new Date(2025, 4, 6, 16, 30),
-    origen: "Bagua Grande Terminal",
-    destino: "Mercado Central, Bagua",
-    tarifa: 6.8,
-    estado: "completado",
-    calificacion: 5,
-  },
-];
+// El historial inicial es vacío, se carga dinámicamente desde la BD de Supabase
+export const HISTORIAL_EJEMPLO: ViajeHistorial[] = [];
 
-//Notificaciones de ejemplo (mas adelante viene el backend)
-
+// Notificaciones del sistema
 export const NOTIFICACIONES_EJEMPLO = [
   {
-    id: "n1",
-    icono: "car-outline",
-    titulo: "Tu viaje fue completado",
-    mensaje: "Llegaste a tu destino. ¡Gracias por viajar con Altokke!",
-    hora: "Hace 10 minutos",
+    id: "n-bienvenida",
+    icono: "shield-checkmark-outline" as const,
+    titulo: "Bienvenido a Altokke",
+    mensaje: "Tu cuenta de pasajero está activa y lista para solicitar mototaxis seguros en Bagua.",
+    hora: "Hoy",
     leida: false,
   },
-
-  {
-    id: "n2",
-    icono: "shield-checkmark-outline",
-    titulo: "Cuenta verificada",
-    mensaje: "Tu cuenta de pasajero ya está activa.",
-    hora: "Ayer",
-    leida: true,
-  },
-] as const;
+];

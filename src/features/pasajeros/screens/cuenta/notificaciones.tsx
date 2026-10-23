@@ -1,9 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Switch, View } from "react-native";
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
 import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
+import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 
 type Clave =
   | "promociones"
@@ -25,19 +28,19 @@ const TIPOS: Opcion[] = [
     clave: "promociones",
     icono: "pricetag-outline",
     titulo: "Promociones y ofertas",
-    subtitulo: "Recibe novedades y descuentos",
+    subtitulo: "Recibe novedades y descuentos exclusivos",
   },
   {
     clave: "viaje",
     icono: "navigate-outline",
     titulo: "Actualizaciones de viaje",
-    subtitulo: "Estado del viaje en tiempo real",
+    subtitulo: "Estado de tu mototaxi en tiempo real",
   },
   {
     clave: "recordatorios",
     icono: "alarm-outline",
     titulo: "Recordatorios",
-    subtitulo: "Avisos y recomendaciones",
+    subtitulo: "Avisos importantes y recomendaciones",
   },
 ];
 
@@ -46,23 +49,27 @@ const CANALES: Opcion[] = [
     clave: "correo",
     icono: "mail-outline",
     titulo: "Notificaciones por correo",
-    subtitulo: "Recibe comunicaciones en tu email",
+    subtitulo: "Comprobantes y avisos en tu email",
   },
   {
     clave: "push",
     icono: "notifications-outline",
     titulo: "Notificaciones push",
-    subtitulo: "En tu dispositivo móvil",
+    subtitulo: "Alertas emergentes en tu celular",
   },
   {
     clave: "sms",
     icono: "chatbubble-outline",
     titulo: "Notificaciones por SMS",
-    subtitulo: "Mensajes de texto importantes",
+    subtitulo: "Mensajes de texto de seguridad",
   },
 ];
 
 export default function Notificaciones() {
+  const { colores } = useAltokkeTheme();
+  const { userId } = useAuth();
+  const { perfil, guardarPreferencias } = usePerfilPasajero();
+
   const [activas, setActivas] = useState<Record<Clave, boolean>>({
     promociones: true,
     viaje: true,
@@ -72,8 +79,26 @@ export default function Notificaciones() {
     sms: false,
   });
 
-  const cambiar = (clave: Clave, value: boolean) => {
-    setActivas((anterior) => ({ ...anterior, [clave]: value }));
+  useEffect(() => {
+    if (perfil?.preferencias?.notificaciones) {
+      setActivas((prev) => ({
+        ...prev,
+        ...perfil.preferencias.notificaciones,
+      }));
+    }
+  }, [perfil]);
+
+  const cambiar = async (clave: Clave, value: boolean) => {
+    const nuevoEstado = { ...activas, [clave]: value };
+    setActivas(nuevoEstado);
+
+    if (userId) {
+      try {
+        await guardarPreferencias({ notificaciones: nuevoEstado });
+      } catch (err) {
+        console.warn("Aviso al guardar preferencias de notificación:", err);
+      }
+    }
   };
 
   const renderItem = (opcion: Opcion) => (
@@ -85,20 +110,20 @@ export default function Notificaciones() {
       sinFlecha
       derecha={
         <Switch
-          value={activas[opcion.clave]}
+          value={Boolean(activas[opcion.clave])}
           onValueChange={(value) => cambiar(opcion.clave, value)}
           trackColor={{
-            false: paletaColores.bordeClaro,
-            true: paletaColores.boton,
+            false: colores.progresoInactivo,
+            true: colores.primario,
           }}
-          thumbColor="#FFFFFF"
+          thumbColor={colores.superficie}
         />
       }
     />
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Notificaciones" />
 
       <ScrollView
@@ -118,7 +143,6 @@ export default function Notificaciones() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
 
   contenido: {
