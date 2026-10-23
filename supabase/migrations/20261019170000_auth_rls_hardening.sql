@@ -122,6 +122,8 @@ public.calificaciones,public.transacciones TO authenticated;
 GRANT UPDATE(nombre,apellidos,telefono,avatar_url,foto_url,expo_push_token)
  ON public.usuarios TO authenticated;
 GRANT UPDATE(preferencias) ON public.pasajeros_perfil TO authenticated;
+-- El chat permite marcar como leídos mensajes de un viaje propio, sin editar su contenido.
+GRANT UPDATE(leido) ON public.mensajes_viaje TO authenticated;
 GRANT UPDATE(en_linea,lat_actual,lng_actual) ON public.conductores_perfil TO authenticated;
 GRANT INSERT(conductor_id,placa,marca,modelo,color,anio,capacidad,activo)
  ON public.vehiculos TO authenticated;
@@ -135,29 +137,46 @@ GRANT INSERT(viaje_id,remitente_id,contenido) ON public.mensajes_viaje TO authen
 GRANT INSERT(viaje_id,autor_id,receptor_id,puntuacion,comentario)
  ON public.calificaciones TO authenticated;
 
+-- Los participantes de un viaje pueden identificar a su contraparte.
+-- No se abre la lectura indiscriminada que existía antes.
 CREATE POLICY altokke_usuarios_select ON public.usuarios FOR SELECT TO authenticated
- USING (id=(SELECT auth.uid()));
+ USING (id=(SELECT auth.uid()) OR EXISTS (
+   SELECT 1 FROM public.viajes v
+   WHERE (v.pasajero_id=(SELECT auth.uid()) AND v.conductor_id=usuarios.id)
+      OR (v.conductor_id=(SELECT auth.uid()) AND v.pasajero_id=usuarios.id)
+ ));
 CREATE POLICY altokke_usuarios_update ON public.usuarios FOR UPDATE TO authenticated
  USING (id=(SELECT auth.uid())) WITH CHECK(id=(SELECT auth.uid()));
 CREATE POLICY altokke_pasajeros_select ON public.pasajeros_perfil FOR SELECT TO authenticated
- USING(usuario_id=(SELECT auth.uid()));
+ USING(usuario_id=(SELECT auth.uid()) OR EXISTS (
+   SELECT 1 FROM public.viajes v
+   WHERE v.conductor_id=(SELECT auth.uid()) AND v.pasajero_id=pasajeros_perfil.usuario_id
+ ));
 CREATE POLICY altokke_pasajeros_update ON public.pasajeros_perfil FOR UPDATE TO authenticated
  USING(usuario_id=(SELECT auth.uid())) WITH CHECK(usuario_id=(SELECT auth.uid()));
 CREATE POLICY altokke_conductores_select ON public.conductores_perfil FOR SELECT TO authenticated
- USING(usuario_id=(SELECT auth.uid()));
+ USING(usuario_id=(SELECT auth.uid()) OR EXISTS (
+   SELECT 1 FROM public.viajes v
+   WHERE v.pasajero_id=(SELECT auth.uid()) AND v.conductor_id=conductores_perfil.usuario_id
+ ));
 CREATE POLICY altokke_conductores_update ON public.conductores_perfil FOR UPDATE TO authenticated
  USING(usuario_id=(SELECT auth.uid()) AND estado='aprobado')
  WITH CHECK(usuario_id=(SELECT auth.uid()) AND estado='aprobado');
+-- Conservar consulta de vehículos activos sin exponer vehículos no activos ajenos.
 CREATE POLICY altokke_vehiculos_select ON public.vehiculos FOR SELECT TO authenticated
- USING(conductor_id=(SELECT auth.uid()));
+ USING(conductor_id=(SELECT auth.uid()) OR activo=true);
 CREATE POLICY altokke_vehiculos_insert ON public.vehiculos FOR INSERT TO authenticated
  WITH CHECK(conductor_id=(SELECT auth.uid()) AND activo=false);
 CREATE POLICY altokke_vehiculos_update ON public.vehiculos FOR UPDATE TO authenticated
  USING(conductor_id=(SELECT auth.uid())) WITH CHECK(conductor_id=(SELECT auth.uid()));
 CREATE POLICY altokke_documentos_select ON public.documentos FOR SELECT TO authenticated
  USING(usuario_id=(SELECT auth.uid()));
+-- Conserva la validación de documentos del entorno original:
+-- pendiente, sin motivo de rechazo y almacenado en carpeta propia.
 CREATE POLICY altokke_documentos_insert ON public.documentos FOR INSERT TO authenticated
- WITH CHECK(usuario_id=(SELECT auth.uid()));
+ WITH CHECK(usuario_id=(SELECT auth.uid())
+ AND estado='pendiente' AND motivo_rechazo IS NULL
+ AND split_part(url_archivo,'/',1)=(SELECT auth.uid())::text);
 
 -- Solo el propietario ve su viaje; conductores aprobados pueden ver ofertas pendientes.
 CREATE POLICY altokke_viajes_select ON public.viajes FOR SELECT TO authenticated
@@ -177,6 +196,12 @@ CREATE POLICY altokke_mensajes_select ON public.mensajes_viaje FOR SELECT TO aut
 CREATE POLICY altokke_mensajes_insert ON public.mensajes_viaje FOR INSERT TO authenticated
  WITH CHECK(remitente_id=(SELECT auth.uid()) AND EXISTS (
  SELECT 1 FROM public.viajes v WHERE v.id=viaje_id
+ AND (v.pasajero_id=(SELECT auth.uid()) OR v.conductor_id=(SELECT auth.uid()))));
+-- La política ALL antigua permitía marcar mensajes leídos; se conserva solo ese campo.
+CREATE POLICY altokke_mensajes_update ON public.mensajes_viaje FOR UPDATE TO authenticated
+ USING (EXISTS(SELECT 1 FROM public.viajes v WHERE v.id=viaje_id
+ AND (v.pasajero_id=(SELECT auth.uid()) OR v.conductor_id=(SELECT auth.uid()))))
+ WITH CHECK (EXISTS(SELECT 1 FROM public.viajes v WHERE v.id=viaje_id
  AND (v.pasajero_id=(SELECT auth.uid()) OR v.conductor_id=(SELECT auth.uid()))));
 CREATE POLICY altokke_calificaciones_select ON public.calificaciones FOR SELECT TO authenticated
  USING(autor_id=(SELECT auth.uid()) OR receptor_id=(SELECT auth.uid()));
