@@ -146,7 +146,6 @@ export const conductorService = {
           usuario_id: usuarioId,
           tipo,
           url_archivo: ruta,
-          estado: "pendiente" as const,
         };
       })
     );
@@ -540,60 +539,22 @@ export const conductorService = {
   /**
    * Conductor acepta una solicitud de viaje
    */
-  async aceptarSolicitud(viajeId: string, conductorId: string): Promise<void> {
-    const { error } = await supabase
-      .from("viajes")
-      .update({
-        conductor_id: conductorId,
-        estado: "aceptado",
-        aceptado_en: new Date().toISOString(),
-      })
-      .eq("id", viajeId);
-
+  async aceptarSolicitud(viajeId: string, _conductorId: string): Promise<void> {
+    const { error } = await supabase.rpc("aceptar_viaje", { p_viaje_id: viajeId });
     if (error) throw error;
   },
 
   /**
-   * Conductor finaliza el viaje activo
+   * La transición y actualización de saldo son atómicas en PostgreSQL.
+   * La tarifa final la determina el servidor, nunca un parámetro del cliente.
    */
   async finalizarViaje(
     viajeId: string,
-    tarifaFinal: number,
-    conductorId: string
+    _tarifaFinal: number,
+    _conductorId: string
   ): Promise<void> {
-    const estadoFinalizado: "finalizado" = "finalizado";
-    const { error } = await supabase
-      .from("viajes")
-      .update({
-        estado: estadoFinalizado,
-        tarifa_final: tarifaFinal,
-        finalizado_en: new Date().toISOString(),
-      })
-      .eq("id", viajeId);
-
+    const { error } = await supabase.rpc("finalizar_viaje", { p_viaje_id: viajeId });
     if (error) throw error;
-
-    // Actualizar perfil de conductor sumando saldo y viajes completados
-    try {
-      const { data: perfil } = await supabase
-        .from("conductores_perfil")
-        .select("saldo_billetera, viajes_completados")
-        .eq("usuario_id", conductorId)
-        .maybeSingle();
-
-      const saldoActual = Number(perfil?.saldo_billetera ?? 0);
-      const viajesActuales = Number(perfil?.viajes_completados ?? 0);
-
-      await supabase
-        .from("conductores_perfil")
-        .update({
-          saldo_billetera: saldoActual + tarifaFinal,
-          viajes_completados: viajesActuales + 1,
-        })
-        .eq("usuario_id", conductorId);
-    } catch (e) {
-      console.warn("Aviso al actualizar estadísticas del conductor:", e);
-    }
   },
 };
 
