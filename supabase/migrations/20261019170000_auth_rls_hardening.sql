@@ -137,28 +137,29 @@ GRANT INSERT(viaje_id,remitente_id,contenido) ON public.mensajes_viaje TO authen
 GRANT INSERT(viaje_id,autor_id,receptor_id,puntuacion,comentario)
  ON public.calificaciones TO authenticated;
 
--- Los participantes de un viaje pueden identificar a su contraparte.
--- No se abre la lectura indiscriminada que existía antes.
-CREATE POLICY altokke_usuarios_select ON public.usuarios FOR SELECT TO authenticated
- USING (id=(SELECT auth.uid()) OR EXISTS (
+-- Consulta controlada por el servidor: evita recursión entre RLS de viajes
+-- y perfiles, y solo permite identificar a la contraparte de un viaje real.
+CREATE OR REPLACE FUNCTION public.comparte_viaje_con(p_otro uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $fn$
+ SELECT auth.uid() IS NOT NULL AND EXISTS (
    SELECT 1 FROM public.viajes v
-   WHERE (v.pasajero_id=(SELECT auth.uid()) AND v.conductor_id=usuarios.id)
-      OR (v.conductor_id=(SELECT auth.uid()) AND v.pasajero_id=usuarios.id)
- ));
+   WHERE (v.pasajero_id=auth.uid() AND v.conductor_id=p_otro)
+      OR (v.conductor_id=auth.uid() AND v.pasajero_id=p_otro)
+ );
+$fn$;
+REVOKE ALL ON FUNCTION public.comparte_viaje_con(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.comparte_viaje_con(uuid) TO authenticated;
+
+CREATE POLICY altokke_usuarios_select ON public.usuarios FOR SELECT TO authenticated
+ USING (id=(SELECT auth.uid()) OR public.comparte_viaje_con(id));
 CREATE POLICY altokke_usuarios_update ON public.usuarios FOR UPDATE TO authenticated
  USING (id=(SELECT auth.uid())) WITH CHECK(id=(SELECT auth.uid()));
 CREATE POLICY altokke_pasajeros_select ON public.pasajeros_perfil FOR SELECT TO authenticated
- USING(usuario_id=(SELECT auth.uid()) OR EXISTS (
-   SELECT 1 FROM public.viajes v
-   WHERE v.conductor_id=(SELECT auth.uid()) AND v.pasajero_id=pasajeros_perfil.usuario_id
- ));
+ USING(usuario_id=(SELECT auth.uid()) OR public.comparte_viaje_con(usuario_id));
 CREATE POLICY altokke_pasajeros_update ON public.pasajeros_perfil FOR UPDATE TO authenticated
  USING(usuario_id=(SELECT auth.uid())) WITH CHECK(usuario_id=(SELECT auth.uid()));
 CREATE POLICY altokke_conductores_select ON public.conductores_perfil FOR SELECT TO authenticated
- USING(usuario_id=(SELECT auth.uid()) OR EXISTS (
-   SELECT 1 FROM public.viajes v
-   WHERE v.pasajero_id=(SELECT auth.uid()) AND v.conductor_id=conductores_perfil.usuario_id
- ));
+ USING(usuario_id=(SELECT auth.uid()) OR public.comparte_viaje_con(usuario_id));
 CREATE POLICY altokke_conductores_update ON public.conductores_perfil FOR UPDATE TO authenticated
  USING(usuario_id=(SELECT auth.uid()) AND estado='aprobado')
  WITH CHECK(usuario_id=(SELECT auth.uid()) AND estado='aprobado');
