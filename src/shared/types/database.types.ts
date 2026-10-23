@@ -285,7 +285,8 @@ export type Database = {
           apellidos: string
           avatar_url: string | null
           creado_en: string
-          dni?: string | null
+          dni: string | null
+          fecha_nacimiento: string | null
           expo_push_token: string | null
           foto_url: string | null
           id: string
@@ -298,6 +299,7 @@ export type Database = {
           avatar_url?: string | null
           creado_en?: string
           dni?: string | null
+          fecha_nacimiento?: string | null
           expo_push_token?: string | null
           foto_url?: string | null
           id: string
@@ -310,6 +312,7 @@ export type Database = {
           avatar_url?: string | null
           creado_en?: string
           dni?: string | null
+          fecha_nacimiento?: string | null
           expo_push_token?: string | null
           foto_url?: string | null
           id?: string
@@ -477,6 +480,9 @@ export type Database = {
     }
     Functions: {
       reservar_otp_conductor: { Args: { p_telefono: string }; Returns: Json }
+      cancelar_viaje_pasajero: { Args: { p_viaje_id: string }; Returns: undefined }
+      aceptar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }
+      finalizar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }
     }
     Enums: {
       estado_verificacion: "pendiente" | "aprobado" | "rechazado" | "suspendido"
