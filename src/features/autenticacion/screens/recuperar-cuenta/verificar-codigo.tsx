@@ -23,11 +23,14 @@ export default function VerificacionCodigoScreen() {
   const [intentosFallidos, setIntentosFallidos] = useState(0);
   const [bloqueadoHasta, setBloqueadoHasta] = useState<number | null>(null);
 
+  const contando = timer > 0;
+
+  // Creo el intervalo una sola vez por cada cuenta regresiva y no cada segundo
   useEffect(() => {
-    if (timer <= 0) return;
-    const interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    if (!contando) return;
+    const interval = setInterval(() => setTimer((t) => (t > 0 ? t - 1 : 0)), 1000);
     return () => clearInterval(interval);
-  }, [timer]);
+  }, [contando]);
 
   const handleVerificar = async () => {
     if (bloqueadoHasta && Date.now() < bloqueadoHasta) {
