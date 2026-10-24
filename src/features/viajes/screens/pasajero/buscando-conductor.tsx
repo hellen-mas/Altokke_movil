@@ -20,8 +20,8 @@ import {
   CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
-import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 
@@ -33,11 +33,11 @@ const TIEMPO_BUSQUEDA_MS = 5000;
 
 export default function PantallaBuscandoConductor() {
   const { colores } = useAltokkeTheme();
-  const { setDestino, registrarViaje } = useViaje();
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const { height: altoPantalla } = useWindowDimensions();
   const [conductorEncontrado, setConductorEncontrado] = useState(false);
+  const { solicitarCancelacion, cancelando } = useCancelarViaje("buscando");
 
   useEffect(() => {
     const espera = setTimeout(
@@ -55,18 +55,6 @@ export default function PantallaBuscandoConductor() {
 
   const { origen, destino, servicio, metodoPago, tarifa, minutos, ruta } =
     resumen;
-
-  const cancelarViaje = () => {
-    registrarViaje({
-      origen: ORIGEN_EJEMPLO.nombre,
-      destino: destino.nombre,
-      lugarDestino: destino,
-      tarifa,
-      estado: "cancelado",
-    });
-    setDestino(null);
-    router.replace("/mapa");
-  };
 
   const verMiViaje = () => {
     router.replace("/viaje-activo");
@@ -268,15 +256,17 @@ export default function PantallaBuscandoConductor() {
           </View>
 
           <Pressable
-            onPress={cancelarViaje}
+            onPress={solicitarCancelacion}
+            disabled={cancelando}
             style={({ pressed }) => [
               styles.botonCancelar,
               { borderColor: colores.error },
-              pressed && { backgroundColor: colores.errorFondo },
+              (pressed || cancelando) && { backgroundColor: colores.errorFondo },
+              cancelando && { opacity: 0.6 },
             ]}
           >
             <Text style={[styles.botonCancelarTexto, { color: colores.error }]}>
-              Cancelar viaje
+              {cancelando ? "Cancelando..." : "Cancelar viaje"}
             </Text>
           </Pressable>
         </ScrollView>

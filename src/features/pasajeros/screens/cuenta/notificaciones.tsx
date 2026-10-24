@@ -1,11 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ScrollView, StyleSheet, Switch, View } from "react-native";
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
 import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
-import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
-import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
+import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 
 type Clave =
@@ -67,37 +65,13 @@ const CANALES: Opcion[] = [
 
 export default function Notificaciones() {
   const { colores } = useAltokkeTheme();
-  const { userId } = useAuth();
-  const { perfil, guardarPreferencias } = usePerfilPasajero();
-
-  const [activas, setActivas] = useState<Record<Clave, boolean>>({
-    promociones: true,
-    viaje: true,
-    recordatorios: true,
-    correo: true,
-    push: true,
-    sms: false,
-  });
-
-  useEffect(() => {
-    if (perfil?.preferencias?.notificaciones) {
-      setActivas((prev) => ({
-        ...prev,
-        ...perfil.preferencias.notificaciones,
-      }));
-    }
-  }, [perfil]);
+  const { preferencias, actualizarPreferencia } = useNotificaciones();
 
   const cambiar = async (clave: Clave, value: boolean) => {
-    const nuevoEstado = { ...activas, [clave]: value };
-    setActivas(nuevoEstado);
-
-    if (userId) {
-      try {
-        await guardarPreferencias({ notificaciones: nuevoEstado });
-      } catch (err) {
-        console.warn("Aviso al guardar preferencias de notificación:", err);
-      }
+    try {
+      await actualizarPreferencia(clave, value);
+    } catch (err) {
+      console.warn("Aviso al guardar preferencias de notificación:", err);
     }
   };
 
@@ -110,7 +84,7 @@ export default function Notificaciones() {
       sinFlecha
       derecha={
         <Switch
-          value={Boolean(activas[opcion.clave])}
+          value={Boolean(preferencias[opcion.clave])}
           onValueChange={(value) => cambiar(opcion.clave, value)}
           trackColor={{
             false: colores.progresoInactivo,
