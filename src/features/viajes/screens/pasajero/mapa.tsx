@@ -7,10 +7,10 @@ import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
   CONDUCTORES_CERCANOS,
-  NOTIFICACIONES_EJEMPLO,
   ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
 import { TipoServicio, useViaje } from "@/features/viajes/context/ViajeContext";
+import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
 import { useNombrePasajero } from "@/features/pasajeros/hooks/use-nombre-pasajero";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
@@ -50,6 +50,7 @@ const SERVICIOS: {
 export default function PantallaMapa() {
   const { colores, esOscuro } = useAltokkeTheme();
   const { tipoServicio, setTipoServicio, destino, setDestino } = useViaje();
+  const { hayNoLeidas } = useNotificaciones();
   const nombre = useNombrePasajero();
   const { perfil } = usePerfilPasajero();
 
@@ -104,9 +105,7 @@ export default function PantallaMapa() {
           titulo={nombre ? `Hola, ${nombre} 👋` : "Hola 👋"}
           subtitulo="¿A dónde te llevamos hoy?"
           paddingInferior={72}
-          hayNotificaciones={NOTIFICACIONES_EJEMPLO.some(
-            (notificacion) => !notificacion.leida,
-          )}
+          hayNotificaciones={hayNoLeidas}
         />
 
         {/* Origen y destino */}

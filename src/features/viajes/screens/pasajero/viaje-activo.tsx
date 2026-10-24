@@ -23,6 +23,8 @@ import {
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
+import { supabase } from "@/shared/api/supabase";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import {
   formatearHora,
@@ -59,6 +61,7 @@ export default function PantallaViajeActivo() {
   const { height: altoPantalla } = useWindowDimensions();
   const [avance, setAvance] = useState(0);
   const [horaSalida] = useState(() => new Date());
+  const [estadoViaje, setEstadoViaje] = useState<string>("aceptado");
 
   const terminado = avance >= 1;
 
@@ -73,6 +76,62 @@ export default function PantallaViajeActivo() {
 
     return () => clearInterval(reloj);
   }, [terminado]);
+
+  // Consultar y escuchar estado real del viaje en Supabase
+  useEffect(() => {
+    if (!viajeActivoId) return;
+
+    let activo = true;
+    supabase
+      .from("viajes")
+      .select("estado")
+      .eq("id", viajeActivoId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!activo) return;
+        if (error) {
+          console.warn("Aviso al consultar estado del viaje:", error);
+          return;
+        }
+        if (data?.estado) {
+          setEstadoViaje(data.estado);
+        }
+      });
+
+    const canal = supabase
+      .channel(`monitoreo_estado_activo_${viajeActivoId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "viajes",
+          filter: `id=eq.${viajeActivoId}`,
+        },
+        (payload) => {
+          const nuevo = payload.new as any;
+          if (nuevo?.estado) {
+            setEstadoViaje(nuevo.estado);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      activo = false;
+      supabase.removeChannel(canal);
+    };
+  }, [viajeActivoId]);
+
+  // El viaje solo es cancelable antes de iniciar la marcha (en_viaje o finalizado)
+  const estadoEfectivo = terminado
+    ? "finalizado"
+    : avance > 0.05 && estadoViaje === "aceptado"
+      ? "en_viaje"
+      : estadoViaje;
+
+  const { solicitarCancelacion, cancelando, esCancelable } =
+    useCancelarViaje(estadoEfectivo);
 
   // Si se entra sin haber armado un viaje, se vuelve a pedir el destino
   if (!resumen) {
@@ -92,12 +151,18 @@ export default function PantallaViajeActivo() {
   const compartirViaje = () => {
     Share.share({
       message: `Sigue mi viaje en Altokke: voy de ${ORIGEN_INICIAL_BAGUA.nombre} a ${destino.nombre}. Llegada estimada: ${formatearHora(horaLlegada)}.`,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn("Aviso al compartir viaje:", err);
+    });
   };
 
   const calificarViaje = () => {
     if (viajeActivoId) {
-      viajeService.finalizarViaje(viajeActivoId, tarifa).catch(() => {});
+      viajeService
+        .finalizarViaje(viajeActivoId, tarifa)
+        .catch((err) => {
+          console.warn("Aviso al finalizar viaje:", err);
+        });
     }
     router.replace("/calificacion");
   };
@@ -365,6 +430,24 @@ export default function PantallaViajeActivo() {
               </View>
             </View>
           </View>
+
+          {esCancelable && (
+            <Pressable
+              onPress={solicitarCancelacion}
+              disabled={cancelando}
+              style={({ pressed }) => [
+                styles.botonCancelar,
+                { borderColor: colores.error },
+                (pressed || cancelando) && { backgroundColor: colores.errorFondo },
+                cancelando && { opacity: 0.6 },
+              ]}
+            >
+              <Ionicons name="close-circle-outline" size={20} color={colores.error} />
+              <Text style={[styles.botonCancelarTexto, { color: colores.error }]}>
+                {cancelando ? "Cancelando viaje..." : "Cancelar viaje"}
+              </Text>
+            </Pressable>
+          )}
 
           <Pressable
             style={({ pressed }) => [
@@ -645,5 +728,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     borderTopWidth: 1,
+  },
+
+  botonCancelar: {
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+
+  botonCancelarTexto: {
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

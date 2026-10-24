@@ -1,91 +1,157 @@
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { NOTIFICACIONES_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-
-interface NotificacionItem {
-  id: string;
-  icono: keyof typeof Ionicons.glyphMap;
-  titulo: string;
-  mensaje: string;
-  hora: string;
-  leida: boolean;
-}
+import React from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export default function PantallaNotificaciones() {
   const { colores } = useAltokkeTheme();
-  const [lista, setLista] = useState<NotificacionItem[]>(() => [...NOTIFICACIONES_EJEMPLO]);
+  const {
+    notificaciones,
+    marcarComoLeida,
+    marcarTodasLeidas,
+    hayNoLeidas,
+    cargando,
+  } = useNotificaciones();
 
-  const marcarComoLeida = (id: string) => {
-    setLista((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, leida: true } : item))
+  const handleMarcarTodasLeidas = async () => {
+    await marcarTodasLeidas();
+    Alert.alert(
+      "Notificaciones",
+      "Todas las notificaciones han sido marcadas como leídas."
     );
   };
-
-  const marcarTodasLeidas = () => {
-    setLista((prev) => prev.map((item) => ({ ...item, leida: true })));
-    Alert.alert("Notificaciones", "Todas las notificaciones han sido marcadas como leídas.");
-  };
-
-  const hayNoLeidas = lista.some((n) => !n.leida);
 
   return (
     <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Notificaciones" />
 
       <ScrollView contentContainerStyle={styles.contenido}>
-        {hayNoLeidas && (
-          <Pressable
-            style={[styles.botonMarcarTodas, { borderColor: colores.linea }]}
-            onPress={marcarTodasLeidas}
-          >
-            <Ionicons name="checkmark-done-outline" size={18} color={colores.exitoTexto} />
-            <Text style={[styles.textoMarcarTodas, { color: colores.exitoTexto }]}>
-              Marcar todas como leídas
+        {cargando ? (
+          <View style={styles.centroVacio}>
+            <ActivityIndicator size="large" color={colores.primario} />
+            <Text style={[styles.textoVacio, { color: colores.secundario }]}>
+              Cargando notificaciones...
             </Text>
-          </Pressable>
-        )}
-
-        {lista.map((notificacion) => (
-          <Pressable
-            key={notificacion.id}
-            onPress={() => marcarComoLeida(notificacion.id)}
-            style={({ pressed }) => [
-              styles.tarjeta,
-              {
-                backgroundColor: colores.superficie,
-                borderColor: notificacion.leida ? colores.linea : colores.primario,
-              },
-              pressed && { opacity: 0.8 },
-            ]}
-          >
-            <View style={[styles.icono, { backgroundColor: colores.exitoFondo }]}>
+          </View>
+        ) : notificaciones.length === 0 ? (
+          <View style={styles.centroVacio}>
+            <View
+              style={[
+                styles.iconoVacio,
+                { backgroundColor: colores.superficie, borderColor: colores.linea },
+              ]}
+            >
               <Ionicons
-                name={notificacion.icono}
-                size={22}
-                color={colores.exitoTexto}
+                name="notifications-off-outline"
+                size={36}
+                color={colores.secundario}
               />
             </View>
-
-            <View style={styles.textos}>
-              <Text style={[styles.titulo, { color: colores.texto }]}>
-                {notificacion.titulo}
-              </Text>
-              <Text style={[styles.mensaje, { color: colores.secundario }]}>
-                {notificacion.mensaje}
-              </Text>
-              <Text style={[styles.hora, { color: colores.secundario }]}>
-                {notificacion.hora}
-              </Text>
-            </View>
-
-            {!notificacion.leida && (
-              <View style={[styles.puntoNuevo, { backgroundColor: colores.error }]} />
+            <Text style={[styles.tituloVacio, { color: colores.texto }]}>
+              No tienes notificaciones
+            </Text>
+            <Text style={[styles.textoVacio, { color: colores.secundario }]}>
+              Aquí aparecerán las actualizaciones en tiempo real sobre tus viajes y avisos importantes.
+            </Text>
+          </View>
+        ) : (
+          <>
+            {hayNoLeidas && (
+              <Pressable
+                style={[styles.botonMarcarTodas, { borderColor: colores.linea }]}
+                onPress={handleMarcarTodasLeidas}
+              >
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={18}
+                  color={colores.exitoTexto}
+                />
+                <Text
+                  style={[styles.textoMarcarTodas, { color: colores.exitoTexto }]}
+                >
+                  Marcar todas como leídas
+                </Text>
+              </Pressable>
             )}
-          </Pressable>
-        ))}
+
+            {notificaciones.map((notificacion) => (
+              <Pressable
+                key={notificacion.id}
+                onPress={() => marcarComoLeida(notificacion.id)}
+                style={({ pressed }) => [
+                  styles.tarjeta,
+                  {
+                    backgroundColor: colores.superficie,
+                    borderColor: notificacion.leida
+                      ? colores.linea
+                      : colores.primario,
+                  },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.icono,
+                    {
+                      backgroundColor: notificacion.leida
+                        ? colores.campo
+                        : colores.exitoFondo,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={notificacion.icono}
+                    size={22}
+                    color={
+                      notificacion.leida
+                        ? colores.secundario
+                        : colores.exitoTexto
+                    }
+                  />
+                </View>
+
+                <View style={styles.textos}>
+                  <Text
+                    style={[
+                      styles.titulo,
+                      {
+                        color: colores.texto,
+                        fontWeight: notificacion.leida ? "600" : "800",
+                      },
+                    ]}
+                  >
+                    {notificacion.titulo}
+                  </Text>
+                  <Text style={[styles.mensaje, { color: colores.secundario }]}>
+                    {notificacion.mensaje}
+                  </Text>
+                  <Text style={[styles.hora, { color: colores.secundario }]}>
+                    {notificacion.hora}
+                  </Text>
+                </View>
+
+                {!notificacion.leida && (
+                  <View
+                    style={[
+                      styles.puntoNuevo,
+                      { backgroundColor: colores.error },
+                    ]}
+                  />
+                )}
+              </Pressable>
+            ))}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -155,5 +221,35 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+
+  centroVacio: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+
+  iconoVacio: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+
+  tituloVacio: {
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  textoVacio: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
   },
 });
