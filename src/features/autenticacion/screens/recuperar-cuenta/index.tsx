@@ -8,6 +8,7 @@ import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
 import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { esquemaCorreo } from "@/features/autenticacion/utils/validacionesAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -24,7 +25,7 @@ export default function RecuperarPasswordScreen() {
   const handleContinuar = async () => {
     if (loading) return;
     const normalizado = correo.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizado)) {
+    if (!esquemaCorreo.isValidSync(normalizado)) {
       Alert.alert("Correo inválido", "Por favor ingresa un correo electrónico válido para continuar.");
       return;
     }
