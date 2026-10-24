@@ -1,11 +1,12 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { seleccionarFotoGaleria, validarFotoModeracion } from "@/shared/utils/avatar";
 import { Ionicons } from "@expo/vector-icons";
+// Usar expo-image para decodificar la foto al tamaño del avatar
+import { Image } from "expo-image";
 import React, { useState } from "react";
 import { 
   ActivityIndicator,
   Alert, 
-  Image, 
   Pressable, 
   StyleSheet, 
   Text, 
@@ -83,7 +84,7 @@ export function SelectorFotoPerfil({
         {validando ? (
           <ActivityIndicator size="small" color={colores.primario} />
         ) : fotoUri ? (
-          <Image source={{ uri: fotoUri }} style={styles.foto} />
+          <Image source={{ uri: fotoUri }} style={styles.foto} contentFit="cover" />
         ) : (
           <Ionicons name="person-outline" size={27} 
             color={ colores.exitoTexto }
