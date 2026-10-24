@@ -30,8 +30,8 @@ export async function subirDocumento(
 
   return await storageService.subirArchivo("documentos-conductores", ruta, archivo.uri, {
     esPdf,
-    anchoMaximo: 1400,
-    calidad: 0.85,
+    anchoMaximo: 1200,
+    calidad: 0.75,
   });
 }
 
