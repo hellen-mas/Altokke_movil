@@ -22,4 +22,9 @@ export const esquemaLogin = yup.object({
     .test("no-vacia", "Ingresa tu contraseña", (val) => Boolean(val?.trim())),
 });
 
+export const esquemaRecuperar = yup.object({
+  correo: esquemaCorreo,
+});
+
 export type TipoDatosLogin = yup.InferType<typeof esquemaLogin>;
+export type TipoDatosRecuperar = yup.InferType<typeof esquemaRecuperar>;

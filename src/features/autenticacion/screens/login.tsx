@@ -24,11 +24,11 @@ WebBrowser.maybeCompleteAuthSession();
 export default function LoginScreen() {
   const { colores } = useAltokkeTheme();
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const { control, handleSubmit } = useForm<TipoDatosLogin>({
     resolver: yupResolver(esquemaLogin),
     defaultValues: { correo: "", contrasena: "" },
   });
-  const { login } = useAuth();
 
   const handleSession = async (user: any) => {
     const rol = user.user_metadata?.rol;
@@ -81,9 +81,6 @@ export default function LoginScreen() {
             placeholder="Correo electrónico"
             keyboardType="email-address"
             autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
           />
 
           <CampoTextoHookForm
@@ -93,15 +90,12 @@ export default function LoginScreen() {
             placeholder="Contraseña"
             esPassword
             autoCapitalize="none"
-            autoComplete="password"
-            textContentType="password"
           />
 
           <Pressable
             onPress={() => router.push("/recuperar-cuenta")}
-            hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
+            hitSlop={12}
             accessibilityRole="link"
-            accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
             style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
           >
             <Text style={[styles.forgotPasswordText, { color: colores.exitoTexto }]}>
@@ -156,8 +150,8 @@ export default function LoginScreen() {
               style={[styles.legalLink, { color: colores.exitoTexto }]}
             >
               Términos de servicio
-            </Text>
-            {" "}y{" "}
+            </Text>{" "}
+            y{" "}
             <Text
               onPress={() =>
                 Alert.alert(
@@ -177,59 +171,16 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 32,
-  },
-  topSection: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 24,
-  },
-  formContainer: {
-    gap: 14,
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    paddingVertical: 5,
-    paddingHorizontal: 4,
-  },
-  forgotPasswordText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 2,
-  },
-  divider: {
-    flex: 1,
-    height: 1.5,
-  },
-  dividerText: {
-    paddingHorizontal: 14,
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  bottomContainer: {
-    marginTop: "auto",
-    paddingTop: 28,
-    gap: 8,
-    alignItems: "center",
-  },
-  legalContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  disclaimerText: {
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  legalLink: {
-    fontWeight: "700",
-  },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 },
+  topSection: { flex: 1, justifyContent: "center", gap: 24 },
+  formContainer: { gap: 14 },
+  forgotPassword: { alignSelf: "flex-end", paddingVertical: 5, paddingHorizontal: 4 },
+  forgotPasswordText: { fontSize: 16, fontWeight: "600" },
+  dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 2 },
+  divider: { flex: 1, height: 1.5 },
+  dividerText: { paddingHorizontal: 14, fontSize: 13, fontWeight: "500" },
+  bottomContainer: { marginTop: "auto", paddingTop: 24, gap: 8, alignItems: "center" },
+  legalContainer: { paddingHorizontal: 8, paddingVertical: 4 },
+  disclaimerText: { fontSize: 13, textAlign: "center", lineHeight: 20 },
+  legalLink: { fontWeight: "700" },
 });

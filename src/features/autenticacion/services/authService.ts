@@ -1,5 +1,6 @@
 import { supabase } from "@/shared/api/supabase";
 import { subirFotoAvatar } from "@/shared/utils/avatar";
+import { identidadService } from "@/features/autenticacion/services/identidadService";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
@@ -21,8 +22,6 @@ export interface RegistroPasajeroInput {
 export type PerfilOAuthInput = Omit<RegistroPasajeroInput, "correo" | "contrasena">;
 
 const cleanEmail = (correo: string) => (correo || "").trim().toLowerCase();
-const aTitulo = (str: string) => str.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
-const cacheDni = new Map<string, { nombres: string; apellidos: string }>();
 
 const extraerMetadata = (d: PerfilOAuthInput) => ({
   nombre: d.nombres,
@@ -53,37 +52,25 @@ export const authService = {
       provider: "google",
       options: { redirectTo: redirectUrl },
     });
-    if (error) {
-      throw error;
-    }
-    if (!data?.url) {
-      throw new Error("No se pudo generar la URL de autenticación con Google.");
-    }
+    if (error) throw error;
+    if (!data?.url) throw new Error("No se pudo generar la URL de autenticación con Google.");
 
     const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-    if (res.type !== "success" || !res.url) {
-      return null;
-    }
+    if (res.type !== "success" || !res.url) return null;
 
     const hashOrQuery = res.url.split("#")[1] || res.url.split("?")[1];
-    if (!hashOrQuery) {
-      return null;
-    }
+    if (!hashOrQuery) return null;
 
     const params = new URLSearchParams(hashOrQuery);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-    if (!access_token || !refresh_token) {
-      return null;
-    }
+    if (!access_token || !refresh_token) return null;
 
     const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
       access_token,
       refresh_token,
     });
-    if (sessionError) {
-      throw sessionError;
-    }
+    if (sessionError) throw sessionError;
     return sessionData?.session?.user || null;
   },
 
@@ -148,82 +135,7 @@ export const authService = {
     await supabase.auth.signOut();
   },
 
-  async existeDni(dni: string): Promise<boolean> {
-    try {
-      const { data } = await supabase
-        .from("usuarios")
-        .select("id")
-        .eq("dni", dni.trim())
-        .maybeSingle();
-
-      return Boolean(data);
-    } catch {
-      return false;
-    }
-  },
-
-  async validarIdentidadDNI(dni: string) {
-    const limpio = dni.trim();
-
-    const yaRegistrado = await this.existeDni(limpio);
-    if (yaRegistrado) {
-      const err = new Error("DNI_YA_REGISTRADO");
-      (err as any).code = "DNI_YA_REGISTRADO";
-      throw err;
-    }
-
-    const guardado = cacheDni.get(limpio);
-    if (guardado) {
-      return { ...guardado };
-    }
-
-    const token = process.env.EXPO_PUBLIC_DNI_API_TOKEN?.trim();
-    if (!token) {
-      throw new Error("Servicio de validación no disponible temporalmente.");
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    try {
-      const res = await fetch("https://api.apiperu.dev/dni", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ dni: limpio }),
-        signal: controller.signal,
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data?.success || !data?.data) {
-        throw new Error("No se encontraron datos registrados para este DNI.");
-      }
-
-      const { nombres = "", apellido_paterno = "", apellido_materno = "" } = data.data;
-      const resultado = {
-        nombres: aTitulo(nombres.trim()),
-        apellidos: aTitulo([apellido_paterno, apellido_materno].filter(Boolean).join(" ").trim()),
-      };
-
-      if (cacheDni.size >= 30) {
-        const primerElemento = cacheDni.keys().next().value;
-        if (primerElemento) {
-          cacheDni.delete(primerElemento);
-        }
-      }
-      cacheDni.set(limpio, resultado);
-
-      return resultado;
-    } catch (err: any) {
-      if (err?.name === "AbortError") {
-        throw new Error("La consulta de DNI tardó más de lo esperado. Verifica tu conexión a internet.");
-      }
-      throw err;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  },
+  // Delegaciones para compatibilidad con módulos dependientes
+  existeDni: (dni: string) => identidadService.existeDni(dni),
+  validarIdentidadDNI: (dni: string) => identidadService.validarIdentidadDNI(dni),
 };

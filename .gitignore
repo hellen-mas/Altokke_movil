@@ -58,3 +58,7 @@ supabase/.temp/
 
 # Playwright artifacts
 .playwright-cli/
+.playwright-mcp/
+
+# Local documentation
+docs/
