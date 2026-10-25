@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
-import { ReactNode } from "react";
+import { ReactNode, useRef, useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,17 +14,26 @@ import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
-import { CENTRO_BAGUA, ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
 import { MetodoPago, useViaje } from "@/features/viajes/context/ViajeContext";
 import { ServicioViaje, useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles } from "@/features/viajes/utils/viaje";
+import { ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
+// Distancia mínima permitida para solicitar un viaje.
+const DISTANCIA_MINIMA_KM = 0.1; // 100 metros
+const coordenadasValidas = (latitude: number, longitude: number) =>
+  Number.isFinite(latitude) &&
+  Number.isFinite(longitude) &&
+  latitude >= -90 &&
+  latitude <= 90 &&
+  longitude >= -180 &&
+  longitude <= 180;
 
 const SERVICIOS: {
   id: ServicioViaje;
@@ -84,42 +94,216 @@ const METODOS_PAGO: {
 export default function PantallaConfirmarViaje() {
   const { colores } = useAltokkeTheme();
   const { userId } = useAuth();
-  const { setTipoServicio, metodoPago, setMetodoPago, setViajeActivoId } = useViaje();
+  const { 
+    tipoServicio, 
+    setTipoServicio, 
+    metodoPago, 
+    setMetodoPago, 
+    setOrigen,
+    setDestino,
+    setViajeActivoId, 
+    ubicacionActual 
+  } = useViaje();
   const resumen = useResumenViaje();
   const { height: altoPantalla } = useWindowDimensions();
-
+  const [creandoViaje, setCreandoViaje] = useState(false);
+  const solicitudEnProceso = useRef(false);
+  
   // Si se entra sin haber elegido destino, se vuelve a pedirlo
   if (!resumen) {
     return <Redirect href="/destino" />;
   }
 
-  const { origen, destino, servicio, kilometros, tarifa, minutos, ruta } =
+  const { origen, origenLugar, destino, servicio, kilometros, tarifa, minutos, ruta } =
     resumen;
 
   const confirmarViaje = async () => {
-    if (userId) {
-      try {
-        const viajeCreado = await viajeService.crearViaje({
-          pasajeroId: userId,
-          origenTexto: ORIGEN_EJEMPLO.nombre,
-          destinoTexto: destino.nombre,
-          origenLat: origen.latitude,
-          origenLng: origen.longitude,
-          destinoLat: destino.coordenadas.latitude,
-          destinoLng: destino.coordenadas.longitude,
-          distanciaKm: kilometros,
-          tarifaEstimada: tarifa,
-          metodoPago,
-        });
+    // Evita solicitudes duplicadas
+    if (solicitudEnProceso.current) return;
 
-        if (viajeCreado?.id) {
-          setViajeActivoId(viajeCreado.id);
-        }
-      } catch (err) {
-        console.warn("Aviso al crear viaje en Supabase:", err);
-      }
+    if (tipoServicio === "reserva") {
+      Alert.alert(
+        "Servicio no disponible",
+        "La programación de viajes todavía no está habilitada. Selecciona Normal o Express."
+      );
+      return;
     }
-    router.push("/buscando-conductor");
+
+    // Verificar que el pasajero tenga una sesión activa
+    if (!userId) {
+      Alert.alert (
+        "Sesión requerida",
+        "Debes iniciar sesión para solicitar un mototaxi."
+      );
+      return;
+    }
+
+    if (!resumen) {
+      Alert.alert(
+        "Destino requerido",
+        "Selecciona un destino antes de solicitar el viaje."
+      );
+      return;
+    }
+
+    // No permitir solicitudes con el origen de ejemplo.
+    if (origenLugar.id === ORIGEN_EJEMPLO.id) {
+      Alert.alert(
+        "Selecciona un punto de recojo",
+        "No pudimos obtener tu ubicación. Selecciona manualmente un origen real antes de solicitar el viaje."
+      );
+      return;
+    }
+
+    // Verificar coordenadas de ambos lugares.
+    if (
+      !coordenadasValidas(origen.latitude, origen.longitude) ||
+      !coordenadasValidas(
+        destino.coordenadas.latitude,
+        destino.coordenadas.longitude
+      )
+    ) {
+      Alert.alert(
+        "Ubicación no válida",
+        "Verifica las ubicaciones de origen y destino e inténtalo nuevamente."
+      );
+      return;
+    }
+
+    // Evitar viajes al mismo punto o demasiado cercanos.
+    if (
+      !Number.isFinite(kilometros) ||
+      kilometros < DISTANCIA_MINIMA_KM
+    ) {
+      Alert.alert(
+        "Origen y destino demasiado cercanos",
+        "El origen y el destino deben estar separados por al menos 100 metros. Selecciona un destino diferente."
+      );
+      return;
+    }
+
+    solicitudEnProceso.current = true;
+    setCreandoViaje(true);
+
+    try {
+      // Comprobar en Supabase si ya existe una solicitud activa.
+      const viajeExistente =
+        await viajeService.obtenerViajeActivoPasajero(userId);
+
+      if (viajeExistente) {
+        // Comprobar que el viaje tenga ubicaciones válidas.
+        const {
+          origen_lat,
+          origen_lng,
+          destino_lat,
+          destino_lng,
+        } = viajeExistente;
+
+        const coordenadasValidas = [
+          origen_lat,
+          origen_lng,
+          destino_lat,
+          destino_lng,
+        ].every((valor) => typeof valor === "number" && Number.isFinite(valor));
+
+        if (!coordenadasValidas) {
+          Alert.alert(
+            "No se pudo recuperar el viaje",
+            "La solicitud existe, pero sus coordenadas no son válidas."
+          );
+          return;
+        }
+
+        setViajeActivoId(viajeExistente.id);
+
+        Alert.alert(
+          "Ya tienes un viaje activo",
+          `Tu solicitud se encuentra en estado "${viajeExistente.estado}". ¿Deseas regresar a ella?`,
+          [
+            {
+              text: "Quedarme aquí",
+              style: "cancel",
+            },
+            {
+              text: "Ver mi viaje",
+              onPress: () => {
+                setOrigen({
+                  id: `origen-viaje-${viajeExistente.id}`,
+                  nombre: viajeExistente.origen_texto,
+                  detalle: viajeExistente.origen_texto,
+                  coordenadas: {
+                    latitude: origen_lat,
+                    longitude: origen_lng,
+                  },
+                });
+
+                setDestino({
+                  id: `destino-viaje-${viajeExistente.id}`,
+                  nombre: viajeExistente.destino_texto,
+                  detalle: viajeExistente.destino_texto,
+                  coordenadas: {
+                    latitude: destino_lat,
+                    longitude: destino_lng,
+                  },
+                });
+
+                if (
+                  viajeExistente.metodo_pago === "efectivo" ||
+                  viajeExistente.metodo_pago === "yape" ||
+                  viajeExistente.metodo_pago === "plin"
+                ) {
+                  setMetodoPago(viajeExistente.metodo_pago);
+                }
+
+                router.replace("/buscando-conductor");
+              },
+            },
+          ]
+        );
+
+        return;
+      }
+      
+      const viajeCreado = await viajeService.crearViaje({
+        pasajeroId: userId,
+        origenTexto: origenLugar.nombre,
+        destinoTexto: destino.nombre,
+        origenLat: origen.latitude,
+        origenLng: origen.longitude,
+        destinoLat: destino.coordenadas.latitude,
+        destinoLng: destino.coordenadas.longitude,
+        distanciaKm: kilometros,
+        tarifaEstimada: tarifa,
+        metodoPago,
+      });
+
+      if (!viajeCreado?.id) {
+        Alert.alert(
+          "No se pudo solicitar el viaje",
+          "No pudimos registrar tu solicitud en Supabase. Verifica tu conexión a internet e inténtalo nuevamente."
+        );
+        return;
+      }
+
+      setViajeActivoId(viajeCreado.id);
+
+      console.log("ALTOKKE - Viaje registrado:", {
+        id: viajeCreado.id,
+        estado: viajeCreado.estado,
+      });
+
+      router.push("/buscando-conductor");
+    } catch (error) {
+      console.error("Error al solicitar viaje:", error);
+
+      Alert.alert(
+        "Error de conexión",
+        "Ocurrió un problema al solicitar tu mototaxi. Inténtalo nuevamente."
+      );
+    } finally {
+      solicitudEnProceso.current = false;
+      setCreandoViaje(false);
+    }
   };
 
   return (
@@ -127,8 +311,9 @@ export default function PantallaConfirmarViaje() {
       <CabeceraPasajero />
 
       <MapaBase
-        centro={CENTRO_BAGUA}
+        centro={origen}
         origen={origen}
+        ubicacionActual={ubicacionActual}
         destino={destino.coordenadas}
         ruta={ruta}
         margenInferior={PANEL_SOBRE_MAPA + 6}
@@ -177,7 +362,7 @@ export default function PantallaConfirmarViaje() {
                   Origen
                 </Text>
                 <Text style={[styles.lugarNombre, { color: colores.texto }]}>
-                  {ORIGEN_EJEMPLO.nombre}
+                  {origenLugar.nombre}
                 </Text>
               </View>
             </View>
@@ -392,7 +577,12 @@ export default function PantallaConfirmarViaje() {
             },
           ]}
         >
-          <BotonPrincipal titulo="Confirmar viaje" onPress={confirmarViaje} />
+          <BotonPrincipal 
+            titulo={creandoViaje ? "Solicitando viaje..." : "Confirmar viaje"}
+            onPress={confirmarViaje} 
+            cargando={creandoViaje}
+            disabled={creandoViaje}
+          />
         </View>
       </View>
 
