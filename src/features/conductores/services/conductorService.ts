@@ -1,5 +1,5 @@
-import { supabase } from "@/shared/api/supabase";
 import { TipoDocumento } from "@/features/conductores/services/documentosStorage";
+import { supabase } from "@/shared/api/supabase";
 import { storageService } from "@/shared/utils/storageService";
 
 export interface DatosVehiculo {
@@ -138,8 +138,9 @@ export const conductorService = {
 
         await storageService.subirArchivo("documentos-conductores", ruta, adjunto.uri, {
           esPdf,
-          anchoMaximo: 1400,
-          calidad: 0.85,
+          // Equilibra legibilidad y peso de los documentos
+          anchoMaximo: 1200,
+          calidad: 0.75,
         });
 
         return {
