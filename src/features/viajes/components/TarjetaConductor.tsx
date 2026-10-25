@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { IconoMototaxi } from "./IconoMototaxi";
 
@@ -22,12 +23,22 @@ interface Props {
 export function TarjetaConductor({ conductor }: Props) {
   const { colores } = useAltokkeTheme();
 
-  const nombre = conductor?.nombre || "Conductor Altokke";
-  const calificacion = conductor?.calificacion !== undefined ? conductor.calificacion.toFixed(1) : "5.0";
-  const viajes = conductor?.viajes !== undefined ? conductor.viajes : 0;
-  const vehiculo = conductor?.vehiculo || "Mototaxi Torito";
-  const placa = conductor?.placa || "Verificado";
-  const color = conductor?.color || "Color oficial";
+  // Mientras no lleguen datos confirmados, no se inventa ningún conductor
+  if (!conductor) {
+    return (
+      <View style={[styles.tarjeta, { backgroundColor: colores.campo }]}>
+        <ActivityIndicator color={colores.exitoTexto} />
+        <Text style={[styles.detalle, { color: colores.secundario }]}>
+          Cargando datos del conductor...
+        </Text>
+      </View>
+    );
+  }
+
+  const calificacion = conductor.calificacion?.toFixed(1) ?? "-";
+  const viajes = conductor.viajes ?? 0;
+  const vehiculo = conductor.vehiculo ?? "Mototaxi";
+  const placa = conductor.placa ?? "Sin placa";
 
   return (
     <View style={[styles.tarjeta, { backgroundColor: colores.campo }]}>
@@ -40,17 +51,25 @@ export function TarjetaConductor({ conductor }: Props) {
           },
         ]}
       >
-        <Ionicons
-          name="person"
-          size={26}
-          color={colores.secundario}
-        />
+        {conductor.foto ? (
+          <Image
+            source={{ uri: conductor.foto }}
+            style={styles.foto}
+            contentFit="cover"
+          />
+        ) : (
+          <Ionicons
+            name="person"
+            size={26}
+            color={colores.secundario}
+          />
+        )}
       </View>
 
       <View style={styles.textos}>
         <View style={styles.fila}>
           <Text style={[styles.nombre, { color: colores.texto }]} numberOfLines={1}>
-            {nombre}
+            {conductor.nombre}
           </Text>
           <Ionicons
             name="checkmark-circle"
@@ -83,9 +102,11 @@ export function TarjetaConductor({ conductor }: Props) {
         >
           {placa}
         </Text>
-        <Text style={[styles.vehiculoColor, { color: colores.secundario }]} numberOfLines={1}>
-          {color}
-        </Text>
+        {conductor.color && (
+          <Text style={[styles.vehiculoColor, { color: colores.secundario }]} numberOfLines={1}>
+            {conductor.color}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -107,6 +128,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
+    overflow: "hidden",
+  },
+
+  foto: {
+    width: "100%",
+    height: "100%",
   },
 
   textos: {
