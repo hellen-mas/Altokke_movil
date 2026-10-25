@@ -183,6 +183,11 @@ export const pasajeroService = {
     return await this.obtenerPerfil(userId);
   },
 
+  /**
+   * Actualiza las preferencias del pasajero en pasajeros_perfil.
+   * Requiere que el registro del perfil ya exista.
+   * La operación está restringida al usuario autenticado mediante RLS.
+   */
   async guardarPreferencias(
     userId: string,
     nuevasPreferencias: Partial<PreferenciasPasajero>
@@ -193,11 +198,25 @@ export const pasajeroService = {
       ...nuevasPreferencias,
     };
 
-    const { error } = await supabase.from("pasajeros_perfil").upsert({
-      usuario_id: userId,
-      preferencias: preferenciasCombinadas,
-    });
-    if (error) throw error;
+    const { data, error } = await supabase
+      .from("pasajeros_perfil")
+      .update({
+        preferencias: preferenciasCombinadas,
+      })
+      .eq("usuario_id", userId)
+      .select("usuario_id")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error al actualizar preferencias:", error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error(
+        "No se encontró un perfil de pasajero que puedas actualizar."
+      );
+    }
 
     if (perfilActual) {
       perfilActual.preferencias = preferenciasCombinadas;

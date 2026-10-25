@@ -15,9 +15,6 @@ export interface CrearViajeInput {
 }
 
 export const viajeService = {
-  /**
-   * Crea un nuevo registro de viaje en estado 'buscando' en Supabase
-   */
   async crearViaje(input: CrearViajeInput) {
     try {
       const { data, error } = await supabase
@@ -48,9 +45,50 @@ export const viajeService = {
     }
   },
 
-  /**
-   * Finaliza el viaje y actualiza su tarifa final
-   */
+  async obtenerViajeActivoPasajero(pasajeroId: string) {
+    if (!pasajeroId) {
+      throw new Error("Se requiere el ID del pasajero.");
+    }
+
+    const estadosActivos = [
+      "buscando",
+      "aceptado",
+      "en_camino_origen",
+      "esperando_pasajero",
+      "en_viaje",
+    ] as const;
+
+    const { data, error } = await supabase
+      .from("viajes")
+      .select(`
+        id,
+        estado,
+        origen_texto,
+        destino_texto,
+        origen_lat,
+        origen_lng,
+        destino_lat,
+        destino_lng,
+        distancia_km,
+        tarifa_estimada,
+        metodo_pago
+      `)
+      .eq("pasajero_id", pasajeroId)
+      .in("estado", estadosActivos)
+      .order("creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error al consultar viaje activo:", error);
+      throw new Error(
+        "No se pudo verificar si tienes un viaje activo."
+      );
+    }
+
+    return data;
+  },
+
   async finalizarViaje(viajeId: string, _tarifaFinal?: number) {
     if (!viajeId) return null;
     try {

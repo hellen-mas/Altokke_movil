@@ -2,7 +2,7 @@ import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   COLOR_CABECERA,
@@ -16,8 +16,10 @@ import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajer
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ReactNode, useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ReactNode, useMemo, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { viajeService } from "@/features/viajes/services/viajeService";
 
 const SERVICIOS: {
   id: TipoServicio;
@@ -49,22 +51,152 @@ const SERVICIOS: {
 
 export default function PantallaMapa() {
   const { colores, esOscuro } = useAltokkeTheme();
-  const { tipoServicio, setTipoServicio, destino, setDestino } = useViaje();
+  const { 
+    tipoServicio, 
+    setTipoServicio, 
+    destino, 
+    setDestino,
+    setOrigen,
+    setMetodoPago,
+    viajeActivoId,
+    setViajeActivoId,
+    verificandoViajeActivo,
+  } = useViaje();
   const { hayNoLeidas } = useNotificaciones();
   const nombre = useNombrePasajero();
   const { perfil } = usePerfilPasajero();
+  const { userId } = useAuth();
+  const [abriendoViaje, setAbriendoViaje] = useState(false);
+
+  const continuarViaje = async () => {
+    if (!userId || !viajeActivoId || abriendoViaje || verificandoViajeActivo) {
+      return;
+    }
+
+    setAbriendoViaje(true);
+
+    try {
+      // Consultar el estado real antes de navegar.
+      const viaje = await viajeService.obtenerViajeActivoPasajero(userId);
+
+      if (!viaje) {
+        setViajeActivoId(null);
+
+        Alert.alert(
+          "No tienes viajes activos",
+          "Tu solicitud anterior ya no está activa."
+        );
+        return;
+      }
+
+      const {
+        origen_lat,
+        origen_lng,
+        destino_lat,
+        destino_lng,
+      } = viaje;
+
+      const coordenadasValidas =
+        typeof origen_lat === "number" &&
+        Number.isFinite(origen_lat) &&
+        Math.abs(origen_lat) <= 90 &&
+        typeof origen_lng === "number" &&
+        Number.isFinite(origen_lng) &&
+        Math.abs(origen_lng) <= 180 &&
+        typeof destino_lat === "number" &&
+        Number.isFinite(destino_lat) &&
+        Math.abs(destino_lat) <= 90 &&
+        typeof destino_lng === "number" &&
+        Number.isFinite(destino_lng) &&
+        Math.abs(destino_lng) <= 180;
+
+      if (!coordenadasValidas) {
+        Alert.alert(
+          "No se pudo recuperar el viaje",
+          "El viaje existe, pero sus coordenadas no son válidas."
+        );
+        return;
+      }
+
+      // Restaurar los datos originales del viaje.
+      setOrigen({
+        id: `origen-viaje-${viaje.id}`,
+        nombre: viaje.origen_texto ?? "Origen registrado",
+        detalle: viaje.origen_texto ?? "",
+        coordenadas: {
+          latitude: origen_lat,
+          longitude: origen_lng,
+        },
+      });
+
+      setDestino({
+        id: `destino-viaje-${viaje.id}`,
+        nombre: viaje.destino_texto ?? "Destino registrado",
+        detalle: viaje.destino_texto ?? "",
+        coordenadas: {
+          latitude: destino_lat,
+          longitude: destino_lng,
+        },
+      });
+
+      if (
+        viaje.metodo_pago === "efectivo" ||
+        viaje.metodo_pago === "yape" ||
+        viaje.metodo_pago === "plin"
+      ) {
+        setMetodoPago(viaje.metodo_pago);
+      }
+
+      setViajeActivoId(viaje.id);
+
+      // Navegar según el estado real registrado en Supabase.
+      if (viaje.estado === "buscando") {
+        router.push("/buscando-conductor");
+      } else {
+        router.push("/viaje-activo");
+      }
+
+    } catch (error) {
+      console.warn("Error al recuperar el viaje:", error);
+
+      Alert.alert(
+        "No se pudo recuperar tu viaje",
+        "Verifica tu conexión a internet e inténtalo nuevamente."
+      );
+    } finally {
+      setAbriendoViaje(false);
+    }
+  };
 
   const destinosFrecuentes = useMemo(() => {
     const guardadas = perfil?.preferencias?.direcciones || [];
-    if (guardadas.length > 0) {
-      return guardadas.slice(0, 3).map((d) => ({
+
+    const direccionesValidas = guardadas.filter((d) => {
+      const coordenadas = d.coordenadas;
+
+      return (
+        coordenadas != null &&
+        typeof coordenadas.latitude === "number" &&
+        typeof coordenadas.longitude === "number" &&
+        Number.isFinite(coordenadas.latitude) &&
+        Number.isFinite(coordenadas.longitude) &&
+        Math.abs(coordenadas.latitude) <= 90 &&
+        Math.abs(coordenadas.longitude) <= 180
+      );
+    });
+
+    if (direccionesValidas.length > 0) {
+      return direccionesValidas.slice(0, 3).map((d) => ({
         nombre: d.nombre,
         detalle: d.direccion,
-        icono: ((d.icono || "location").replace("-outline", "") as keyof typeof Ionicons.glyphMap),
-        coordenadas: d.coordenadas || { latitude: -5.6389, longitude: -78.5302 },
+        icono: (
+          (d.icono || "location").replace("-outline", "")
+        ) as keyof typeof Ionicons.glyphMap,
+        coordenadas: d.coordenadas!,
         esGuardado: true,
       }));
     }
+    
     return [
       { nombre: "Casa", detalle: "Toca para agregar", icono: "home" as const, coordenadas: null, esGuardado: false },
       { nombre: "Trabajo", detalle: "Toca para agregar", icono: "briefcase" as const, coordenadas: null, esGuardado: false },
@@ -192,6 +324,70 @@ export default function PantallaMapa() {
             )}
           </Pressable>
         </View>
+        
+        {/* Tarjeta de viaje activo */}
+        {verificandoViajeActivo ? (
+          <View
+            style={[
+              styles.tarjetaContinuar,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
+            <Text style={{ color: colores.secundario }}>Verificando tus viajes activos...</Text>
+          </View>
+        ) : viajeActivoId ? (
+          <Pressable
+            onPress={() => void continuarViaje()}
+            disabled={abriendoViaje}
+            style={[
+              styles.tarjetaContinuar,
+              {
+                backgroundColor: colores.exitoFondo,
+                borderColor: colores.primario,
+                opacity: abriendoViaje ? 0.6 : 1,
+              },
+            ]} 
+          >
+            <Ionicons
+              name="car-sport-outline"
+              size={26}
+              color={colores.exitoTexto}
+            />
+
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: colores.exitoTexto,
+                  fontSize: 16,
+                  fontWeight: "800",
+                }}
+              >
+                Tienes un viaje activo
+              </Text>
+
+              <Text
+                style={{
+                  color: colores.secundario,
+                  fontSize: 13,
+                  marginTop: 3,
+                }}
+              >
+                {abriendoViaje
+                  ? "Recuperando tu solicitud..."
+                  : "Toca aquí para continuar tu viaje"}
+              </Text>
+            </View>
+
+            <Ionicons
+              name="chevron-forward"
+              size={22}
+              color={colores.exitoTexto}
+            />
+          </Pressable>
+        ): null}
 
         {/* Mapa */}
         <MapaBase
@@ -529,5 +725,16 @@ const styles = StyleSheet.create({
     width: "auto",
     marginTop: 16,
     marginHorizontal: 16,
+  },
+
+  tarjetaContinuar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
   },
 });
