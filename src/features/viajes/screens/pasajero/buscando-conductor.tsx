@@ -27,6 +27,7 @@ import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
 import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
+import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
@@ -138,10 +139,12 @@ export default function PantallaBuscandoConductor() {
               <TarjetaConductor conductor={conductor} />
 
               <View style={styles.acciones}>
-                <View
-                  style={[
+                <Pressable
+                  onPress={() => llamarConductor(conductor?.telefono)}
+                  style={({ pressed }) => [
                     styles.accion,
                     { backgroundColor: colores.exitoFondo },
+                    pressed && { opacity: 0.8 },
                   ]}
                 >
                   <Ionicons name="call" size={18} color={colores.exitoTexto} />
@@ -150,11 +153,13 @@ export default function PantallaBuscandoConductor() {
                   >
                     Llamar
                   </Text>
-                </View>
-                <View
-                  style={[
+                </Pressable>
+                <Pressable
+                  onPress={() => escribirConductor(conductor?.telefono)}
+                  style={({ pressed }) => [
                     styles.accion,
                     { backgroundColor: colores.exitoFondo },
+                    pressed && { opacity: 0.8 },
                   ]}
                 >
                   <Ionicons
@@ -167,7 +172,7 @@ export default function PantallaBuscandoConductor() {
                   >
                     Mensaje
                   </Text>
-                </View>
+                </Pressable>
               </View>
             </>
           ) : mostrarSinConductor ? (
