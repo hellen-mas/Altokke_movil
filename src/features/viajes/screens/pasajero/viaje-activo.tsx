@@ -69,7 +69,7 @@ export default function PantallaViajeActivo() {
   const { height: altoPantalla } = useWindowDimensions();
   const [horaSalida] = useState(() => new Date());
 
-  const { viaje } = useViajeEnVivo(viajeActivoId);
+  const { viaje, conectado } = useViajeEnVivo(viajeActivoId);
   const conductor = useConductorViaje(
     viajeActivoId,
     viaje?.conductor_id,
@@ -202,6 +202,26 @@ export default function PantallaViajeActivo() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contenido}
         >
+          {!conectado && (
+            <View
+              style={[
+                styles.avisoSinConexion,
+                { backgroundColor: colores.errorFondo },
+              ]}
+            >
+              <Ionicons
+                name="cloud-offline-outline"
+                size={18}
+                color={colores.error}
+              />
+              <Text
+                style={[styles.avisoSinConexionTexto, { color: colores.error }]}
+              >
+                Sin conexión. Reintentando...
+              </Text>
+            </View>
+          )}
+
           {terminado && (
             <View
               style={[
@@ -722,5 +742,19 @@ const styles = StyleSheet.create({
 
   avisoAproximadoTexto: {
     fontSize: 12,
+  },
+
+  avisoSinConexion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+
+  avisoSinConexionTexto: {
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

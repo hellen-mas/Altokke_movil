@@ -7,25 +7,31 @@ export type ViajeEnVivo = Tables<"viajes">;
 export function useViajeEnVivo (viajeId: string | null){
   const [viaje, setViaje] = useState<ViajeEnVivo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conectado, setConectado] = useState(true);
 
   useEffect(() => {
     if (!viajeId) return;
     let activo = true;
 
-    // Carga inicial: el viaje tal cual está ahora
-    supabase
-      .from("viajes")
-      .select("*")
-      .eq("id", viajeId)
-      .maybeSingle()
-      .then(({ data, error: errorCarga }) => {
-        if (!activo) return;
-        if (errorCarga) {
-          setError(errorCarga.message);
-          return;
-        }
-        setViaje(data);
-      });
+    // Carga: el viaje tal cual está ahora
+    const cargar = () => {
+      supabase
+        .from("viajes")
+        .select("*")
+        .eq("id", viajeId)
+        .maybeSingle()
+        .then(({ data, error: errorCarga }) => {
+          if (!activo) return;
+          if (errorCarga) {
+            setError(errorCarga.message);
+            return;
+          }
+          setError(null);
+          setViaje(data);
+        });
+    };
+
+    cargar();
 
     // Suscripción: cada cambio del viaje llega a esta parte
     const canal = supabase
@@ -42,7 +48,16 @@ export function useViajeEnVivo (viajeId: string | null){
           setViaje(payload.new as ViajeEnVivo);
         }
       )
-      .subscribe();
+      .subscribe((estado) => {
+        if (!activo) return;
+        if (estado === "SUBSCRIBED") {
+          setConectado(true);
+          // Al reconectar se recarga, por si hubo cambios mientras no había señal
+          cargar();
+        } else {
+          setConectado(false);
+        }
+      });
 
     // Limpieza: al salir de la pantalla se cierra la suscripción
     return () => {
@@ -53,5 +68,5 @@ export function useViajeEnVivo (viajeId: string | null){
 
   const cargando = Boolean(viajeId) && viaje === null && error === null;
 
-  return { viaje, cargando, error };
+  return { viaje, cargando, error, conectado };
 }
