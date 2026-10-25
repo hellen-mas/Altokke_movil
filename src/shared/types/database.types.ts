@@ -483,6 +483,23 @@ export type Database = {
       cancelar_viaje_pasajero: { Args: { p_viaje_id: string }; Returns: undefined }
       aceptar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }
       finalizar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }
+      obtener_conductor_viaje: {
+        Args: { p_viaje_id: string }
+        Returns: {
+          nombre: string
+          apellidos: string
+          foto_url: string | null
+          telefono: string
+          calificacion: number | null
+          viajes_completados: number | null
+          placa: string | null
+          marca: string | null
+          modelo: string | null
+          color: string | null
+          lat_actual: number | null
+          lng_actual: number | null
+        }[]
+      }
     }
     Enums: {
       estado_verificacion: "pendiente" | "aprobado" | "rechazado" | "suspendido"

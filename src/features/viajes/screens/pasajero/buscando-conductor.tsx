@@ -24,6 +24,7 @@ import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
+import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 
@@ -43,6 +44,7 @@ export default function PantallaBuscandoConductor() {
   const { viajeActivoId } = useViaje();
   const { viaje } = useViajeEnVivo(viajeActivoId);
   const conductorEncontrado = Boolean(viaje?.conductor_id);
+  const conductor = useConductorViaje(viajeActivoId, viaje?.conductor_id);
 
   const [sinConductor, setSinConductor] = useState(false);
   const [intento, setIntento] = useState(0);
@@ -133,7 +135,7 @@ export default function PantallaBuscandoConductor() {
               <Text style={[styles.seccion, { color: colores.texto }]}>
                 Tu conductor
               </Text>
-              <TarjetaConductor />
+              <TarjetaConductor conductor={conductor} />
 
               <View style={styles.acciones}>
                 <View
