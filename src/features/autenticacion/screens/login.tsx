@@ -9,7 +9,7 @@ import { BotonRedesSociales } from "@/shared/components/ui/BotonRedesSociales";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
-import { obtenerEstadoConductor } from "@/features/conductores/services/estadoConductor";
+import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
 import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
 import { esquemaLogin, TipoDatosLogin } from "@/features/autenticacion/utils/validacionesAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -38,166 +38,141 @@ export default function LoginScreen() {
       ]);
     }
 
+    login(rol);
     if (rol === "conductor") {
       await obtenerEstadoConductor(user.id);
-      login("conductor");
       return router.replace("/(auth)/estado-solicitud");
     }
-
-    if (rol === "pasajero") {
-      login("pasajero");
-      return router.replace("/mapa");
-    }
-
-    throw new Error("Rol de usuario no reconocido.");
+    return router.replace("/mapa");
   };
 
-  // handleSubmit solo llama a esta función si los datos pasan esquemaLogin
-  const handleLogin = async ({ correo, contrasena }: TipoDatosLogin) => {
-    if (loading) return;
-    Keyboard.dismiss();
-
-    setLoading(true);
-    try {
-      const user = await authService.loginConPassword(correo, contrasena);
-      await handleSession(user);
-    } catch (error: any) {
-      Alert.alert("No se pudo iniciar sesión", traducirErrorAuth(error, "Comprueba tus datos e inténtalo nuevamente."));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
+  const ejecutarAuth = async (accion: () => Promise<any>) => {
     if (loading) return;
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const user = await authService.loginConGoogle();
+      const user = await accion();
       if (user) await handleSession(user);
     } catch (err: any) {
-      Alert.alert("Inicio con Google", traducirErrorAuth(err, "No se pudo iniciar sesión con Google."));
+      Alert.alert("Inicio de sesión", traducirErrorAuth(err, "Comprueba tus datos e inténtalo nuevamente."));
     } finally {
       setLoading(false);
     }
   };
 
-
-  const handleTerms = () =>
-    Alert.alert(
-      "Términos de Servicio",
-      "1. Uso del Servicio: Conectamos pasajeros y conductores de forma ágil y segura.\n2. Seguridad: Tus datos viajan protegidos.\n3. Convivencia: Cuentas que violen normas serán suspendidas."
-    );
-
-  const handlePrivacy = () =>
-    Alert.alert(
-      "Política de Privacidad",
-      "Protegemos tus datos personales y credenciales bajo altos estándares de cifrado y seguridad."
-    );
-
   return (
-      <ContenedorPantalla
-        estilo={{ backgroundColor: colores.fondo }}
-        estiloContenedorContenido={[
-          styles.scrollContent,
-          { backgroundColor: colores.fondo },
-        ]}
-      >
+    <ContenedorPantalla
+      estilo={{ backgroundColor: colores.fondo }}
+      estiloContenedorContenido={[styles.scrollContent, { backgroundColor: colores.fondo }]}
+    >
+      <EncabezadoPagina
+        titulo="Iniciar "
+        tituloDestacado="sesión"
+        descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
+      />
 
-        <EncabezadoPagina
-          titulo="Iniciar "
-          tituloDestacado="sesión"
-          descripcion="Ingresa a tu cuenta para viajar por tu ciudad o generar ingresos."
-        />
+      <View style={styles.topSection}>
+        <View style={styles.formContainer}>
+          <CampoTextoHookForm
+            control={control}
+            name="correo"
+            conBotonLimpiar
+            nombreIcono="mail-outline"
+            placeholder="Correo electrónico"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+          />
 
-        <View style={styles.topSection}>
-          <View style={styles.formContainer}>
-            <CampoTextoHookForm
-              control={control}
-              name="correo"
-              conBotonLimpiar
-              nombreIcono="mail-outline"
-              placeholder="Correo electrónico"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              textContentType="emailAddress"
-            />
+          <CampoTextoHookForm
+            control={control}
+            name="contrasena"
+            nombreIcono="lock-closed-outline"
+            placeholder="Contraseña"
+            esPassword
+            autoCapitalize="none"
+            autoComplete="password"
+            textContentType="password"
+          />
 
-            <CampoTextoHookForm
-              control={control}
-              name="contrasena"
-              nombreIcono="lock-closed-outline"
-              placeholder="Contraseña"
-              esPassword
-              autoCapitalize="none"
-              autoComplete="password"
-              textContentType="password"
-            />
+          <Pressable
+            onPress={() => router.push("/recuperar-cuenta")}
+            hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
+            accessibilityRole="link"
+            accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
+            style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={[styles.forgotPasswordText, { color: colores.exitoTexto }]}>
+              ¿Olvidaste tu contraseña?
+            </Text>
+          </Pressable>
 
-            <Pressable
-              onPress={() => router.push("/recuperar-cuenta")}
-              hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
-              accessibilityRole="link"
-              accessibilityLabel="¿Olvidaste tu contraseña? Toca para recuperarla"
-              style={({ pressed }) => [styles.forgotPassword, pressed && { opacity: 0.6 }]}
-            >
-              <Text 
-                style={[
-                  styles.forgotPasswordText,
-                  { color: colores.exitoTexto },
-                ]}
-              >¿Olvidaste tu contraseña?</Text>
-            </Pressable>
-
-            <BotonPrincipal
-              titulo="Iniciar sesión"
-              mostrarIcono
-              icono="arrow-forward"
-              cargando={loading}
-              onPress={handleSubmit(handleLogin)}
-              disabled={loading}
-            />
-          </View>
-
-          <View style={styles.dividerContainer}>
-            <View 
-              style={[
-                styles.divider,
-                { backgroundColor: colores.linea },
-              ]}
-            />
-            <Text style={[styles.dividerText, { color: colores.secundario },]}>O continúa con</Text>
-            <View style={[styles.divider, { backgroundColor: colores.linea },]} />
-          </View>
-
-          <BotonRedesSociales
-            titulo="Continuar con Google"
-            nombreIcono="logo-google"
-            colorIcono="#EA4335"
-            onPress={handleGoogleLogin}
+          <BotonPrincipal
+            titulo="Iniciar sesión"
+            mostrarIcono
+            icono="arrow-forward"
+            cargando={loading}
+            onPress={handleSubmit(({ correo, contrasena }) =>
+              ejecutarAuth(() => authService.loginConPassword(correo, contrasena))
+            )}
             disabled={loading}
           />
         </View>
 
-        <View style={styles.bottomContainer}>
-          <PiePaginaAutenticacion
-            textoPregunta="¿No tienes una cuenta?"
-            textoEnlace="Crear cuenta"
-            ruta="/crear-cuenta"
-          />
-
-          <View style={styles.legalContainer}>
-            <Text style={[styles.disclaimerText, { color: colores.secundario }, ]}>
-              Al iniciar sesión, aceptas nuestros{" "}
-              <Text onPress={handleTerms} style={[styles.legalLink, { color: colores.exitoTexto },]}>Términos de servicio</Text>
-              {" "}y{" "}
-              <Text onPress={handlePrivacy} style={[styles.legalLink, { color: colores.exitoTexto },]}>Política de privacidad</Text>.
-            </Text>
-          </View>
+        <View style={styles.dividerContainer}>
+          <View style={[styles.divider, { backgroundColor: colores.linea }]} />
+          <Text style={[styles.dividerText, { color: colores.secundario }]}>O continúa con</Text>
+          <View style={[styles.divider, { backgroundColor: colores.linea }]} />
         </View>
-      </ContenedorPantalla>
+
+        <BotonRedesSociales
+          titulo="Continuar con Google"
+          nombreIcono="logo-google"
+          colorIcono="#EA4335"
+          onPress={() => ejecutarAuth(() => authService.loginConGoogle())}
+          disabled={loading}
+        />
+      </View>
+
+      <View style={styles.bottomContainer}>
+        <PiePaginaAutenticacion
+          textoPregunta="¿No tienes una cuenta?"
+          textoEnlace="Crear cuenta"
+          ruta="/crear-cuenta"
+        />
+
+        <View style={styles.legalContainer}>
+          <Text style={[styles.disclaimerText, { color: colores.secundario }]}>
+            Al iniciar sesión, aceptas nuestros{" "}
+            <Text
+              onPress={() =>
+                Alert.alert(
+                  "Términos de Servicio",
+                  "1. Uso del Servicio: Conectamos pasajeros y conductores de forma ágil y segura.\n2. Seguridad: Tus datos viajan protegidos.\n3. Convivencia: Cuentas que violen normas serán suspendidas."
+                )
+              }
+              style={[styles.legalLink, { color: colores.exitoTexto }]}
+            >
+              Términos de servicio
+            </Text>
+            {" "}y{" "}
+            <Text
+              onPress={() =>
+                Alert.alert(
+                  "Política de Privacidad",
+                  "Protegemos tus datos personales y credenciales bajo altos estándares de cifrado y seguridad."
+                )
+              }
+              style={[styles.legalLink, { color: colores.exitoTexto }]}
+            >
+              Política de privacidad
+            </Text>.
+          </Text>
+        </View>
+      </View>
+    </ContenedorPantalla>
   );
 }
 

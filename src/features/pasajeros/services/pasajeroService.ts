@@ -58,32 +58,21 @@ export interface PerfilPasajero {
   preferencias: PreferenciasPasajero;
 }
 
-// Cache en memoria para navegación instantánea (0ms de retraso entre tabs)
 const cachePerfilPasajero = new Map<string, PerfilPasajero>();
 
 function formatearPrimerNombre(nombre: string): string {
   if (!nombre) return "";
   const primer = nombre.trim().split(" ")[0];
-  if (!primer) return "";
-  return primer.charAt(0).toUpperCase() + primer.slice(1).toLowerCase();
+  return primer ? primer.charAt(0).toUpperCase() + primer.slice(1).toLowerCase() : "";
 }
 
 export const pasajeroService = {
-  /**
-   * Obtiene el perfil del pasajero desde la caché en memoria si existe
-   */
   obtenerPerfilEnCache(userId: string): PerfilPasajero | null {
     return cachePerfilPasajero.get(userId) || null;
   },
 
-  /**
-   * Consulta el perfil completo desde Supabase (usuarios, pasajeros_perfil, viajes)
-   * y refresca la caché en memoria.
-   */
   async obtenerPerfil(userId: string, metadataUsuario?: any): Promise<PerfilPasajero> {
-    if (!userId) {
-      throw new Error("Se requiere el ID de usuario para obtener su perfil");
-    }
+    if (!userId) throw new Error("Se requiere el ID de usuario para obtener su perfil");
 
     try {
       const [usuarioRes, perfilRes, viajesCountRes] = await Promise.all([
@@ -114,46 +103,22 @@ export const pasajeroService = {
         "Pasajero"
       ).trim();
 
-      const apellidos = (
-        dataUsuario?.apellidos ||
-        metadataUsuario?.apellidos ||
-        ""
-      ).trim();
-
-      const nombreCompleto = apellidos ? `${nombre} ${apellidos}` : nombre;
-      const primerNombre = formatearPrimerNombre(nombre);
-      const telefono = dataUsuario?.telefono || metadataUsuario?.telefono || "";
-      const correo = metadataUsuario?.email || "";
-      const fotoUrl =
-        dataUsuario?.avatar_url ||
-        dataUsuario?.foto_url ||
-        metadataUsuario?.avatar_url ||
-        metadataUsuario?.picture ||
-        null;
-
-      const calificacion = dataPerfil?.calificacion_promedio
-        ? Number(dataPerfil.calificacion_promedio)
-        : 5.0;
-
-      const viajesCount = viajesCountRes.count ?? 0;
+      const apellidos = (dataUsuario?.apellidos || metadataUsuario?.apellidos || "").trim();
       const preferencias: PreferenciasPasajero = (dataPerfil?.preferencias as PreferenciasPasajero) || {};
 
       const perfil: PerfilPasajero = {
         id: userId,
         nombre,
         apellidos,
-        nombreCompleto,
-        primerNombre,
-        correo,
-        telefono,
-        fotoUrl,
-        calificacion,
-        viajesCount,
+        nombreCompleto: apellidos ? `${nombre} ${apellidos}` : nombre,
+        primerNombre: formatearPrimerNombre(nombre),
+        correo: metadataUsuario?.email || "",
+        telefono: dataUsuario?.telefono || metadataUsuario?.telefono || "",
+        fotoUrl: dataUsuario?.avatar_url || dataUsuario?.foto_url || metadataUsuario?.avatar_url || null,
+        calificacion: Number(dataPerfil?.calificacion_promedio ?? 5.0),
+        viajesCount: viajesCountRes.count ?? 0,
         dni: metadataUsuario?.dni || preferencias.dni || "Sin registrar",
-        fechaNacimiento:
-          metadataUsuario?.fecha_nacimiento ||
-          preferencias.fechaNacimiento ||
-          "Sin registrar",
+        fechaNacimiento: metadataUsuario?.fecha_nacimiento || preferencias.fechaNacimiento || "Sin registrar",
         genero: preferencias.genero || "Sin registrar",
         contactoEmergencia: preferencias.contactoEmergencia,
         preferencias,
@@ -169,9 +134,6 @@ export const pasajeroService = {
     }
   },
 
-  /**
-   * Actualiza datos personales del usuario en public.usuarios y en auth.metadata
-   */
   async actualizarDatosPersonales(
     userId: string,
     datos: {
@@ -196,15 +158,12 @@ export const pasajeroService = {
         .from("usuarios")
         .update(camposUsuario)
         .eq("id", userId);
-
       if (error) throw error;
     }
 
-    // Actualizar preferencias si hay campos extendidos
     const nuevasPreferencias: PreferenciasPasajero = {
       ...(perfilActual?.preferencias || {}),
     };
-
     if (datos.dni !== undefined) nuevasPreferencias.dni = datos.dni.trim();
     if (datos.fechaNacimiento !== undefined) nuevasPreferencias.fechaNacimiento = datos.fechaNacimiento;
     if (datos.genero !== undefined) nuevasPreferencias.genero = datos.genero;
@@ -212,26 +171,18 @@ export const pasajeroService = {
 
     await this.guardarPreferencias(userId, nuevasPreferencias);
 
-    // Sincronizar metadata en auth de Supabase
-    try {
-      await supabase.auth.updateUser({
-        data: {
-          nombre: datos.nombre ?? perfilActual?.nombre,
-          apellidos: datos.apellidos ?? perfilActual?.apellidos,
-          telefono: datos.telefono ?? perfilActual?.telefono,
-          dni: datos.dni ?? perfilActual?.dni,
-        },
-      });
-    } catch (err) {
-      console.warn("Aviso al actualizar auth metadata:", err);
-    }
+    supabase.auth.updateUser({
+      data: {
+        nombre: datos.nombre ?? perfilActual?.nombre,
+        apellidos: datos.apellidos ?? perfilActual?.apellidos,
+        telefono: datos.telefono ?? perfilActual?.telefono,
+        dni: datos.dni ?? perfilActual?.dni,
+      },
+    }).catch((err) => console.warn("Aviso al sincronizar auth metadata:", err));
 
     return await this.obtenerPerfil(userId);
   },
 
-  /**
-   * Guarda o combina preferencias del pasajero en la tabla pasajeros_perfil
-   */
   async guardarPreferencias(
     userId: string,
     nuevasPreferencias: Partial<PreferenciasPasajero>
@@ -242,13 +193,10 @@ export const pasajeroService = {
       ...nuevasPreferencias,
     };
 
-    const { error } = await supabase
-      .from("pasajeros_perfil")
-      .upsert({
-        usuario_id: userId,
-        preferencias: preferenciasCombinadas,
-      });
-
+    const { error } = await supabase.from("pasajeros_perfil").upsert({
+      usuario_id: userId,
+      preferencias: preferenciasCombinadas,
+    });
     if (error) throw error;
 
     if (perfilActual) {
@@ -259,36 +207,25 @@ export const pasajeroService = {
     return preferenciasCombinadas;
   },
 
-  /**
-   * Guarda una nueva dirección frecuente o edita una existente
-   */
   async guardarDireccion(userId: string, direccion: DireccionGuardada): Promise<DireccionGuardada[]> {
     const perfilActual = cachePerfilPasajero.get(userId);
-    const direccionesActuales = perfilActual?.preferencias.direcciones || [];
-
-    const index = direccionesActuales.findIndex((d) => d.id === direccion.id);
-    let listaActualizada: DireccionGuardada[];
+    const direcciones = [...(perfilActual?.preferencias.direcciones || [])];
+    const index = direcciones.findIndex((d) => d.id === direccion.id);
 
     if (index >= 0) {
-      listaActualizada = [...direccionesActuales];
-      listaActualizada[index] = direccion;
+      direcciones[index] = direccion;
     } else {
-      listaActualizada = [...direccionesActuales, direccion];
+      direcciones.push(direccion);
     }
 
-    await this.guardarPreferencias(userId, { direcciones: listaActualizada });
-    return listaActualizada;
+    await this.guardarPreferencias(userId, { direcciones });
+    return direcciones;
   },
 
-  /**
-   * Elimina una dirección guardada
-   */
   async eliminarDireccion(userId: string, direccionId: string): Promise<DireccionGuardada[]> {
     const perfilActual = cachePerfilPasajero.get(userId);
-    const direccionesActuales = perfilActual?.preferencias.direcciones || [];
-    const listaActualizada = direccionesActuales.filter((d) => d.id !== direccionId);
-
-    await this.guardarPreferencias(userId, { direcciones: listaActualizada });
-    return listaActualizada;
+    const direcciones = (perfilActual?.preferencias.direcciones || []).filter((d) => d.id !== direccionId);
+    await this.guardarPreferencias(userId, { direcciones });
+    return direcciones;
   },
 };

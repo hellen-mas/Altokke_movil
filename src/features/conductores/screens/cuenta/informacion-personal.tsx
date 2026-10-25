@@ -1,185 +1,114 @@
-import { 
-    Pressable,
-    Text,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    View,
-} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
-import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
+import { AvisoInformativo } from "@/shared/components/ui";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function InformacionPersonalConductor() {
-    const { perfil } = usePerfilConductor();
-    const [modoEdicion, setModoEdicion] = useState(false);
-    const editarDato = (campo: string) => {
-        Alert.alert(
-            "Editar información",
-            `Para actualizar ${campo}, contacta a soporte o guarda tus cambios en perfil.`
-        );
-    };
+  const { perfil } = usePerfilConductor();
+  const [modoEdicion, setModoEdicion] = useState(false);
 
-    return (
-        <View style={styles.container}>
-            <CabeceraConductor
-                    titulo="Información personal"
-                    subtitulo="Mantén tus datos actualizados para una mejor experiencia en Altokke"
-                    mostrarAtras
-                    compacta
-                />
+  const editarDato = (campo: string) => {
+    Alert.alert("Editar información", `Para actualizar ${campo}, contacta a soporte o actualiza tus documentos.`);
+  };
 
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                
-                <View style={styles.perfilContainer}>
-                    <TarjetaPerfilConductor
-                        nombre={perfil.nombre}
-                        calificacion={perfil.calificacion}
-                        viajes={perfil.viajes}
-                        estado={perfil.estado}
-                        foto={perfil.foto}
-                        compacta
-                    />
-                </View>
+  const campos = [
+    { icono: "person" as const, titulo: "Nombre completo", valor: perfil.nombre, editable: false },
+    { icono: "card" as const, titulo: "DNI", valor: perfil.dni || "Registrado", editable: false },
+    { icono: "call" as const, titulo: "Teléfono", valor: perfil.telefono || "No especificado", editable: modoEdicion, campo: "tu teléfono" },
+    { icono: "mail" as const, titulo: "Correo electrónico", valor: perfil.correo || "No especificado", editable: modoEdicion, campo: "tu correo electrónico" },
+    { icono: "calendar" as const, titulo: "Fecha de nacimiento", valor: perfil.fechaNacimiento, editable: false },
+    { icono: "location" as const, titulo: "Ciudad", valor: perfil.ciudad, editable: modoEdicion, campo: "tu ciudad" },
+    {
+      icono: "people" as const,
+      titulo: "Contacto de emergencia",
+      valor: `${perfil.contactoEmergencia.nombre} (${perfil.contactoEmergencia.parentesco})`,
+      valorSecundario: perfil.contactoEmergencia.telefono,
+      editable: modoEdicion,
+      campo: "tu contacto de emergencia",
+    },
+  ];
 
-                <View style={styles.datosCard}>
-                    <DatoPersonal
-                        icono="person"
-                        titulo="Nombre completo"
-                        valor={perfil.nombre}
-                        editable={false}
-                    />
-                    <DatoPersonal
-                        icono="card"
-                        titulo="DNI"
-                        valor={perfil.dni || "Registrado"}
-                        editable={false}
-                    />
-                    <DatoPersonal
-                        icono="call"
-                        titulo="Teléfono"
-                        valor={perfil.telefono || "No especificado"}
-                        editable={modoEdicion}
-                        onEditar={() => editarDato("tu teléfono")}
-                    />
-                    <DatoPersonal
-                        icono="mail"
-                        titulo="Correo electrónico"
-                        valor={perfil.correo || "No especificado"}
-                        editable={modoEdicion}
-                        onEditar={() => editarDato("tu correo electrónico")}
-                    />
-                    <DatoPersonal
-                        icono="calendar"
-                        titulo="Fecha de nacimiento"
-                        valor={perfil.fechaNacimiento}
-                        editable={false}
-                    />
-                    <DatoPersonal
-                        icono="location"
-                        titulo="Ciudad"
-                        valor={perfil.ciudad}
-                        editable={modoEdicion}
-                        onEditar={() => editarDato("tu ciudad")}
-                    />
-                    <DatoPersonal
-                        icono="people"
-                        titulo="Contacto de emergencia"
-                        valor={`${perfil.contactoEmergencia.nombre} (${perfil.contactoEmergencia.parentesco})`}
-                        valorSecundario={perfil.contactoEmergencia.telefono}
-                        editable={modoEdicion}
-                        onEditar={() => editarDato("tu contacto de emergencia")}
-                        ultimo
-                    />
-                </View>
+  return (
+    <View style={styles.container}>
+      <CabeceraConductor titulo="Información personal" subtitulo="Tus datos registrados en Altokke" mostrarAtras compacta />
 
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.botonActualizar,
-                        pressed && styles.botonActualizarPresionado,
-                    ]}
-                    onPress={() => setModoEdicion(!modoEdicion)}
-                >
-                    <Ionicons
-                        name={
-                            modoEdicion ? "checkmark-outline" : "pencil-outline"
-                        }
-                        size={17}
-                        color={paletaColores.textoOscuro}
-                    />
-                    <Text style={styles.botonTexto}>
-                        {modoEdicion ? "Finalizar edición" : "Actualizar datos"}
-                    </Text>
-                </Pressable>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <TarjetaPerfilConductor
+          nombre={perfil.nombre}
+          calificacion={perfil.calificacion}
+          viajes={perfil.viajes}
+          estado={perfil.estado}
+          foto={perfil.foto}
+          compacta
+        />
 
-                <View style={styles.avisoContainer}>
-                    <AvisoInformativo
-                        icono="shield-checkmark-outline"
-                        titulo="Información segura"
-                        texto="Tus datos están protegidos y solo se utilizan para mejorar tu experiencia en Altokke."
-                    />
-                </View>
-            </ScrollView>
+        <View style={styles.cardDatos}>
+          {campos.map((c, i) => (
+            <DatoPersonal
+              key={c.titulo}
+              icono={c.icono}
+              titulo={c.titulo}
+              valor={c.valor}
+              valorSecundario={c.valorSecundario}
+              editable={c.editable}
+              onEditar={() => c.campo && editarDato(c.campo)}
+              ultimo={i === campos.length - 1}
+            />
+          ))}
         </View>
-    );
+
+        <Pressable
+          style={({ pressed }) => [styles.botonEditar, pressed && { opacity: 0.85 }]}
+          onPress={() => setModoEdicion(!modoEdicion)}
+        >
+          <Ionicons name={modoEdicion ? "checkmark-outline" : "pencil-outline"} size={18} color="#FFFFFF" />
+          <Text style={styles.botonTexto}>{modoEdicion ? "Finalizar edición" : "Actualizar datos"}</Text>
+        </Pressable>
+
+        <AvisoInformativo
+          icono="shield-checkmark-outline"
+          texto="Tus datos personales están protegidos con cifrado de punto a punto y no se comparten con terceros."
+          variante="claro"
+        />
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: paletaColores.fondoClaro,
-    },
-
-    scrollContent: {
-        paddingBottom: 30,
-    },
-
-    perfilContainer: {
-        marginHorizontal: 18,
-        marginTop: 14,
-    },
-
-    datosCard: {
-        marginHorizontal: 18,
-        marginTop: 14,
-        borderRadius: 17,
-        borderWidth: 1,
-        borderColor: paletaColores.bordeClaro,
-        backgroundColor: paletaColores.superficieClara,
-        overflow: "hidden",
-    },
-
-    avisoContainer: {
-        marginHorizontal: 18,
-    },
-
-    botonActualizar: {
-        height: 48,
-        marginHorizontal: 18,
-        marginTop: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 7,
-        borderRadius: 13,
-        backgroundColor: paletaColores.boton,
-    },
-
-    botonActualizarPresionado: {
-        backgroundColor: paletaColores.botonPresionado,
-    },
-
-    botonTexto: {
-        color: paletaColores.textoOscuro,
-        fontSize: 16,
-        fontWeight: "700",
-    },
+  container: {
+    flex: 1,
+    backgroundColor: paletaColores.fondoClaro,
+  },
+  scroll: {
+    padding: 18,
+    gap: 16,
+    paddingBottom: 40,
+  },
+  cardDatos: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: paletaColores.bordeClaro,
+    overflow: "hidden",
+  },
+  botonEditar: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: paletaColores.verde,
+    borderRadius: 14,
+    gap: 8,
+  },
+  botonTexto: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
 });

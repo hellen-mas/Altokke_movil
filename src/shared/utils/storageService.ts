@@ -3,10 +3,35 @@ import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 
+export type TipoDocumento =
+  | "DNI_FRONTAL"
+  | "DNI_POSTERIOR"
+  | "SELFIE"
+  | "LICENCIA"
+  | "SOAT"
+  | "ANTECEDENTES";
+
+export interface ArchivoSubida {
+  uri: string;
+  nombre?: string;
+  tipo?: string;
+}
+
 export interface OpcionesSubida {
   anchoMaximo?: number;
   calidad?: number;
   esPdf?: boolean;
+}
+
+export interface DocumentoParaSubir {
+  tipo: TipoDocumento;
+  adjunto: ArchivoSubida | string;
+}
+
+export interface RegistroDocumentoSubido {
+  usuario_id: string;
+  tipo: TipoDocumento;
+  url_archivo: string;
 }
 
 export const storageService = {
@@ -46,11 +71,61 @@ export const storageService = {
       .from(bucket)
       .upload(ruta, decode(base64), {
         contentType,
-        upsert: false,
+        upsert: true,
       });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
+
     return ruta;
+  },
+
+  /**
+   * Procesa, sube en paralelo y registra un lote de documentos en Storage y base de datos
+   */
+  async subirLoteDocumentos(
+    usuarioId: string,
+    documentos: DocumentoParaSubir[],
+    bucket = "documentos-conductores"
+  ): Promise<RegistroDocumentoSubido[]> {
+    const documentosValidos = documentos.filter((d) => Boolean(d.adjunto));
+    if (documentosValidos.length === 0) {
+      return [];
+    }
+
+    const registros = await Promise.all(
+      documentosValidos.map(async ({ tipo, adjunto }) => {
+        const info = typeof adjunto === "string" ? { uri: adjunto } : adjunto;
+        const nombreNorm = (info.nombre || "").toLowerCase();
+        const uriNorm = (info.uri || "").toLowerCase().split("?")[0];
+        const esPdf =
+          info.tipo === "application/pdf" ||
+          nombreNorm.endsWith(".pdf") ||
+          uriNorm.endsWith(".pdf");
+        const extension = esPdf ? "pdf" : "jpg";
+        const ruta = `${usuarioId}/${tipo.toLowerCase()}-${Date.now()}.${extension}`;
+
+        await this.subirArchivo(bucket, ruta, info.uri, {
+          esPdf,
+          anchoMaximo: 1200,
+          calidad: 0.75,
+        });
+
+        return {
+          usuario_id: usuarioId,
+          tipo,
+          url_archivo: ruta,
+        };
+      })
+    );
+
+    const { error } = await supabase.from("documentos").insert(registros);
+    if (error) {
+      throw new Error(`Error al registrar documentos en base de datos: ${error.message}`);
+    }
+
+    return registros;
   },
 
   /**

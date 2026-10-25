@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
+import React from "react";
+import { create } from "zustand";
 import { TipoDatosPersonales } from "@/features/pasajeros/utils/validacionesPasajero";
 
-interface RegistroPasajeroContextType {
+interface RegistroPasajeroStore {
   datosPersonales: Partial<TipoDatosPersonales>;
   setDatosPersonales: (data: Partial<TipoDatosPersonales>) => void;
   preferencias: any;
@@ -9,48 +10,14 @@ interface RegistroPasajeroContextType {
   clearRegistro: () => void;
 }
 
-// Creamos el espacio global para guardar los datos del registro mientras el usuario pasa de una pantalla a otra
-const RegistroPasajeroContext = createContext<
-  RegistroPasajeroContextType | undefined
->(undefined);
+export const useRegistroPasajero = create<RegistroPasajeroStore>((set) => ({
+  datosPersonales: {},
+  preferencias: {},
+  setDatosPersonales: (data) =>
+    set((state) => ({ datosPersonales: { ...state.datosPersonales, ...data } })),
+  setPreferencias: (data) =>
+    set((state) => ({ preferencias: { ...state.preferencias, ...data } })),
+  clearRegistro: () => set({ datosPersonales: {}, preferencias: {} }),
+}));
 
-export function RegistroPasajeroProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [datosPersonales, setDatosPersonales] = useState({});
-  const [preferencias, setPreferencias] = useState({});
-
-  const clearRegistro = useCallback(() => {
-    setDatosPersonales({});
-    setPreferencias({});
-  }, []);
-
-  const value = useMemo(
-    () => ({
-      datosPersonales,
-      setDatosPersonales,
-      preferencias,
-      setPreferencias,
-      clearRegistro,
-    }),
-    [datosPersonales, preferencias, clearRegistro]
-  );
-
-  return (
-    <RegistroPasajeroContext.Provider value={value}>
-      {children}
-    </RegistroPasajeroContext.Provider>
-  );
-}
-
-export function useRegistroPasajero() {
-  const context = useContext(RegistroPasajeroContext);
-  if (context === undefined) {
-    throw new Error(
-      "useRegistroPasajero debe usarse dentro de un RegistroPasajeroProvider",
-    );
-  }
-  return context;
-}
+export const RegistroPasajeroProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;

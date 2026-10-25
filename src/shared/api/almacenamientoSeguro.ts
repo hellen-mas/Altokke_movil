@@ -4,69 +4,64 @@ import * as aesjs from "aes-js";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 
-const memoryStorage = new Map<string, string>();
+const memory = new Map<string, string>();
+const isSSR = typeof window === "undefined";
+const isWeb = Platform.OS === "web";
 
-// Guardo la sesion cifrada en AsyncStorage y su llave en SecureStore, porque SecureStore solo acepta valores pequeños (como 2 KB) y la sesion es mas grande
 class AlmacenamientoSeguro {
-  // Cifro el valor con una llave nueva y guardo esa llave en la caja fuerte
-  private async cifrar(clave: string, valor: string) {
+  private async cifrar(clave: string, valor: string): Promise<string> {
     const llave = Crypto.getRandomBytes(32);
     const cifrador = new aesjs.ModeOfOperation.ctr(llave, new aesjs.Counter(1));
-    const bytesCifrados = cifrador.encrypt(aesjs.utils.utf8.toBytes(valor));
-
     await SecureStore.setItemAsync(clave, aesjs.utils.hex.fromBytes(llave));
-    return aesjs.utils.hex.fromBytes(bytesCifrados);
+    return aesjs.utils.hex.fromBytes(cifrador.encrypt(aesjs.utils.utf8.toBytes(valor)));
   }
 
-  // Saco la llave de la caja fuerte y descifro el valor
-  private async descifrar(clave: string, valorCifrado: string) {
+  private async descifrar(clave: string, valorCifrado: string): Promise<string | null> {
     const llaveHex = await SecureStore.getItemAsync(clave);
     if (!llaveHex) return null;
-
     const cifrador = new aesjs.ModeOfOperation.ctr(
       aesjs.utils.hex.toBytes(llaveHex),
       new aesjs.Counter(1)
     );
-    const bytes = cifrador.decrypt(aesjs.utils.hex.toBytes(valorCifrado));
-    return aesjs.utils.utf8.fromBytes(bytes);
+    return aesjs.utils.utf8.fromBytes(cifrador.decrypt(aesjs.utils.hex.toBytes(valorCifrado)));
   }
 
-  async getItem(clave: string) {
-    if (typeof window === "undefined") {
-      return memoryStorage.get(clave) ?? null;
+  async getItem(clave: string): Promise<string | null> {
+    if (isSSR) {
+      return memory.get(clave) ?? null;
     }
-    if (Platform.OS === "web") {
-      return AsyncStorage.getItem(clave);
+    if (isWeb) {
+      return await AsyncStorage.getItem(clave);
     }
-    const valorCifrado = await AsyncStorage.getItem(clave);
-    if (!valorCifrado) return null;
-    return this.descifrar(clave, valorCifrado);
+    const cifrado = await AsyncStorage.getItem(clave);
+    if (!cifrado) {
+      return null;
+    }
+    return await this.descifrar(clave, cifrado);
   }
 
-  async setItem(clave: string, valor: string) {
-    if (typeof window === "undefined") {
-      memoryStorage.set(clave, valor);
+  async setItem(clave: string, valor: string): Promise<void> {
+    if (isSSR) {
+      memory.set(clave, valor);
       return;
     }
-    if (Platform.OS === "web") {
+    if (isWeb) {
       await AsyncStorage.setItem(clave, valor);
       return;
     }
-    const valorCifrado = await this.cifrar(clave, valor);
-    await AsyncStorage.setItem(clave, valorCifrado);
+    const cifrado = await this.cifrar(clave, valor);
+    await AsyncStorage.setItem(clave, cifrado);
   }
 
-  async removeItem(clave: string) {
-    if (typeof window === "undefined") {
-      memoryStorage.delete(clave);
-      return;
-    }
-    if (Platform.OS === "web") {
-      await AsyncStorage.removeItem(clave);
+  async removeItem(clave: string): Promise<void> {
+    if (isSSR) {
+      memory.delete(clave);
       return;
     }
     await AsyncStorage.removeItem(clave);
-    await SecureStore.deleteItemAsync(clave);
+    if (!isWeb) {
+      await SecureStore.deleteItemAsync(clave);
+    }
   }
 }
 

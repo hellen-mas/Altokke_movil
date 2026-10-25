@@ -10,14 +10,13 @@ import {
 } from "@/shared/components/ui";
 import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { usuarioService } from "@/features/autenticacion/services/usuarioService";
-import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDni";
 import { esquemaPaso2 } from "@/features/pasajeros/utils/validacionesPasajero";
 import { sanitizarDNI, sanitizarTelefono } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { 
   ActivityIndicator, 
@@ -31,13 +30,8 @@ import {
 
 export default function PasajeroIdentidadScreen() {
   const { colores } = useAltokkeTheme();
-
   const { datosPersonales, setDatosPersonales } = useRegistroPasajero();
-  const [loadingDni, setLoadingDni] = useState(false);
-  const [dniValidado, setDniValidado] = useState<string>("");
-  const [errorDni, setErrorDni] = useState("");
-
-  const consultaActual = useRef(0);
+  const [errorDniManual, setErrorDniManual] = useState("");
 
   const [fotoLocal, setFotoLocal] = useState<string | null>(
     datosPersonales.fotoPerfil || null
@@ -69,86 +63,23 @@ export default function PasajeroIdentidadScreen() {
   const apellidosActual = useWatch({ control, name: "apellidos" });
   const fechaNacimientoActual = useWatch({ control, name: "fechaNacimiento" });
 
-  // Consultar el DNI sin conservar resultados de consultas antiguas.
-  useEffect(() => {
-    const identificador = ++consultaActual.current;
+  const {
+    cargando: loadingDni,
+    error: errorDniHook,
+    esValido: identidadVerificada,
+  } = useConsultaDni(dniActual, (nombres, apellidos) => {
+    setValue("nombres", nombres, { shouldValidate: true });
+    setValue("apellidos", apellidos, { shouldValidate: true });
+    setErrorDniManual("");
+  });
 
-    if (!/^\d{8}$/.test(dniActual)) {
-      setDniValidado("");
-      setErrorDni("");
-      setLoadingDni(false);
-
-      setValue("nombres", "");
-      setValue("apellidos", "");
-      return;
-    }
-
-    if (dniValidado === dniActual) return;
-
-    const timer = setTimeout(async () => {
-      setLoadingDni(true);
-      setErrorDni("");
-
-      try {
-        const datos = await usuarioService.validarIdentidadDNI(
-          dniActual
-        );
-
-        if (identificador !== consultaActual.current) return;
-
-        setValue("nombres", datos.nombres, {
-          shouldValidate: true,
-        });
-
-        setValue("apellidos", datos.apellidos, {
-          shouldValidate: true,
-        });
-
-        setDniValidado(dniActual);
-      } catch (error: any) {
-        if (identificador !== consultaActual.current) return;
-
-        setDniValidado("");
-        setValue("nombres", "");
-        setValue("apellidos", "");
-
-        if (error?.code === "DNI_YA_REGISTRADO") {
-          setErrorDni(
-            "Este DNI ya está registrado. Inicia sesión o utiliza otro documento."
-          );
-        } else {
-          setErrorDni(
-            traducirErrorAuth(
-              error,
-              "No pudimos validar el DNI. Inténtalo nuevamente."
-            )
-          );
-        }
-      } finally {
-        if (identificador === consultaActual.current) {
-          setLoadingDni(false);
-        }
-      }
-    }, 450);
-
-    return () => {
-      clearTimeout(timer);
-      consultaActual.current++;
-    };
-  }, [dniActual, setValue]);
-
-  const identidadVerificada =
-    dniValidado === dniActual &&
-    dniActual.length === 8 &&
-    !loadingDni;
+  const errorDni = errorDniManual || errorDniHook;
 
   const onSubmit = (data: any) => {
     Keyboard.dismiss();
 
     if (!identidadVerificada) {
-      setErrorDni(
-        "Primero debes validar tu DNI para continuar."
-      );
+      setErrorDniManual("Primero debes validar tu DNI para continuar.");
       return;
     }
 
