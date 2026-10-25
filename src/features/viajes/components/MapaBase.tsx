@@ -18,6 +18,8 @@ const URL_MOSAICOS_OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 export function MapaBase({
   centro,
   origen,
+  ubicacionActual,
+  onSeleccionarPunto,
   destino,
   ruta,
   conductores = [],
@@ -27,7 +29,7 @@ export function MapaBase({
 }: MapaBaseProps) {
   const { colores, esOscuro } = useAltokkeTheme();
   const mapaRef = useRef<MapView>(null);
-  const posicionPasajero = origen ?? centro;
+  const posicionPasajero = ubicacionActual ?? origen ?? centro;
 
   // Cuando hay origen y destino, se encuadra la ruta completa
   useEffect(() => {
@@ -55,6 +57,11 @@ export function MapaBase({
       <MapView
         ref={mapaRef}
         style={styles.mapa}
+        onLongPress={(evento) => {
+          if (!interactivo) return;
+
+          onSeleccionarPunto?.(evento.nativeEvent.coordinate);
+        }}
         initialRegion={{
           ...centro,
           latitudeDelta: ZOOM_INICIAL,
@@ -98,7 +105,12 @@ export function MapaBase({
           <Marker coordinate={destino} pinColor={colores.error} />
         )}
 
-        <Marker coordinate={posicionPasajero} anchor={{ x: 0.5, y: 0.5 }}>
+        {/* Punto de recojo: permanece fijo */}
+        <Marker 
+          coordinate={origen ?? centro} 
+          anchor={{ x: 0.5, y: 0.5 }}
+          title="Punto de recojo"
+        >
           <View style={styles.halo}>
             <View
               style={[
@@ -111,6 +123,20 @@ export function MapaBase({
             />
           </View>
         </Marker>
+
+        {/* Ubicación GPS actual del pasajero */}
+        {ubicacionActual && (
+          <Marker
+            coordinate={ubicacionActual}
+            anchor={{ x: 0.5, y: 0.5}}
+            title="Mi ubicación actual"
+            tracksViewChanges
+          >
+            <View style={styles.haloGPS}>
+              <View style={styles.puntoGPS}/>
+            </View>
+          </Marker>
+        )}
       </MapView>
 
       <Pressable
@@ -164,11 +190,29 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(47, 174, 115, 0.22)",
   },
 
+  haloGPS: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(37, 99, 235, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   punto: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 3,
+  },
+
+  puntoGPS: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#2563EB",
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
   },
 
   conductor: {
