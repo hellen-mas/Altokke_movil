@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
-import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
+import { AvisoInformativo } from "@/shared/components/ui";
 import { paletaColores } from "@/shared/theme/paletaColores";
 
 type TipoIncidente =

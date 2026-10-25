@@ -4,7 +4,7 @@ import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { supabase } from "@/shared/api/supabase";
-import { obtenerEstadoConductor } from "@/features/conductores/services/estadoConductor";
+import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
 
 import { paletaColores } from "@/shared/theme/paletaColores";
 

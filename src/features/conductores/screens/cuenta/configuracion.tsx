@@ -1,4 +1,4 @@
-import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
+import { AvisoInformativo } from "@/shared/components/ui";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";

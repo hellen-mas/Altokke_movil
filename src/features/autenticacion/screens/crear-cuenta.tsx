@@ -7,7 +7,6 @@ import {
 import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
