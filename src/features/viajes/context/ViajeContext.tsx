@@ -35,6 +35,7 @@ type ViajeContextType = {
   historial: ViajeHistorial[];
   viajeActivoId: string | null;
   setViajeActivoId: React.Dispatch<React.SetStateAction<string | null>>;
+  verificandoViajeActivo: boolean;
   registrarViaje: (viaje: Omit<ViajeHistorial, "id" | "fecha">) => Promise<void>;
   recargarHistorial: () => Promise<void>;
 };
@@ -55,6 +56,7 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
   const [destino, setDestino] = useState<Lugar | null>(null);
   const [historial, setHistorial] = useState<ViajeHistorial[]>(HISTORIAL_EJEMPLO);
   const [viajeActivoId, setViajeActivoId] = useState<string | null>(null);
+  const [verificandoViajeActivo, setVerificandoViajeActivo] = useState(true);
 
   // Detectar si Altokke está abierta en primer plano
   useEffect(() => {
@@ -136,6 +138,113 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
     };
   }, [viajeActivoId, userId, appActiva]);
 
+  useEffect(() => {
+    let cancelado = false;
+
+    const recuperarViajeActivo = async () => {
+      setVerificandoViajeActivo(true);
+
+      if (!userId) {
+        setViajeActivoId(null);
+        setOrigen(ORIGEN_EJEMPLO);
+        setDestino(null);
+        setUbicacionActual(null);
+        setVerificandoViajeActivo(false);
+        return;
+      }
+
+      try {
+        const viaje = await viajeService.obtenerViajeActivoPasajero(userId);
+
+        if (cancelado) return;
+
+        // Si no hay viajes activos, no necesitamos restaurar nada
+        if (!viaje) {
+          setViajeActivoId(null);
+          setDestino(null);
+          return;
+        }
+
+        const { 
+          origen_lat,
+          origen_lng,
+          destino_lat,
+          destino_lng
+        } = viaje;
+
+        // Validar cada coordenada
+        if (
+          typeof origen_lat !== "number" ||
+          !Number.isFinite(origen_lat) ||
+          typeof origen_lng !== "number" ||
+          !Number.isFinite(origen_lng) ||
+          typeof destino_lat !== "number" ||
+          !Number.isFinite(destino_lat) ||
+          typeof destino_lng !== "number" ||
+          !Number.isFinite(destino_lng) ||
+          Math.abs(origen_lat) > 90 ||
+          Math.abs(destino_lat) > 90 ||
+          Math.abs(origen_lng) > 180 ||
+          Math.abs(destino_lng) > 180
+        ) {
+          console.warn(
+            "El viaje activo tiene coordenadas inválidas:",
+            viaje.id
+          );
+          return;
+        }
+
+        // Recuperar el punto de recojo original
+        setOrigen({
+          id: `origen-viaje-${viaje.id}`,
+          nombre: viaje.origen_texto ?? "Origen registrado",
+          detalle: viaje.origen_texto ?? "",
+          coordenadas: {
+            latitude: origen_lat,
+            longitude: origen_lng,
+          },
+        });
+
+        // Recuperar el destino original
+        setDestino({
+          id: `destino-viaje-${viaje.id}`,
+          nombre: viaje.destino_texto ?? "Destino registrado",
+          detalle: viaje.destino_texto ?? "",
+          coordenadas: {
+            latitude: destino_lat,
+            longitude: destino_lng,
+          },
+        });
+
+        // Recuperar el método de pago
+        if (
+          viaje.metodo_pago === "efectivo" ||
+          viaje.metodo_pago === "yape" ||
+          viaje.metodo_pago === "plin"
+        ) {
+          setMetodoPago(viaje.metodo_pago);
+        }
+
+        // Activar el viaje únicamente después de restaurar sus datos
+        setViajeActivoId(viaje.id);
+      } catch (error) {
+        if (!cancelado) {
+          console.warn("No se pudo recuperar el viaje activo:", error);
+        }
+      } finally {
+        if (!cancelado) {
+          setVerificandoViajeActivo(false);
+        }
+      }
+    };
+
+    void recuperarViajeActivo();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [userId]);
+
   const recargarHistorial = async () => {
     if (!userId) return;
     try {
@@ -201,6 +310,7 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
         setViajeActivoId,
         registrarViaje,
         recargarHistorial,
+        verificandoViajeActivo,
       }}
     >
       {children}

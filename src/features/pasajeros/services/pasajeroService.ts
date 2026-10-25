@@ -69,17 +69,10 @@ function formatearPrimerNombre(nombre: string): string {
 }
 
 export const pasajeroService = {
-  /**
-   * Obtiene el perfil del pasajero desde la caché en memoria si existe
-   */
   obtenerPerfilEnCache(userId: string): PerfilPasajero | null {
     return cachePerfilPasajero.get(userId) || null;
   },
 
-  /**
-   * Consulta el perfil completo desde Supabase (usuarios, pasajeros_perfil, viajes)
-   * y refresca la caché en memoria.
-   */
   async obtenerPerfil(userId: string, metadataUsuario?: any): Promise<PerfilPasajero> {
     if (!userId) {
       throw new Error("Se requiere el ID de usuario para obtener su perfil");
@@ -169,9 +162,6 @@ export const pasajeroService = {
     }
   },
 
-  /**
-   * Actualiza datos personales del usuario en public.usuarios y en auth.metadata
-   */
   async actualizarDatosPersonales(
     userId: string,
     datos: {
@@ -230,7 +220,9 @@ export const pasajeroService = {
   },
 
   /**
-   * Guarda o combina preferencias del pasajero en la tabla pasajeros_perfil
+   * Actualiza las preferencias del pasajero en pasajeros_perfil.
+   * Requiere que el registro del perfil ya exista.
+   * La operación está restringida al usuario autenticado mediante RLS.
    */
   async guardarPreferencias(
     userId: string,
@@ -242,14 +234,25 @@ export const pasajeroService = {
       ...nuevasPreferencias,
     };
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("pasajeros_perfil")
-      .upsert({
-        usuario_id: userId,
+      .update({
         preferencias: preferenciasCombinadas,
-      });
+      })
+      .eq("usuario_id", userId)
+      .select("usuario_id")
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error al actualizar preferencias:", error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error(
+        "No se encontró un perfil de pasajero que puedas actualizar."
+      );
+    }
 
     if (perfilActual) {
       perfilActual.preferencias = preferenciasCombinadas;
@@ -259,9 +262,6 @@ export const pasajeroService = {
     return preferenciasCombinadas;
   },
 
-  /**
-   * Guarda una nueva dirección frecuente o edita una existente
-   */
   async guardarDireccion(userId: string, direccion: DireccionGuardada): Promise<DireccionGuardada[]> {
     const perfilActual = cachePerfilPasajero.get(userId);
     const direccionesActuales = perfilActual?.preferencias.direcciones || [];
@@ -280,9 +280,6 @@ export const pasajeroService = {
     return listaActualizada;
   },
 
-  /**
-   * Elimina una dirección guardada
-   */
   async eliminarDireccion(userId: string, direccionId: string): Promise<DireccionGuardada[]> {
     const perfilActual = cachePerfilPasajero.get(userId);
     const direccionesActuales = perfilActual?.preferencias.direcciones || [];

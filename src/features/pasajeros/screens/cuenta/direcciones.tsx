@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,35 +21,22 @@ import {
 } from "@/features/pasajeros/services/pasajeroService";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import MapView, { Marker } from "react-native-maps";
+import type { PuntoMapa } from "@/features/viajes/types/tiposMapa";
+import { CENTRO_BAGUA } from "@/features/viajes/constants/pasajero";
+import * as Location from "expo-location";
 
-const ICONOS_DISPONIBLES: Array<{
+const ICONOS_DISPONIBLES: {
   id: string;
   nombre: keyof typeof Ionicons.glyphMap;
   etiqueta: string;
-}> = [
+}[] = [
   { id: "home", nombre: "home-outline", etiqueta: "Casa" },
   { id: "trabajo", nombre: "briefcase-outline", etiqueta: "Trabajo" },
   { id: "estudio", nombre: "school-outline", etiqueta: "Estudios" },
   { id: "gym", nombre: "fitness-outline", etiqueta: "Gimnasio" },
   { id: "corazon", nombre: "heart-outline", etiqueta: "Favorito" },
   { id: "ubicacion", nombre: "location-outline", etiqueta: "Punto" },
-];
-
-const DIRECCIONES_PREDETERMINADAS: DireccionGuardada[] = [
-  {
-    id: "casa-default",
-    nombre: "Casa",
-    direccion: "Jr. Amazonas 320, Bagua",
-    icono: "home-outline",
-    coordenadas: { latitude: -5.638, longitude: -78.531 },
-  },
-  {
-    id: "trabajo-default",
-    nombre: "Trabajo",
-    direccion: "Av. Héroes del Cenepa 450, Bagua",
-    icono: "briefcase-outline",
-    coordenadas: { latitude: -5.642, longitude: -78.527 },
-  },
 ];
 
 export default function DireccionesGuardadas() {
@@ -63,17 +50,179 @@ export default function DireccionesGuardadas() {
   const [direccion, setDireccion] = useState("");
   const [iconoSeleccionado, setIconoSeleccionado] = useState<keyof typeof Ionicons.glyphMap>("home-outline");
   const [guardando, setGuardando] = useState(false);
+  const [coordenadasSeleccionadas, setCoordenadasSeleccionadas] = useState<PuntoMapa | null>(null);
+  const [buscandoDireccion, setBuscandoDireccion] = useState(false);
+  const consultaDireccionRef = useRef(0);
+  const direccionEditadaRef = useRef(false);
+  const mapaRef = useRef<MapView | null>(null);
+  const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
 
-  const direccionesGuardadas =
-    perfil?.preferencias?.direcciones && perfil.preferencias.direcciones.length > 0
-      ? perfil.preferencias.direcciones
-      : DIRECCIONES_PREDETERMINADAS;
+  useEffect(() => {
+    return () => {
+      consultaDireccionRef.current += 1;
+    };
+  }, []);
+
+  const direccionesGuardadas = perfil?.preferencias?.direcciones ?? [];
 
   const abrirModalAgregar = () => {
     setNombre("");
     setDireccion("");
     setIconoSeleccionado("home-outline");
+    setCoordenadasSeleccionadas(null);
     setModalVisible(true);
+    consultaDireccionRef.current += 1;
+    direccionEditadaRef.current = false;
+    setBuscandoDireccion(false);
+  };
+
+  const cerrarModalAgregar = () => {
+    consultaDireccionRef.current += 1;
+    setBuscandoDireccion(false);
+    setModalVisible(false);
+  };
+  
+  const seleccionarUbicacion = async (punto: PuntoMapa) => {
+    setCoordenadasSeleccionadas(punto);
+    const numeroConsulta = ++consultaDireccionRef.current;
+
+    direccionEditadaRef.current = false;
+    setBuscandoDireccion(true);
+    setDireccion("");
+
+    try {
+      const resultados = await Location.reverseGeocodeAsync(punto);
+
+      // Ignorar resultados de puntos anteriores o de un modal cerrado.
+      if (
+        numeroConsulta !== consultaDireccionRef.current ||
+        direccionEditadaRef.current
+      ) {
+        return;
+      }
+
+      const lugar = resultados[0];
+      if (!lugar) {
+        return;
+      }
+
+      const calle = [lugar.street, lugar.streetNumber]
+        .filter(Boolean)
+        .join(" ");
+
+      const localidad = lugar.district || lugar.city || lugar.subregion;
+
+      const direccionEncontrada = [calle || lugar.name, localidad]
+        .filter(Boolean)
+        .join(", ");
+
+      if (direccionEncontrada) {
+        setDireccion(direccionEncontrada);
+      }
+    } catch (error) {
+      if (numeroConsulta === consultaDireccionRef.current) {
+        console.warn("No se pudo obtener la dirección:", error);
+      }
+    } finally {
+      if (numeroConsulta === consultaDireccionRef.current) {
+        setBuscandoDireccion(false);
+      }
+    }
+  };
+
+  const buscarDireccionEnMapa = async () => {
+    const texto = direccion.trim();
+
+    if (!texto || buscandoUbicacion || guardando) {
+      if (!texto) {
+        Alert.alert(
+          "Escribe una dirección",
+          "Ingresa una calle o referencia para buscarla en el mapa."
+        );
+      }
+      return;
+    }
+
+    setBuscandoUbicacion(true);
+
+    // Invalidar cualquier búsqueda inversa anterior.
+    const numeroConsulta = ++consultaDireccionRef.current;
+    setBuscandoDireccion(false);
+
+    try {
+      const resultados = await Location.geocodeAsync(
+        `${texto}, Bagua, Amazonas, Perú`
+      );
+
+      if (numeroConsulta !== consultaDireccionRef.current) return;
+
+      if (resultados.length === 0) {
+        Alert.alert(
+          "Dirección no encontrada",
+          "No encontramos esa dirección. Intenta escribir una referencia más precisa o marca el punto manualmente."
+        );
+        return;
+      }
+
+      const punto = resultados[0];
+
+      if (
+        !Number.isFinite(punto.latitude) ||
+        !Number.isFinite(punto.longitude) ||
+        Math.abs(punto.latitude) > 90 ||
+        Math.abs(punto.longitude) > 180
+      ) {
+        Alert.alert(
+          "Ubicación no válida",
+          "No se pudo obtener una ubicación válida para esta dirección."
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Ubicación aproximada encontrada",
+        "Altokke encontró una posible ubicación. Verifica el marcador en el mapa antes de guardar.",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel",
+          },
+          {
+            text: "Mostrar en el mapa",
+            onPress: () => {
+              const coordenadas = {
+                latitude: punto.latitude,
+                longitude: punto.longitude,
+              };
+
+              // Evitar que una consulta anterior cambie el texto.
+              consultaDireccionRef.current += 1;
+              direccionEditadaRef.current = true;
+
+              setCoordenadasSeleccionadas(coordenadas);
+
+              mapaRef.current?.animateToRegion(
+                {
+                  ...coordenadas,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                },
+                500
+              );
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.warn("Error al buscar la dirección:", error);
+
+      Alert.alert(
+        "No se pudo buscar",
+        "Comprueba tu conexión o selecciona el lugar manualmente en el mapa."
+      );
+    } finally {
+      setBuscandoUbicacion(false);
+    }
   };
 
   const guardarDireccion = async () => {
@@ -87,6 +236,26 @@ export default function DireccionesGuardadas() {
       return;
     }
 
+    if (
+      !coordenadasSeleccionadas ||
+      typeof coordenadasSeleccionadas.latitude !== "number" ||
+      typeof coordenadasSeleccionadas.longitude !== "number" ||
+      !Number.isFinite(coordenadasSeleccionadas.latitude) ||
+      !Number.isFinite(coordenadasSeleccionadas.longitude) ||
+      Math.abs(coordenadasSeleccionadas.latitude) > 90 ||
+      Math.abs(coordenadasSeleccionadas.longitude) > 180
+    ) {
+      Alert.alert(
+        "Selecciona una ubicación válida",
+        "Marca en el mapa el punto exacto de esta dirección."
+      );
+      return;
+    }
+
+    // Invalidar cualquier consulta pendiente antes de guardar.
+    consultaDireccionRef.current += 1;
+    setBuscandoDireccion(false);
+
     try {
       setGuardando(true);
       const nueva: DireccionGuardada = {
@@ -94,12 +263,13 @@ export default function DireccionesGuardadas() {
         nombre: nombre.trim(),
         direccion: direccion.trim(),
         icono: iconoSeleccionado,
-        coordenadas: { latitude: -5.6389, longitude: -78.5302 },
+        coordenadas: coordenadasSeleccionadas,
       };
 
       await pasajeroService.guardarDireccion(userId, nueva);
       await recargar();
-      setModalVisible(false);
+      cerrarModalAgregar();
+
       Alert.alert("Éxito", "Dirección guardada correctamente.");
     } catch (err: any) {
       Alert.alert("Error al guardar", err?.message || "No se pudo registrar la dirección.");
@@ -113,12 +283,40 @@ export default function DireccionesGuardadas() {
       {
         text: "Pedir viaje hacia aquí",
         onPress: () => {
+          const coordenadas = lugar.coordenadas;
+
+          if (
+            !coordenadas ||
+            !Number.isFinite(coordenadas.latitude) ||
+            !Number.isFinite(coordenadas.longitude) ||
+            Math.abs(coordenadas.latitude) > 90 ||
+            Math.abs(coordenadas.longitude) > 180
+          ) {
+            Alert.alert(
+              "Ubicación no definida", 
+              "Esta dirección todavía no tiene un punto exacato en el mapa. Selecciona su ubicación antes de solicitar un mototaxi.",
+              [
+                {
+                  text: "Seleccionar ubicación",
+                  onPress: () => router.push("/destino"),
+                },
+                {
+                  text: "Cancelar",
+                  style: "cancel",
+                },
+              ]
+            );
+
+            return;
+          }
+
           setDestino({
             id: lugar.id,
             nombre: lugar.nombre,
             detalle: lugar.direccion,
-            coordenadas: lugar.coordenadas || { latitude: -5.6389, longitude: -78.5302 },
+            coordenadas,
           });
+
           router.push("/confirmar-viaje");
         },
       },
@@ -131,7 +329,7 @@ export default function DireccionesGuardadas() {
             await pasajeroService.eliminarDireccion(userId, lugar.id);
             await recargar();
             Alert.alert("Eliminado", "La dirección fue eliminada.");
-          } catch (err: any) {
+          } catch {
             Alert.alert("Aviso", "No se pudo eliminar la dirección.");
           }
         },
@@ -148,6 +346,20 @@ export default function DireccionesGuardadas() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
       >
+
+        {direccionesGuardadas.length === 0 && (
+          <Text
+            style={{
+              color: colores.secundario,
+              textAlign: "center",
+              marginVertical: 24,
+            }}
+          >
+            Todavía no tienes direcciones guardadas.
+            Agrega tu casa, trabajo u otro lugar frecuente.
+          </Text>
+        )}
+
         {direccionesGuardadas.map((lugar) => (
           <Pressable
             key={lugar.id}
@@ -209,7 +421,7 @@ export default function DireccionesGuardadas() {
         visible={modalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={cerrarModalAgregar}
       >
         <View style={styles.modalFondo}>
           <View style={[styles.modalCaja, { backgroundColor: colores.superficie, borderColor: colores.linea }]}>
@@ -228,8 +440,90 @@ export default function DireccionesGuardadas() {
               placeholder="Dirección o referencia exacta"
               placeholderTextColor={colores.secundario}
               value={direccion}
-              onChangeText={setDireccion}
+              onChangeText={(texto) => {
+                consultaDireccionRef.current += 1;
+                direccionEditadaRef.current = true;
+                setDireccion(texto);
+                setCoordenadasSeleccionadas(null);
+              }}
             />
+
+            <Pressable
+              onPress={() => void buscarDireccionEnMapa()}
+              disabled={buscandoUbicacion || guardando}
+              style={[
+                styles.botonBuscarDireccion,
+                {
+                  backgroundColor: colores.exitoFondo,
+                  opacity: buscandoUbicacion ? 0.6 : 1,
+                },
+              ]}
+            >
+              {buscandoUbicacion ? (
+                <ActivityIndicator size="small" color={colores.exitoTexto} />
+              ) : (
+                <Ionicons
+                  name="search-outline"
+                  size={19}
+                  color={colores.exitoTexto}
+                />
+              )}
+
+              <Text style={{ color: colores.exitoTexto, fontWeight: "700" }}>
+                {buscandoUbicacion
+                  ? "Buscando ubicación..."
+                  : "Buscar dirección en el mapa"}
+              </Text>
+            </Pressable>
+
+            {buscandoDireccion && (
+              <Text style={{ color: colores.secundario, fontSize: 12 }}>Buscando la dirección del punto seleccionado...</Text>
+            )}
+
+            <Text style={[styles.etiquetaIconos, { color: colores.texto }]}>
+              Marca tu ubicación exacta:
+            </Text>
+
+            <MapView
+              ref={mapaRef}
+              style={styles.mapaDireccion}
+              initialRegion={{
+                latitude: CENTRO_BAGUA.latitude,
+                longitude: CENTRO_BAGUA.longitude,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015,
+              }}
+              onPress={(evento) => {
+                const punto = evento.nativeEvent.coordinate;
+
+                void seleccionarUbicacion({
+                  latitude: punto.latitude,
+                  longitude: punto.longitude,
+                });
+              }}
+            >
+              {coordenadasSeleccionadas && (
+                <Marker
+                  coordinate={coordenadasSeleccionadas}
+                  title={nombre.trim() || "Mi dirección"}
+                  pinColor="green"
+                />
+              )}
+            </MapView>
+
+            <Text
+              style={{
+                color: coordenadasSeleccionadas
+                  ? colores.exitoTexto
+                  : colores.secundario,
+                fontSize: 12,
+                marginTop: 4,
+              }}
+            >
+              {coordenadasSeleccionadas
+                ? "Ubicación seleccionada. Toca otro punto para cambiarla."
+                : "Toca el mapa para seleccionar tu ubicación."}
+            </Text>
 
             <Text style={[styles.etiquetaIconos, { color: colores.texto }]}>Selecciona un ícono:</Text>
             <View style={styles.grillaIconos}>
@@ -260,7 +554,7 @@ export default function DireccionesGuardadas() {
             <View style={styles.modalBotones}>
               <Pressable
                 style={[styles.botonModal, { borderColor: colores.linea, borderWidth: 1 }]}
-                onPress={() => setModalVisible(false)}
+                onPress={cerrarModalAgregar}
                 disabled={guardando}
               >
                 <Text style={[styles.botonTextoSecundario, { color: colores.secundario }]}>Cancelar</Text>
@@ -405,5 +699,21 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "700",
+  },
+
+  mapaDireccion: {
+    width: "100%",
+    height: 190,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+
+  botonBuscarDireccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
 });
