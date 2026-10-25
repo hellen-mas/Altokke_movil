@@ -65,10 +65,7 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
   },
 
   init: () => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      get().setSession(session);
-    });
-
+    // Delega la sesión inicial en INITIAL_SESSION para no leerla dos veces
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, ses) => {
