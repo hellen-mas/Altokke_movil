@@ -32,6 +32,7 @@ import {
   formatearSoles,
   interpolarRuta,
 } from "@/features/viajes/utils/viaje";
+import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
@@ -261,10 +262,12 @@ export default function PantallaViajeActivo() {
           <TarjetaConductor conductor={conductor} />
 
           <View style={styles.acciones}>
-            <View
-              style={[
+            <Pressable
+              onPress={() => llamarConductor(conductor?.telefono)}
+              style={({ pressed }) => [
                 styles.accion,
                 { backgroundColor: colores.exitoFondo },
+                pressed && { opacity: 0.8 },
               ]}
             >
               <Ionicons name="call" size={18} color={colores.exitoTexto} />
@@ -273,11 +276,13 @@ export default function PantallaViajeActivo() {
               >
                 Llamar
               </Text>
-            </View>
-            <View
-              style={[
+            </Pressable>
+            <Pressable
+              onPress={() => escribirConductor(conductor?.telefono)}
+              style={({ pressed }) => [
                 styles.accion,
                 { backgroundColor: colores.exitoFondo },
+                pressed && { opacity: 0.8 },
               ]}
             >
               <Ionicons
@@ -290,7 +295,7 @@ export default function PantallaViajeActivo() {
               >
                 Mensaje
               </Text>
-            </View>
+            </Pressable>
             <Pressable
               onPress={compartirViaje}
               style={({ pressed }) => [
