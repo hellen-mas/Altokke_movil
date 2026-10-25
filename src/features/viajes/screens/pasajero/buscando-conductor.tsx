@@ -22,31 +22,40 @@ import {
 } from "@/features/viajes/constants/pasajero";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
+import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
+import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
 
-// TEMPORAL: mientras no haya backend, el conductor "aparece" después de unos segundos
-const TIEMPO_BUSQUEDA_MS = 5000;
+// Si nadie acepta en este tiempo, se avisa que no hay conductores disponibles
+const TIEMPO_MAXIMO_BUSQUEDA = 2 * 60 * 1000;
 
 export default function PantallaBuscandoConductor() {
   const { colores } = useAltokkeTheme();
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const { height: altoPantalla } = useWindowDimensions();
-  const [conductorEncontrado, setConductorEncontrado] = useState(false);
   const { solicitarCancelacion, cancelando } = useCancelarViaje("buscando");
 
-  useEffect(() => {
-    const espera = setTimeout(
-      () => setConductorEncontrado(true),
-      TIEMPO_BUSQUEDA_MS,
-    );
+  const { viajeActivoId } = useViaje();
+  const { viaje } = useViajeEnVivo(viajeActivoId);
+  const conductorEncontrado = Boolean(viaje?.conductor_id);
+  const conductor = useConductorViaje(viajeActivoId, viaje?.conductor_id);
 
+  const [sinConductor, setSinConductor] = useState(false);
+  const [intento, setIntento] = useState(0);
+
+  useEffect(() => {
+    if (conductorEncontrado) return;
+    const espera = setTimeout(() => setSinConductor(true), TIEMPO_MAXIMO_BUSQUEDA);
     return () => clearTimeout(espera);
-  }, []);
+  }, [conductorEncontrado, intento]);
+
+  const mostrarSinConductor = sinConductor && !conductorEncontrado;
 
   // Si se entra sin haber armado un viaje, se vuelve a pedir el destino
   if (!resumen) {
@@ -58,6 +67,11 @@ export default function PantallaBuscandoConductor() {
 
   const verMiViaje = () => {
     router.replace("/viaje-activo");
+  };
+
+  const seguirBuscando = () => {
+    setSinConductor(false);
+    setIntento((n) => n + 1);
   };
 
   return (
@@ -121,7 +135,7 @@ export default function PantallaBuscandoConductor() {
               <Text style={[styles.seccion, { color: colores.texto }]}>
                 Tu conductor
               </Text>
-              <TarjetaConductor />
+              <TarjetaConductor conductor={conductor} />
 
               <View style={styles.acciones}>
                 <View
@@ -156,6 +170,24 @@ export default function PantallaBuscandoConductor() {
                 </View>
               </View>
             </>
+          ) : mostrarSinConductor ? (
+            <View style={styles.buscando}>
+              <Ionicons name="alert-circle" size={44} color={colores.error} />
+              <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
+                No hay mototaxis disponibles
+              </Text>
+              <Text
+                style={[
+                  styles.buscandoDetalle,
+                  { color: colores.secundario },
+                ]}
+              >
+                Nadie aceptó tu viaje todavía. Puedes seguir esperando o cancelar.
+              </Text>
+              <View style={styles.botonSeguir}>
+                <BotonPrincipal titulo="Seguir buscando" onPress={seguirBuscando} />
+              </View>
+            </View>
           ) : (
             <View style={styles.buscando}>
               <PulsoBusqueda />
@@ -435,5 +467,10 @@ const styles = StyleSheet.create({
   botonCancelarTexto: {
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  botonSeguir: {
+    alignSelf: "stretch",
+    marginTop: 12,
   },
 });

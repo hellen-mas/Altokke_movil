@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -24,7 +24,8 @@ import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
-import { supabase } from "@/shared/api/supabase";
+import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
+import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import {
   formatearHora,
@@ -35,23 +36,27 @@ import {
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
 
-// TEMPORAL: el recorrido se simula en unos segundos (más adelante vendrá de la
-// ubicación real del conductor)
-const DURACION_SIMULADA_MS = 24000;
-const PASO_SIMULACION_MS = 400;
-const AVANCE_LLEGANDO = 0.8;
+// Estados reales del viaje, en el orden en que avanza la barra de progreso
+const ESTADOS_PROGRESO = [
+  "aceptado",
+  "en_camino_origen",
+  "esperando_pasajero",
+  "en_viaje",
+  "finalizado",
+];
 
-const ETAPAS = ["Recogido", "En camino", "Llegando", "Finaliza"];
-const ETAPA_EN_CAMINO = 1;
-const ETAPA_LLEGANDO = 2;
-const ETAPA_FINALIZADO = 3;
+const ETAPAS = ["Aceptado", "En camino", "Te espera", "En viaje", "Llegaste"];
 
 const SUBTITULOS_ETAPA = [
-  "",
+  "Tu conductor aceptó el viaje",
+  "Tu conductor va hacia ti",
+  "Tu conductor te está esperando",
   "En camino a tu destino",
-  "Llegando a tu destino",
   "Llegaste a tu destino",
 ];
+
+// Posición aproximada del mototaxi sobre la ruta mientras no haya ubicación real
+const AVANCE_POR_ETAPA = [0, 0, 0, 0.5, 1];
 
 export default function PantallaViajeActivo() {
   const { colores } = useAltokkeTheme();
@@ -59,79 +64,17 @@ export default function PantallaViajeActivo() {
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const { height: altoPantalla } = useWindowDimensions();
-  const [avance, setAvance] = useState(0);
   const [horaSalida] = useState(() => new Date());
-  const [estadoViaje, setEstadoViaje] = useState<string>("aceptado");
 
-  const terminado = avance >= 1;
+  const { viaje } = useViajeEnVivo(viajeActivoId);
+  const conductor = useConductorViaje(viajeActivoId, viaje?.conductor_id);
 
-  useEffect(() => {
-    if (terminado) return;
-
-    const reloj = setInterval(() => {
-      setAvance((actual) =>
-        Math.min(1, actual + PASO_SIMULACION_MS / DURACION_SIMULADA_MS),
-      );
-    }, PASO_SIMULACION_MS);
-
-    return () => clearInterval(reloj);
-  }, [terminado]);
-
-  // Consultar y escuchar estado real del viaje en Supabase
-  useEffect(() => {
-    if (!viajeActivoId) return;
-
-    let activo = true;
-    supabase
-      .from("viajes")
-      .select("estado")
-      .eq("id", viajeActivoId)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (!activo) return;
-        if (error) {
-          console.warn("Aviso al consultar estado del viaje:", error);
-          return;
-        }
-        if (data?.estado) {
-          setEstadoViaje(data.estado);
-        }
-      });
-
-    const canal = supabase
-      .channel(`monitoreo_estado_activo_${viajeActivoId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "viajes",
-          filter: `id=eq.${viajeActivoId}`,
-        },
-        (payload) => {
-          const nuevo = payload.new as any;
-          if (nuevo?.estado) {
-            setEstadoViaje(nuevo.estado);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      activo = false;
-      supabase.removeChannel(canal);
-    };
-  }, [viajeActivoId]);
-
-  // El viaje solo es cancelable antes de iniciar la marcha (en_viaje o finalizado)
-  const estadoEfectivo = terminado
-    ? "finalizado"
-    : avance > 0.05 && estadoViaje === "aceptado"
-      ? "en_viaje"
-      : estadoViaje;
+  const estadoViaje = viaje?.estado ?? "aceptado";
+  const etapa = Math.max(0, ESTADOS_PROGRESO.indexOf(estadoViaje));
+  const terminado = estadoViaje === "finalizado";
 
   const { solicitarCancelacion, cancelando, esCancelable } =
-    useCancelarViaje(estadoEfectivo);
+    useCancelarViaje(estadoViaje);
 
   // Si se entra sin haber armado un viaje, se vuelve a pedir el destino
   if (!resumen) {
@@ -140,12 +83,6 @@ export default function PantallaViajeActivo() {
 
   const { origen, destino, tarifa, minutos, ruta } = resumen;
 
-  const etapa = terminado
-    ? ETAPA_FINALIZADO
-    : avance >= AVANCE_LLEGANDO
-      ? ETAPA_LLEGANDO
-      : ETAPA_EN_CAMINO;
-  const minutosRestantes = Math.ceil(minutos * (1 - avance));
   const horaLlegada = new Date(horaSalida.getTime() + minutos * 60000);
 
   const compartirViaje = () => {
@@ -218,7 +155,7 @@ export default function PantallaViajeActivo() {
 
           <View style={styles.tiempo}>
             <Text style={styles.tiempoValor}>
-              {terminado ? 0 : minutosRestantes} min
+              {terminado ? 0 : minutos} min
             </Text>
             <Text style={styles.tiempoEtiqueta}>Tiempo estimado</Text>
           </View>
@@ -230,7 +167,7 @@ export default function PantallaViajeActivo() {
         origen={origen}
         destino={destino.coordenadas}
         ruta={ruta}
-        conductores={[interpolarRuta(ruta, avance)]}
+        conductores={[interpolarRuta(ruta, AVANCE_POR_ETAPA[etapa])]}
         margenInferior={PANEL_SOBRE_MAPA + 6}
         style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
       />
@@ -271,7 +208,7 @@ export default function PantallaViajeActivo() {
           <Text style={[styles.seccion, { color: colores.texto }]}>
             Tu conductor
           </Text>
-          <TarjetaConductor />
+          <TarjetaConductor conductor={conductor} />
 
           <View style={styles.acciones}>
             <View
