@@ -7,12 +7,12 @@ import { MedidorPasswordSeguro } from "@/features/autenticacion/components/Medid
 import { PiePaginaAutenticacion } from "@/features/autenticacion/components/PiePaginaAutenticacion";
 import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { usuarioService } from "@/features/autenticacion/services/usuarioService";
+import { useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDni";
 import { calcularEdad, sanitizarDNI } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -44,62 +44,35 @@ export default function DatosPersonalesConductor() {
     setConfirmarContrasena,
   } = useRegistroConductor();
 
-  const [consultandoDni, setConsultandoDni] = useState(false);
-  const [dniVerificado, setDniVerificado] = useState("");
-  const [errorDni, setErrorDni] = useState("");
+  const {
+    cargando: consultandoDni,
+    error: errorDni,
+    esValido: dniEsValido,
+    dniVerificado,
+  } = useConsultaDni(
+    dni,
+    (nombresObtenidos, apellidosObtenidos) => {
+      setNombre(nombresObtenidos);
+      setApellidos(apellidosObtenidos);
+    }
+  );
 
   const cambiarDni = (texto: string) => {
     const nuevoDni = sanitizarDNI(texto);
     if (nuevoDni === dni) return;
     setDni(nuevoDni);
-    setNombre("");
-    setApellidos("");
-    setDniVerificado("");
-    setErrorDni("");
-  };
-
-  useEffect(() => {
-    if (dni.length !== 8) {
-      setDniVerificado("");
-      setErrorDni("");
-      return;
+    if (nuevoDni.length !== 8) {
+      setNombre("");
+      setApellidos("");
     }
-
-    let cancelado = false;
-    const timer = setTimeout(async () => {
-      setConsultandoDni(true);
-      setErrorDni("");
-      try {
-        const datos = await usuarioService.validarIdentidadDNI(dni);
-        if (!cancelado) {
-          setNombre(datos.nombres);
-          setApellidos(datos.apellidos);
-          setDniVerificado(dni);
-        }
-      } catch (err: any) {
-        if (!cancelado) {
-          setErrorDni(err?.message || "No se pudo validar el DNI.");
-          setDniVerificado("");
-          setNombre("");
-          setApellidos("");
-        }
-      } finally {
-        if (!cancelado) setConsultandoDni(false);
-      }
-    }, 450);
-
-    return () => {
-      cancelado = true;
-      clearTimeout(timer);
-    };
-  }, [dni, setNombre, setApellidos]);
+  };
 
   const continuar = () => {
     Keyboard.dismiss();
     if (consultandoDni) {
       return Alert.alert("Consulta en proceso", "Espera mientras verificamos tu DNI.");
     }
-    if (dniVerificado !== dni || dni.length !== 8) {
+    if (!dniEsValido) {
       return Alert.alert("DNI requerido", "Ingresa un DNI válido y espera la verificación.");
     }
     if (!nombre.trim() || !apellidos.trim() || !fechaNacimiento || !correo.trim() || !contrasena || !confirmarContrasena.trim()) {

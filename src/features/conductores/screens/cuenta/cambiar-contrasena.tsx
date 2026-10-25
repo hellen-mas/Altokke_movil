@@ -1,242 +1,99 @@
 import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
-import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
+import { AvisoInformativo, BotonPrincipal, CampoTexto } from "@/shared/components/ui";
 import { paletaColores } from "@/shared/theme/paletaColores";
-
-interface CampoContrasenaProps {
-  titulo: string;
-  value: string;
-  onChangeText: (texto: string) => void;
-  placeholder: string;
-}
-
-function CampoContrasena({
-  titulo,
-  value,
-  onChangeText,
-  placeholder,
-}: CampoContrasenaProps) {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <View style={styles.campoGrupo}>
-      <Text style={styles.label}>
-        {titulo}
-      </Text>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={
-            paletaColores.textoSecundarioClaro
-          }
-          secureTextEntry={!visible}
-          style={styles.input}
-        />
-
-        <Pressable
-          style={styles.verBoton}
-          onPress={() => setVisible(!visible)}
-        >
-          <Ionicons
-            name={
-              visible
-                ? "eye-off-outline"
-                : "eye-outline"
-            }
-            size={19}
-            color={paletaColores.textoSecundarioClaro}
-          />
-        </Pressable>
-      </View>
-    </View>
-  );
-}
+import { supabase } from "@/shared/api/supabase";
+import { router } from "expo-router";
 
 export default function CambiarContrasena() {
-  const [contrasenaActual, setContrasenaActual] =
-    useState("");
+  const [contrasenaActual, setContrasenaActual] = useState("");
+  const [nuevaContrasena, setNuevaContrasena] = useState("");
+  const [confirmarContrasena, setConfirmarContrasena] = useState("");
+  const [cargando, setCargando] = useState(false);
 
-  const [nuevaContrasena, setNuevaContrasena] =
-    useState("");
-
-  const [confirmarContrasena, setConfirmarContrasena] =
-    useState("");
-
-  const guardarCambios = () => {
-    if (
-      !contrasenaActual ||
-      !nuevaContrasena ||
-      !confirmarContrasena
-    ) {
-      Alert.alert(
-        "Campos incompletos",
-        "Completa todos los campos."
-      );
-      return;
+  const guardarCambios = async () => {
+    if (!contrasenaActual || !nuevaContrasena || !confirmarContrasena) {
+      return Alert.alert("Campos incompletos", "Completa todos los campos.");
     }
-
     if (nuevaContrasena.length < 8) {
-      Alert.alert(
-        "Contraseña muy corta",
-        "La nueva contraseña debe tener al menos 8 caracteres."
-      );
-      return;
+      return Alert.alert("Contraseña muy corta", "La nueva contraseña debe tener al menos 8 caracteres.");
     }
-
     if (nuevaContrasena !== confirmarContrasena) {
-      Alert.alert(
-        "Las contraseñas no coinciden",
-        "Verifica que ambas contraseñas nuevas sean iguales."
-      );
-      return;
+      return Alert.alert("Las contraseñas no coinciden", "Verifica que ambas contraseñas nuevas sean iguales.");
     }
-
     if (contrasenaActual === nuevaContrasena) {
-      Alert.alert(
-        "Usa una contraseña diferente",
-        "La nueva contraseña debe ser distinta de la contraseña actual."
-      );
-      return;
+      return Alert.alert("Usa una contraseña diferente", "La nueva contraseña debe ser distinta de la actual.");
     }
 
-    Alert.alert(
-      "Contraseña actualizada",
-      "Tu contraseña fue actualizada correctamente."
-    );
+    try {
+      setCargando(true);
+      const { error } = await supabase.auth.updateUser({ password: nuevaContrasena });
+      if (error) throw error;
 
-    setContrasenaActual("");
-    setNuevaContrasena("");
-    setConfirmarContrasena("");
+      Alert.alert("Contraseña actualizada", "Tu contraseña fue actualizada correctamente.", [
+        { text: "Entendido", onPress: () => router.back() },
+      ]);
+      setContrasenaActual("");
+      setNuevaContrasena("");
+      setConfirmarContrasena("");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "No se pudo actualizar la contraseña.");
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
     <View style={styles.container}>
+      <CabeceraConductor titulo="Cambiar contraseña" subtitulo="Actualiza tu contraseña de acceso" mostrarAtras compacta />
 
-      <CabeceraConductor
-          titulo="Cambiar contraseña"
-          subtitulo="Actualiza tu contraseña de acceso"
-          mostrarAtras
-          compacta
-      />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-
-        <View style={styles.contenido}>
-          <View style={styles.introCard}>
-            <View style={styles.introIcono}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={24}
-                color={paletaColores.verde}
-              />
-            </View>
-
-            <View style={styles.introInformacion}>
-              <Text style={styles.introTitulo}>
-                Protege tu cuenta
-              </Text>
-
-              <Text style={styles.introDescripcion}>
-                Utiliza una contraseña segura y diferente
-                a la que usas en otros servicios.
-              </Text>
-            </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.introCard}>
+          <Ionicons name="lock-closed-outline" size={24} color={paletaColores.verde} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.introTitulo}>Protege tu cuenta</Text>
+            <Text style={styles.introDescripcion}>Utiliza una contraseña segura y diferente a la de otros servicios.</Text>
           </View>
+        </View>
 
-          <View style={styles.formulario}>
-            <CampoContrasena
-              titulo="Contraseña actual"
-              value={contrasenaActual}
-              onChangeText={setContrasenaActual}
-              placeholder="Ingresa tu contraseña actual"
-            />
-
-            <CampoContrasena
-              titulo="Nueva contraseña"
-              value={nuevaContrasena}
-              onChangeText={setNuevaContrasena}
-              placeholder="Mínimo 8 caracteres"
-            />
-
-            <CampoContrasena
-              titulo="Confirmar nueva contraseña"
-              value={confirmarContrasena}
-              onChangeText={setConfirmarContrasena}
-              placeholder="Repite la nueva contraseña"
-            />
-          </View>
-
-          <View style={styles.requisitos}>
-            <Text style={styles.requisitosTitulo}>
-              La contraseña debe:
-            </Text>
-
-            <View style={styles.requisito}>
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={16}
-                color={paletaColores.verde}
-              />
-
-              <Text style={styles.requisitoTexto}>
-                Tener al menos 8 caracteres
-              </Text>
-            </View>
-
-            <View style={styles.requisito}>
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={16}
-                color={paletaColores.verde}
-              />
-
-              <Text style={styles.requisitoTexto}>
-                Ser diferente de tu contraseña actual
-              </Text>
-            </View>
-          </View>
-
-          <AvisoInformativo
-            icono="shield-checkmark-outline"
-            titulo="Información segura"
-            texto="Nunca compartas tu contraseña con otras personas. Altokke no te pedirá tu contraseña por mensajes o llamadas."
+        <View style={styles.formularioCard}>
+          <CampoTexto
+            etiqueta="Contraseña actual"
+            placeholder="Ingresa tu contraseña actual"
+            value={contrasenaActual}
+            onChangeText={setContrasenaActual}
+            esPassword
+          />
+          <CampoTexto
+            etiqueta="Nueva contraseña"
+            placeholder="Mínimo 8 caracteres"
+            value={nuevaContrasena}
+            onChangeText={setNuevaContrasena}
+            esPassword
+          />
+          <CampoTexto
+            etiqueta="Confirmar nueva contraseña"
+            placeholder="Repite la nueva contraseña"
+            value={confirmarContrasena}
+            onChangeText={setConfirmarContrasena}
+            esPassword
           />
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.botonGuardar,
-              pressed && styles.botonPresionado,
-            ]}
+          <BotonPrincipal
+            titulo="Actualizar contraseña"
             onPress={guardarCambios}
-          >
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={18}
-              color={paletaColores.textoOscuro}
-            />
-
-            <Text style={styles.botonTexto}>
-              Guardar nueva contraseña
-            </Text>
-          </Pressable>
+            cargando={cargando}
+            estilo={{ marginTop: 12 }}
+          />
         </View>
+
+        <AvisoInformativo
+          icono="shield-checkmark-outline"
+          texto="Tu información está protegida con cifrado de punto a punto."
+          variante="claro"
+        />
       </ScrollView>
     </View>
   );
@@ -247,135 +104,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: paletaColores.fondoClaro,
   },
-
   scrollContent: {
-    paddingBottom: 30,
+    padding: 20,
+    gap: 16,
   },
-
-  contenido: {
-    marginHorizontal: 18,
-    marginTop: 18,
-  },
-
   introCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
-    gap: 12,
+    backgroundColor: "#FFFFFF",
+    padding: 16,
     borderRadius: 16,
-    backgroundColor: "#E8F4ED",
+    gap: 12,
   },
-
-  introIcono: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: paletaColores.superficieClara,
-  },
-
-  introInformacion: {
-    flex: 1,
-  },
-
   introTitulo: {
-    color: paletaColores.textoClaro,
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "700",
+    color: paletaColores.textPrimary,
   },
-
   introDescripcion: {
-    marginTop: 3,
-    color: paletaColores.textoSecundarioClaro,
     fontSize: 13,
-    lineHeight: 15,
+    color: paletaColores.textSecondary,
+    marginTop: 2,
   },
-
-  formulario: {
-    marginTop: 20,
-    gap: 15,
-  },
-
-  campoGrupo: {
-    gap: 6,
-  },
-
-  label: {
-    color: paletaColores.textoClaro,
-    fontSize: 17,
-    fontWeight: "700",
-  },
-
-  inputContainer: {
-    height: 50,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    borderRadius: 13,
-    backgroundColor: paletaColores.superficieClara,
-  },
-
-  input: {
-    flex: 1,
-    height: "100%",
-    paddingHorizontal: 13,
-    color: paletaColores.textoClaro,
-    fontSize: 15,
-  },
-
-  verBoton: {
-    width: 46,
-    height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  requisitos: {
-    marginTop: 18,
-    padding: 14,
-    borderRadius: 15,
-    backgroundColor: "#F3F7F5",
-  },
-
-  requisitosTitulo: {
-    marginBottom: 8,
-    color: paletaColores.textoClaro,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  requisito: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginTop: 5,
-  },
-
-  requisitoTexto: {
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 13,
-  },
-
-  botonGuardar: {
-    height: 49,
-    marginTop: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    borderRadius: 3,
-    backgroundColor: paletaColores.boton,
-  },
-
-  botonPresionado: {
-    backgroundColor: paletaColores.botonPresionado,
-  },
-
-  botonTexto: {
-    color: paletaColores.textoOscuro,
-    fontSize: 17,
-    fontWeight: "700",
+  formularioCard: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 20,
+    gap: 16,
   },
 });

@@ -1,304 +1,86 @@
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import React from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
-import { AvisoInformativo } from "@/features/conductores/components/AvisoInformativo";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
+import { AvisoInformativo } from "@/shared/components/ui";
 import { paletaColores } from "@/shared/theme/paletaColores";
 
-type EstadoDocumento =
-  | "VERIFICADO"
-  | "EN_REVISION"
-  | "PENDIENTE";
+type EstadoDoc = "VERIFICADO" | "EN_REVISION" | "PENDIENTE";
 
-interface DocumentoEstadoProps {
-  icono: keyof typeof Ionicons.glyphMap;
-  titulo: string;
-  descripcion: string;
-  estado: EstadoDocumento;
-  onPress: () => void;
-}
+const DOCS_CONFIG = [
+  { clave: "dni", icono: "id-card-outline" as const, titulo: "DNI o documento de identidad", desc: "Tu documento oficial registrado" },
+  { clave: "licencia", icono: "car-outline" as const, titulo: "Licencia de conducir", desc: "Licencia vigente para mototaxi" },
+  { clave: "soat", icono: "document-text-outline" as const, titulo: "SOAT", desc: "Seguro obligatorio contra accidentes" },
+  { clave: "tarjetaPropiedad", icono: "car-sport-outline" as const, titulo: "Tarjeta de propiedad", desc: "Documento oficial de tu vehículo" },
+  { clave: "antecedentesPenales", icono: "shield-checkmark-outline" as const, titulo: "Antecedentes penales", desc: "Certificado policial y judicial" },
+];
 
-function DocumentoEstado({
-  icono,
-  titulo,
-  descripcion,
-  estado,
-  onPress,
-}: DocumentoEstadoProps) {
-  const obtenerEstado = () => {
-    switch (estado) {
-      case "VERIFICADO":
-        return {
-          texto: "Verificado",
-          icono: "checkmark-circle" as const,
-          color: paletaColores.verde,
-          fondo: "#E5F6ED",
-        };
-
-      case "EN_REVISION":
-        return {
-          texto: "En revisión",
-          icono: "time-outline" as const,
-          color: "#C88A20",
-          fondo: "#FFF3DB",
-        };
-
-      case "PENDIENTE":
-        return {
-          texto: "Pendiente",
-          icono: "alert-circle-outline" as const,
-          color: "#D65353",
-          fondo: "#FDE8E8",
-        };
-    }
-  };
-
-  const estadoVisual = obtenerEstado();
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.documentoFila,
-        pressed && styles.documentoPresionado,
-      ]}
-    >
-      <View style={styles.documentoIcono}>
-        <Ionicons
-          name={icono}
-          size={21}
-          color={paletaColores.verde}
-        />
-      </View>
-
-      <View style={styles.documentoInformacion}>
-        <Text style={styles.documentoTitulo}>
-          {titulo}
-        </Text>
-
-        <Text style={styles.documentoDescripcion}>
-          {descripcion}
-        </Text>
-      </View>
-
-      <View
-        style={[
-          styles.estadoContainer,
-          {
-            backgroundColor: estadoVisual.fondo,
-          },
-        ]}
-      >
-        <Ionicons
-          name={estadoVisual.icono}
-          size={14}
-          color={estadoVisual.color}
-        />
-
-        <Text
-          style={[
-            styles.estadoTexto,
-            {
-              color: estadoVisual.color,
-            },
-          ]}
-        >
-          {estadoVisual.texto}
-        </Text>
-      </View>
-
-      <Ionicons
-        name="chevron-forward"
-        size={18}
-        color={paletaColores.textoSecundarioClaro}
-      />
-    </Pressable>
-  );
-}
+const ESTILOS_ESTADO: Record<EstadoDoc, { texto: string; icono: keyof typeof Ionicons.glyphMap; color: string; fondo: string }> = {
+  VERIFICADO: { texto: "Verificado", icono: "checkmark-circle", color: paletaColores.verde, fondo: "#E5F6ED" },
+  EN_REVISION: { texto: "En revisión", icono: "time-outline", color: "#C88A20", fondo: "#FFF3DB" },
+  PENDIENTE: { texto: "Pendiente", icono: "alert-circle-outline", color: "#D65353", fondo: "#FDE8E8" },
+};
 
 export default function DocumentosConductor() {
   const { perfil } = usePerfilConductor();
-  const documentos = perfil.documentos;
+  const docs = perfil.documentos || {};
 
   const verDocumento = (nombre: string) => {
-    Alert.alert(
-      nombre,
-      "Más adelante aquí podrás revisar el documento, consultar su estado o reemplazarlo."
-    );
+    Alert.alert(nombre, "Tu documento se encuentra registrado en la central. Para reemplazarlo, contacta a soporte.");
   };
+
+  const docsCargados = DOCS_CONFIG.filter((d) => docs[d.clave]?.estado === "VERIFICADO").length;
 
   return (
     <View style={styles.container}>
+      <CabeceraConductor titulo="Documentos" subtitulo="Documentación oficial de tu mototaxi" mostrarAtras compacta />
 
-        {/* Cabecera */}
-        <CabeceraConductor
-          titulo="Documentos"
-          subtitulo="Mantén tu documentación actualizada"
-          mostrarAtras
-          compacta
-        />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-
-        {/* Introducción */}
-        <View style={styles.introduccion}>
-          <View style={styles.introduccionTexto}>
-            <Text style={styles.tituloPrincipal}>
-              Tu documentación{"\n"}
-              <Text style={styles.tituloVerde}>
-                al día
-              </Text>
-            </Text>
-
-            <Text style={styles.descripcionPrincipal}>
-              Mantén tus documentos actualizados para seguir
-              conduciendo con Altokke.
-            </Text>
-          </View>
-
-          <View style={styles.ilustracion}>
-            <Ionicons
-              name="document-text-outline"
-              size={46}
-              color={paletaColores.verde}
-            />
-
-            <View style={styles.checkIlustracion}>
-              <Ionicons
-                name="checkmark"
-                size={17}
-                color="#FFFFFF"
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Resumen */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.resumenCard}>
-          <View style={styles.progresoCircular}>
-            <Text style={styles.progresoNumero}>
-              5 de 5
-            </Text>
-
-            <Text style={styles.progresoTexto}>
-              documentos{"\n"}cargados
-            </Text>
+          <View style={styles.progresoBox}>
+            <Text style={styles.progresoNum}>{docsCargados} de 5</Text>
+            <Text style={styles.progresoSub}>verificados</Text>
           </View>
-
-          <View style={styles.resumenInformacion}>
-            <Text style={styles.resumenTitulo}>
-              ¡Todo en orden!
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={styles.resumenTitulo}>{docsCargados === 5 ? "¡Documentación al día!" : "Verificación en curso"}</Text>
+            <Text style={styles.resumenDesc}>
+              {docsCargados === 5
+                ? "Todos tus documentos están aprobados para conducir con Altokke."
+                : "La central está revisando tus documentos para habilitar tu cuenta."}
             </Text>
-
-            <Text style={styles.resumenDescripcion}>
-              Has completado todos los documentos requeridos.
-            </Text>
-
-            <Pressable
-              style={styles.botonDetalle}
-              onPress={() =>
-                Alert.alert(
-                  "Resumen de documentación",
-                  "Actualmente tienes 5 de 5 documentos cargados."
-                )
-              }
-            >
-              <Ionicons
-                name="eye-outline"
-                size={15}
-                color={paletaColores.verde}
-              />
-
-              <Text style={styles.botonDetalleTexto}>
-                Ver detalle
-              </Text>
-            </Pressable>
           </View>
         </View>
 
-        {/* Lista de documentos */}
-        <View style={styles.listaDocumentos}>
-          <DocumentoEstado
-            icono="id-card-outline"
-            titulo="DNI o documento de identidad"
-            descripcion="Tu documento de identidad."
-            estado={
-              documentos.dni.estado as EstadoDocumento
-            }
-            onPress={() =>
-              verDocumento("DNI o documento de identidad")
-            }
-          />
+        <View style={styles.lista}>
+          {DOCS_CONFIG.map((d) => {
+            const rawEstado = (docs[d.clave]?.estado || "PENDIENTE").toUpperCase() as EstadoDoc;
+            const estadoVisual = ESTILOS_ESTADO[rawEstado] || ESTILOS_ESTADO.PENDIENTE;
 
-          <DocumentoEstado
-            icono="car-outline"
-            titulo="Licencia de conducir"
-            descripcion="Tu licencia vigente."
-            estado={
-              documentos.licencia.estado as EstadoDocumento
-            }
-            onPress={() =>
-              verDocumento("Licencia de conducir")
-            }
-          />
-
-          <DocumentoEstado
-            icono="document-text-outline"
-            titulo="SOAT"
-            descripcion="Seguro obligatorio contra accidentes."
-            estado={
-              documentos.soat.estado as EstadoDocumento
-            }
-            onPress={() =>
-              verDocumento("SOAT")
-            }
-          />
-
-          <DocumentoEstado
-            icono="car-sport-outline"
-            titulo="Tarjeta de propiedad"
-            descripcion="Documento de tu vehículo."
-            estado={
-              documentos.tarjetaPropiedad
-                .estado as EstadoDocumento
-            }
-            onPress={() =>
-              verDocumento("Tarjeta de propiedad")
-            }
-          />
-
-          <DocumentoEstado
-            icono="shield-checkmark-outline"
-            titulo="Antecedentes penales"
-            descripcion="Certificado de antecedentes penales."
-            estado={
-              documentos.antecedentesPenales
-                .estado as EstadoDocumento
-            }
-            onPress={() =>
-              verDocumento("Antecedentes penales")
-            }
-          />
+            return (
+              <Pressable key={d.clave} style={styles.item} onPress={() => verDocumento(d.titulo)}>
+                <View style={styles.iconoBox}>
+                  <Ionicons name={d.icono} size={22} color={paletaColores.verde} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.itemTitulo}>{d.titulo}</Text>
+                  <Text style={styles.itemDesc}>{d.desc}</Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: estadoVisual.fondo }]}>
+                  <Ionicons name={estadoVisual.icono} size={14} color={estadoVisual.color} />
+                  <Text style={[styles.badgeText, { color: estadoVisual.color }]}>{estadoVisual.texto}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={paletaColores.textoSecundarioClaro} />
+              </Pressable>
+            );
+          })}
         </View>
 
-        {/* Aviso */}
-        <View style={styles.avisoContainer}>
-          <AvisoInformativo
-            icono="shield-checkmark-outline"
-            titulo="Tu información está segura"
-            texto="Todos tus documentos son procesados de forma segura y confidencial."
-          />
-        </View>
+        <AvisoInformativo
+          icono="shield-checkmark-outline"
+          texto="Tus documentos están cifrados y protegidos de acuerdo con la Ley de Protección de Datos Personales."
+          variante="claro"
+        />
       </ScrollView>
     </View>
   );
@@ -309,211 +91,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: paletaColores.fondoClaro,
   },
-
-  scrollContent: {
-    paddingBottom: 30,
+  scroll: {
+    padding: 18,
+    gap: 16,
+    paddingBottom: 40,
   },
-
-  introduccion: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginHorizontal: 18,
-    marginTop: 17,
-  },
-
-  introduccionTexto: {
-    flex: 1,
-    paddingRight: 15,
-  },
-
-  tituloPrincipal: {
-    color: paletaColores.textoClaro,
-    fontSize: 25,
-    fontWeight: "800",
-    lineHeight: 25,
-  },
-
-  tituloVerde: {
-    color: paletaColores.verde,
-  },
-
-  descripcionPrincipal: {
-    marginTop: 7,
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-
-  ilustracion: {
-    width: 82,
-    height: 82,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#E7F5ED",
-  },
-
-  checkIlustracion: {
-    position: "absolute",
-    right: 8,
-    bottom: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: paletaColores.verde,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-
   resumenCard: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 18,
-    marginTop: 18,
-    padding: 15,
-    gap: 15,
-    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    gap: 14,
     borderWidth: 1,
     borderColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
-    elevation: 2,
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
   },
-
-  progresoCircular: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  progresoBox: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "#E8F4ED",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 7,
-    borderColor: paletaColores.verde,
-    backgroundColor: "#FFFFFF",
   },
-
-  progresoNumero: {
-    color: paletaColores.textoClaro,
-    fontSize: 17,
-    fontWeight: "800",
-  },
-
-  progresoTexto: {
-    marginTop: 1,
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 9,
-    lineHeight: 10,
-    textAlign: "center",
-  },
-
-  resumenInformacion: {
-    flex: 1,
-  },
-
-  resumenTitulo: {
-    color: paletaColores.textoClaro,
+  progresoNum: {
     fontSize: 16,
     fontWeight: "800",
-  },
-
-  resumenDescripcion: {
-    marginTop: 3,
-    color: paletaColores.textoSecundarioClaro,
-    fontSize: 11,
-    lineHeight: 14,
-  },
-
-  botonDetalle: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 13,
-    backgroundColor: "#E8F4ED",
-  },
-
-  botonDetalleTexto: {
     color: paletaColores.verde,
+  },
+  progresoSub: {
     fontSize: 11,
+    fontWeight: "600",
+    color: paletaColores.textoSecundarioClaro,
+  },
+  resumenTitulo: {
+    fontSize: 16,
     fontWeight: "700",
+    color: paletaColores.textoClaro,
   },
-
-  listaDocumentos: {
-    marginHorizontal: 18,
-    marginTop: 16,
-    gap: 9,
+  resumenDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: paletaColores.textoSecundarioClaro,
   },
-
-  documentoFila: {
-    minHeight: 72,
+  lista: {
+    gap: 10,
+  },
+  item: {
+    minHeight: 64,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
     borderWidth: 1,
     borderColor: paletaColores.bordeClaro,
-    borderRadius: 14,
-    backgroundColor: paletaColores.superficieClara,
   },
-
-  documentoPresionado: {
-    backgroundColor: "#F6F8F7",
-  },
-
-  documentoIcono: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  iconoBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E8F4ED",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8F4ED",
   },
-
-  documentoInformacion: {
-    flex: 1,
-  },
-
-  documentoTitulo: {
-    color: paletaColores.textoClaro,
-    fontSize: 14,
+  itemTitulo: {
+    fontSize: 15,
     fontWeight: "700",
+    color: paletaColores.textoClaro,
   },
-
-  documentoDescripcion: {
-    marginTop: 2,
+  itemDesc: {
+    fontSize: 13,
     color: paletaColores.textoSecundarioClaro,
-    fontSize: 9,
-    lineHeight: 11,
   },
-
-  estadoContainer: {
+  badge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
-
-  estadoTexto: {
-    fontSize: 10,
+  badgeText: {
+    fontSize: 12,
     fontWeight: "700",
-  },
-
-  avisoContainer: {
-    marginHorizontal: 18,
-    marginTop: 3,
   },
 });

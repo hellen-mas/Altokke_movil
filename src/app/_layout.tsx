@@ -4,20 +4,32 @@ import { paletaColores } from "@/shared/theme/paletaColores";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar, useColorScheme } from "react-native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Bloqueo el auto hide del splash hasta que la app termine de cargar
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 2,
+    },
+  },
+});
+
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <StatusBar barStyle="light-content" backgroundColor={paletaColores.fondo} />
-        <AnimatedSplashOverlay />
-        <Slot />
-      </AuthProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <AuthProvider>
+          <StatusBar barStyle="light-content" backgroundColor={paletaColores.fondo} />
+          <AnimatedSplashOverlay />
+          <Slot />
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
+

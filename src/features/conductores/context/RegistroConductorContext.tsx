@@ -1,183 +1,123 @@
-import {
-    createContext,
-    ReactNode,
-    useContext,
-    useState,
-} from "react";
+import React from "react";
+import { create } from "zustand";
 import { ArchivoDocumento } from "@/features/conductores/types/conductor";
 
-type RegistroConductorContextType = {
-    // Para el paso 1
-    nombre: string;
-    setNombre: React.Dispatch<React.SetStateAction<string>>;
-    apellidos: string;
-    setApellidos: React.Dispatch<React.SetStateAction<string>>;
-    dni: string;
-    setDni: React.Dispatch<React.SetStateAction<string>>;
-    fechaNacimiento: Date | null;
-    setFechaNacimiento: React.Dispatch<React.SetStateAction<Date | null>>;
-    correo: string;
-    setCorreo: React.Dispatch<React.SetStateAction<string>>;
-    contrasena: string;
-    setContrasena: React.Dispatch<React.SetStateAction<string>>;
-    confirmarContrasena: string;
-    setConfirmarContrasena: React.Dispatch<React.SetStateAction<string>>;
+interface DatosFormularioConductor {
+  nombre: string;
+  apellidos: string;
+  dni: string;
+  fechaNacimiento: Date | null;
+  correo: string;
+  contrasena: string;
+  confirmarContrasena: string;
+  telefono: string;
+  codigo: string;
+  correoRespaldo: string;
+  direccion: string;
+  foto: string | null;
+  dniFrente: string | null;
+  dniReverso: string | null;
+  selfie: string | null;
+  licenciaConducir: ArchivoDocumento | null;
+  soat: ArchivoDocumento | null;
+  antecedentesPenales: ArchivoDocumento | null;
+  placa: string;
+  marca: string;
+  modelo: string;
+  anio: string;
+  color: string;
+  capacidad: string;
+  confirmacionVeracidad: boolean;
+}
 
-    // Para el paso 2
-    telefono: string;
-    setTelefono: React.Dispatch<React.SetStateAction<string>>;
-    codigo: string;
-    setCodigo: React.Dispatch<React.SetStateAction<string>>;
-    correoRespaldo: string;
-    setCorreoRespaldo: React.Dispatch<React.SetStateAction<string>>;
-    direccion: string;
-    setDireccion: React.Dispatch<React.SetStateAction<string>>;
-    foto: string | null;
-    setFoto: React.Dispatch<React.SetStateAction<string | null>>;
-
-    // Para el paso 3
-    dniFrente: string | null;
-    setDniFrente: React.Dispatch<React.SetStateAction<string | null>>;
-    dniReverso: string | null;
-    setDniReverso: React.Dispatch<React.SetStateAction<string | null>>;
-    selfie: string | null;
-    setSelfie: React.Dispatch<React.SetStateAction<string | null>>;
-
-    // Para el paso 4
-    licenciaConducir: ArchivoDocumento | null;
-    setLicenciaConducir: React.Dispatch<React.SetStateAction<ArchivoDocumento | null>>;
-    soat: ArchivoDocumento | null;
-    setSoat: React.Dispatch<React.SetStateAction<ArchivoDocumento | null>>;
-    antecedentesPenales: ArchivoDocumento | null;
-    setAntecedentesPenales: React.Dispatch<React.SetStateAction<ArchivoDocumento | null>>;
-
-    // Para el paso 5
-    placa: string;
-    setPlaca: React.Dispatch<React.SetStateAction<string>>;
-    marca: string;
-    setMarca: React.Dispatch<React.SetStateAction<string>>;
-    modelo: string;
-    setModelo: React.Dispatch<React.SetStateAction<string>>;
-    anio: string;
-    setAnio: React.Dispatch<React.SetStateAction<string>>;
-    color: string;
-    setColor: React.Dispatch<React.SetStateAction<string>>;
-    capacidad: string;
-    setCapacidad: React.Dispatch<React.SetStateAction<string>>;
-    confirmacionVeracidad: boolean;
-    setConfirmacionVeracidad: React.Dispatch<React.SetStateAction<boolean>>;
+const estadoInicial: DatosFormularioConductor = {
+  nombre: "",
+  apellidos: "",
+  dni: "",
+  fechaNacimiento: null,
+  correo: "",
+  contrasena: "",
+  confirmarContrasena: "",
+  telefono: "",
+  codigo: "",
+  correoRespaldo: "",
+  direccion: "",
+  foto: null,
+  dniFrente: null,
+  dniReverso: null,
+  selfie: null,
+  licenciaConducir: null,
+  soat: null,
+  antecedentesPenales: null,
+  placa: "",
+  marca: "",
+  modelo: "",
+  anio: "",
+  color: "",
+  capacidad: "",
+  confirmacionVeracidad: false,
 };
 
-const RegistroConductorContext = createContext<RegistroConductorContextType | undefined>(undefined);
-
-export function RegistroConductorProvider({
-    children,
-}: {
-    children: ReactNode;
-}) {
-    // Datos personales
-    const [nombre, setNombre] = useState("");
-    const [apellidos, setApellidos] = useState("");
-    const [dni, setDni] = useState("");
-    const [fechaNacimiento, setFechaNacimiento] = useState<Date | null>(null);
-    const [correo, setCorreo] = useState("");
-    const [contrasena, setContrasena] = useState("");
-    const [confirmarContrasena, setConfirmarContrasena] = useState("");
-
-    // Verificacion y contacto
-    const [telefono, setTelefono] = useState("");
-    const [codigo, setCodigo] = useState("");
-    const [correoRespaldo, setCorreoRespaldo] = useState("");
-    const [direccion, setDireccion] = useState("");
-    const [foto, setFoto] = useState<string | null>(null);
-
-    // Identidad oficial
-    const [dniFrente, setDniFrente] = useState<string | null>(null);
-    const [dniReverso, setDniReverso] = useState<string | null>(null);
-    const [selfie, setSelfie] = useState<string | null>(null);
-
-    // Documentos 
-    const [licenciaConducir, setLicenciaConducir] = useState<ArchivoDocumento | null>(null);
-    const [soat, setSoat] = useState<ArchivoDocumento | null>(null);
-    const [antecedentesPenales, setAntecedentesPenales] = useState<ArchivoDocumento | null>(null);
-
-    // Vehículo
-    const [placa, setPlaca] = useState("");
-    const [marca, setMarca] = useState("");
-    const [modelo, setModelo] = useState("");
-    const [anio, setAnio] = useState("");
-    const [color, setColor] = useState("");
-    const [capacidad, setCapacidad] = useState("");
-    const [confirmacionVeracidad, setConfirmacionVeracidad] = useState(false);
-
-    return (
-        <RegistroConductorContext.Provider
-            value={{
-                nombre,
-                setNombre,
-                apellidos,
-                setApellidos,
-                dni,
-                setDni,
-                fechaNacimiento,
-                setFechaNacimiento,
-                correo,
-                setCorreo,
-                contrasena,
-                setContrasena,
-                confirmarContrasena,
-                setConfirmarContrasena,
-                telefono,
-                setTelefono,
-                codigo,
-                setCodigo,
-                correoRespaldo,
-                setCorreoRespaldo,
-                direccion,
-                setDireccion,
-                foto,
-                setFoto,
-                dniFrente,
-                setDniFrente,
-                dniReverso,
-                setDniReverso,
-                selfie,
-                setSelfie,
-                licenciaConducir,
-                setLicenciaConducir,
-                soat,
-                setSoat,
-                antecedentesPenales,
-                setAntecedentesPenales,
-                placa,
-                setPlaca,
-                marca,
-                setMarca,
-                modelo,
-                setModelo,
-                anio,
-                setAnio,
-                color,
-                setColor,
-                capacidad,
-                setCapacidad,
-                confirmacionVeracidad,
-                setConfirmacionVeracidad,
-            }}
-        >
-            {children}
-        </RegistroConductorContext.Provider>
-    );
+interface ConductorStore extends DatosFormularioConductor {
+  setNombre: (v: string) => void;
+  setApellidos: (v: string) => void;
+  setDni: (v: string) => void;
+  setFechaNacimiento: (v: Date | null) => void;
+  setCorreo: (v: string) => void;
+  setContrasena: (v: string) => void;
+  setConfirmarContrasena: (v: string) => void;
+  setTelefono: (v: string) => void;
+  setCodigo: (v: string) => void;
+  setCorreoRespaldo: (v: string) => void;
+  setDireccion: (v: string) => void;
+  setFoto: (v: string | null) => void;
+  setDniFrente: (v: string | null) => void;
+  setDniReverso: (v: string | null) => void;
+  setSelfie: (v: string | null) => void;
+  setLicenciaConducir: (v: ArchivoDocumento | null) => void;
+  setSoat: (v: ArchivoDocumento | null) => void;
+  setAntecedentesPenales: (v: ArchivoDocumento | null) => void;
+  setPlaca: (v: string) => void;
+  setMarca: (v: string) => void;
+  setModelo: (v: string) => void;
+  setAnio: (v: string) => void;
+  setColor: (v: string) => void;
+  setCapacidad: (v: string) => void;
+  setConfirmacionVeracidad: (v: boolean | ((prev: boolean) => boolean)) => void;
+  limpiar: () => void;
 }
 
-export function useRegistroConductor() {
-    const context = useContext(RegistroConductorContext);
+export const useRegistroConductor = create<ConductorStore>((set) => ({
+  ...estadoInicial,
+  setNombre: (nombre) => set({ nombre }),
+  setApellidos: (apellidos) => set({ apellidos }),
+  setDni: (dni) => set({ dni }),
+  setFechaNacimiento: (fechaNacimiento) => set({ fechaNacimiento }),
+  setCorreo: (correo) => set({ correo }),
+  setContrasena: (contrasena) => set({ contrasena }),
+  setConfirmarContrasena: (confirmarContrasena) => set({ confirmarContrasena }),
+  setTelefono: (telefono) => set({ telefono }),
+  setCodigo: (codigo) => set({ codigo }),
+  setCorreoRespaldo: (correoRespaldo) => set({ correoRespaldo }),
+  setDireccion: (direccion) => set({ direccion }),
+  setFoto: (foto) => set({ foto }),
+  setDniFrente: (dniFrente) => set({ dniFrente }),
+  setDniReverso: (dniReverso) => set({ dniReverso }),
+  setSelfie: (selfie) => set({ selfie }),
+  setLicenciaConducir: (licenciaConducir) => set({ licenciaConducir }),
+  setSoat: (soat) => set({ soat }),
+  setAntecedentesPenales: (antecedentesPenales) => set({ antecedentesPenales }),
+  setPlaca: (placa) => set({ placa }),
+  setMarca: (marca) => set({ marca }),
+  setModelo: (modelo) => set({ modelo }),
+  setAnio: (anio) => set({ anio }),
+  setColor: (color) => set({ color }),
+  setCapacidad: (capacidad) => set({ capacidad }),
+  setConfirmacionVeracidad: (val) =>
+    set((s) => ({
+      confirmacionVeracidad: typeof val === "function" ? val(s.confirmacionVeracidad) : val,
+    })),
+  limpiar: () => set(estadoInicial),
+}));
 
-    if (!context) {
-        throw new Error(
-            "useRegistroConductor debe utilizarse dentro de RegistroConductorProvider"
-        );
-    }
-
-    return context;
-}
+export const RegistroConductorProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
