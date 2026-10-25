@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { authService } from "@/features/autenticacion/services/authService";
+import { identidadService } from "@/features/autenticacion/services/identidadService";
 
 interface ResultadoConsultaDni {
   cargando: boolean;
@@ -35,7 +35,7 @@ export function useConsultaDni(
       setError("");
 
       try {
-        const datos = await authService.validarIdentidadDNI(limpio);
+        const datos = await identidadService.validarIdentidadDNI(limpio);
         if (idActual !== requestId.current) return;
 
         setDniVerificado(limpio);

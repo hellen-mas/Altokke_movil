@@ -36,15 +36,10 @@ export default function NuevoPasswordScreen() {
         [{ text: "Iniciar sesión", onPress: () => router.replace("/login") }]
       );
     } catch (error: any) {
-      Alert.alert("Error al actualizar", traducirErrorAuth(error, "No se pudo actualizar la contraseña."));
+      Alert.alert("Error al actualizar", traducirErrorAuth(error));
     } finally {
       setLoading(false);
     }
-  };
-
-
-  const onError = () => {
-    Alert.alert("Datos incompletos", "Las contraseñas no coinciden o no cumplen con los requisitos mínimos.");
   };
 
   return (
@@ -56,13 +51,11 @@ export default function NuevoPasswordScreen() {
     >
       <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
         <View style={styles.topSection}>
-          <View style={styles.headerContainer}>
-            <EncabezadoPagina
-              titulo={"Nueva "}
-              tituloDestacado="contraseña"
-              descripcion="Crea una contraseña segura para proteger tu cuenta."
-            />
-          </View>
+          <EncabezadoPagina
+            titulo="Nueva "
+            tituloDestacado="contraseña"
+            descripcion="Crea una contraseña segura para proteger tu cuenta."
+          />
 
           <View style={styles.formContainer}>
             <CampoTextoHookForm
@@ -86,18 +79,16 @@ export default function NuevoPasswordScreen() {
             <BotonPrincipal
               titulo="Guardar contraseña"
               cargando={loading}
-              onPress={handleSubmit(onSubmit, onError)}
+              onPress={handleSubmit(onSubmit, () =>
+                Alert.alert("Datos incompletos", "Las contraseñas no coinciden o no cumplen con los requisitos.")
+              )}
               disabled={loading}
             />
           </View>
         </View>
 
         <View style={styles.bottomContainer}>
-          <PiePaginaAutenticacion
-            textoPregunta="¿Deseas cancelar?"
-            textoEnlace="Iniciar sesión"
-            ruta="/login"
-          />
+          <PiePaginaAutenticacion textoPregunta="¿Deseas cancelar?" textoEnlace="Iniciar sesión" ruta="/login" />
         </View>
       </ContenedorPantalla>
     </LinearGradient>
@@ -105,29 +96,9 @@ export default function NuevoPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  pantalla: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 32,
-    flexGrow: 1,
-  },
-  topSection: {
-    gap: 4,
-  },
-  headerContainer: {
-    marginTop: 8,
-    marginBottom: 26,
-  },
-  formContainer: {
-    gap: 18,
-    marginBottom: 20,
-  },
-  bottomContainer: {
-    marginTop: 14,
-    alignItems: "center",
-  },
+  pantalla: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, flexGrow: 1, justifyContent: "space-between" },
+  topSection: { gap: 16 },
+  formContainer: { gap: 16, marginTop: 10 },
+  bottomContainer: { marginTop: "auto", paddingTop: 16 },
 });
-

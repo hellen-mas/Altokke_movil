@@ -28,41 +28,24 @@ export const PiePaginaAutenticacion = ({
   ruta,
   alineacion = "center",
   mostrarBorde = false,
-  variante = "oscuro",
   estilo,
   estiloPregunta,
   estiloEnlace,
 }: PropsPiePaginaAutenticacion) => {
   const { colores } = useAltokkeTheme();
+  const justify = alineacion === "left" ? "flex-start" : alineacion === "right" ? "flex-end" : "center";
 
   return (
     <View
       style={[
-        estilos.contenedor,
-        mostrarBorde && {
-          borderTopWidth: 1,
-          borderTopColor: colores.linea,
-          marginTop: 12,
-          paddingTop: 16,
-        },
-        {
-          justifyContent:
-            alineacion === "left"
-              ? "flex-start"
-              : alineacion === "right"
-              ? "flex-end"
-              : "center",
-        },
+        styles.contenedor,
+        mostrarBorde && { borderTopWidth: 1, borderTopColor: colores.linea, marginTop: 12, paddingTop: 16 },
+        { justifyContent: justify },
         estilo,
       ]}
     >
-      <View style={estilos.fila}>
-        <Text 
-          style={[
-            estilos.textoPregunta, 
-            { color: colores.secundario },
-            estiloPregunta,
-          ]}>
+      <View style={styles.fila}>
+        <Text style={[styles.textoPregunta, { color: colores.secundario }, estiloPregunta]}>
           {textoPregunta}{" "}
         </Text>
         <Pressable
@@ -72,12 +55,7 @@ export const PiePaginaAutenticacion = ({
           accessibilityLabel={`${textoPregunta} ${textoEnlace}`}
           style={({ pressed }) => [pressed && { opacity: 0.75 }]}
         >
-          <Text 
-            style={[
-              estilos.textoEnlace, 
-              { color: colores.exitoTexto },
-              estiloEnlace,
-            ]}>
+          <Text style={[styles.textoEnlace, { color: colores.exitoTexto }, estiloEnlace]}>
             {textoEnlace}
           </Text>
         </Pressable>
@@ -86,30 +64,11 @@ export const PiePaginaAutenticacion = ({
   );
 };
 
-const estilos = StyleSheet.create({
-  contenedor: {
-    width: "100%",
-    paddingVertical: 10,
-    minHeight: 52,
-    alignItems: "center",
-  },
-  fila: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 6,
-  },
-  textoPregunta: {
-    fontSize: 15,
-    lineHeight: 24,
-    fontWeight: "500",
-  },
-  textoEnlace: {
-    fontSize: 17,
-    lineHeight: 24,
-    fontWeight: "700",
-  },
+const styles = StyleSheet.create({
+  contenedor: { width: "100%", paddingVertical: 10, minHeight: 52, alignItems: "center" },
+  fila: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", justifyContent: "center", gap: 6 },
+  textoPregunta: { fontSize: 15, lineHeight: 24, fontWeight: "500" },
+  textoEnlace: { fontSize: 17, lineHeight: 24, fontWeight: "700" },
 });
 
 export default PiePaginaAutenticacion;
