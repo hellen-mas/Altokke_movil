@@ -32,6 +32,7 @@ import {
   formatearSoles,
   interpolarRuta,
 } from "@/features/viajes/utils/viaje";
+import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
 
 const PANEL_SOBRE_MAPA = 20;
 const PROPORCION_MAPA = 0.3;
@@ -58,6 +59,9 @@ const SUBTITULOS_ETAPA = [
 // Posición aproximada del mototaxi sobre la ruta mientras no haya ubicación real
 const AVANCE_POR_ETAPA = [0, 0, 0, 0.5, 1];
 
+// Cada cuánto se pregunta la ubicación del conductor mientras dura el viaje
+const REFRESCO_UBICACION_MS = 5000;
+
 export default function PantallaViajeActivo() {
   const { colores } = useAltokkeTheme();
   const { viajeActivoId } = useViaje();
@@ -66,8 +70,12 @@ export default function PantallaViajeActivo() {
   const { height: altoPantalla } = useWindowDimensions();
   const [horaSalida] = useState(() => new Date());
 
-  const { viaje } = useViajeEnVivo(viajeActivoId);
-  const conductor = useConductorViaje(viajeActivoId, viaje?.conductor_id);
+  const { viaje, conectado } = useViajeEnVivo(viajeActivoId);
+  const conductor = useConductorViaje(
+    viajeActivoId,
+    viaje?.conductor_id,
+    REFRESCO_UBICACION_MS
+  );
 
   const estadoViaje = viaje?.estado ?? "aceptado";
   const etapa = Math.max(0, ESTADOS_PROGRESO.indexOf(estadoViaje));
@@ -82,6 +90,14 @@ export default function PantallaViajeActivo() {
   }
 
   const { origen, destino, tarifa, minutos, ruta } = resumen;
+
+  // Si el conductor envía su ubicación se usa esa; si no, una posición aproximada sobre la ruta
+  const ubicacionReal =
+    conductor?.lat != null && conductor?.lng != null
+      ? { latitude: conductor.lat, longitude: conductor.lng }
+      : null;
+  const posicionMoto =
+    ubicacionReal ?? interpolarRuta(ruta, AVANCE_POR_ETAPA[etapa]);
 
   const horaLlegada = new Date(horaSalida.getTime() + minutos * 60000);
 
@@ -167,7 +183,7 @@ export default function PantallaViajeActivo() {
         origen={origen}
         destino={destino.coordenadas}
         ruta={ruta}
-        conductores={[interpolarRuta(ruta, AVANCE_POR_ETAPA[etapa])]}
+        conductores={[posicionMoto]}
         margenInferior={PANEL_SOBRE_MAPA + 6}
         style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
       />
@@ -187,6 +203,26 @@ export default function PantallaViajeActivo() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contenido}
         >
+          {!conectado && (
+            <View
+              style={[
+                styles.avisoSinConexion,
+                { backgroundColor: colores.errorFondo },
+              ]}
+            >
+              <Ionicons
+                name="cloud-offline-outline"
+                size={18}
+                color={colores.error}
+              />
+              <Text
+                style={[styles.avisoSinConexionTexto, { color: colores.error }]}
+              >
+                Sin conexión. Reintentando...
+              </Text>
+            </View>
+          )}
+
           {terminado && (
             <View
               style={[
@@ -205,16 +241,33 @@ export default function PantallaViajeActivo() {
             </View>
           )}
 
+          {!ubicacionReal && !terminado && (
+            <View style={styles.avisoAproximado}>
+              <Ionicons
+                name="information-circle-outline"
+                size={16}
+                color={colores.secundario}
+              />
+              <Text
+                style={[styles.avisoAproximadoTexto, { color: colores.secundario }]}
+              >
+                Ubicación aproximada del conductor
+              </Text>
+            </View>
+          )}
+
           <Text style={[styles.seccion, { color: colores.texto }]}>
             Tu conductor
           </Text>
           <TarjetaConductor conductor={conductor} />
 
           <View style={styles.acciones}>
-            <View
-              style={[
+            <Pressable
+              onPress={() => llamarConductor(conductor?.telefono)}
+              style={({ pressed }) => [
                 styles.accion,
                 { backgroundColor: colores.exitoFondo },
+                pressed && { opacity: 0.8 },
               ]}
             >
               <Ionicons name="call" size={18} color={colores.exitoTexto} />
@@ -223,11 +276,13 @@ export default function PantallaViajeActivo() {
               >
                 Llamar
               </Text>
-            </View>
-            <View
-              style={[
+            </Pressable>
+            <Pressable
+              onPress={() => escribirConductor(conductor?.telefono)}
+              style={({ pressed }) => [
                 styles.accion,
                 { backgroundColor: colores.exitoFondo },
+                pressed && { opacity: 0.8 },
               ]}
             >
               <Ionicons
@@ -240,7 +295,7 @@ export default function PantallaViajeActivo() {
               >
                 Mensaje
               </Text>
-            </View>
+            </Pressable>
             <Pressable
               onPress={compartirViaje}
               style={({ pressed }) => [
@@ -680,6 +735,31 @@ const styles = StyleSheet.create({
 
   botonCancelarTexto: {
     fontSize: 16,
+    fontWeight: "700",
+  },
+
+  avisoAproximado: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 12,
+  },
+
+  avisoAproximadoTexto: {
+    fontSize: 12,
+  },
+
+  avisoSinConexion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+
+  avisoSinConexionTexto: {
+    fontSize: 13,
     fontWeight: "700",
   },
 });
