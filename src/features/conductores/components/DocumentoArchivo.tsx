@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import {
     Pressable,
@@ -23,6 +24,7 @@ export function DocumentoArchivo({
     onPress,
     deshabilitado = false,
 } : DocumentoArchivoProps) {
+  const { colores, esOscuro } = useAltokkeTheme();
 
     const cargado = Boolean(archivo);
 
@@ -31,18 +33,19 @@ export function DocumentoArchivo({
             style={[
                 styles.card,
                 cargado && styles.cardCompletada,
+                { backgroundColor: cargado ? colores.exitoFondo : colores.superficie, borderColor: colores.linea },
             ]}
         >
-            <View style={styles.iconoContainer}>
+            <View style={[styles.iconoContainer, { backgroundColor: colores.campo }]}>
                 <Ionicons
                     name={icono}
                     size={24}
-                    color={paletaColores.primaryHover}
+                    color={colores.exitoTexto}
                 />
             </View>
 
             <View style={styles.informacion}>
-                <Text style={styles.titulo}>
+                <Text style={[styles.titulo, { color: colores.texto }]}>
                     {titulo}
                 </Text>
 
@@ -65,6 +68,7 @@ export function DocumentoArchivo({
                         style={[
                             styles.estado,
                             archivo && styles.estadoCargado,
+                            archivo && { color: colores.exitoTexto },
                         ]}
                         numberOfLines={1}
                         ellipsizeMode="middle"
@@ -94,10 +98,10 @@ export function DocumentoArchivo({
                             : "cloud-upload-outline"
                         }
                         size={16}
-                        color={paletaColores.primaryHover}
+                        color={colores.exitoTexto}
                     />
 
-                    <Text style={styles.botonTexto}>
+                    <Text style={[styles.botonTexto, { color: colores.exitoTexto }]}>
                         {cargado
                         ? "Cambiar archivo"
                         : "Adjuntar archivo"}
