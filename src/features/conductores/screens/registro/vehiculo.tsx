@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { IndicadorPasos } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
@@ -24,6 +25,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VehiculoConductor() {
+  const { colores, esOscuro } = useAltokkeTheme();
   const [enviando, setEnviando] = useState(false);
   const envioEnCurso = useRef(false);
 
@@ -165,15 +167,15 @@ export default function VehiculoConductor() {
 
   return (
     <SafeAreaView
-      style={styles.areaSegura}
+      style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colores.fondo }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
@@ -187,14 +189,14 @@ export default function VehiculoConductor() {
               titulo="Vehículo y  "
               tituloDestacado="solicitud"
               descripcion="Completa los datos de tu mototaxi y envía tu solicitud."
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
 
           <IndicadorPasos
             pasoActual={5}
             totalPasos={5}
-            variante="claro"
+            variante={esOscuro ? "oscuro" : "claro"}
           />
 
           <View style={styles.formulario}>
@@ -206,7 +208,7 @@ export default function VehiculoConductor() {
               autoCapitalize="characters"
               autoCorrect={false}
               maxLength={10}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
             <CampoTexto
               placeholder="Marca"
@@ -214,7 +216,7 @@ export default function VehiculoConductor() {
               value={marca}
               onChangeText={setMarca}
               autoCapitalize="words"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
             <CampoTexto
               placeholder="Modelo"
@@ -222,7 +224,7 @@ export default function VehiculoConductor() {
               value={modelo}
               onChangeText={setModelo}
               autoCapitalize="words"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
             <View style={styles.filaDoble}>
               <View style={styles.campoMitad}>
@@ -235,7 +237,7 @@ export default function VehiculoConductor() {
                   }
                   keyboardType="number-pad"
                   maxLength={4}
-                  variante="claro"
+                  variante={esOscuro ? "oscuro" : "claro"}
                 />
               </View>
 
@@ -246,7 +248,7 @@ export default function VehiculoConductor() {
                   value={color}
                   onChangeText={setColor}
                   autoCapitalize="words"
-                  variante="claro"
+                  variante={esOscuro ? "oscuro" : "claro"}
                 />
               </View>
             </View>
@@ -260,7 +262,7 @@ export default function VehiculoConductor() {
               }
               keyboardType="number-pad"
               maxLength={1}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
 
@@ -278,20 +280,22 @@ export default function VehiculoConductor() {
             <View
               style={[
                 styles.checkbox,
+                { backgroundColor: colores.campo, borderColor: colores.linea },
                 confirmacionVeracidad &&
                   styles.checkboxActivo,
+                confirmacionVeracidad && { backgroundColor: colores.primario, borderColor: colores.primario },
               ]}
             >
               {confirmacionVeracidad && (
                 <Ionicons
                   name="checkmark"
                   size={16}
-                  color="#FFFFFF"
+                  color={colores.textoBoton}
                 />
               )}
             </View>
 
-            <Text style={styles.confirmacionTexto}>
+            <Text style={[styles.confirmacionTexto, { color: colores.texto }]}>
               Confirmo que los datos son correctos.
             </Text>
           </Pressable>
@@ -300,10 +304,10 @@ export default function VehiculoConductor() {
             <Ionicons
               name="shield-checkmark-outline"
               size={18}
-              color={paletaColores.primaryHover}
+              color={colores.exitoTexto}
             />
 
-            <Text style={styles.avisoTexto}>
+            <Text style={[styles.avisoTexto, { color: colores.secundario }]}>
               Tu solicitud pasará por revisión.
             </Text>
           </View>
@@ -332,10 +336,10 @@ export default function VehiculoConductor() {
               <Ionicons
                 name="arrow-back-outline"
                 size={18}
-                color={paletaColores.textoSecundarioClaro}
+                color={colores.secundario}
               />
 
-              <Text style={styles.textoVolver}>
+              <Text style={[styles.textoVolver, { color: colores.secundario }]}>
                 Volver
               </Text>
             </Pressable>

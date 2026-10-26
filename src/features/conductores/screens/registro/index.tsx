@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { IndicadorPasos } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { CampoFechaNacimiento } from "@/shared/components/ui/CampoFechaNacimiento";
@@ -27,6 +28,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DatosPersonalesConductor() {
+  const { colores, esOscuro } = useAltokkeTheme();
   const {
     nombre,
     setNombre,
@@ -104,16 +106,16 @@ export default function DatosPersonalesConductor() {
 
   return (
     <SafeAreaView
-      style={styles.areaSegura}
+      style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
-      <StatusBar style="dark"/>
+      <StatusBar style={esOscuro ? "light" : "dark"}/>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colores.fondo }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
@@ -125,14 +127,14 @@ export default function DatosPersonalesConductor() {
               titulo={"Tus datos "}
               tituloDestacado="personales"
               descripcion="Comencemos con tu información."
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
 
           <IndicadorPasos
             pasoActual={1}
             totalPasos={5}
-            variante="claro"
+            variante={esOscuro ? "oscuro" : "claro"}
           
           />
 
@@ -145,12 +147,12 @@ export default function DatosPersonalesConductor() {
                 onChangeText={cambiarDni}
                 keyboardType="number-pad"
                 maxLength={15}
-                variante="claro"
+                variante={esOscuro ? "oscuro" : "claro"}
                 error={!!errorDni}
                 textoError={errorDni}
               />
               {consultandoDni && (
-                <ActivityIndicator style={styles.indicadorDni} size="small" color={paletaColores.primary} />
+                <ActivityIndicator style={styles.indicadorDni} size="small" color={colores.primario} />
               )}
             </View>
 
@@ -159,19 +161,19 @@ export default function DatosPersonalesConductor() {
               !consultandoDni &&
               nombre.trim() !== "" &&
               apellidos.trim() !== "" && (
-                <View style={styles.tarjetaVerificada}>
+                <View style={[styles.tarjetaVerificada, { backgroundColor: colores.exitoFondo, borderColor: colores.linea }]}>
                   <View style={styles.cabeceraVerificada}>
                     <Ionicons
                       name="checkmark-circle"
                       size={18}
-                      color={paletaColores.primary}
+                      color={colores.primario}
                     />
-                    <Text style={styles.tituloVerificado}>
+                    <Text style={[styles.tituloVerificado, { color: colores.exitoTexto }]}>
                       Datos verificados
                     </Text>
                   </View>
 
-                  <Text style={styles.nombreVerificado}>
+                  <Text style={[styles.nombreVerificado, { color: colores.texto }]}>
                     {`${nombre} ${apellidos}`}
                   </Text>
                 </View>
@@ -181,7 +183,7 @@ export default function DatosPersonalesConductor() {
               valorFecha={fechaNacimiento}
               alCambiarFecha={setFechaNacimiento}
               label="Fecha de nacimiento"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
 
             <CampoTexto
@@ -193,7 +195,7 @@ export default function DatosPersonalesConductor() {
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="email"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
 
             <CampoTexto
@@ -204,13 +206,13 @@ export default function DatosPersonalesConductor() {
               esPassword
               autoCapitalize="none"
               autoCorrect={false}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
 
             <MedidorPasswordSeguro
               contrasena={contrasena}
               longitudMinima={12}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
 
             <CampoTexto
@@ -221,7 +223,7 @@ export default function DatosPersonalesConductor() {
               esPassword
               autoCapitalize="none"
               autoCorrect={false}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
           
@@ -242,7 +244,7 @@ export default function DatosPersonalesConductor() {
               textoPregunta="¿Ya tienes una cuenta?"
               textoEnlace="Iniciar sesión"
               ruta="/login"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
         </ScrollView>

@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
 import { DocumentoArchivo } from "@/features/conductores/components/DocumentoArchivo";
 import { IndicadorPasos } from "@/shared/components/ui";
@@ -28,6 +29,7 @@ type TipoDocumento =
   | "antecedentes";
 
 export default function DocumentosConductor() {
+  const { colores, esOscuro } = useAltokkeTheme();
     const {
         licenciaConducir,
         setLicenciaConducir,
@@ -118,12 +120,12 @@ export default function DocumentosConductor() {
 
     return (
         <SafeAreaView
-            style={styles.areaSegura}
+            style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
             edges={["top", "bottom"]}
         >
-            <StatusBar style="dark"/>
+            <StatusBar style={esOscuro ? "light" : "dark"}/>
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
@@ -131,23 +133,23 @@ export default function DocumentosConductor() {
                         titulo={"Tus "}
                         tituloDestacado="documentos"
                         descripcion="Adjunta los documentos requeridos"
-                        variante="claro"
+                        variante={esOscuro ? "oscuro" : "claro"}
                     />
 
                     <IndicadorPasos
                         pasoActual={4}
                         totalPasos={5}
-                        variante="claro"
+                        variante={esOscuro ? "oscuro" : "claro"}
                     />
 
                     {/* Documentos */}
                     <View style={styles.documentosContainer}>
                         <View style={styles.filaSeccion}>
-                            <Text style={styles.tituloSeccion}>
+                            <Text style={[styles.tituloSeccion, { color: colores.texto }]}>
                             Documentos requeridos
                             </Text>
 
-                            <Text style={styles.contador}>
+                            <Text style={[styles.contador, { color: colores.exitoTexto }]}>
                             {documentosCompletados} de 3
                             </Text>
                         </View>
@@ -181,9 +183,9 @@ export default function DocumentosConductor() {
                         <Ionicons
                             name="information-circle-outline"
                             size={17}
-                            color={paletaColores.textoSecundarioClaro}
+                            color={colores.secundario}
                         />
-                        <Text style={styles.consejoTexto}>
+                        <Text style={[styles.consejoTexto, { color: colores.secundario }]}>
                             Archivos legibles y vigentes. PDF, JPG o PNG.
                         </Text>
                     </View>
@@ -206,10 +208,10 @@ export default function DocumentosConductor() {
                             <Ionicons
                             name="arrow-back-outline"
                             size={18}
-                            color={paletaColores.textoSecundarioClaro}
+                            color={colores.secundario}
                             />
 
-                            <Text style={styles.textoVolver}>
+                            <Text style={[styles.textoVolver, { color: colores.secundario }]}>
                             Volver
                             </Text>
                         </Pressable>

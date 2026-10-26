@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { authService } from "@/features/autenticacion/services/authService";
@@ -27,6 +28,7 @@ const ETAPAS = [
 ];
 
 export default function SolicitudEnviada() {
+  const { colores, esOscuro } = useAltokkeTheme();
   const [saliendo, setSaliendo] = useState(false);
   const salidaEnCurso = useRef(false);
 
@@ -52,14 +54,14 @@ export default function SolicitudEnviada() {
 
   return (
     <SafeAreaView
-      style={styles.areaSegura}
+      style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
-      <StatusBar style="dark"/>
+      <StatusBar style={esOscuro ? "light" : "dark"}/>
 
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        style={[styles.scroll, { backgroundColor: colores.fondo }]}
+        contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -86,7 +88,7 @@ export default function SolicitudEnviada() {
 
         <View style={styles.contenido}>
           <View style={styles.encabezadoProceso}>
-            <Text style={styles.tituloSeccion}>
+            <Text style={[styles.tituloSeccion, { color: colores.texto }]}>
               ¿Qué sigue?
             </Text>
           </View>
@@ -109,16 +111,16 @@ export default function SolicitudEnviada() {
                   </Text>
 
                   {indice < ETAPAS.length - 1 && (
-                    <View style={styles.linea} />
+                    <View style={[styles.linea, { backgroundColor: colores.linea }]} />
                   )}
                 </View>
 
                 <View style={styles.informacionEtapa}>
-                  <Text style={styles.tituloEtapa}>
+                  <Text style={[styles.tituloEtapa, { color: colores.texto }]}>
                     {etapa.titulo}
                   </Text>
 
-                  <Text style={styles.descripcionEtapa}>
+                  <Text style={[styles.descripcionEtapa, { color: colores.secundario }]}>
                     {etapa.descripcion}
                   </Text>
                 </View>
@@ -127,7 +129,7 @@ export default function SolicitudEnviada() {
                   <Ionicons
                     name="checkmark-circle-outline"
                     size={22}
-                    color={paletaColores.primaryHover}
+                    color={colores.exitoTexto}
                   />
                 )}
               </View>
@@ -135,14 +137,14 @@ export default function SolicitudEnviada() {
           </View>
 
           {/* Nota de confianza */}
-          <View style={styles.nota}>
+          <View style={[styles.nota, { borderTopColor: colores.linea }]}>
             <Ionicons
               name="information-circle-outline"
               size={18}
-              color={paletaColores.textoSecundarioClaro}
+              color={colores.secundario}
             />
 
-            <Text style={styles.notaTexto}>
+            <Text style={[styles.notaTexto, { color: colores.secundario }]}>
               Tu solicitud permanecerá registrada.
             </Text>
           </View>
@@ -157,7 +159,7 @@ export default function SolicitudEnviada() {
               disabled={saliendo}
               onPress={irAlLogin}
               estilo={styles.boton}
-              estiloTexto={styles.botonTexto}
+              estiloTexto={[styles.botonTexto, { color: colores.textoBoton }]}
             />
           </View>
         </View>
