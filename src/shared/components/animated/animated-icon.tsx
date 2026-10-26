@@ -1,18 +1,25 @@
 import { Image } from "expo-image";
 import * as SplashScreen from "expo-splash-screen";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, { Easing, Keyframe } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { useAuthStore } from "@/features/autenticacion/store/authStore";
 
 const INITIAL_SCALE_FACTOR = Dimensions.get("screen").height / 90;
 const DURATION = 600;
+const TIEMPO_MAXIMO = 5000;
 
 export function AnimatedSplashOverlay() {
-  const [animate, setAnimate] = useState(false);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const [minimoCumplido, setMinimoCumplido] = useState(false);
+  const [tiempoAgotado, setTiempoAgotado] = useState(false);
   const [visible, setVisible] = useState(true);
+  const temporizadoresIniciados = useRef(false);
 
   if (!visible) return null;
+
+  const animate = minimoCumplido && (!isLoading || tiempoAgotado);
 
   const splashKeyframe = new Keyframe({
     0: {
@@ -56,10 +63,16 @@ export function AnimatedSplashOverlay() {
   ) : (
     <View
       onLayout={() => {
+        if (temporizadoresIniciados.current) return;
+        temporizadoresIniciados.current = true;
         SplashScreen.hideAsync().finally(() => {
           setTimeout(() => {
-            setAnimate(true);
+            setMinimoCumplido(true);
           }, 1500);
+          // Libera el overlay aunque la sesión nunca termine de cargar
+          setTimeout(() => {
+            setTiempoAgotado(true);
+          }, TIEMPO_MAXIMO);
         });
       }}
       style={styles.splashOverlay}
