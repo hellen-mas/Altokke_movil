@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import {
     Image, 
@@ -25,6 +26,7 @@ export function DocumentoFoto({
     onVerFoto,
     deshabilitado = false,
 } : DocumentoFotoProps) {
+  const { colores } = useAltokkeTheme();
     const tieneFoto = Boolean(foto);
 
     return (
@@ -32,10 +34,11 @@ export function DocumentoFoto({
             style={[
                 styles.card,
                 tieneFoto && styles.cardCompletada,
+                { backgroundColor: tieneFoto ? colores.exitoFondo : colores.superficie, borderColor: colores.linea },
             ]}
         >
             <Pressable
-                style={styles.previewContainer}
+                style={[styles.previewContainer, { backgroundColor: colores.campo }]}
                 onPress={onVerFoto}
                 disabled={!foto || !onVerFoto}
                 accessibilityRole="button"
@@ -55,14 +58,14 @@ export function DocumentoFoto({
                                 : "id-card-outline"
                             }
                         size={26}
-                        color={paletaColores.primaryHover}
+                        color={colores.exitoTexto}
                     />
                 )}
             </Pressable>
 
             <View style={styles.informacion}>
                 <View style={styles.filaTitulo}>
-                    <Text style={styles.titulo}>
+                    <Text style={[styles.titulo, { color: colores.texto }]}>
                         {titulo}
                     </Text>
 
@@ -70,12 +73,12 @@ export function DocumentoFoto({
                         <Ionicons
                         name="checkmark-circle"
                         size={17}
-                        color={paletaColores.primary}
+                        color={colores.primario}
                         />
                     )}
                 </View>
                 
-                <Text style={styles.descripcion} numberOfLines={2}>
+                <Text style={[styles.descripcion, { color: colores.secundario }]} numberOfLines={2}>
                     {tieneFoto ? "Foto registrada" : descripcion }
                 </Text>
 
@@ -100,10 +103,10 @@ export function DocumentoFoto({
                             : "camera-outline"
                         }
                         size={16}
-                        color={paletaColores.primaryHover}
+                        color={colores.exitoTexto}
                     />
 
-                    <Text style={styles.botonTexto}>
+                    <Text style={[styles.botonTexto, { color: colores.exitoTexto }]}>
                         {tieneFoto ? "Repetir foto" : "Tomar foto"}
                     </Text>
                     </Pressable>

@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
 import { IndicadorPasos } from "@/shared/components/ui";
@@ -28,6 +29,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VerificacionContactoConductor() {
+  const { colores, esOscuro } = useAltokkeTheme();
   const {
     telefono,
     setTelefono,
@@ -97,17 +99,17 @@ export default function VerificacionContactoConductor() {
 
   return (
     <SafeAreaView
-      style={styles.areaSegura}
+      style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
-      <StatusBar style="dark"/>
+      <StatusBar style={esOscuro ? "light" : "dark"}/>
 
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colores.fondo }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
             Platform.OS === "ios"
@@ -121,14 +123,14 @@ export default function VerificacionContactoConductor() {
               titulo={"Verificación y "}
               tituloDestacado="contacto"
               descripcion="¿Cómo podemos contactarte?"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
 
           <IndicadorPasos
             pasoActual={2}
             totalPasos={5}
-            variante="claro"
+            variante={esOscuro ? "oscuro" : "claro"}
             etiquetas={[
               "Datos personales",
               "Contacto",
@@ -147,7 +149,11 @@ export default function VerificacionContactoConductor() {
                   telefonoEnFoco &&
                     styles.telefonoEnFoco,
                   mostrarErrorTelefono && 
-                    styles.telefonoError
+                    styles.telefonoError,
+                  {
+                    backgroundColor: mostrarErrorTelefono ? colores.errorFondo : colores.campo,
+                    borderColor: mostrarErrorTelefono ? colores.error : telefonoEnFoco ? colores.exitoTexto : colores.linea,
+                  },
                 ]}
               >
                 <Ionicons
@@ -155,23 +161,21 @@ export default function VerificacionContactoConductor() {
                   size={22}
                   color={
                     telefonoEnFoco
-                      ? paletaColores.primary
-                      : paletaColores.textoSecundarioClaro
+                      ? colores.exitoTexto
+                      : colores.secundario
                   }
                 />
 
-                <Text style={styles.prefijo}>
+                <Text style={[styles.prefijo, { color: colores.textoCampo }]}>
                   +51
                 </Text>
 
-                <View style={styles.separador} />
+                <View style={[styles.separador, { backgroundColor: colores.linea }]} />
 
                 <TextInput
-                  style={styles.telefonoInput}
+                  style={[styles.telefonoInput, { color: colores.textoCampo }]}
                   placeholder="Número de celular"
-                  placeholderTextColor={
-                    paletaColores.textoSecundarioClaro
-                  }
+                  placeholderTextColor={colores.secundario}
                   value={telefono}
                   onChangeText={cambiarTelefono}
                   onFocus={() => setTelefonoEnFoco(true)}
@@ -179,6 +183,7 @@ export default function VerificacionContactoConductor() {
                   keyboardType="phone-pad"
                   textContentType="telephoneNumber"
                   autoComplete="tel"
+                  keyboardAppearance={esOscuro ? "dark" : "light"}
                   maxLength={15}
                   accessibilityLabel="Número de celular"
 
@@ -190,9 +195,9 @@ export default function VerificacionContactoConductor() {
                   <Ionicons
                     name="alert-circle-outline"
                     size={16}
-                    color={paletaColores.error}
+                    color={colores.error}
                   />
-                  <Text style={styles.textoError}>
+                  <Text style={[styles.textoError, { color: colores.error }]}>
                     Ingresa un celular peruano válido
                     de 9 dígitos.
                   </Text>
@@ -209,7 +214,7 @@ export default function VerificacionContactoConductor() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
             <CampoTexto
               placeholder="Dirección actual"
@@ -217,7 +222,7 @@ export default function VerificacionContactoConductor() {
               value={direccion}
               onChangeText={setDireccion}
               autoCapitalize="sentences"
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
 
@@ -227,7 +232,7 @@ export default function VerificacionContactoConductor() {
               fotoUri={foto}
               descripcion="Para que puedan reconocerte."
               alCambiarFoto={(uri) => setFoto(uri)}
-              variante="claro"
+              variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>
             
@@ -254,7 +259,7 @@ export default function VerificacionContactoConductor() {
                 }
               />
 
-              <Text style={styles.textoVolver}>
+              <Text style={[styles.textoVolver, { color: colores.secundario }]}>
                 Volver
               </Text>
             </Pressable>
