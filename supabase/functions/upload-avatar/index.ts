@@ -8,173 +8,143 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+const respuestaJson = (data: unknown, status = 200) =>
+  Response.json(data, { status, headers: corsHeaders })
+
+/**
+ * Convierte Base64 a Uint8Array de forma nativa y eficiente
+ */
+function base64ABytes(base64: string): Uint8Array {
+  const limpio = base64.replace(/^data:image\/\w+;base64,/, '')
+  const binario = atob(limpio)
+  const bytes = new Uint8Array(binario.length)
+  for (let i = 0; i < binario.length; i++) {
+    bytes[i] = binario.charCodeAt(i)
+  }
+  return bytes
+}
+
+/**
+ * Consulta la moderación en Sightengine y determina si la imagen es apta
+ */
+async function validarContenidoImagen(file: File, user: string, secret: string): Promise<boolean> {
+  const form = new FormData()
+  form.append('media', file)
+  form.append('models', 'nudity-2.0,wad')
+  form.append('api_user', user)
+  form.append('api_secret', secret)
+
+  const res = await fetch('https://api.sightengine.com/1.0/check.json', {
+    method: 'POST',
+    body: form,
+    signal: AbortSignal.timeout(9000),
+  })
+
+  if (!res.ok) {
+    throw new Error('FALLO_MODERACION')
+  }
+
+  const data = await res.json()
+  if (data.status === 'failure') {
+    throw new Error('FALLO_MODERACION')
+  }
+
+  const sinDesnudez = typeof data.nudity?.none === 'number' ? data.nudity.none : 1
+  const armas = typeof data.weapon === 'number' ? data.weapon : 0
+  const drogas = typeof data.drugs === 'number' ? data.drugs : 0
+
+  return sinDesnudez >= 0.4 && armas <= 0.6 && drogas <= 0.6
+}
+
 Deno.serve(async (req: Request) => {
-  // Manejo de peticiones preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const contentType = req.headers.get('content-type') || ''
     let file: File | null = null
     let userId: string | null = null
-    let fileName: string = ''
-    let mimeType: string = 'image/jpeg'
-    let validateOnly: boolean = false
-
-    const contentType = req.headers.get('content-type') || ''
+    let validateOnly = false
+    let mimeType = 'image/jpeg'
 
     if (contentType.includes('application/json')) {
-      const jsonBody = await req.json()
-      userId = jsonBody.userId || null
-      validateOnly = Boolean(jsonBody.validateOnly)
-      const base64Data = jsonBody.base64 || ''
-      mimeType = jsonBody.mimeType || 'image/jpeg'
+      const json = await req.json().catch(() => ({}))
+      userId = json.userId || null
+      validateOnly = Boolean(json.validateOnly)
+      mimeType = json.mimeType || 'image/jpeg'
       const ext = mimeType.split('/')[1] || 'jpg'
-      fileName = `${userId || 'temp'}-${Date.now()}.${ext}`
 
-      if (base64Data) {
-        const pureBase64 = base64Data.replace(/^data:image\/\w+;base64,/, '')
-        const binaryString = atob(pureBase64)
-        const bytes = new Uint8Array(binaryString.length)
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i)
-        }
-        file = new File([bytes], fileName, { type: mimeType })
+      if (json.base64) {
+        file = new File([base64ABytes(json.base64)], `${userId || 'temp'}-${Date.now()}.${ext}`, { type: mimeType })
       }
     } else {
-      const formData = await req.formData()
-      file = formData.get('file') as File | null
-      userId = formData.get('userId') as string | null
-      validateOnly = formData.get('validateOnly') === 'true'
-      const ext = file?.name?.split('.').pop()?.toLowerCase() || 'jpg'
-      fileName = `${userId || 'temp'}-${Date.now()}.${ext}`
+      const form = await req.formData()
+      file = form.get('file') as File | null
+      userId = form.get('userId') as string | null
+      validateOnly = form.get('validateOnly') === 'true'
       mimeType = file?.type || 'image/jpeg'
     }
 
     if (!file || (!validateOnly && !userId)) {
-      return new Response(
-        JSON.stringify({ error: 'Faltan datos requeridos (imagen o id de usuario)' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      return respuestaJson({ error: 'Faltan datos requeridos (imagen o id de usuario).' }, 400)
     }
 
-    // 1. Validar la imagen con la API de Sightengine usando los Secretos de Supabase
+    // 1. Verificación de credenciales de moderación
     const apiUser = Deno.env.get('SIGHTENGINE_USER')
     const apiSecret = Deno.env.get('SIGHTENGINE_SECRET')
-
     if (!apiUser || !apiSecret) {
-      console.error('Faltan los secretos SIGHTENGINE_USER y SIGHTENGINE_SECRET en Supabase.')
-      return new Response(
-        JSON.stringify({ error: 'El servicio de moderación de imágenes no está configurado.' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      return respuestaJson({ error: 'Servicio de validación no disponible temporalmente.' }, 503)
     }
 
-    const sightengineForm = new FormData()
-    sightengineForm.append('media', file)
-    sightengineForm.append('models', 'nudity-2.0,wad')
-    sightengineForm.append('api_user', apiUser)
-    sightengineForm.append('api_secret', apiSecret)
-
+    // 2. Validación de contenido con Sightengine
     try {
-      const moderationRes = await fetch('https://api.sightengine.com/1.0/check.json', {
-        method: 'POST',
-        body: sightengineForm,
-      })
-      const moderationData = await moderationRes.json()
-
-      if (moderationData.status === 'failure') {
-        console.warn('Aviso de Sightengine:', moderationData.error?.message)
-      } else {
-        const nudityNone = typeof moderationData.nudity?.none === 'number' ? moderationData.nudity.none : 1
-        const weaponScore = typeof moderationData.weapon === 'number' ? moderationData.weapon : 0
-        const drugsScore = typeof moderationData.drugs === 'number' ? moderationData.drugs : 0
-
-        const isNsfw = nudityNone < 0.4 || weaponScore > 0.6 || drugsScore > 0.6
-
-        if (isNsfw) {
-          return new Response(
-            JSON.stringify({ error: 'La foto seleccionada contiene material no permitido (desnudez, armas o drogas).' }),
-            { 
-              status: 400, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          )
-        }
+      const esApta = await validarContenidoImagen(file, apiUser, apiSecret)
+      if (!esApta) {
+        return respuestaJson({
+          error: 'La foto seleccionada contiene material no permitido (desnudez, armas o drogas).'
+        }, 400)
       }
-    } catch (modErr) {
-      console.warn('Error al conectar con Sightengine:', modErr)
+    } catch (err: any) {
+      if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
+        return respuestaJson({ error: 'La validación de la imagen tardó demasiado tiempo.' }, 504)
+      }
+      return respuestaJson({ error: 'No se pudo verificar la imagen en este momento.' }, 502)
     }
 
-    // Si solo es validación previa al registro, respondemos exitosamente sin guardar en BD ni Storage
     if (validateOnly) {
-      return new Response(
-        JSON.stringify({ ok: true, valid: true, message: 'Foto verificada y permitida' }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      return respuestaJson({ ok: true, valid: true, message: 'Foto verificada y permitida' })
     }
 
-    // 2. Conectar a Supabase usando permisos de servicio administrativo
+    // 3. Persistencia en Supabase Storage y Base de Datos
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 3. Subir el archivo al bucket de avatars
+    const nombreArchivo = `${userId}-${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`
+
     const { error: uploadError } = await supabaseAdmin.storage
       .from('avatars')
-      .upload(fileName, file, { 
-        contentType: mimeType,
-        upsert: true 
-      })
+      .upload(nombreArchivo, file, { contentType: mimeType, upsert: true })
 
     if (uploadError) {
-      console.error('Error al subir a storage:', uploadError)
-      throw new Error(`Error en almacenamiento: ${uploadError.message}`)
+      return respuestaJson({ error: 'No se pudo guardar la imagen de perfil.' }, 500)
     }
 
-    // 4. Obtener la URL pública del archivo
-    const { data: { publicUrl } } = supabaseAdmin.storage.from('avatars').getPublicUrl(fileName)
+    const { data: { publicUrl } } = supabaseAdmin.storage.from('avatars').getPublicUrl(nombreArchivo)
 
-    // 5. Actualizar la tabla public.usuarios con la nueva foto
     const { error: dbError } = await supabaseAdmin
       .from('usuarios')
-      .update({ 
-        avatar_url: publicUrl,
-        foto_url: publicUrl 
-      })
+      .update({ avatar_url: publicUrl, foto_url: publicUrl })
       .eq('id', userId)
 
     if (dbError) {
-      console.error('Error al actualizar base de datos:', dbError)
-      throw new Error(`Error en base de datos: ${dbError.message}`)
+      return respuestaJson({ error: 'No se pudo actualizar el perfil del usuario.' }, 500)
     }
 
-    return new Response(
-      JSON.stringify({ url: publicUrl, message: 'Avatar actualizado con éxito' }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
-
-  } catch (error: any) {
-    console.error('Error en upload-avatar:', error)
-    return new Response(
-      JSON.stringify({ error: error?.message || 'Error inesperado al procesar el avatar' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    return respuestaJson({ url: publicUrl, message: 'Avatar actualizado con éxito' })
+  } catch {
+    return respuestaJson({ error: 'Error interno al procesar el avatar.' }, 500)
   }
 })
