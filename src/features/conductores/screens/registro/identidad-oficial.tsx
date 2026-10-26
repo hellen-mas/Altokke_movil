@@ -1,3 +1,4 @@
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
 import { DocumentoFoto } from "@/features/conductores/components/DocumentoFoto";
 import { IndicadorPasos } from "@/shared/components/ui";
@@ -26,6 +27,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type TipoFoto = "frente" | "reverso" | "selfie";
 
 export default function IdentidadOficialConductor() {
+  const { colores, esOscuro } = useAltokkeTheme();
     const {
         dniFrente,
         setDniFrente,
@@ -125,17 +127,17 @@ export default function IdentidadOficialConductor() {
 
     return (
         <SafeAreaView
-            style={styles.areaSegura}
+            style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
             edges={["top", "bottom"]}
         >
-            <StatusBar style="dark"/>
+            <StatusBar style={esOscuro ? "light" : "dark"}/>
             
             <KeyboardAvoidingView
-                style={styles.container}
+                style={[styles.container, { backgroundColor: colores.fondo }]}
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
@@ -144,24 +146,24 @@ export default function IdentidadOficialConductor() {
                         titulo="Identidad "
                         tituloDestacado="oficial"
                         descripcion="Documentos para validar tu identidad"
-                        variante="claro"
+                        variante={esOscuro ? "oscuro" : "claro"}
                         />
                     </View>
 
                     <IndicadorPasos
                         pasoActual={3}
                         totalPasos={5}
-                        variante="claro"
+                        variante={esOscuro ? "oscuro" : "claro"}
                     />
 
                     {/* Documentos */}
                     <View style={styles.documentosContainer}>
                         <View style={styles.filaSeccion}>
-                            <Text style={styles.tituloSeccion}>
+                            <Text style={[styles.tituloSeccion, { color: colores.texto }]}>
                                 Fotografías requeridas
                             </Text>
 
-                            <Text style={styles.contador}>
+                            <Text style={[styles.contador, { color: colores.exitoTexto }]}>
                                 {fotosCompletadas}/3
                             </Text>
                         </View>
@@ -196,9 +198,9 @@ export default function IdentidadOficialConductor() {
                         <Ionicons
                         name="information-circle-outline"
                         size={17}
-                        color={paletaColores.textoSecundarioClaro}
+                        color={colores.secundario}
                         />
-                        <Text style={styles.consejoTexto}>
+                        <Text style={[styles.consejoTexto, { color: colores.secundario }]}>
                         Usa buena iluminación y evita reflejos.
                         </Text>
                     </View>
@@ -221,9 +223,9 @@ export default function IdentidadOficialConductor() {
                         <Ionicons
                             name="arrow-back-outline"
                             size={18}
-                            color={paletaColores.textoSecundarioClaro}
+                            color={colores.secundario}
                         />
-                        <Text style={styles.textoVolver}>
+                        <Text style={[styles.textoVolver, { color: colores.secundario }]}>
                             Volver
                         </Text>
                         </Pressable>
