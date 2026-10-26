@@ -24,7 +24,7 @@ export function DocumentoArchivo({
     onPress,
     deshabilitado = false,
 } : DocumentoArchivoProps) {
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { colores } = useAltokkeTheme();
 
     const cargado = Boolean(archivo);
 
@@ -67,6 +67,7 @@ export function DocumentoArchivo({
                     <Text
                         style={[
                             styles.estado,
+                            { color: colores.secundario },
                             archivo && styles.estadoCargado,
                             archivo && { color: colores.exitoTexto },
                         ]}

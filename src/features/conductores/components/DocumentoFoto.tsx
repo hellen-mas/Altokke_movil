@@ -26,7 +26,7 @@ export function DocumentoFoto({
     onVerFoto,
     deshabilitado = false,
 } : DocumentoFotoProps) {
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { colores } = useAltokkeTheme();
     const tieneFoto = Boolean(foto);
 
     return (
