@@ -170,6 +170,7 @@ export default function VehiculoConductor() {
       style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
+      <StatusBar style={esOscuro ? "light" : "dark"}/>
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colores.fondo }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
