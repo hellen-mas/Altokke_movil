@@ -1,59 +1,88 @@
-import { BotonPrincipal, ContenedorPantalla } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { authService } from "@/features/autenticacion/services/authService";
-import { EstadoConductor, obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
+import {
+  EstadoConductor,
+  obtenerEstadoConductor,
+} from "@/features/conductores/services/conductorService";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const CONFIG_ESTADOS: Record<
+type Icono = keyof typeof Ionicons.glyphMap;
+
+const ESTADOS: Record<
   EstadoConductor,
-  { titulo: string; descripcion: string; icono: keyof typeof Ionicons.glyphMap; color: string }
+  { 
+    titulo: string; 
+    descripcion: string; 
+    etiqueta: string;
+    icono: Icono;
+  }
 > = {
-  aprobado: {
-    titulo: "¡Solicitud aprobada!",
-    descripcion: "Tu cuenta fue aprobada. Ya puedes comenzar a conducir con Altokke.",
-    icono: "checkmark-circle",
-    color: paletaColores.boton,
-  },
   pendiente: {
-    titulo: "Tu solicitud está en revisión",
-    descripcion: "Estamos revisando tus datos y documentos. Por ahora no puedes recibir viajes.",
+    titulo: "Solicitud en revisión",
+    descripcion:
+      "Estamos verificando tu información y documentos. Te informaremos cuando termine la revisión.",
+    etiqueta: "En revisión",
     icono: "time-outline",
-    color: "#F59E0B",
+  },
+  aprobado: {
+    titulo: "¡Todo está listo!",
+    descripcion:
+      "Tu solicitud fue aprobada. Ya puedes comenzar a recibir viajes con Altokke.",
+    etiqueta: "Aprobada",
+    icono: "checkmark-outline",
   },
   rechazado: {
-    titulo: "Tu solicitud tiene observaciones",
-    descripcion: "Encontramos observaciones en tu solicitud. Debes corregirlas antes de comenzar.",
-    icono: "alert-circle-outline",
-    color: "#EF4444",
+    titulo: "Solicitud observada",
+    descripcion:
+      "Encontramos observaciones en tu solicitud. Comunícate con soporte para conocer los detalles.",
+    etiqueta: "Requiere atención",
+    icono: "alert-outline",
   },
   suspendido: {
-    titulo: "Tu cuenta está suspendida",
-    descripcion: "Tu acceso como conductor está temporalmente suspendido.",
-    icono: "alert-circle-outline",
-    color: "#EF4444",
+    titulo: "Cuenta suspendida",
+    descripcion:
+      "Tu acceso como conductor está suspendido. Comunícate con soporte para recibir ayuda.",
+    etiqueta: "Suspendida",
+    icono: "lock-closed-outline",
   },
 };
 
 export default function EstadoSolicitudScreen() {
+  const { colores, esOscuro } = useAltokkeTheme();
+
   const [estado, setEstado] = useState<EstadoConductor | null>(null);
   const [cargando, setCargando] = useState(true);
 
   const consultarEstado = useCallback(async () => {
     setCargando(true);
+
     try {
       const user = await authService.obtenerUsuarioActual();
+
       if (!user) {
         router.replace("/login");
         return;
       }
+
       const estadoActual = await obtenerEstadoConductor(user.id);
       setEstado(estadoActual);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "No se pudo consultar tu solicitud.");
+      Alert.alert(
+        "No se pudo consultar",
+        error?.message || "Inténtalo nuevamente."
+      );
     } finally {
       setCargando(false);
     }
@@ -64,64 +93,213 @@ export default function EstadoSolicitudScreen() {
   }, [consultarEstado]);
 
   const cerrarSesion = async () => {
-    await authService.cerrarSesion();
-    router.replace("/login");
+    try {
+      await authService.cerrarSesion();
+      router.replace("/login");
+    } catch {
+      Alert.alert("Error", "No se pudo cerrar la sesión.");
+    }
   };
 
-
-  const pantallaFondo = (contenido: React.ReactNode) => (
-    <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
-    >
-      <ContenedorPantalla estiloContenedorContenido={styles.container}>{contenido}</ContenedorPantalla>
-    </LinearGradient>
-  );
-
-  if (cargando) {
-    return pantallaFondo(
-      <View style={styles.centro}>
-        <ActivityIndicator size="large" color={paletaColores.boton} />
-        <Text style={styles.textoCargando}>Consultando tu solicitud...</Text>
-      </View>
-    );
-  }
-
-  if (!estado || !CONFIG_ESTADOS[estado]) {
-    return pantallaFondo(
-      <View style={styles.centro}>
-        <Text style={styles.descripcion}>No se pudo cargar tu solicitud.</Text>
-        <BotonPrincipal titulo="Reintentar" onPress={consultarEstado} />
-        <BotonPrincipal titulo="Cerrar sesión" onPress={cerrarSesion} />
-      </View>
-    );
-  }
-
-  const { titulo, descripcion, icono, color } = CONFIG_ESTADOS[estado];
+  const configuracion = estado ? ESTADOS[estado] : null;
   const esAprobado = estado === "aprobado";
 
-  return pantallaFondo(
-    <View style={styles.contenido}>
-      <Ionicons name={icono} size={80} color={color} />
-      <Text style={styles.titulo}>{titulo}</Text>
-      <Text style={styles.descripcion}>{descripcion}</Text>
+  const colorEstado =
+    estado === "rechazado" || estado === "suspendido"
+      ? colores.error
+      : colores.exitoTexto;
 
-      <View style={styles.tarjeta}>
-        <Text style={styles.etiqueta}>Estado de tu solicitud</Text>
-        <Text style={[styles.estado, { color }]}>{estado.toUpperCase()}</Text>
-      </View>
+  const fondoIcono =
+    estado === "rechazado" || estado === "suspendido"
+      ? colores.errorFondo
+      : colores.exitoFondo;
 
-      <View style={styles.acciones}>
-        {esAprobado ? (
-          <BotonPrincipal titulo="Empezar a conducir" onPress={() => router.replace("/inicio")} />
-        ) : (
-          <BotonPrincipal titulo="Actualizar estado" onPress={consultarEstado} />
-        )}
-        <BotonPrincipal titulo="Cerrar sesión" onPress={cerrarSesion} />
-      </View>
-    </View>
+  return (
+    <SafeAreaView
+      style={[
+        styles.pantalla,
+        { backgroundColor: colores.fondo },
+      ]}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contenido}>
+          {cargando ? (
+            <View style={styles.centro}>
+              <ActivityIndicator
+                size="large"
+                color={colores.exitoTexto}
+              />
+              <Text
+                style={[
+                  styles.descripcion,
+                  { color: colores.secundario },
+                ]}
+              >
+                Consultando tu solicitud...
+              </Text>
+            </View>
+          ) : configuracion ? (
+            <>
+              <View
+                style={[
+                  styles.iconoContenedor,
+                  { backgroundColor: fondoIcono },
+                ]}
+              >
+                <Ionicons
+                  name={configuracion.icono}
+                  size={34}
+                  color={colorEstado}
+                />
+              </View>
+
+              <Text
+                style={[
+                  styles.titulo,
+                  { color: colores.texto },
+                ]}
+              >
+                {configuracion.titulo}
+              </Text>
+
+              <Text
+                style={[
+                  styles.descripcion,
+                  { color: colores.secundario },
+                ]}
+              >
+                {configuracion.descripcion}
+              </Text>
+
+              <View
+                style={[
+                  styles.tarjeta,
+                  {
+                    backgroundColor: colores.superficie,
+                    borderColor: colores.linea,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.etiqueta,
+                    { color: colores.secundario },
+                  ]}
+                >
+                  ESTADO ACTUAL
+                </Text>
+
+                <View style={styles.filaEstado}>
+                  <Ionicons
+                    name="ellipse"
+                    size={11}
+                    color={colorEstado}
+                  />
+
+                  <Text
+                    style={[
+                      styles.valorEstado,
+                      { color: colores.texto },
+                    ]}
+                  >
+                    {configuracion.etiqueta}
+                  </Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <>
+              <View
+                style={[
+                  styles.iconoContenedor,
+                  { backgroundColor: colores.campo },
+                ]}
+              >
+                <Ionicons
+                  name="cloud-offline-outline"
+                  size={32}
+                  color={colores.secundario}
+                />
+              </View>
+
+              <Text
+                style={[
+                  styles.titulo,
+                  { color: colores.texto },
+                ]}
+              >
+                No pudimos cargar tu solicitud
+              </Text>
+
+              <Text
+                style={[
+                  styles.descripcion,
+                  { color: colores.secundario },
+                ]}
+              >
+                Comprueba tu conexión e inténtalo nuevamente.
+              </Text>
+            </>
+          )}
+        </View>
+
+        <View style={styles.acciones}>
+          <Pressable
+            disabled={cargando}
+            onPress={
+              esAprobado
+                ? () => router.replace("/inicio")
+                : () => void consultarEstado()
+            }
+            style={({ pressed }) => [
+              styles.botonPrincipal,
+              {
+                backgroundColor: colores.primario,
+                opacity: cargando ? 0.55 : pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.textoPrincipal,
+                { color: colores.textoBoton },
+              ]}
+            >
+              {esAprobado
+                ? "Empezar a conducir"
+                : "Actualizar estado"}
+            </Text>
+
+            <Ionicons
+              name={
+                esAprobado
+                  ? "arrow-forward"
+                  : "refresh-outline"
+              }
+              size={18}
+              color={colores.textoBoton}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={() => void cerrarSesion()}
+            style={styles.botonSecundario}
+          >
+            <Text
+              style={[
+                styles.textoSecundario,
+                { color: colores.secundario },
+              ]}
+            >
+              Cerrar sesión
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -129,63 +307,96 @@ const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
   },
-  container: {
+  scroll: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-    justifyContent: "center",
+    paddingHorizontal: 26,
+    paddingTop: 22,
+    paddingBottom: 30,
+  },
+  marca: {
+    fontSize: 15,
+    fontWeight: "800",
+    letterSpacing: 2.5,
   },
   contenido: {
-    alignItems: "center",
-    gap: 18,
-  },
-  centro: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 20,
+    paddingVertical: 50,
   },
-  textoCargando: {
-    color: "#C2D4CB",
-    fontSize: 16,
+  centro: {
+    alignItems: "center",
+    gap: 18,
+  },
+  iconoContenedor: {
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 28,
   },
   titulo: {
-    fontSize: 26,
+    fontSize: 27,
+    lineHeight: 34,
     fontWeight: "800",
+    letterSpacing: -0.7,
     textAlign: "center",
-    color: "#FFFFFF",
+    marginBottom: 14,
   },
   descripcion: {
     fontSize: 15,
+    lineHeight: 24,
     textAlign: "center",
-    lineHeight: 22,
-    color: "#C2D4CB",
+    maxWidth: 330,
   },
   tarjeta: {
     width: "100%",
-    backgroundColor: paletaColores.input,
-    borderWidth: 1.5,
-    borderColor: paletaColores.borde,
-    borderRadius: 16,
-    padding: 20,
-    marginVertical: 10,
-    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginTop: 36,
   },
   etiqueta: {
-    fontSize: 13,
-    color: paletaColores.textoSecundario,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.2,
   },
-  estado: {
-    fontSize: 18,
-    fontWeight: "800",
-    marginTop: 6,
-    letterSpacing: 1,
+  filaEstado: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 12,
+  },
+  valorEstado: {
+    fontSize: 16,
+    fontWeight: "700",
   },
   acciones: {
-    width: "100%",
-    gap: 14,
-    marginTop: 10,
+    gap: 10,
+  },
+  botonPrincipal: {
+    minHeight: 56,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 18,
+  },
+  textoPrincipal: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  botonSecundario: {
+    minHeight: 48,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  textoSecundario: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
 

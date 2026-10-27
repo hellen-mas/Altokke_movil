@@ -1,6 +1,6 @@
+import { identidadService } from "@/features/autenticacion/services/identidadService";
 import { supabase } from "@/shared/api/supabase";
 import { subirFotoAvatar } from "@/shared/utils/avatar";
-import { identidadService } from "@/features/autenticacion/services/identidadService";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
@@ -35,6 +35,42 @@ const extraerMetadata = (d: PerfilOAuthInput) => ({
   rol: "pasajero",
 });
 
+
+const comprobarEstadoCuenta = async (usuarioId: string) => {
+  const { data: perfil, error } = await supabase
+    .from("usuarios")
+    .select("estado_cuenta")
+    .eq("id", usuarioId)
+    .single();
+
+  if (error || !perfil) {
+    await supabase.auth.signOut({ scope: "local" });
+    throw new Error("No fue posible verificar el estado de tu cuenta.");
+  }
+
+  if (perfil.estado_cuenta !== "activo") {
+    await supabase.auth.signOut({ scope: "local" });
+
+    switch (perfil.estado_cuenta) {
+      case "eliminada":
+        throw new Error("Esta cuenta ya no está disponible.");
+
+      case "suspendido":
+        throw new Error(
+          "Tu cuenta ha sido suspendida. Contacta con soporte de Altokke."
+        );
+
+      case "desactivado":
+        throw new Error(
+          "Tu cuenta está desactivada. Contacta con soporte para solicitar su reactivación."
+        );
+
+      default:
+        throw new Error("Tu cuenta no está disponible.");
+    }
+  }
+};
+
 export const authService = {
   async loginConPassword(email: string, contrasena: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -42,7 +78,10 @@ export const authService = {
       password: contrasena,
     });
     if (error) throw error;
+
     if (!data.user) throw new Error("No se pudo obtener el usuario.");
+
+    await comprobarEstadoCuenta(data.user.id);
     return data.user;
   },
 
@@ -70,8 +109,16 @@ export const authService = {
       access_token,
       refresh_token,
     });
+    
     if (sessionError) throw sessionError;
-    return sessionData?.session?.user || null;
+
+    const usuarioGoogle = sessionData?.session?.user;
+
+    if (!usuarioGoogle) return null;
+
+    await comprobarEstadoCuenta(usuarioGoogle.id);
+
+    return usuarioGoogle;
   },
 
   async registrarPasajero(datos: RegistroPasajeroInput) {
@@ -122,13 +169,52 @@ export const authService = {
   },
 
   async tieneSesionActiva(): Promise<boolean> {
-    const { data } = await supabase.auth.getSession();
-    return Boolean(data?.session);
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error || !data.session?.user) {
+      return false;
+    }
+
+    await comprobarEstadoCuenta(data.session.user.id);
+
+    return true;
   },
 
   async obtenerUsuarioActual() {
     const { data: { user } } = await supabase.auth.getUser();
     return user;
+  },
+  
+  async eliminarMiCuenta(): Promise<void> {
+    const { data, error } = await supabase.functions.invoke(
+      "finalizar-eliminacion-cuenta",
+      { body: {} }
+    );
+
+    if (error) {
+      let mensaje = "No se pudo completar la eliminación de la cuenta.";
+
+      if (error.context instanceof Response) {
+        try {
+          const detalle = await error.context.clone().json();
+          mensaje = detalle.error || detalle.message || mensaje;
+        } catch {
+          mensaje = error.message;
+        }
+      } else {
+        mensaje = error.message;
+      }
+
+      throw new Error(mensaje);
+    }
+
+    if (!data?.ok) {
+      throw new Error(
+        data?.error || "No se pudo completar la eliminación de la cuenta."
+      );
+    }
+
+    await supabase.auth.signOut({ scope: "local" });
   },
 
   async cerrarSesion() {

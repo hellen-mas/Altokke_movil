@@ -5,6 +5,8 @@ import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { authService } from "@/features/autenticacion/services/authService";
+import { useState } from "react";
 
 const mostrarProximamente = () => {
   Alert.alert("Próximamente", "Esta opción todavía no está disponible.");
@@ -12,6 +14,43 @@ const mostrarProximamente = () => {
 
 export default function ConfiguracionConductor() {
   const { logout } = useAuth();
+
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+
+  const confirmarEliminarCuenta = () => {
+    if (eliminandoCuenta) return;
+
+    Alert.alert(
+      "Eliminar cuenta",
+      "¿Deseas eliminar tu cuenta de Altokke? Perderás el acceso y no podrás seguir utilizando esta cuenta. Algunos registros históricos podrán conservarse por obligaciones legales y operativas.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar cuenta",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setEliminandoCuenta(true);
+
+              await authService.eliminarMiCuenta();
+
+              router.replace("/(auth)/bienvenida");
+            } catch (error: any) {
+              Alert.alert(
+                "No se pudo eliminar la cuenta",
+                error?.message || "Inténtalo nuevamente."
+              );
+            } finally {
+              setEliminandoCuenta(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const cerrarSesion = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que quieres salir de tu cuenta?", [
@@ -93,6 +132,21 @@ export default function ConfiguracionConductor() {
             ultimo
           />
         </View>
+
+        <View style={styles.opciones}>
+          <OpcionCuenta
+            icono="trash-outline"
+            titulo="Eliminar cuenta"
+            descripcion={
+              eliminandoCuenta
+                ? "Procesando solicitud..."
+                : "Solicitar la eliminación de tu cuenta"
+            }
+            onPress={confirmarEliminarCuenta}
+            ultimo
+          />
+        </View>
+
       </ScrollView>
     </View>
   );

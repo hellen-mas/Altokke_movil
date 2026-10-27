@@ -7,8 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.18"
   }
@@ -293,6 +291,9 @@ export type Database = {
           nombre: string
           rol: Database["public"]["Enums"]["rol_usuario"] | null
           telefono: string
+          estado_cuenta: string
+          desactivado_en: string | null
+          motivo_desactivacion: string | null
         }
         Insert: {
           apellidos: string
@@ -306,6 +307,9 @@ export type Database = {
           nombre: string
           rol?: Database["public"]["Enums"]["rol_usuario"] | null
           telefono: string
+          estado_cuenta?: string
+          desactivado_en?: string | null
+          motivo_desactivacion?: string | null
         }
         Update: {
           apellidos?: string
@@ -319,6 +323,9 @@ export type Database = {
           nombre?: string
           rol?: Database["public"]["Enums"]["rol_usuario"] | null
           telefono?: string
+          estado_cuenta?: string
+          desactivado_en?: string | null
+          motivo_desactivacion?: string | null
         }
         Relationships: []
       }
@@ -483,6 +490,10 @@ export type Database = {
       cancelar_viaje_pasajero: { Args: { p_viaje_id: string }; Returns: undefined }
       aceptar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }
       finalizar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }
+      eliminar_mi_cuenta: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       obtener_conductor_viaje: {
         Args: { p_viaje_id: string }
         Returns: {

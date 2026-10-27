@@ -6,6 +6,8 @@ import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { authService } from "@/features/autenticacion/services/authService";
+import { router } from "expo-router";
 
 interface OpcionConfig {
   titulo: string;
@@ -46,6 +48,38 @@ export default function Configuracion() {
     setModalVisible(true);
   };
 
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+
+  const confirmarEliminarCuenta = () => {
+    if (eliminandoCuenta) return;
+
+    Alert.alert(
+      "Eliminar cuenta",
+      "¿Estás seguro de que deseas eliminar tu cuenta de Altokke? Perderás el acceso a ella. Algunos registros históricos podrán conservarse por motivos legales y operativos.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar cuenta",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setEliminandoCuenta(true);
+              await authService.eliminarMiCuenta();
+              router.replace("/(auth)/bienvenida");
+            } catch (error: any) {
+              Alert.alert(
+                "No se pudo eliminar la cuenta",
+                error?.message || "Inténtalo nuevamente."
+              );
+            } finally {
+              setEliminandoCuenta(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Configuración" />
@@ -60,6 +94,16 @@ export default function Configuracion() {
           titulo="Privacidad y Derechos ARCO"
           subtitulo="Protección de datos personales (Ley N° 29733)"
           onPress={() => Alert.alert("Privacidad", "Tus datos están protegidos conforme a ley. Puedes rectificarlos o solicitar su supresión en cualquier momento.")}
+        />
+        <ItemMenu
+          icono="trash-outline"
+          titulo="Eliminar cuenta"
+          subtitulo={
+            eliminandoCuenta
+              ? "Procesando solicitud..."
+              : "Solicitar la eliminación de tu cuenta"
+          }
+          onPress={confirmarEliminarCuenta}
         />
       </ScrollView>
 

@@ -65,13 +65,80 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
   },
 
   init: () => {
-    // Delega la sesión inicial en INITIAL_SESSION para no leerla dos veces
+    let activo = true;
+    let revision = 0;
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, ses) => {
-      get().setSession(ses);
+      const revisionActual = ++revision;
+
+      if (!ses?.user) {
+        get().setSession(null);
+        return;
+      }
+
+      // No autorizar la navegación hasta verificar la cuenta.
+      set({
+        isLoading: true,
+        isAuthenticated: false,
+      });
+
+      // La consulta se ejecuta fuera del callback de Supabase Auth
+      // para evitar bloqueos con operaciones asíncronas.
+      setTimeout(() => {
+        const verificarCuenta = async () => {
+          try {
+            const { data: usuario, error } = await supabase
+              .from("usuarios")
+              .select("estado_cuenta")
+              .eq("id", ses.user.id)
+              .single();
+
+            if (!activo || revisionActual !== revision) return;
+
+            if (error || !usuario) {
+              console.warn(
+                "No se pudo verificar el estado de la cuenta:",
+                error
+              );
+
+              get().setSession(null);
+              return;
+            }
+
+            if (usuario.estado_cuenta !== "activo") {
+              get().setSession(null);
+
+              await supabase.auth.signOut({
+                scope: "local",
+              });
+
+              return;
+            }
+
+            // Solo una cuenta activa obtiene acceso a la app.
+            get().setSession(ses);
+          } catch (error) {
+            if (!activo || revisionActual !== revision) return;
+
+            console.warn(
+              "Error verificando la cuenta:",
+              error
+            );
+
+            get().setSession(null);
+          }
+        };
+
+        void verificarCuenta();
+      }, 0);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      activo = false;
+      revision++;
+      subscription.unsubscribe();
+    };
   },
 }));
