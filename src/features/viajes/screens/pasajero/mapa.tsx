@@ -9,7 +9,7 @@ import {
   CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
-import { TipoServicio, useViaje } from "@/features/viajes/context/ViajeContext";
+import { useViajeStore, type TipoServicio } from "@/features/viajes/store/viajeStore";
 import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
 import { useNombrePasajero } from "@/features/pasajeros/hooks/use-nombre-pasajero";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
@@ -51,17 +51,15 @@ const SERVICIOS: {
 
 export default function PantallaMapa() {
   const { colores, esOscuro } = useAltokkeTheme();
-  const { 
-    tipoServicio, 
-    setTipoServicio, 
-    destino, 
-    setDestino,
-    setOrigen,
-    setMetodoPago,
-    viajeActivoId,
-    setViajeActivoId,
-    verificandoViajeActivo,
-  } = useViaje();
+  const tipoServicio = useViajeStore((s) => s.tipoServicio);
+  const setTipoServicio = useViajeStore((s) => s.setTipoServicio);
+  const destino = useViajeStore((s) => s.destino);
+  const setDestino = useViajeStore((s) => s.setDestino);
+  const setOrigen = useViajeStore((s) => s.setOrigen);
+  const setMetodoPago = useViajeStore((s) => s.setMetodoPago);
+  const viajeActivoId = useViajeStore((s) => s.viajeActivoId);
+  const setViajeActivoId = useViajeStore((s) => s.setViajeActivoId);
+  const verificandoViajeActivo = useViajeStore((s) => s.verificandoViajeActivo);
   const { hayNoLeidas } = useNotificaciones();
   const nombre = useNombrePasajero();
   const { perfil } = usePerfilPasajero();
