@@ -12,3 +12,6 @@ export * from "./IndicadorPasos";
 export * from "./SelectorFotoPerfil";
 export * from "./TarjetaOpcion";
 export * from "./TarjetaRol";
+export * from "./Tarjeta";
+export * from "./Fila";
+export * from "./InsigniaEstado";
