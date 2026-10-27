@@ -1,21 +1,35 @@
-
+// @ts-nocheck
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const respuestaJson = (data: unknown, status = 200) =>
+  Response.json(data, { status, headers: corsHeaders });
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     if (req.method !== "POST") {
-      return Response.json(
+      return respuestaJson(
         { error: "Método no permitido." },
-        { status: 405 }
+        405
       );
     }
 
     const authorization = req.headers.get("Authorization");
 
     if (!authorization?.startsWith("Bearer ")) {
-      return Response.json(
+      return respuestaJson(
         { error: "No autorizado." },
-        { status: 401 }
+        401
       );
     }
 
@@ -53,9 +67,9 @@ Deno.serve(async (req) => {
       await admin.auth.getUser(token);
 
     if (errorAuth || !autenticacion.user) {
-      return Response.json(
+      return respuestaJson(
         { error: "Tu sesión no es válida." },
-        { status: 401 }
+        401
       );
     }
 
@@ -110,21 +124,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    return Response.json({
+    return respuestaJson({
       ok: true,
       mensaje: "Cuenta procesada correctamente.",
     });
   } catch (error) {
     console.error("Error eliminando cuenta:", error);
 
-    return Response.json(
+    return respuestaJson(
       {
         error:
           error instanceof Error
             ? error.message
             : "Ocurrió un error inesperado.",
       },
-      { status: 400 }
+      400
     );
   }
 });
