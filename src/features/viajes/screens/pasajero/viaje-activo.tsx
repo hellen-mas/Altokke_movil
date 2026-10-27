@@ -20,7 +20,7 @@ import {
   COLOR_CABECERA,
   ORIGEN_INICIAL_BAGUA,
 } from "@/features/viajes/constants/pasajero";
-import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { useViajeStore } from "@/features/viajes/store/viajeStore";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
@@ -64,7 +64,7 @@ const REFRESCO_UBICACION_MS = 5000;
 
 export default function PantallaViajeActivo() {
   const { colores } = useAltokkeTheme();
-  const { viajeActivoId } = useViaje();
+  const viajeActivoId = useViajeStore((s) => s.viajeActivoId);
   const resumen = useResumenViaje();
   const insets = useSafeAreaInsets();
   const { height: altoPantalla } = useWindowDimensions();
