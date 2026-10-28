@@ -67,6 +67,11 @@ export const identidadService = {
       if (err?.name === "AbortError") {
         throw new Error("La consulta de DNI tardó más de lo esperado. Verifica tu conexión a internet.");
       }
+      // Consulta el estado actual de la red para no culpar al servidor cuando falta internet
+      const redTrasFallo = await NetInfo.refresh().catch(() => null);
+      if (redTrasFallo?.isConnected === false || redTrasFallo?.isInternetReachable === false) {
+        throw new Error(MENSAJE_SIN_CONEXION);
+      }
       throw new Error(err.message || "No se encontraron datos registrados para este DNI.");
     }
   },
