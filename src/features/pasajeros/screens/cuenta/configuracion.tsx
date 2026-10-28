@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
-import { 
+import { useState, useEffect } from "react";
+import {
   ActivityIndicator,
   Alert,
   Modal,
@@ -18,7 +18,6 @@ import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajer
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
 import type { ModoApariencia } from "@/shared/theme/temaStore";
-import { useEffect } from "react";
 
 type ClavePreferencia = "idioma" | "tema" | "unidades" | "mapaEstilo";
 type ClaveModal = "idioma" | "tema" | "unidades" | "mapa";
@@ -62,13 +61,7 @@ const CONFIGURACIONES: Record<ClaveModal, OpcionConfig> = {
   },
 };
 
-const CLAVES: ClaveModal[] = [
-  "idioma",
-  "tema",
-  "unidades",
-  "mapa",
-];
-
+const CLAVES: ClaveModal[] = ["idioma", "tema", "unidades", "mapa"];
 
 const ETIQUETAS_TEMA: Record<ModoApariencia, string> = {
   automatico: "Automático (Sistema)",
@@ -92,11 +85,7 @@ function obtenerModoTema(valor: string): ModoApariencia {
 }
 
 export default function Configuracion() {
-  const {
-    colores,
-    modoPreferido,
-    setModoPreferido,
-  } = useAltokkeTheme();
+  const { colores, modoPreferido, setModoPreferido } = useAltokkeTheme();
   const { userId } = useAuth();
   const { perfil, guardarPreferencias } = usePerfilPasajero();
 
@@ -123,16 +112,13 @@ export default function Configuracion() {
     if (!guardando) setModalClave(null);
   };
 
-  const seleccionarOpcion = async (
-    campo: ClavePreferencia,
-    valor: string
-  ) => {
+  const seleccionarOpcion = async (campo: ClavePreferencia, valor: string) => {
     if (guardando) return;
 
     if (!userId) {
       Alert.alert(
         "Sesión requerida",
-        "Inicia sesión para guardar tus preferencias."
+        "Inicia sesión para guardar tus preferencias.",
       );
       return;
     }
@@ -140,9 +126,7 @@ export default function Configuracion() {
     const esCambioTema = campo === "tema";
     const modoAnterior = modoPreferido;
 
-    const nuevoModo = esCambioTema
-      ? obtenerModoTema(valor)
-      : null;
+    const nuevoModo = esCambioTema ? obtenerModoTema(valor) : null;
 
     try {
       setGuardando(true);
@@ -164,7 +148,7 @@ export default function Configuracion() {
       }
 
       setModalClave(null);
-    } catch (error) {
+    } catch {
       // Restaurar el tema anterior si falla el guardado.
       if (nuevoModo) {
         setModoPreferido(modoAnterior);
@@ -172,7 +156,7 @@ export default function Configuracion() {
 
       Alert.alert(
         "No se pudo guardar",
-        "Comprueba tu conexión e inténtalo nuevamente."
+        "Comprueba tu conexión e inténtalo nuevamente.",
       );
     } finally {
       setGuardando(false);
@@ -200,21 +184,14 @@ export default function Configuracion() {
                 "No se pudo eliminar la cuenta",
                 error instanceof Error
                   ? error.message
-                  : "Inténtalo nuevamente."
+                  : "Inténtalo nuevamente.",
               );
             } finally {
               setEliminandoCuenta(false);
             }
           },
         },
-      ]
-    );
-  };
-
-  const mostrarPrivacidad = () => {
-    Alert.alert(
-      "Privacidad y derechos ARCO",
-      "Puedes solicitar el acceso, rectificación, cancelación u oposición al tratamiento de tus datos personales. Contacta al equipo de soporte de Altokke para recibir orientación."
+      ],
     );
   };
 
@@ -222,24 +199,17 @@ export default function Configuracion() {
     <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Configuración" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.contenido}>
-        <Text
-          style={[
-            styles.descripcion,
-            { color: colores.secundario },
-          ]}
-        >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.contenido}
+      >
+        <Text style={[styles.descripcion, { color: colores.secundario }]}>
           Personaliza tu experiencia en Altokke.
         </Text>
 
         {/* Preferencias */}
         <View style={styles.grupo}>
-          <Text
-            style={[
-              styles.tituloGrupo,
-              { color: colores.secundario },
-            ]}
-          >
+          <Text style={[styles.tituloGrupo, { color: colores.secundario }]}>
             PREFERENCIAS
           </Text>
 
@@ -287,10 +257,7 @@ export default function Configuracion() {
 
                     <View style={styles.textos}>
                       <Text
-                        style={[
-                          styles.filaTitulo,
-                          { color: colores.texto },
-                        ]}
+                        style={[styles.filaTitulo, { color: colores.texto }]}
                       >
                         {config.etiqueta}
                       </Text>
@@ -325,8 +292,8 @@ export default function Configuracion() {
             })}
           </View>
         </View>
-
-        {/* Privacidad */}
+        
+        {/* Accesibilidad */}
         <View style={styles.grupo}>
           <Text
             style={[
@@ -334,6 +301,74 @@ export default function Configuracion() {
               { color: colores.secundario },
             ]}
           >
+            ACCESIBILIDAD
+          </Text>
+
+          <View
+            style={[
+              styles.tarjeta,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={() => router.push("/cuenta/accesibilidad")}
+              accessibilityRole="button"
+              accessibilityLabel="Accesibilidad y modo simple"
+              style={({ pressed }) => [
+                styles.fila,
+                pressed && {
+                  backgroundColor: colores.campo,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.iconoCaja,
+                  { backgroundColor: colores.exitoFondo },
+                ]}
+              >
+                <Ionicons
+                  name="accessibility-outline"
+                  size={19}
+                  color={colores.exitoTexto}
+                />
+              </View>
+
+              <View style={styles.textos}>
+                <Text
+                  style={[
+                    styles.filaTitulo,
+                    { color: colores.texto },
+                  ]}
+                >
+                  Accesibilidad y asistencia
+                </Text>
+
+                <Text
+                  style={[
+                    styles.filaSubtitulo,
+                    { color: colores.secundario },
+                  ]}
+                >
+                  Modo simple y facilidad de uso
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colores.secundario}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Privacidad */}
+        <View style={styles.grupo}>
+          <Text style={[styles.tituloGrupo, { color: colores.secundario }]}>
             PRIVACIDAD Y CUENTA
           </Text>
 
@@ -347,7 +382,7 @@ export default function Configuracion() {
             ]}
           >
             <Pressable
-              onPress={mostrarPrivacidad}
+              onPress={() => router.push("/cuenta/privacidad")}
               accessibilityRole="button"
               accessibilityLabel="Privacidad y datos"
               style={({ pressed }) => [
@@ -364,20 +399,12 @@ export default function Configuracion() {
               />
 
               <View style={styles.textos}>
-                <Text
-                  style={[
-                    styles.filaTitulo,
-                    { color: colores.texto },
-                  ]}
-                >
+                <Text style={[styles.filaTitulo, { color: colores.texto }]}>
                   Privacidad y datos
                 </Text>
 
                 <Text
-                  style={[
-                    styles.filaSubtitulo,
-                    { color: colores.secundario },
-                  ]}
+                  style={[styles.filaSubtitulo, { color: colores.secundario }]}
                 >
                   Conoce tus derechos
                 </Text>
@@ -391,10 +418,7 @@ export default function Configuracion() {
             </Pressable>
 
             <View
-              style={[
-                styles.separador,
-                { backgroundColor: colores.linea },
-              ]}
+              style={[styles.separador, { backgroundColor: colores.linea }]}
             />
 
             <Pressable
@@ -410,27 +434,15 @@ export default function Configuracion() {
                 eliminandoCuenta && { opacity: 0.6 },
               ]}
             >
-              <Ionicons
-                name="trash-outline"
-                size={22}
-                color={colores.error}
-              />
+              <Ionicons name="trash-outline" size={22} color={colores.error} />
 
               <View style={styles.textos}>
-                <Text
-                  style={[
-                    styles.filaTitulo,
-                    { color: colores.error },
-                  ]}
-                >
+                <Text style={[styles.filaTitulo, { color: colores.error }]}>
                   Eliminar cuenta
                 </Text>
 
                 <Text
-                  style={[
-                    styles.filaSubtitulo,
-                    { color: colores.secundario },
-                  ]}
+                  style={[styles.filaSubtitulo, { color: colores.secundario }]}
                 >
                   {eliminandoCuenta
                     ? "Procesando solicitud..."
@@ -439,10 +451,7 @@ export default function Configuracion() {
               </View>
 
               {eliminandoCuenta ? (
-                <ActivityIndicator
-                  size="small"
-                  color={colores.error}
-                />
+                <ActivityIndicator size="small" color={colores.error} />
               ) : (
                 <Ionicons
                   name="chevron-forward"
@@ -455,7 +464,7 @@ export default function Configuracion() {
         </View>
       </ScrollView>
 
-      <Modal 
+      <Modal
         visible={modalClave !== null}
         transparent
         animationType="fade"
@@ -480,12 +489,7 @@ export default function Configuracion() {
             {configActual && (
               <>
                 <View style={styles.modalEncabezado}>
-                  <Text
-                    style={[
-                      styles.modalTitulo,
-                      { color: colores.texto },
-                    ]}
-                  >
+                  <Text style={[styles.modalTitulo, { color: colores.texto }]}>
                     {configActual.titulo}
                   </Text>
 
@@ -514,10 +518,7 @@ export default function Configuracion() {
                     <View key={opcion}>
                       <Pressable
                         onPress={() =>
-                          void seleccionarOpcion(
-                            configActual.campo,
-                            opcion
-                          )
+                          void seleccionarOpcion(configActual.campo, opcion)
                         }
                         disabled={guardando}
                         style={({ pressed }) => [
@@ -549,8 +550,7 @@ export default function Configuracion() {
                         )}
                       </Pressable>
 
-                      {index !==
-                        configActual.opciones.length - 1 && (
+                      {index !== configActual.opciones.length - 1 && (
                         <View
                           style={[
                             styles.separador,

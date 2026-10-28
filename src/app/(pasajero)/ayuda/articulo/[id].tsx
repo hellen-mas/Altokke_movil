@@ -1,0 +1,1 @@
+export { default } from "@/features/soporte/screens/pasajero/articulo-ayuda";

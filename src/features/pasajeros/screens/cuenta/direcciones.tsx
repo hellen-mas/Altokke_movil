@@ -469,10 +469,14 @@ export default function DireccionesGuardadas() {
           accessibilityLabel="Agregar nueva dirección"
           style={({ pressed }) => [
             styles.botonAgregar,
-            pressed && { opacity: 0.8 },
+            {
+              backgroundColor: pressed
+                ? colores.primarioPresionado
+                : colores.primario,
+            },
           ]}
         >
-          <Ionicons name="add" size={21} color="#FFFFFF" />
+          <Ionicons name="add" size={21} color={colores.textoBoton} />
 
           <Text style={styles.textoBotonAgregar}>
             Agregar dirección
@@ -811,8 +815,8 @@ const styles = StyleSheet.create({
 
   botonAgregar: {
     minHeight: 50,
-    backgroundColor: "#0B3B2A",
-    borderRadius: 25,
+    backgroundColor: "#83D5AA",
+    borderRadius: 999,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -823,7 +827,7 @@ const styles = StyleSheet.create({
   textoBotonAgregar: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#0C211C",
   },
 
   estadoVacio: {

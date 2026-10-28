@@ -7,6 +7,7 @@ import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
+import { TituloAltokke } from "@/shared/components/ui/TituloAltokke";
 
 type NombreIcono = keyof typeof Ionicons.glyphMap;
 
@@ -202,11 +203,10 @@ export default function CuentaPasajero() {
       >
         {/* Encabezado */}
         <View style={styles.encabezado}>
-          <Text style={[
-              styles.titulo,
-              { color: colores.texto },
-            ]}>Mi cuenta
-            </Text>
+          <TituloAltokke
+            texto="Mi cuenta"
+            style={styles.titulo}
+          />
 
             <Pressable
               onPress={() =>
@@ -288,22 +288,23 @@ export default function CuentaPasajero() {
             style={({ pressed }) => [
               styles.botonEditar,
               {
-                backgroundColor: "#0B3B2A",
+                backgroundColor: pressed
+                  ? colores.primarioPresionado
+                  : colores.primario,
               },
-              pressed && { opacity: 0.8 },
             ]}
           >
             <Ionicons
               name="create-outline"
               size={16}
-              color="#FFFFFF"
+              color={colores.textoBoton}
             />
 
             <Text
               style={[
                 styles.textoEditar,
                 {
-                  color: "#FFFFFF",
+                  color: colores.textoBoton,
                 },
               ]}
             >
@@ -425,7 +426,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderRadius: 22,
+    borderRadius: 999,
   },
 
   textoEditar: {

@@ -39,7 +39,7 @@ const OPCIONES_FUTURAS: {
 ];
 
 export default function Seguridad() {
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { colores } = useAltokkeTheme();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [nuevaPassword, setNuevaPassword] = useState("");
@@ -341,33 +341,27 @@ export default function Seguridad() {
               style={({ pressed }) => [
                 styles.botonGuardar,
                 {
-                  backgroundColor: esOscuro
-                    ? colores.primario
-                    : "#0B3B2A",
+                  backgroundColor: pressed
+                    ? colores.primarioPresionado
+                    : colores.primario,
                   opacity:
-                    actualizando ||
-                    !nuevaPassword ||
-                    !confirmarPassword
+                    actualizando || !nuevaPassword || !confirmarPassword
                       ? 0.5
-                      : pressed
-                        ? 0.8
-                        : 1,
+                      : 1,
                 },
               ]}
             >
               {actualizando ? (
                 <ActivityIndicator
                   size="small"
-                  color={esOscuro ? colores.textoBoton : "#FFFFFF"}
+                  color={colores.textoBoton}
                 />
               ) : (
                 <Text
                   style={[
                     styles.textoGuardar,
                     {
-                      color: esOscuro
-                        ? colores.textoBoton
-                        : "#FFFFFF",
+                      color: colores.textoBoton
                     },
                   ]}
                 >
@@ -506,7 +500,7 @@ const styles = StyleSheet.create({
 
   botonGuardar: {
     minHeight: 48,
-    borderRadius: 14,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
