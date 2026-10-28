@@ -5,7 +5,6 @@ import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
 import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
-import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { COLORES_CUENTA } from "@/features/pasajeros/constants/cuenta";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
@@ -159,7 +158,6 @@ export default function CuentaPasajero() {
         </View>
       </ScrollView>
 
-      <BarraInferior activa="cuenta" />
     </View>
   );
 }

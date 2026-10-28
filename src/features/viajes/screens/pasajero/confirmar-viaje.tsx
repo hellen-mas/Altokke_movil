@@ -10,7 +10,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
@@ -586,7 +585,6 @@ export default function PantallaConfirmarViaje() {
         </View>
       </View>
 
-      <BarraInferior activa="inicio" />
     </View>
   );
 }
