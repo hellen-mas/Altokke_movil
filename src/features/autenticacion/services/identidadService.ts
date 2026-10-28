@@ -1,9 +1,12 @@
+import NetInfo from "@react-native-community/netinfo";
 import { supabase, invocarEdgeFunction } from "@/shared/api/supabase";
 
 const aTitulo = (str: string) =>
   str.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
 
 const cacheDni = new Map<string, { nombres: string; apellidos: string }>();
+
+const MENSAJE_SIN_CONEXION = "No tienes conexión a internet. Revisa tu conexión e inténtalo nuevamente.";
 
 export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
@@ -22,6 +25,14 @@ export const identidadService = {
 
   async validarIdentidadDNI(dni: string) {
     const limpio = dni.trim();
+
+    // Evita la espera de existeDni cuando NetInfo confirma que no hay red
+    const estadoRed = await NetInfo.fetch().catch(() => null);
+    if (estadoRed?.isConnected === false) {
+      const guardadoSinRed = cacheDni.get(limpio);
+      if (guardadoSinRed) return { ...guardadoSinRed };
+      throw new Error(MENSAJE_SIN_CONEXION);
+    }
 
     const yaRegistrado = await this.existeDni(limpio);
     if (yaRegistrado) {
@@ -55,6 +66,11 @@ export const identidadService = {
     } catch (err: any) {
       if (err?.name === "AbortError") {
         throw new Error("La consulta de DNI tardó más de lo esperado. Verifica tu conexión a internet.");
+      }
+      // Consulta el estado actual de la red para no culpar al servidor cuando falta internet
+      const redTrasFallo = await NetInfo.refresh().catch(() => null);
+      if (redTrasFallo?.isConnected === false || redTrasFallo?.isInternetReachable === false) {
+        throw new Error(MENSAJE_SIN_CONEXION);
       }
       throw new Error(err.message || "No se encontraron datos registrados para este DNI.");
     }
