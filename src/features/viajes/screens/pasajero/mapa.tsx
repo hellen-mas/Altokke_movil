@@ -63,6 +63,7 @@ export default function PantallaMapa() {
   const { hayNoLeidas } = useNotificaciones();
   const nombre = useNombrePasajero();
   const { perfil } = usePerfilPasajero();
+  const modoSimple = perfil?.preferencias?.modoSimple === true;
   const { userId } = useAuth();
   const [abriendoViaje, setAbriendoViaje] = useState(false);
 
@@ -291,7 +292,11 @@ export default function PantallaMapa() {
             onPress={irADestino}
             style={({ pressed }) => [
               styles.campoDestino,
-              { backgroundColor: colores.campo },
+              {
+                backgroundColor: colores.campo,
+                minHeight: modoSimple ? 64 : 48,
+                borderRadius: modoSimple ? 18 : 12,
+              },
               pressed && { opacity: 0.8 },
             ]}
           >
@@ -303,7 +308,10 @@ export default function PantallaMapa() {
             <Text
               style={[
                 styles.campoDestinoTexto,
-                { color: destino ? colores.texto : colores.secundario },
+                {
+                  color: destino ? colores.texto : colores.secundario,
+                  fontSize: modoSimple ? 19 : 16,
+                },
                 destino && styles.campoDestinoElegido,
               ]}
               numberOfLines={1}
@@ -532,7 +540,10 @@ export default function PantallaMapa() {
         <BotonPrincipal
           titulo="Solicitar mototaxi"
           onPress={solicitarMototaxi}
-          estilo={styles.botonSolicitar}
+          estilo={[
+            styles.botonSolicitar,
+            modoSimple && { minHeight: 62 },
+          ]}
         />
       </ScrollView>
 
