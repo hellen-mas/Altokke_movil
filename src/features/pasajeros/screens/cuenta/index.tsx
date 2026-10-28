@@ -1,62 +1,141 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
-import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
-import { COLORES_CUENTA } from "@/features/pasajeros/constants/cuenta";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
-import React from "react";
 
-const OPCIONES = [
+type NombreIcono = keyof typeof Ionicons.glyphMap;
+
+type OpcionMenu = {
+  titulo: string;
+  icono: NombreIcono;
+  ruta:
+    | "/cuenta/informacion-personal"
+    | "/cuenta/seguridad"
+    | "/cuenta/metodos-pago"
+    | "/cuenta/direcciones"
+    | "/cuenta/notificaciones"
+    | "/cuenta/configuracion"
+};
+
+const OPCIONES_CUENTA: OpcionMenu[] = [
   {
-    icono: "person-outline",
     titulo: "Información personal",
-    subtitulo: "Tu perfil y datos de cuenta",
+    icono: "person-outline",
     ruta: "/cuenta/informacion-personal",
   },
   {
-    icono: "shield-checkmark-outline",
     titulo: "Seguridad",
-    subtitulo: "Protege tu cuenta",
+    icono: "shield-checkmark-outline",
     ruta: "/cuenta/seguridad",
   },
   {
-    icono: "card-outline",
     titulo: "Métodos de pago",
-    subtitulo: "Efectivo, Yape y Plin",
+    icono: "card-outline",
     ruta: "/cuenta/metodos-pago",
   },
   {
-    icono: "location-outline",
     titulo: "Direcciones guardadas",
-    subtitulo: "Casa, trabajo y más",
+    icono: "location-outline",
     ruta: "/cuenta/direcciones",
   },
+];
+
+const OPCIONES_PREFERENCIAS: OpcionMenu[] = [
   {
-    icono: "notifications-outline",
     titulo: "Notificaciones",
-    subtitulo: "Elige qué quieres recibir",
+    icono: "notifications-outline",
     ruta: "/cuenta/notificaciones",
   },
   {
-    icono: "settings-outline",
     titulo: "Configuración",
-    subtitulo: "Idioma, apariencia y más",
+    icono: "settings-outline",
     ruta: "/cuenta/configuracion",
   },
-  {
-    icono: "help-circle-outline",
-    titulo: "Ayuda",
-    subtitulo: "Centro de soporte y preguntas frecuentes",
-    ruta: "/ayuda",
-  },
-] as const;
+];
+
+function GrupoMenu({
+  titulo,
+  opciones,
+}: {
+  titulo: string;
+  opciones: OpcionMenu[];
+}) {
+  const { colores } = useAltokkeTheme();
+
+  return (
+    <View style={styles.grupo}>
+      <Text
+        style={[
+          styles.tituloGrupo,
+          { color: colores.secundario },
+        ]}
+      >
+        {titulo}
+      </Text>
+
+      <View
+        style={[
+          styles.cajaOpciones,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
+        {opciones.map((opcion, index) => (
+          <View key={opcion.ruta}>
+            <Pressable
+              onPress={() => router.push(opcion.ruta)}
+              accessibilityRole="button"
+              accessibilityLabel={opcion.titulo}
+              style={({ pressed }) => [
+                styles.opcion,
+                pressed && {
+                  backgroundColor: colores.campo,
+                },
+              ]}
+            >
+              <Ionicons
+                name={opcion.icono}
+                size={21}
+                color={colores.exitoTexto}
+              />
+
+              <Text
+                style={[
+                  styles.textoOpcion,
+                  { color: colores.texto },
+                ]}
+              >
+                {opcion.titulo}
+              </Text>
+
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colores.secundario}
+              />
+            </Pressable>
+
+            {index !== opciones.length - 1 && (
+              <View
+                style={[
+                  styles.separador,
+                  { backgroundColor: colores.linea },
+                ]}
+              />
+            )}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export default function CuentaPasajero() {
   const insets = useSafeAreaInsets();
@@ -64,98 +143,211 @@ export default function CuentaPasajero() {
   const { logout } = useAuth();
   const { perfil } = usePerfilPasajero();
 
-  const nombre = perfil?.nombreCompleto || perfil?.primerNombre || "Pasajero";
+  const nombre =
+    perfil?.nombreCompleto ||
+    perfil?.primerNombre ||
+    "Pasajero";
+
   const foto = perfil?.fotoUrl || null;
-  const calificacion = perfil ? perfil.calificacion.toFixed(1) : "5.0";
-  const viajesTexto = perfil ? `(${perfil.viajesCount} viajes)` : "(0 viajes)";
+
+  const calificacion = perfil
+    ? perfil.calificacion.toFixed(1)
+    : "5.0";
+
+  const viajes = perfil?.viajesCount ?? 0;
 
   const cerrarSesion = () => {
-    Alert.alert("Cerrar sesión", "¿Seguro que quieres salir de tu cuenta?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Cerrar sesión",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await logout();
-          } catch (error) {
-            console.error("Error al cerrar sesión:", error);
-          }
-          router.replace("/(auth)/login");
+    Alert.alert(
+      "Cerrar sesión",
+      "¿Seguro que quieres salir de tu cuenta?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
         },
-      },
-    ]);
+        {
+          text: "Cerrar sesión",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace("/(auth)/login");
+            } catch (error) {
+              console.error(
+                "Error al cerrar sesión:",
+                error
+              );
+
+              Alert.alert(
+                "Error",
+                "No se pudo cerrar sesión. Inténtalo nuevamente."
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const bgCabecera = esOscuro ? colores.superficie : COLORES_CUENTA.cabecera;
-
   return (
-    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
-      <StatusBar style="light" />
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
+      <StatusBar style={esOscuro ? "light" : "dark"} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.contenido,
+          { paddingTop: insets.top + 20 },
+        ]}
       >
-        <View style={[styles.cabecera, { paddingTop: insets.top + 14, backgroundColor: bgCabecera }]}>
-          <Text style={[styles.logo, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>Altokke</Text>
-          <Text style={[styles.lema, { color: esOscuro ? colores.secundario : "rgba(255,255,255,0.75)" }]}>
-            Tu movilidad en buenas manos
+        {/* Encabezado */}
+        <View style={styles.encabezado}>
+          <Text style={[
+              styles.titulo,
+              { color: colores.texto },
+            ]}>Mi cuenta
+            </Text>
+
+            <Pressable
+              onPress={() =>
+                router.push("/cuenta/configuracion")
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Abrir configuración"
+              style={[
+                styles.botonConfig,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={21}
+                color={colores.exitoTexto}
+              />
+            </Pressable>
+        </View>
+
+        {/* Perfil del pasajero */}
+        <View
+          style={[
+            styles.tarjetaPerfil,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
+          <AvatarPerfil
+            nombre={nombre}
+            tamano={84}
+            uri={foto}
+          />
+
+          <Text
+            style={[
+              styles.nombre,
+              { color: colores.texto },
+            ]}
+            numberOfLines={2}
+          >
+            {nombre}
           </Text>
 
-          <View style={styles.perfil}>
-            <AvatarPerfil
-              nombre={nombre}
-              tamano={84}
-              enLinea
-              conBorde
-              uri={foto}
+          <Text
+            style={[
+              styles.rol,
+              { color: colores.secundario },
+            ]}
+          >
+            Pasajero Altokke
+          </Text>
+
+          <View style={styles.estadisticas}>
+            <Ionicons
+              name="star"
+              size={15}
+              color="#D3A33B"
             />
 
-            <View style={styles.perfilTextos}>
-              <Text style={[styles.nombre, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>{nombre}</Text>
-
-              <View style={styles.filaInfo}>
-                <Ionicons name="star" size={15} color={paletaColores.advertencia} />
-                <Text style={[styles.calificacion, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
-                  {calificacion}
-                </Text>
-                <Text style={[styles.viajes, { color: esOscuro ? colores.secundario : "rgba(255,255,255,0.75)" }]}>
-                  {viajesTexto}
-                </Text>
-              </View>
-
-              <View style={styles.filaInfo}>
-                <Text style={[styles.mensaje, { color: colores.exitoTexto }]}>
-                  Tu próxima parada está más cerca
-                </Text>
-                <Ionicons name="heart" size={12} color={colores.exitoTexto} />
-              </View>
-            </View>
+            <Text
+              style={[
+                styles.textoEstadisticas,
+                { color: colores.secundario },
+              ]}
+            >
+              {calificacion} · {viajes} viajes
+            </Text>
           </View>
-        </View>
 
-        <View style={[styles.lista, { backgroundColor: colores.fondo }]}>
-          {OPCIONES.map((opcion) => (
-            <ItemMenu
-              key={opcion.titulo}
-              variante="tarjeta"
-              icono={opcion.icono}
-              titulo={opcion.titulo}
-              subtitulo={opcion.subtitulo}
-              onPress={() => router.push(opcion.ruta)}
+          <Pressable
+            onPress={() =>
+              router.push("/cuenta/informacion-personal")
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Editar perfil"
+            style={({ pressed }) => [
+              styles.botonEditar,
+              {
+                backgroundColor: "#0B3B2A",
+              },
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Ionicons
+              name="create-outline"
+              size={16}
+              color="#FFFFFF"
             />
-          ))}
 
-          <ItemMenu
-            variante="tarjeta"
-            peligro
-            icono="log-out-outline"
-            titulo="Cerrar sesión"
-            subtitulo="Salir de tu cuenta"
-            onPress={cerrarSesion}
-          />
+            <Text
+              style={[
+                styles.textoEditar,
+                {
+                  color: "#FFFFFF",
+                },
+              ]}
+            >
+              Editar perfil
+            </Text>
+          </Pressable>
         </View>
+
+        {/* Opciones */}
+        <GrupoMenu
+          titulo="CUENTA Y SEGURIDAD"
+          opciones={OPCIONES_CUENTA}
+        />
+
+        <GrupoMenu
+          titulo="PREFERENCIAS"
+          opciones={OPCIONES_PREFERENCIAS}
+        />
+
+        {/* Cerrar sesión */}
+        <Pressable
+          onPress={cerrarSesion}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión"
+          style={({ pressed }) => [
+            styles.cerrarSesion,
+            pressed && { opacity: 0.6 },
+          ]}
+        >
+          <Ionicons
+            name="log-out-outline"
+            size={19}
+            color={colores.error}
+          />
+
+          <Text
+            style={[
+              styles.textoCerrarSesion,
+              { color: colores.error },
+            ]}
+          >
+            Cerrar sesión
+          </Text>
+        </Pressable>
       </ScrollView>
 
     </View>
@@ -163,71 +355,133 @@ export default function CuentaPasajero() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  pantalla: {
     flex: 1,
   },
 
-  scrollContent: {
-    paddingBottom: 16,
-  },
-
-  cabecera: {
+  contenido: {
     paddingHorizontal: 20,
-    paddingBottom: 44,
+    paddingBottom: 36,
   },
 
-  logo: {
-    fontSize: 20,
-    fontWeight: "800",
-  },
-
-  lema: {
-    marginTop: 2,
-    fontSize: 12,
-  },
-
-  perfil: {
+  encabezado: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    marginTop: 20,
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
 
-  perfilTextos: {
-    flex: 1,
-    gap: 4,
+  titulo: {
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+
+  botonConfig: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  tarjetaPerfil: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    borderRadius: 22,
+    borderWidth: 1,
+    marginBottom: 26,
   },
 
   nombre: {
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: "700",
+    textAlign: "center",
+    marginTop: 14,
   },
 
-  filaInfo: {
+  rol: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  estadisticas: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
+    marginTop: 10,
   },
 
-  calificacion: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  viajes: {
+  textoEstadisticas: {
     fontSize: 13,
   },
 
-  mensaje: {
-    fontSize: 12,
+  botonEditar: {
+    marginTop: 20,
+    minHeight: 42,
+    paddingHorizontal: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 22,
   },
 
-  lista: {
+  textoEditar: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  grupo: {
+    marginBottom: 24,
     gap: 10,
-    marginTop: -24,
+  },
+
+  tituloGrupo: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginLeft: 2,
+  },
+
+  cajaOpciones: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+
+  opcion: {
+    minHeight: 57,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
     paddingHorizontal: 16,
-    paddingTop: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+  },
+
+  textoOpcion: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  separador: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 51,
+    marginRight: 16,
+  },
+
+  cerrarSesion: {
+    minHeight: 50,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  textoCerrarSesion: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

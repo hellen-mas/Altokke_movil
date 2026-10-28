@@ -1,54 +1,183 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useState } from "react";
+import { 
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
-import { router } from "expo-router";
+import type { ModoApariencia } from "@/shared/theme/temaStore";
+import { useEffect } from "react";
 
-interface OpcionConfig {
+type ClavePreferencia = "idioma" | "tema" | "unidades" | "mapaEstilo";
+type ClaveModal = "idioma" | "tema" | "unidades" | "mapa";
+
+type OpcionConfig = {
   titulo: string;
-  campo: "idioma" | "tema" | "unidades" | "mapaEstilo";
+  etiqueta: string;
+  campo: ClavePreferencia;
+  icono: keyof typeof Ionicons.glyphMap;
   opciones: string[];
-}
-
-const OPCIONES_CONFIG: Record<string, OpcionConfig> = {
-  idioma: { titulo: "Seleccionar idioma", campo: "idioma", opciones: ["Español (Perú)", "Quechua", "English"] },
-  tema: { titulo: "Apariencia de la app", campo: "tema", opciones: ["Automático (Sistema)", "Claro", "Oscuro"] },
-  unidades: { titulo: "Unidades de distancia", campo: "unidades", opciones: ["Kilómetros (km)", "Millas (mi)"] },
-  mapa: { titulo: "Estilo del mapa", campo: "mapaEstilo", opciones: ["Estándar", "Satélite", "Híbrido"] },
 };
 
+const CONFIGURACIONES: Record<ClaveModal, OpcionConfig> = {
+  idioma: {
+    titulo: "Seleccionar idioma",
+    etiqueta: "Idioma",
+    campo: "idioma",
+    icono: "globe-outline",
+    opciones: ["Español (Perú)", "Quechua", "English"],
+  },
+  tema: {
+    titulo: "Apariencia de la app",
+    etiqueta: "Apariencia",
+    campo: "tema",
+    icono: "moon-outline",
+    opciones: ["Automático (Sistema)", "Claro", "Oscuro"],
+  },
+  unidades: {
+    titulo: "Unidades de distancia",
+    etiqueta: "Distancia",
+    campo: "unidades",
+    icono: "speedometer-outline",
+    opciones: ["Kilómetros (km)", "Millas (mi)"],
+  },
+  mapa: {
+    titulo: "Estilo del mapa",
+    etiqueta: "Estilo del mapa",
+    campo: "mapaEstilo",
+    icono: "map-outline",
+    opciones: ["Estándar", "Satélite", "Híbrido"],
+  },
+};
+
+const CLAVES: ClaveModal[] = [
+  "idioma",
+  "tema",
+  "unidades",
+  "mapa",
+];
+
+
+const ETIQUETAS_TEMA: Record<ModoApariencia, string> = {
+  automatico: "Automático (Sistema)",
+  claro: "Claro",
+  oscuro: "Oscuro",
+};
+
+function obtenerModoTema(valor: string): ModoApariencia {
+  switch (valor) {
+    case "Claro":
+    case "claro":
+      return "claro";
+
+    case "Oscuro":
+    case "oscuro":
+      return "oscuro";
+
+    default:
+      return "automatico";
+  }
+}
+
 export default function Configuracion() {
-  const { colores } = useAltokkeTheme();
+  const {
+    colores,
+    modoPreferido,
+    setModoPreferido,
+  } = useAltokkeTheme();
   const { userId } = useAuth();
   const { perfil, guardarPreferencias } = usePerfilPasajero();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalClave, setModalClave] = useState<keyof typeof OPCIONES_CONFIG | null>(null);
+  const temaGuardado = perfil?.preferencias?.tema;
 
-  const configActual = OPCIONES_CONFIG[modalClave || ""];
+  useEffect(() => {
+    if (
+      temaGuardado === "automatico" ||
+      temaGuardado === "claro" ||
+      temaGuardado === "oscuro"
+    ) {
+      setModoPreferido(temaGuardado);
+    }
+  }, [temaGuardado, setModoPreferido]);
+
+  const [modalClave, setModalClave] = useState<ClaveModal | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+
   const prefs = perfil?.preferencias || {};
+  const configActual = modalClave ? CONFIGURACIONES[modalClave] : null;
 
-  const seleccionarOpcion = async (campo: string, valor: string) => {
+  const cerrarModal = () => {
+    if (!guardando) setModalClave(null);
+  };
+
+  const seleccionarOpcion = async (
+    campo: ClavePreferencia,
+    valor: string
+  ) => {
+    if (guardando) return;
+
+    if (!userId) {
+      Alert.alert(
+        "Sesión requerida",
+        "Inicia sesión para guardar tus preferencias."
+      );
+      return;
+    }
+
+    const esCambioTema = campo === "tema";
+    const modoAnterior = modoPreferido;
+
+    const nuevoModo = esCambioTema
+      ? obtenerModoTema(valor)
+      : null;
+
     try {
-      if (userId) await guardarPreferencias({ [campo]: valor });
-      setModalVisible(false);
-      Alert.alert("Configuración guardada", "Tu preferencia ha sido actualizada.");
-    } catch {
-      Alert.alert("Aviso", "No se pudo actualizar la configuración.");
+      setGuardando(true);
+
+      // Aplicar el tema inmediatamente.
+      if (nuevoModo) {
+        setModoPreferido(nuevoModo);
+      }
+
+      // Guardar la preferencia real en Supabase.
+      if (esCambioTema && nuevoModo) {
+        await guardarPreferencias({
+          tema: nuevoModo,
+        });
+      } else {
+        await guardarPreferencias({
+          [campo]: valor,
+        });
+      }
+
+      setModalClave(null);
+    } catch (error) {
+      // Restaurar el tema anterior si falla el guardado.
+      if (nuevoModo) {
+        setModoPreferido(modoAnterior);
+      }
+
+      Alert.alert(
+        "No se pudo guardar",
+        "Comprueba tu conexión e inténtalo nuevamente."
+      );
+    } finally {
+      setGuardando(false);
     }
   };
-
-  const abrir = (clave: keyof typeof OPCIONES_CONFIG) => {
-    setModalClave(clave);
-    setModalVisible(true);
-  };
-
-  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
 
   const confirmarEliminarCuenta = () => {
     if (eliminandoCuenta) return;
@@ -66,10 +195,12 @@ export default function Configuracion() {
               setEliminandoCuenta(true);
               await authService.eliminarMiCuenta();
               router.replace("/(auth)/bienvenida");
-            } catch (error: any) {
+            } catch (error: unknown) {
               Alert.alert(
                 "No se pudo eliminar la cuenta",
-                error?.message || "Inténtalo nuevamente."
+                error instanceof Error
+                  ? error.message
+                  : "Inténtalo nuevamente."
               );
             } finally {
               setEliminandoCuenta(false);
@@ -80,96 +211,487 @@ export default function Configuracion() {
     );
   };
 
+  const mostrarPrivacidad = () => {
+    Alert.alert(
+      "Privacidad y derechos ARCO",
+      "Puedes solicitar el acceso, rectificación, cancelación u oposición al tratamiento de tus datos personales. Contacta al equipo de soporte de Altokke para recibir orientación."
+    );
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
+    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Configuración" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.contenido}>
-        <ItemMenu icono="globe-outline" titulo="Idioma" subtitulo={prefs.idioma || "Español (Perú)"} onPress={() => abrir("idioma")} />
-        <ItemMenu icono="moon-outline" titulo="Tema de la aplicación" subtitulo={prefs.tema || "Automático (Sistema)"} onPress={() => abrir("tema")} />
-        <ItemMenu icono="speedometer-outline" titulo="Unidades de distancia" subtitulo={prefs.unidades || "Kilómetros (km)"} onPress={() => abrir("unidades")} />
-        <ItemMenu icono="map-outline" titulo="Estilo del mapa" subtitulo={prefs.mapaEstilo || "Estándar"} onPress={() => abrir("mapa")} />
-        <ItemMenu
-          icono="shield-checkmark-outline"
-          titulo="Privacidad y Derechos ARCO"
-          subtitulo="Protección de datos personales (Ley N° 29733)"
-          onPress={() => Alert.alert("Privacidad", "Tus datos están protegidos conforme a ley. Puedes rectificarlos o solicitar su supresión en cualquier momento.")}
-        />
-        <ItemMenu
-          icono="trash-outline"
-          titulo="Eliminar cuenta"
-          subtitulo={
-            eliminandoCuenta
-              ? "Procesando solicitud..."
-              : "Solicitar la eliminación de tu cuenta"
-          }
-          onPress={confirmarEliminarCuenta}
-        />
+        <Text
+          style={[
+            styles.descripcion,
+            { color: colores.secundario },
+          ]}
+        >
+          Personaliza tu experiencia en Altokke.
+        </Text>
+
+        {/* Preferencias */}
+        <View style={styles.grupo}>
+          <Text
+            style={[
+              styles.tituloGrupo,
+              { color: colores.secundario },
+            ]}
+          >
+            PREFERENCIAS
+          </Text>
+
+          <View
+            style={[
+              styles.tarjeta,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
+            {CLAVES.map((clave, index) => {
+              const config = CONFIGURACIONES[clave];
+              const valor =
+                clave === "tema"
+                  ? ETIQUETAS_TEMA[modoPreferido]
+                  : prefs?.[config.campo] || config.opciones[0];
+
+              return (
+                <View key={clave}>
+                  <Pressable
+                    onPress={() => setModalClave(clave)}
+                    accessibilityRole="button"
+                    accessibilityLabel={config.etiqueta}
+                    style={({ pressed }) => [
+                      styles.fila,
+                      pressed && {
+                        backgroundColor: colores.campo,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.iconoCaja,
+                        { backgroundColor: colores.exitoFondo },
+                      ]}
+                    >
+                      <Ionicons
+                        name={config.icono}
+                        size={19}
+                        color={colores.exitoTexto}
+                      />
+                    </View>
+
+                    <View style={styles.textos}>
+                      <Text
+                        style={[
+                          styles.filaTitulo,
+                          { color: colores.texto },
+                        ]}
+                      >
+                        {config.etiqueta}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.filaSubtitulo,
+                          { color: colores.secundario },
+                        ]}
+                      >
+                        {valor}
+                      </Text>
+                    </View>
+
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={colores.secundario}
+                    />
+                  </Pressable>
+
+                  {index !== CLAVES.length - 1 && (
+                    <View
+                      style={[
+                        styles.separador,
+                        { backgroundColor: colores.linea },
+                      ]}
+                    />
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Privacidad */}
+        <View style={styles.grupo}>
+          <Text
+            style={[
+              styles.tituloGrupo,
+              { color: colores.secundario },
+            ]}
+          >
+            PRIVACIDAD Y CUENTA
+          </Text>
+
+          <View
+            style={[
+              styles.tarjeta,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
+            <Pressable
+              onPress={mostrarPrivacidad}
+              accessibilityRole="button"
+              accessibilityLabel="Privacidad y datos"
+              style={({ pressed }) => [
+                styles.fila,
+                pressed && {
+                  backgroundColor: colores.campo,
+                },
+              ]}
+            >
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={22}
+                color={colores.exitoTexto}
+              />
+
+              <View style={styles.textos}>
+                <Text
+                  style={[
+                    styles.filaTitulo,
+                    { color: colores.texto },
+                  ]}
+                >
+                  Privacidad y datos
+                </Text>
+
+                <Text
+                  style={[
+                    styles.filaSubtitulo,
+                    { color: colores.secundario },
+                  ]}
+                >
+                  Conoce tus derechos
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colores.secundario}
+              />
+            </Pressable>
+
+            <View
+              style={[
+                styles.separador,
+                { backgroundColor: colores.linea },
+              ]}
+            />
+
+            <Pressable
+              onPress={confirmarEliminarCuenta}
+              disabled={eliminandoCuenta}
+              accessibilityRole="button"
+              accessibilityLabel="Eliminar cuenta"
+              style={({ pressed }) => [
+                styles.fila,
+                pressed && {
+                  backgroundColor: colores.campo,
+                },
+                eliminandoCuenta && { opacity: 0.6 },
+              ]}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={22}
+                color={colores.error}
+              />
+
+              <View style={styles.textos}>
+                <Text
+                  style={[
+                    styles.filaTitulo,
+                    { color: colores.error },
+                  ]}
+                >
+                  Eliminar cuenta
+                </Text>
+
+                <Text
+                  style={[
+                    styles.filaSubtitulo,
+                    { color: colores.secundario },
+                  ]}
+                >
+                  {eliminandoCuenta
+                    ? "Procesando solicitud..."
+                    : "Solicitar eliminación"}
+                </Text>
+              </View>
+
+              {eliminandoCuenta ? (
+                <ActivityIndicator
+                  size="small"
+                  color={colores.error}
+                />
+              ) : (
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colores.secundario}
+                />
+              )}
+            </Pressable>
+          </View>
+        </View>
       </ScrollView>
 
-      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
-        <Pressable style={styles.modalFondo} onPress={() => setModalVisible(false)}>
-          <View style={[styles.modalCaja, { backgroundColor: colores.superficie, borderColor: colores.linea }]}>
+      <Modal 
+        visible={modalClave !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={cerrarModal}
+      >
+        <View style={styles.modalFondo}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={cerrarModal}
+            accessibilityLabel="Cerrar selector"
+          />
+
+          <View
+            style={[
+              styles.modalCaja,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
             {configActual && (
               <>
-                <Text style={[styles.modalTitulo, { color: colores.texto }]}>{configActual.titulo}</Text>
-                {configActual.opciones.map((op) => {
-                  const seleccionado = (prefs[configActual.campo] || configActual.opciones[0]) === op;
+                <View style={styles.modalEncabezado}>
+                  <Text
+                    style={[
+                      styles.modalTitulo,
+                      { color: colores.texto },
+                    ]}
+                  >
+                    {configActual.titulo}
+                  </Text>
+
+                  <Pressable
+                    onPress={cerrarModal}
+                    disabled={guardando}
+                    accessibilityRole="button"
+                    accessibilityLabel="Cerrar"
+                  >
+                    <Ionicons
+                      name="close"
+                      size={22}
+                      color={colores.secundario}
+                    />
+                  </Pressable>
+                </View>
+
+                {configActual.opciones.map((opcion, index) => {
+                  const seleccionado =
+                    configActual.campo === "tema"
+                      ? modoPreferido === obtenerModoTema(opcion)
+                      : (prefs?.[configActual.campo] ||
+                          configActual.opciones[0]) === opcion;
+
                   return (
-                    <Pressable
-                      key={op}
-                      style={[styles.opcionFila, { borderColor: colores.linea }]}
-                      onPress={() => seleccionarOpcion(configActual.campo, op)}
-                    >
-                      <Text style={[styles.opcionTexto, { color: colores.texto }]}>{op}</Text>
-                      {seleccionado && <Ionicons name="checkmark-circle" size={20} color={colores.exitoTexto} />}
-                    </Pressable>
+                    <View key={opcion}>
+                      <Pressable
+                        onPress={() =>
+                          void seleccionarOpcion(
+                            configActual.campo,
+                            opcion
+                          )
+                        }
+                        disabled={guardando}
+                        style={({ pressed }) => [
+                          styles.modalOpcion,
+                          pressed && {
+                            backgroundColor: colores.campo,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.modalTexto,
+                            {
+                              color: seleccionado
+                                ? colores.exitoTexto
+                                : colores.texto,
+                            },
+                          ]}
+                        >
+                          {opcion}
+                        </Text>
+
+                        {seleccionado && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={22}
+                            color={colores.exitoTexto}
+                          />
+                        )}
+                      </Pressable>
+
+                      {index !==
+                        configActual.opciones.length - 1 && (
+                        <View
+                          style={[
+                            styles.separador,
+                            {
+                              marginLeft: 0,
+                              backgroundColor: colores.linea,
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
                   );
                 })}
+
+                {guardando && (
+                  <ActivityIndicator
+                    style={{ marginTop: 12 }}
+                    color={colores.exitoTexto}
+                  />
+                )}
               </>
             )}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  pantalla: {
     flex: 1,
   },
+
   contenido: {
-    padding: 16,
-    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    gap: 24,
   },
+
+  descripcion: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+
+  grupo: {
+    gap: 10,
+  },
+
+  tituloGrupo: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginLeft: 2,
+  },
+
+  tarjeta: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+
+  fila: {
+    minHeight: 70,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+
+  iconoCaja: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  textos: {
+    flex: 1,
+    gap: 3,
+  },
+
+  filaTitulo: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  filaSubtitulo: {
+    fontSize: 12,
+  },
+
+  separador: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 68,
+    marginRight: 16,
+  },
+
   modalFondo: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
     padding: 24,
   },
+
   modalCaja: {
     width: "100%",
-    borderRadius: 20,
-    padding: 20,
+    maxWidth: 420,
+    borderRadius: 22,
     borderWidth: 1,
-    gap: 8,
+    padding: 20,
+    gap: 4,
   },
-  modalTitulo: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  opcionFila: {
+
+  modalEncabezado: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
+    marginBottom: 12,
+    gap: 12,
   },
-  opcionTexto: {
+
+  modalTitulo: {
+    flex: 1,
+    fontSize: 19,
+    fontWeight: "700",
+  },
+
+  modalOpcion: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+
+  modalTexto: {
     fontSize: 15,
     fontWeight: "500",
   },
