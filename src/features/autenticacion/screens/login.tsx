@@ -171,16 +171,59 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 },
-  topSection: { flex: 1, justifyContent: "center", gap: 24 },
-  formContainer: { gap: 14 },
-  forgotPassword: { alignSelf: "flex-end", paddingVertical: 5, paddingHorizontal: 4 },
-  forgotPasswordText: { fontSize: 16, fontWeight: "600" },
-  dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 2 },
-  divider: { flex: 1, height: 1.5 },
-  dividerText: { paddingHorizontal: 14, fontSize: 13, fontWeight: "500" },
-  bottomContainer: { marginTop: "auto", paddingTop: 24, gap: 8, alignItems: "center" },
-  legalContainer: { paddingHorizontal: 8, paddingVertical: 4 },
-  disclaimerText: { fontSize: 13, textAlign: "center", lineHeight: 20 },
-  legalLink: { fontWeight: "700" },
+  scrollContent: { 
+    flexGrow: 1, 
+    paddingHorizontal: 24, 
+    paddingTop: 24, 
+    paddingBottom: 32 
+  },
+  topSection: { 
+    marginTop: 32, 
+    gap: 24, 
+  },
+  formContainer: { 
+    gap: 14 
+  },
+  forgotPassword: { 
+    alignSelf: "flex-end", 
+    paddingVertical: 5, 
+    paddingHorizontal: 4 
+  },
+  forgotPasswordText: { 
+    fontSize: 16, 
+    fontWeight: "600" 
+  },
+  dividerContainer: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginVertical: 2 
+  },
+  divider: { 
+    flex: 1, 
+    height: 1.5 
+  },
+  dividerText: { 
+    paddingHorizontal: 14, 
+    fontSize: 13, 
+    fontWeight: "500" 
+  },
+  bottomContainer: { 
+    marginTop: "auto",
+    paddingTop: 40,
+    paddingBottom: 8,
+    gap: 12,
+    alignItems: "center",
+  },
+  legalContainer: { 
+    paddingHorizontal: 8, 
+    paddingVertical: 4 
+  },
+  disclaimerText: { 
+    fontSize: 13, 
+    textAlign: "center", 
+    lineHeight: 20 
+  },
+  legalLink: { 
+    fontWeight: "700" 
+  },
 });

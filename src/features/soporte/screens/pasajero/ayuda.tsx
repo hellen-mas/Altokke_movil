@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import {
   Alert,
   Linking,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,118 +10,34 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-
-interface PreguntaFrecuente {
-  pregunta: string;
-  respuesta: string;
-}
-
-interface TemaAyuda {
-  id: string;
-  icono: keyof typeof Ionicons.glyphMap;
-  titulo: string;
-  descripcion: string;
-  preguntas: PreguntaFrecuente[];
-}
-
-const TEMAS_AYUDA: TemaAyuda[] = [
-  {
-    id: "viaje",
-    icono: "car-outline",
-    titulo: "Problemas con un viaje",
-    descripcion: "Objetos olvidados, cobros indebidos o rutas",
-    preguntas: [
-      {
-        pregunta: "¿Cómo reportar un objeto olvidado?",
-        respuesta:
-          "Si olvidaste una pertenencia en el mototaxi, contáctanos de inmediato mediante el botón 'Contactar soporte' indicando la hora aproximada y el destino del viaje para comunicarnos con el conductor.",
-      },
-      {
-        pregunta: "¿Qué hago si el conductor no llegó?",
-        respuesta:
-          "Si pasaron más de 5 minutos y el mototaxi no se mueve hacia tu punto de recogida, puedes cancelar el viaje sin penalización y solicitar una nueva unidad.",
-      },
-      {
-        pregunta: "¿La tarifa puede cambiar durante el viaje?",
-        respuesta:
-          "No. En Altokke la tarifa acordada al confirmar el viaje es fija en el ámbito urbano de Bagua, salvo que solicites un cambio de destino durante el trayecto.",
-      },
-    ],
-  },
-  {
-    id: "pagos",
-    icono: "card-outline",
-    titulo: "Métodos de pago",
-    descripcion: "Efectivo, Yape y Plin en Bagua",
-    preguntas: [
-      {
-        pregunta: "¿Cómo pagar con Yape o Plin?",
-        respuesta:
-          "Al finalizar tu viaje, pídele el número o código QR de Yape/Plin al conductor. Muestra tu constancia de pago antes de descender del vehículo.",
-      },
-      {
-        pregunta: "¿Puedo cambiar de método de pago durante el viaje?",
-        respuesta:
-          "Sí, puedes coordinar directamente con el conductor si prefieres cambiar de efectivo a Yape/Plin o viceversa.",
-      },
-    ],
-  },
-  {
-    id: "cuenta",
-    icono: "shield-checkmark-outline",
-    titulo: "Cuenta y seguridad",
-    descripcion: "Protección de datos y verificación",
-    preguntas: [
-      {
-        pregunta: "¿Cómo actualizo mi número de teléfono?",
-        respuesta:
-          "Ve a la sección 'Cuenta' > 'Información personal' y toca tu número de teléfono para actualizarlo con tu nuevo número activo.",
-      },
-      {
-        pregunta: "¿Mis viajes están asegurados?",
-        respuesta:
-          "Todos nuestros conductores cuentan con verificación de identidad (DNI), SOAT vigente e historial verificado para garantizar tu tranquilidad.",
-      },
-    ],
-  },
-  {
-    id: "promociones",
-    icono: "pricetag-outline",
-    titulo: "Promociones y descuentos",
-    descripcion: "Cupones y beneficios por fidelidad",
-    preguntas: [
-      {
-        pregunta: "¿Cómo obtengo descuentos en mis viajes?",
-        respuesta:
-          "Recibirás códigos promocionales y beneficios a través de notificaciones en la app por tus primeros viajes y fechas festivas en Bagua.",
-      },
-    ],
-  },
-  {
-    id: "otros",
-    icono: "ellipsis-horizontal",
-    titulo: "Más temas y normas",
-    descripcion: "Términos, horarios y cobertura en Amazonas",
-    preguntas: [
-      {
-        pregunta: "¿Cuál es el horario de atención?",
-        respuesta:
-          "Altokke opera en Bagua todos los días de 5:30 AM a 11:00 PM con cobertura completa en zonas urbanas y periféricas.",
-      },
-    ],
-  },
-];
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import {
+  CATEGORIAS_AYUDA,
+  ARTICULOS_AYUDA,
+} from "@/features/soporte/data/centroAyuda";
 
 export default function Ayuda() {
-  const { colores } = useAltokkeTheme();
+  const { colores, esOscuro } = useAltokkeTheme();
+  const insets = useSafeAreaInsets();
   const [busqueda, setBusqueda] = useState("");
-  const [temaSeleccionado, setTemaSeleccionado] = useState<TemaAyuda | null>(null);
 
-  const temasFiltrados = TEMAS_AYUDA.filter((tema) => {
-    const texto = `${tema.titulo} ${tema.descripcion} ${tema.preguntas.map((p) => p.pregunta).join(" ")}`.toLowerCase();
+  const temasFiltrados = CATEGORIAS_AYUDA.filter((categoria) => {
+    const articulos = ARTICULOS_AYUDA.filter(
+      (articulo) => articulo.categoriaId === categoria.id
+    );
+
+    const texto = [
+      categoria.titulo,
+      categoria.descripcion,
+      ...categoria.secciones.map((seccion) => seccion.titulo),
+      ...articulos.map((articulo) => articulo.titulo),
+    ]
+      .join(" ")
+      .toLowerCase();
+
     return texto.includes(busqueda.trim().toLowerCase());
   });
 
@@ -160,139 +75,235 @@ export default function Ayuda() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
-      <EncabezadoPantalla titulo="Ayuda y Soporte" />
+    <View 
+      style={[
+        styles.container,
+        { backgroundColor: colores.fondo },
+      ]}
+    >
+      <StatusBar style={esOscuro ? "light" : "dark"} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.contenido}
+        contentContainerStyle={[
+          styles.contenido,
+          { paddingTop: insets.top + 20 },
+        ]}
       >
+        {/* Encabezado principal de pestaña */}
+        <View style={styles.encabezado}>
+          <Text
+            style={[
+              styles.tituloPrincipal,
+              { color: colores.texto },
+            ]}
+          >
+            Ayuda
+          </Text>
+        </View>
+
+        <Text
+          style={[
+            styles.subtituloPrincipal,
+            { color: colores.secundario },
+          ]}
+        >
+          ¿En qué podemos ayudarte?
+        </Text>
+
+        {/* Buscar ayuda */}
         <View
           style={[
             styles.buscador,
             {
               backgroundColor: colores.campo,
-              borderColor: colores.linea,
             },
           ]}
         >
           <Ionicons
             name="search-outline"
-            size={18}
+            size={20}
             color={colores.secundario}
           />
           <TextInput
-            style={[styles.inputBusqueda, { color: colores.textoCampo }]}
-            placeholder="Buscar preguntas o temas..."
-            placeholderTextColor={colores.secundario}
-            value={busqueda}
-            onChangeText={setBusqueda}
-            autoCorrect={false}
+             style={[
+                styles.inputBusqueda,
+                { color: colores.textoCampo },
+              ]}
+              placeholder="Buscar una pregunta o tema..."
+              placeholderTextColor={colores.secundario}
+              value={busqueda}
+              onChangeText={setBusqueda}
+              autoCorrect={false}
+              returnKeyType="search"
           />
+
           {busqueda.length > 0 && (
-            <Pressable onPress={() => setBusqueda("")} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={colores.secundario} />
+            <Pressable 
+              onPress={() => setBusqueda("")}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Limpiar búsqueda"
+            >
+              <Ionicons name="close-circle" size={19} color={colores.secundario} />
             </Pressable>
           )}
         </View>
 
-        <Text style={[styles.seccion, { color: colores.texto }]}>
-          Temas frecuentes
+        {/* Temas frecuentes */}
+        <Text style={[styles.seccion, { color: colores.secundario }]}>
+          TEMAS FRECUETES 
         </Text>
 
         {temasFiltrados.length === 0 ? (
-          <Text style={[styles.sinResultados, { color: colores.secundario }]}>
-            No encontramos temas con esa búsqueda. Prueba con otras palabras o contacta a soporte.
-          </Text>
-        ) : (
-          temasFiltrados.map((tema) => (
-            <ItemMenu
-              key={tema.id}
-              icono={tema.icono}
-              titulo={tema.titulo}
-              subtitulo={tema.descripcion}
-              onPress={() => setTemaSeleccionado(tema)}
+          <View style={styles.sinResultadosCaja}>
+            <Ionicons
+              name="search-outline"
+              size={28}
+              color={colores.secundario}
             />
-          ))
+
+            <Text
+              style={[
+                styles.sinResultados,
+                { color: colores.secundario },
+              ]}
+            >
+              No encontramos resultados. Prueba con otras
+              palabras o contacta a soporte.
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.listaTemas,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
+            {temasFiltrados.map((tema, index) => (
+              <View key={tema.id}>
+                <Pressable
+                  onPress={() => 
+                    router.push({
+                      pathname: "/ayuda/[categoria]",
+                      params: { categoria: tema.id },
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={tema.titulo}
+                  style={({ pressed }) => [
+                    styles.filaTema,
+                    pressed && {
+                      backgroundColor: colores.campo,
+                    },
+                  ]}
+                >
+
+                  <View
+                    style={[
+                      styles.iconoTema,
+                      {
+                        backgroundColor: colores.exitoFondo,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={tema.icono}
+                      size={21}
+                      color={colores.exitoTexto}
+                    />
+                  </View>
+
+                  <View style={styles.textosTema}>
+                    <Text
+                      style={[
+                        styles.tituloTema,
+                        { color: colores.texto },
+                      ]}
+                    >
+                      {tema.titulo}
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.descripcionTema,
+                        { color: colores.secundario },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {tema.descripcion}
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={colores.secundario}
+                  />
+                </Pressable>
+                
+                {index !== temasFiltrados.length - 1 && (
+                  <View
+                    style={[
+                      styles.separador,
+                      { backgroundColor: colores.linea },
+                    ]}
+                  />
+                )}
+              </View>
+            ))}
+          </View>
         )}
 
-        {/* Tarjeta de soporte */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.soporte,
-            {
-              backgroundColor: colores.superficie,
-              borderColor: colores.linea,
-            },
-            pressed && { opacity: 0.8 },
-          ]}
-          hitSlop={6}
-          accessibilityRole="button"
-          accessibilityLabel="Contactar soporte"
-          onPress={contactarSoporte}
-        >
-          <Ionicons
-            name="headset-outline"
-            size={24}
-            color={colores.exitoTexto}
-          />
-          <View style={styles.soporteTextos}>
-            <Text style={[styles.soporteTitulo, { color: colores.texto }]}>
-              Contactar soporte 24/7
-            </Text>
-            <Text style={[styles.soporteSubtitulo, { color: colores.secundario }]}>
-              Atención vía WhatsApp y llamada en Bagua
+        {/* Contacto con soporte */}
+        <View style={styles.tarjetaSoporte}>
+          <View style={styles.filaSoporteTitulo}>
+            <Ionicons
+              name="chatbubbles-outline"
+              size={24}
+              color="#83D5AA"
+            />
+
+            <Text style={styles.tituloSoporte}>
+              ¿Necesitas más ayuda?
             </Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={colores.secundario}
-          />
-        </Pressable>
-      </ScrollView>
 
-      {/* Modal Detalle de Tema */}
-      <Modal
-        visible={Boolean(temaSeleccionado)}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setTemaSeleccionado(null)}
-      >
-        <View style={styles.modalFondo}>
-          <View style={[styles.modalCaja, { backgroundColor: colores.superficie, borderColor: colores.linea }]}>
-            <View style={styles.cabeceraModal}>
-              <Text style={[styles.modalTitulo, { color: colores.texto }]}>
-                {temaSeleccionado?.titulo}
-              </Text>
-              <Pressable onPress={() => setTemaSeleccionado(null)} hitSlop={8}>
-                <Ionicons name="close" size={22} color={colores.secundario} />
-              </Pressable>
-            </View>
+          <Text style={styles.descripcionSoporte}>
+            Comunícate con nuestro equipo por WhatsApp
+            o teléfono.
+          </Text>
 
-            <ScrollView style={{ maxHeight: 360 }}>
-              {temaSeleccionado?.preguntas.map((p, idx) => (
-                <View key={idx} style={[styles.preguntaBloque, { borderBottomColor: colores.linea }]}>
-                  <Text style={[styles.preguntaTexto, { color: colores.texto }]}>{p.pregunta}</Text>
-                  <Text style={[styles.respuestaTexto, { color: colores.secundario }]}>{p.respuesta}</Text>
-                </View>
-              ))}
-            </ScrollView>
+          <Pressable
+            onPress={contactarSoporte}
+            accessibilityRole="button"
+            accessibilityLabel="Contactar soporte"
+            style={({ pressed }) => [
+              styles.botonSoporte,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={18}
+              color="#0B3B2A"
+            />
 
-            <Pressable
-              style={[styles.botonCerrarModal, { backgroundColor: colores.primario }]}
-              onPress={() => setTemaSeleccionado(null)}
-            >
-              <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Entendido</Text>
-            </Pressable>
-          </View>
+            <Text style={styles.textoBotonSoporte}>
+              Contactar soporte
+            </Text>
+          </Pressable>
         </View>
-      </Modal>
+      </ScrollView>
 
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -301,63 +312,150 @@ const styles = StyleSheet.create({
 
   contenido: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 40,
+  },
+
+  encabezado: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  tituloPrincipal: {
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+
+  subtituloPrincipal: {
+    fontSize: 14,
+    marginTop: 5,
+    marginBottom: 22,
   },
 
   buscador: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    height: 48,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginTop: 8,
+    minHeight: 50,
+    paddingHorizontal: 15,
+    borderRadius: 15,
   },
 
   inputBusqueda: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
+    paddingVertical: 12,
   },
 
   seccion: {
-    marginTop: 22,
-    marginBottom: 10,
-    fontSize: 14,
+    marginTop: 28,
+    marginBottom: 12,
+    fontSize: 11,
     fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+    marginLeft: 2,
+  },
+
+  listaTemas: {
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: "hidden",
+  },
+
+  filaTema: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 13,
+    minHeight: 76,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+
+  iconoTema: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  textosTema: {
+    flex: 1,
+    gap: 4,
+  },
+
+  tituloTema: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  descripcionTema: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
+  separador: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 69,
+    marginRight: 15,
+  },
+
+  sinResultadosCaja: {
+    paddingVertical: 35,
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 20,
   },
 
   sinResultados: {
-    paddingVertical: 20,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 19,
     textAlign: "center",
   },
 
-  soporte: {
+  tarjetaSoporte: {
+    backgroundColor: "#0B3B2A",
+    padding: 20,
+    borderRadius: 20,
+    marginTop: 26,
+    gap: 13,
+  },
+
+  filaSoporteTitulo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginTop: 20,
+    gap: 10,
   },
 
-  soporteTextos: {
+  tituloSoporte: {
     flex: 1,
-    gap: 3,
-  },
-
-  soporteTitulo: {
-    fontSize: 15,
+    color: "#FFFFFF",
+    fontSize: 17,
     fontWeight: "700",
   },
 
-  soporteSubtitulo: {
-    fontSize: 12,
+  descripcionSoporte: {
+    color: "#D4E9DD",
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
+  botonSoporte: {
+    backgroundColor: "#FFFFFF",
+    minHeight: 46,
+    borderRadius: 23,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    marginTop: 4,
+  },
+
+  textoBotonSoporte: {
+    color: "#0B3B2A",
+    fontSize: 14,
+    fontWeight: "700",
   },
 
   modalFondo: {
@@ -371,45 +469,51 @@ const styles = StyleSheet.create({
   modalCaja: {
     width: "100%",
     maxWidth: 400,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 22,
-    gap: 14,
+    padding: 20,
+    gap: 16,
   },
 
   cabeceraModal: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 12,
   },
 
   modalTitulo: {
-    fontSize: 18,
-    fontWeight: "700",
     flex: 1,
+    fontSize: 19,
+    fontWeight: "700",
   },
 
   preguntaBloque: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 6,
+    gap: 7,
   },
 
   preguntaTexto: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
+    lineHeight: 20,
   },
 
   respuestaTexto: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
   },
 
   botonCerrarModal: {
-    height: 44,
-    borderRadius: 12,
+    minHeight: 46,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+  },
+
+  textoCerrarModal: {
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

@@ -35,6 +35,7 @@ export interface PreferenciasPasajero {
     telefono: string;
   };
   [key: string]: any;
+  modoSimple?: boolean;
 }
 
 export interface PerfilPasajero {

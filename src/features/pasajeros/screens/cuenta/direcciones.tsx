@@ -340,78 +340,146 @@ export default function DireccionesGuardadas() {
 
   return (
     <View style={[styles.container, { backgroundColor: colores.fondo }]}>
-      <EncabezadoPantalla titulo="Direcciones guardadas" />
+      <EncabezadoPantalla titulo="Mis direcciones" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
       >
 
-        {direccionesGuardadas.length === 0 && (
-          <Text
-            style={{
-              color: colores.secundario,
-              textAlign: "center",
-              marginVertical: 24,
-            }}
+        <Text
+          style={[
+            styles.descripcionPantalla,
+            { color: colores.secundario },
+          ]}
+        >
+          Guarda tus lugares frecuentes para llegar más rápido.
+        </Text>
+
+        {direccionesGuardadas.length === 0 ? (
+          <View style={styles.estadoVacio}>
+            <View
+              style={[
+                styles.iconoVacio,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
+              <Ionicons
+                name="location-outline"
+                size={30}
+                color={colores.exitoTexto}
+              />
+            </View>
+
+            <Text style={[styles.vacioTitulo, { color: colores.texto }]}>
+              Aún no tienes direcciones
+            </Text>
+
+            <Text
+              style={[
+                styles.vacioDescripcion,
+                { color: colores.secundario },
+              ]}
+            >
+              Agrega tu casa, trabajo o cualquier lugar al que viajes
+              con frecuencia.
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.listaDirecciones,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
           >
-            Todavía no tienes direcciones guardadas.
-            Agrega tu casa, trabajo u otro lugar frecuente.
-          </Text>
+            {direccionesGuardadas.map((lugar, index) => (
+              <View key={lugar.id}>
+                <Pressable
+                  onPress={() => opcionesDireccion(lugar)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Opciones para ${lugar.nombre}`}
+                  style={({ pressed }) => [
+                    styles.filaDireccion,
+                    pressed && {
+                      backgroundColor: colores.campo,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.iconoFondo,
+                      { backgroundColor: colores.exitoFondo },
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        (lugar.icono as keyof typeof Ionicons.glyphMap) ||
+                        "location-outline"
+                      }
+                      size={22}
+                      color={colores.exitoTexto}
+                    />
+                  </View>
+
+                  <View style={styles.textos}>
+                    <Text
+                      style={[styles.nombre, { color: colores.texto }]}
+                      numberOfLines={1}
+                    >
+                      {lugar.nombre}
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.direccion,
+                        { color: colores.secundario },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {lugar.direccion}
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={22}
+                    color={colores.secundario}
+                  />
+                </Pressable>
+
+                {index !== direccionesGuardadas.length - 1 && (
+                  <View
+                    style={[
+                      styles.separadorDireccion,
+                      { backgroundColor: colores.linea },
+                    ]}
+                  />
+                )}
+              </View>
+            ))}
+          </View>
         )}
 
-        {direccionesGuardadas.map((lugar) => (
-          <Pressable
-            key={lugar.id}
-            style={({ pressed }) => [
-              styles.fila,
-              { borderBottomColor: colores.linea },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => opcionesDireccion(lugar)}
-            accessibilityRole="button"
-          >
-            <View style={[styles.iconoFondo, { backgroundColor: colores.campo }]}>
-              <Ionicons
-                name={(lugar.icono as keyof typeof Ionicons.glyphMap) || "location-outline"}
-                size={22}
-                color={colores.primario}
-              />
-            </View>
-
-            <View style={styles.textos}>
-              <Text style={[styles.nombre, { color: colores.texto }]}>
-                {lugar.nombre}
-              </Text>
-              <Text style={[styles.direccion, { color: colores.secundario }]}>
-                {lugar.direccion}
-              </Text>
-            </View>
-
-            <Pressable hitSlop={10} onPress={() => opcionesDireccion(lugar)}>
-              <Ionicons
-                name="ellipsis-vertical"
-                size={18}
-                color={colores.secundario}
-              />
-            </Pressable>
-          </Pressable>
-        ))}
-
         <Pressable
-          style={[styles.fila, { borderBottomColor: colores.linea }]}
-          hitSlop={8}
+          onPress={abrirModalAgregar}
           accessibilityRole="button"
           accessibilityLabel="Agregar nueva dirección"
-          onPress={abrirModalAgregar}
+          style={({ pressed }) => [
+            styles.botonAgregar,
+            {
+              backgroundColor: pressed
+                ? colores.primarioPresionado
+                : colores.primario,
+            },
+          ]}
         >
-          <Ionicons
-            name="add-circle"
-            size={24}
-            color={colores.exitoTexto}
-          />
-          <Text style={[styles.agregar, { color: colores.exitoTexto }]}>
-            Agregar nueva dirección
+          <Ionicons name="add" size={21} color={colores.textoBoton} />
+
+          <Text style={styles.textoBotonAgregar}>
+            Agregar dirección
           </Text>
         </Pressable>
       </ScrollView>
@@ -716,4 +784,78 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
   },
+  
+  descripcionPantalla: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 18,
+    marginBottom: 22,
+  },
+
+  listaDirecciones: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+
+  filaDireccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    minHeight: 76,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+
+  separadorDireccion: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 72,
+    marginRight: 16,
+  },
+
+  botonAgregar: {
+    minHeight: 50,
+    backgroundColor: "#83D5AA",
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 24,
+  },
+
+  textoBotonAgregar: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0C211C",
+  },
+
+  estadoVacio: {
+    alignItems: "center",
+    paddingVertical: 38,
+    paddingHorizontal: 20,
+  },
+
+  iconoVacio: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+
+  vacioTitulo: {
+    fontSize: 17,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  vacioDescripcion: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
+    marginTop: 8,
+  },
+
 });

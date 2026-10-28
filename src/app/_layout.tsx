@@ -3,7 +3,8 @@ import { AuthProvider } from "@/features/autenticacion/context/AuthContext";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar, useColorScheme } from "react-native";
+import { StatusBar } from "react-native";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
@@ -25,7 +26,7 @@ import {
 } from "@expo-google-fonts/outfit";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { esOscuro, colores } = useAltokkeTheme();
   const [fontsLoaded] = useFonts({
     Outfit_400Regular,
     Outfit_500Medium,
@@ -36,9 +37,12 @@ export default function TabLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={esOscuro ? DarkTheme : DefaultTheme}>
         <AuthProvider>
-          <StatusBar barStyle="light-content" backgroundColor={paletaColores.fondo} />
+          <StatusBar 
+            barStyle={esOscuro ? "light-content" : "dark-content"}
+            backgroundColor={colores.fondo}
+          />
           <AnimatedSplashOverlay />
           <Slot />
         </AuthProvider>
