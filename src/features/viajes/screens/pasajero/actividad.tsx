@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import {
   COLOR_CABECERA,
@@ -222,7 +221,6 @@ export default function PantallaActividad() {
         </View>
       </ScrollView>
 
-      <BarraInferior activa="actividad" />
     </View>
   );
 }

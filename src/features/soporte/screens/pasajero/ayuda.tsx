@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
 import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
-import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 
 interface PreguntaFrecuente {
@@ -291,7 +290,6 @@ export default function Ayuda() {
         </View>
       </Modal>
 
-      <BarraInferior activa="ayuda" />
     </View>
   );
 }

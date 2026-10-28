@@ -1,4 +1,4 @@
-import { BarraInferior } from "@/features/pasajeros/components/BarraInferior";
+
 import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
@@ -601,7 +601,6 @@ export default function PantallaDestino() {
         )}
       </View>
 
-      {!tecladoVisible && <BarraInferior activa="inicio" />}
     </KeyboardAvoidingView>
   );
 }
