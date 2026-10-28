@@ -4,8 +4,12 @@ import { NotificacionesProvider } from "@/features/notificaciones/context/Notifi
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 
 export default function PasajeroLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) {
+    return null;
+  }
+  
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }
