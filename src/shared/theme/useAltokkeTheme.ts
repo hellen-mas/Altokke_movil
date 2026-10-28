@@ -1,5 +1,6 @@
 
 import { useColorScheme } from "react-native";
+import { useTemaStore } from "./temaStore";
 
 const coloresClaro = {
   fondo: "#F7F9F8",
@@ -42,12 +43,25 @@ const coloresOscuro = {
 } as const;
 
 export function useAltokkeTheme() {
-  const esquema = useColorScheme();
-  const esOscuro = esquema === "dark";
+  const esquemaSistema = useColorScheme();
+  const modoPreferido = useTemaStore(
+    (state) => state.modoPreferido
+  );
+
+  const setModoPreferido = useTemaStore(
+    (state) => state.setModoPreferido
+  );
+
+  const esOscuro =
+    modoPreferido === "oscuro" ||
+    (modoPreferido === "automatico" &&
+      esquemaSistema === "dark");
 
   return {
     esOscuro,
     modo: esOscuro ? "dark" : "light",
+    modoPreferido,
+    setModoPreferido,
     colores: esOscuro ? coloresOscuro : coloresClaro,
   };
 }

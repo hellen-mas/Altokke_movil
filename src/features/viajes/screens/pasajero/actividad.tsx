@@ -1,16 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { 
+  Pressable, 
+  RefreshControl, 
+  ScrollView, 
+  StyleSheet, 
+  Text, 
+  View 
+} from "react-native";
 import {
-  COLOR_CABECERA,
   LUGARES_BAGUA,
-  ViajeHistorial,
+  type ViajeHistorial,
 } from "@/features/viajes/constants/pasajero";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearFechaHora, formatearSoles } from "@/features/viajes/utils/viaje";
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Filtro = "todos" | "completado" | "cancelado";
 
@@ -28,18 +35,24 @@ const MENSAJE_VACIO: Record<Filtro, string> = {
 
 export default function PantallaActividad() {
   const { colores, esOscuro } = useAltokkeTheme();
+  const insets = useSafeAreaInsets();
+
   const { historial, setDestino, recargarHistorial } = useViaje();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [refrescando, setRefrescando] = useState(false);
 
   useEffect(() => {
-    recargarHistorial();
+    void recargarHistorial();
   }, []);
 
   const alRefrescar = async () => {
     setRefrescando(true);
-    await recargarHistorial();
-    setRefrescando(false);
+
+    try {
+      await recargarHistorial();
+    } finally {
+      setRefrescando(false);
+    }
   };
 
   const viajes =
@@ -63,24 +76,39 @@ export default function PantallaActividad() {
     }
   };
 
+  const reportarProblema = (viajeId: string) => {
+    router.push({
+      pathname: "/reportar-viaje",
+      params: { viajeId },
+    });
+  };
+
   return (
     <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
+      <StatusBar style={esOscuro ? "light" : "dark"} />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contenido}
+        contentContainerStyle={[
+          styles.contenido,
+          { paddingTop: insets.top + 16 },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refrescando}
             onRefresh={alRefrescar}
             tintColor={colores.primario}
+            colors={[colores.exitoTexto]}
           />
         }
       >
-        <CabeceraPasajero subtitulo="Tu movilidad en buenas manos" />
 
+        {/* Encabezado principal */}
         <View style={styles.encabezado}>
-          <Text style={[styles.titulo, { color: colores.texto }]}>Actividad</Text>
-          <Text style={[styles.subtitulo, { color: colores.secundario }]}>Tus viajes recientes</Text>
+          <View style={styles.encabezadoTextos}>
+            <Text style={[styles.titulo, { color: colores.texto }]}>Actividad</Text>
+            <Text style={[styles.subtitulo, { color: colores.secundario }]}>Consulta tus viajes recientes y vuelve a solicitar</Text>
+          </View>
         </View>
 
         {/* Filtros */}
@@ -92,10 +120,14 @@ export default function PantallaActividad() {
               <Pressable
                 key={opcion.id}
                 onPress={() => setFiltro(opcion.id)}
-                style={[
+                style={({ pressed }) => [
                   styles.filtro,
-                  activo && {
-                    backgroundColor: esOscuro ? colores.superficie : COLOR_CABECERA,
+                  {
+                    backgroundColor: activo
+                      ? pressed
+                        ? colores.primarioPresionado
+                        : colores.primario
+                      : "transparent",
                   },
                 ]}
               >
@@ -104,9 +136,7 @@ export default function PantallaActividad() {
                     styles.filtroTexto,
                     {
                       color: activo
-                        ? esOscuro
-                          ? colores.texto
-                          : "#FFFFFF"
+                        ? colores.textoBoton
                         : colores.secundario,
                     },
                   ]}
@@ -118,21 +148,93 @@ export default function PantallaActividad() {
           })}
         </View>
 
-        {/* Viajes */}
+        {/* Título de resultados */}
+        <View style={styles.encabezadoHistorial}>
+          <Text
+            style={[
+              styles.historialTitulo,
+              { color: colores.texto },
+            ]}
+          >
+            Historial de viajes
+          </Text>
+
+          <Text
+            style={[
+              styles.contador,
+              { color: colores.secundario },
+            ]}
+          >
+            {viajes.length}{" "}
+            {viajes.length === 1 ? "viaje" : "viajes"}
+          </Text>
+        </View>
+
+
         <View style={styles.lista}>
+          {/* Sin resultados */}
           {viajes.length === 0 && (
-            <View style={styles.vacio}>
-              <Ionicons
-                name="time-outline"
-                size={40}
-                color={colores.progresoInactivo}
-              />
-              <Text style={[styles.vacioTexto, { color: colores.secundario }]}>
+            <View 
+              style={[
+                styles.vacio,
+                {
+                  backgroundColor: colores.superficie,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.vacioIcono,
+                  { backgroundColor: colores.exitoFondo },
+                ]}
+              >
+                <Ionicons
+                  name="car-sport-outline"
+                  size={32}
+                  color={colores.exitoTexto}
+                />
+              </View>
+
+              <Text
+                style={[
+                  styles.vacioTitulo,
+                  { color: colores.texto },
+                ]}
+              >
+                Sin viajes por aquí
+              </Text>
+
+              <Text style={[styles.vacioDescripcion, { color: colores.secundario }]}>
                 {MENSAJE_VACIO[filtro]}
               </Text>
+
+              {filtro === "todos" && (
+                <Pressable
+                  onPress={() => router.push("/mapa")}
+                  style={({ pressed }) => [
+                    styles.botonVacio,
+                    {
+                      backgroundColor: pressed
+                        ? colores.primarioPresionado
+                        : colores.primario,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.textoBotonVacio,
+                      { color: colores.textoBoton },
+                    ]}
+                  >
+                    Solicitar un mototaxi
+                  </Text>
+                </Pressable>
+              )}
             </View>
           )}
 
+          {/* Tarjeta de viajes */}
           {viajes.map((viaje) => {
             const completado = viaje.estado === "completado";
 
@@ -147,149 +249,340 @@ export default function PantallaActividad() {
                   },
                 ]}
               >
+                {/* Fecha y estado */}
                 <View style={styles.filaSuperior}>
-                  <Text style={[styles.fecha, { color: colores.secundario }]}>
-                    {formatearFechaHora(viaje.fecha)}
-                  </Text>
-                  <Text
+                  <View style={styles.fechaContenedor}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={15}
+                      color={colores.secundario}
+                    />
+
+                    <Text
+                      style={[
+                        styles.fecha,
+                        { color: colores.secundario },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {formatearFechaHora(viaje.fecha)}
+                    </Text>
+                  </View>
+
+                  <View
                     style={[
-                      styles.estado,
-                      completado
-                        ? {
-                            color: colores.exitoTexto,
-                            backgroundColor: colores.exitoFondo,
-                          }
-                        : {
-                            color: colores.error,
-                            backgroundColor: colores.errorFondo,
-                          },
+                      styles.estadoCaja,
+                      {
+                        backgroundColor: completado
+                          ? colores.exitoFondo
+                          : colores.errorFondo,
+                      },
                     ]}
                   >
-                    {completado ? "Completado" : "Cancelado"}
-                  </Text>
+                    <Ionicons
+                      name={
+                        completado
+                          ? "checkmark-circle"
+                          : "close-circle"
+                      }
+                      size={14}
+                      color={
+                        completado
+                          ? colores.exitoTexto
+                          : colores.error
+                      }
+                    />
+
+                    <Text
+                      style={[
+                        styles.estadoTexto,
+                        {
+                          color: completado
+                            ? colores.exitoTexto
+                            : colores.error,
+                        },
+                      ]}
+                    >
+                      {completado
+                        ? "Completado"
+                        : "Cancelado"}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.cuerpo}>
+                {/* Recorrido */}
                   <View style={styles.recorrido}>
-                    <View style={styles.filaLugar}>
+                    <View style={styles.lineaRecorrido}>
                       <View style={[styles.puntoOrigen, { backgroundColor: colores.exitoTexto }]} />
-                      <Text style={[styles.lugar, { color: colores.texto }]} numberOfLines={1}>
-                        {viaje.origen}
-                      </Text>
+                      <View
+                        style={[
+                          styles.conector,
+                          { backgroundColor: colores.linea },
+                        ]}
+                      />
+                      <View
+                        style={[
+                          styles.puntoDestino,
+                          {
+                            borderColor: colores.secundario,
+                          },
+                        ]}
+                      />
                     </View>
-                    <View style={styles.filaLugar}>
-                      <View style={[styles.puntoDestino, { borderColor: colores.secundario }]} />
-                      <Text style={[styles.lugar, { color: colores.texto }]} numberOfLines={1}>
-                        {viaje.destino}
-                      </Text>
+
+                    <View style={styles.datosRecorrido}>
+                      <View style={styles.lugarBloque}>
+                        <Text
+                          style={[
+                            styles.etiquetaLugar,
+                            { color: colores.secundario },
+                          ]}
+                        >
+                          ORIGEN
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.lugarTexto,
+                            { color: colores.texto },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {viaje.origen}
+                        </Text>
+                      </View>
+
+                      <View style={styles.lugarBloque}>
+                        <Text
+                          style={[
+                            styles.etiquetaLugar,
+                            { color: colores.secundario },
+                          ]}
+                        >
+                          DESTINO
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.lugarTexto,
+                            { color: colores.texto },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {viaje.destino}
+                        </Text>
+                      </View>
                     </View>
                   </View>
 
-                  <View style={styles.derecha}>
-                    <Text
-                      style={[
-                        styles.tarifa,
-                        { color: colores.texto },
-                        !completado && { color: colores.secundario, textDecorationLine: "line-through" },
-                      ]}
-                    >
-                      {formatearSoles(viaje.tarifa)}
-                    </Text>
+                  {/* Tarifa y nueva solicitud */}
+                  <View
+                    style={[
+                      styles.filaAcciones,
+                      { borderTopColor: colores.linea },
+                    ]}
+                  >
+                    <View style={styles.tarifaBloque}>
+                      <Text
+                        style={[
+                          styles.tarifaEtiqueta,
+                          { color: colores.secundario },
+                        ]}
+                      >
+                        {completado
+                          ? "TARIFA REGISTRADA"
+                          : "TARIFA ESTIMADA"}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.tarifa,
+                          { color: colores.texto },
+                        ]}
+                      >
+                        {formatearSoles(viaje.tarifa)}
+                      </Text>
+                    </View>
 
                     <Pressable
                       onPress={() => solicitarDeNuevo(viaje)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Solicitar este viaje de nuevo"
                       style={({ pressed }) => [
-                        styles.repetir,
-                        { backgroundColor: colores.exitoFondo },
-                        pressed && { opacity: 0.7 },
+                        styles.botonRepetir,
+                        {
+                          backgroundColor: pressed
+                            ? colores.primarioPresionado
+                            : colores.primario,
+                        },
                       ]}
                     >
                       <Ionicons
-                        name="refresh"
-                        size={14}
-                        color={colores.exitoTexto}
+                        name="refresh-outline"
+                        size={17}
+                        color={colores.textoBoton}
                       />
-                      <Text style={[styles.repetirTexto, { color: colores.exitoTexto }]}>
+
+                      <Text
+                        style={[
+                          styles.repetirTexto,
+                          { color: colores.textoBoton },
+                        ]}
+                      >
                         Solicitar de nuevo
                       </Text>
                     </Pressable>
                   </View>
-                </View>
+
+                {/* Reportar inconveniente */}
+                <Pressable
+                  onPress={() => reportarProblema(viaje.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reportar un problema con este viaje"
+                  style={({ pressed }) => [
+                    styles.filaReportar,
+                    { borderTopColor: colores.linea },
+                    pressed && {
+                      backgroundColor: colores.campo,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={18}
+                    color={colores.exitoTexto}
+                  />
+
+                  <Text
+                    style={[
+                      styles.reportarTexto,
+                      { color: colores.exitoTexto },
+                    ]}
+                  >
+                    ¿Tuviste algún problema?
+                  </Text>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={colores.secundario}
+                  />
+                </Pressable>
               </View>
             );
           })}
         </View>
-      </ScrollView>
 
+        <Text
+          style={[
+            styles.piePagina,
+            { color: colores.secundario },
+          ]}
+        >
+          Tu historial, siempre a tu alcance.
+        </Text>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pantalla: {
+    pantalla: {
     flex: 1,
   },
 
   contenido: {
-    paddingBottom: 16,
+    paddingBottom: 30,
   },
 
   encabezado: {
-    marginTop: 16,
-    marginHorizontal: 16,
+    marginTop: 4,
+    marginHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  encabezadoTextos: {
+    flex: 1,
+    gap: 5,
   },
 
   titulo: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
+    letterSpacing: -0.5,
   },
 
   subtitulo: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+
+  iconoEncabezado: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   filtros: {
+    marginTop: 23,
+    marginHorizontal: 20,
     flexDirection: "row",
-    marginTop: 14,
-    marginHorizontal: 16,
-    padding: 4,
-    borderRadius: 14,
+    padding: 5,
+    borderRadius: 999,
+    gap: 3,
   },
 
   filtro: {
     flex: 1,
-    height: 38,
+    minHeight: 41,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 11,
+    paddingHorizontal: 4,
   },
 
   filtroTexto: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  encabezadoHistorial: {
+    marginTop: 28,
+    marginBottom: 13,
+    marginHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+
+  historialTitulo: {
+    flex: 1,
+    fontSize: 17,
     fontWeight: "700",
   },
 
+  contador: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
   lista: {
-    gap: 10,
-    marginTop: 14,
     marginHorizontal: 16,
-  },
-
-  vacio: {
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 48,
-  },
-
-  vacioTexto: {
-    fontSize: 14,
+    gap: 14,
   },
 
   tarjeta: {
-    padding: 12,
-    gap: 10,
-    borderRadius: 14,
     borderWidth: 1,
+    borderRadius: 20,
+    padding: 16,
+    gap: 18,
+    overflow: "hidden",
   },
 
   filaSuperior: {
@@ -299,78 +592,190 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
+  fechaContenedor: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+
   fecha: {
-    flexShrink: 1,
-    fontSize: 12,
+    flex: 1,
+    fontSize: 11,
     fontWeight: "600",
   },
 
-  estado: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    fontSize: 11,
-    fontWeight: "700",
-    overflow: "hidden",
-  },
-
-  cuerpo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  recorrido: {
-    flex: 1,
-    gap: 12,
-  },
-
-  filaLugar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  puntoOrigen: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-
-  puntoDestino: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 2,
-  },
-
-  lugar: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  derecha: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-
-  tarifa: {
-    fontSize: 17,
-    fontWeight: "800",
-  },
-
-  repetir: {
+  estadoCaja: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 10,
-    height: 32,
-    borderRadius: 16,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+
+  estadoTexto: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+
+  recorrido: {
+    flexDirection: "row",
+    gap: 13,
+    paddingHorizontal: 3,
+  },
+
+  lineaRecorrido: {
+    width: 14,
+    alignItems: "center",
+    paddingTop: 7,
+  },
+
+  puntoOrigen: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+
+  conector: {
+    width: 2,
+    height: 59,
+    marginVertical: 5,
+    borderRadius: 1,
+  },
+
+  puntoDestino: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+  },
+
+  datosRecorrido: {
+    flex: 1,
+    justifyContent: "space-between",
+    gap: 22,
+  },
+
+  lugarBloque: {
+    gap: 4,
+  },
+
+  etiquetaLugar: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.7,
+  },
+
+  lugarTexto: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
+  },
+
+  filaAcciones: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  tarifaBloque: {
+    flex: 1,
+    gap: 4,
+  },
+
+  tarifaEtiqueta: {
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+
+  tarifa: {
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  botonRepetir: {
+    minHeight: 42,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
 
   repetirTexto: {
     fontSize: 12,
     fontWeight: "700",
+  },
+
+  filaReportar: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: -16,
+    marginBottom: -16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  reportarTexto: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  vacio: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 25,
+    paddingVertical: 35,
+    gap: 10,
+  },
+
+  vacioIcono: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+
+  vacioTitulo: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
+
+  vacioDescripcion: {
+    textAlign: "center",
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
+  botonVacio: {
+    marginTop: 12,
+    borderRadius: 999,
+    minHeight: 46,
+    paddingHorizontal: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  textoBotonVacio: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  piePagina: {
+    textAlign: "center",
+    marginTop: 25,
+    fontSize: 11,
   },
 });
