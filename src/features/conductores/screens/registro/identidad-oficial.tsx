@@ -30,11 +30,9 @@ export default function IdentidadOficialConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
     const {
         dniFrente,
-        setDniFrente,
         dniReverso,
-        setDniReverso,
         selfie,
-        setSelfie,
+        actualizarFormulario,
     } = useRegistroConductor();
 
     const [fotoVistaPrevia, setFotoVistaPrevia] = useState<string | null>(null);
@@ -78,13 +76,13 @@ export default function IdentidadOficialConductor() {
 
             switch (tipo) {
                 case "frente":
-                setDniFrente(uri);
+                actualizarFormulario({ dniFrente: uri });
                 break;
                 case "reverso":
-                setDniReverso(uri);
+                actualizarFormulario({ dniReverso: uri });
                 break;
                 case "selfie":
-                setSelfie(uri);
+                actualizarFormulario({ selfie: uri });
                 break;
             }
         } catch {

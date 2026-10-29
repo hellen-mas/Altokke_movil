@@ -13,7 +13,7 @@ import { calcularEdad, sanitizarDNI } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -31,19 +31,13 @@ export default function DatosPersonalesConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
   const {
     nombre,
-    setNombre,
     apellidos,
-    setApellidos,
     dni,
-    setDni,
     fechaNacimiento,
-    setFechaNacimiento,
     correo,
-    setCorreo,
     contrasena,
-    setContrasena,
     confirmarContrasena,
-    setConfirmarContrasena,
+    actualizarFormulario,
   } = useRegistroConductor();
 
   const {
@@ -54,18 +48,16 @@ export default function DatosPersonalesConductor() {
   } = useConsultaDni(
     dni,
     (nombresObtenidos, apellidosObtenidos) => {
-      setNombre(nombresObtenidos);
-      setApellidos(apellidosObtenidos);
+      actualizarFormulario({ nombre: nombresObtenidos, apellidos: apellidosObtenidos });
     }
   );
 
   const cambiarDni = (texto: string) => {
     const nuevoDni = sanitizarDNI(texto);
     if (nuevoDni === dni) return;
-    setDni(nuevoDni);
-    if (nuevoDni.length !== 8) {
-      setNombre("");
-      setApellidos("");
+      actualizarFormulario({ dni: nuevoDni });
+      if (nuevoDni.length !== 8) {
+      actualizarFormulario({ nombre: "", apellidos: "" });
     }
   };
 
@@ -181,7 +173,7 @@ export default function DatosPersonalesConductor() {
 
             <CampoFechaNacimiento
               valorFecha={fechaNacimiento}
-              alCambiarFecha={setFechaNacimiento}
+              alCambiarFecha={(fecha) => actualizarFormulario({ fechaNacimiento: fecha })}
               label="Fecha de nacimiento"
               variante={esOscuro ? "oscuro" : "claro"}
             />
@@ -190,7 +182,7 @@ export default function DatosPersonalesConductor() {
               placeholder="Correo electrónico"
               nombreIcono="mail-outline"
               value={correo}
-              onChangeText={setCorreo}
+              onChangeText={(correo) => actualizarFormulario({ correo })}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -202,7 +194,7 @@ export default function DatosPersonalesConductor() {
               placeholder="Contraseña"
               nombreIcono="lock-closed-outline"
               value={contrasena}
-              onChangeText={setContrasena}
+              onChangeText={(contrasena) => actualizarFormulario({ contrasena })}
               esPassword
               autoCapitalize="none"
               autoCorrect={false}
@@ -219,7 +211,7 @@ export default function DatosPersonalesConductor() {
               placeholder="Confirmar contraseña"
               nombreIcono="lock-closed-outline"
               value={confirmarContrasena}
-              onChangeText={setConfirmarContrasena}
+              onChangeText={(confirmarContrasena) => actualizarFormulario({ confirmarContrasena })}
               esPassword
               autoCapitalize="none"
               autoCorrect={false}
