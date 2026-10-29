@@ -401,7 +401,6 @@ export default function PantallaMapa() {
           origen={destino ? ORIGEN_EJEMPLO.coordenadas : undefined}
           destino={destino?.coordenadas}
           conductores={CONDUCTORES_CERCANOS}
-          interactivo={false}
           style={styles.mapa}
         />
 
