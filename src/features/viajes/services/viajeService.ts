@@ -173,7 +173,7 @@ export const viajeService = {
   /**
    * Obtiene el historial de viajes de un pasajero desde Supabase
    */
-  async obtenerHistorialPasajero(userId: string): Promise<ViajeHistorial[]> {
+  async obtenerHistorialPasajero(userId: string, limite = 50): Promise<ViajeHistorial[]> {
     if (!userId) return [];
 
     try {
@@ -181,7 +181,8 @@ export const viajeService = {
         .from("viajes")
         .select("id, origen_texto, destino_texto, tarifa_estimada, tarifa_final, estado, creado_en")
         .eq("pasajero_id", userId)
-        .order("creado_en", { ascending: false });
+        .order("creado_en", { ascending: false })
+        .limit(limite);
 
       if (error || !data) {
         return [];

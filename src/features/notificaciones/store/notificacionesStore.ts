@@ -215,7 +215,7 @@ export const useNotificacionesStore = create<NotificacionesStore>()(
           if (state.notificaciones.some((n) => n.id === notificacion.id)) {
             return state;
           }
-          return { notificaciones: [notificacion, ...state.notificaciones] };
+          return { notificaciones: [notificacion, ...state.notificaciones].slice(0, 50) };
         }),
 
       procesarEstadoViaje: (viajeId, estado, metadata) => {
