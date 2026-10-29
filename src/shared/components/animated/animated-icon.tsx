@@ -1,187 +1,174 @@
-import { Image } from "expo-image";
-import * as SplashScreen from "expo-splash-screen";
-import { useRef, useState } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
-import Animated, { Easing, Keyframe } from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
 import { useAuthStore } from "@/features/autenticacion/store/authStore";
+import { useSplashTargetStore } from "@/shared/store/splashTargetStore";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, useWindowDimensions } from "react-native";
+import Animated, {
+  Easing,
+  Extrapolation,
+  FadeOut,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
-const INITIAL_SCALE_FACTOR = Dimensions.get("screen").height / 90;
-const DURATION = 600;
-const TIEMPO_MAXIMO = 5000;
+// Proporción de la imagen (1508x1320), igual que la escena de la bienvenida
+const PROPORCION = 1320 / 1508;
+
+// Tiempos (ms)
+const ACERCAMIENTO_MS = 1600; // lo que tarda la moto en llegar
+const MINIMO_MS = 1500; // el splash dura como mínimo esto
+const MAXIMO_MS = 5000; // y como máximo esto, aunque la sesión no termine de cargar
+const ESPERA_DESTINO_MS = 1200; // si la bienvenida no reporta su posición, arranca igual hacia el centro
+const ATERRIZAJE_MS = 400; // solo si la posición llega tarde, con la moto ya en camino
+const PAUSA_FINAL_MS = 150; // un respiro con la moto ya quieta antes de desvanecer
+const DESVANECIDO_MS = 350;
+
+// ===== Recorrido de la moto (EDITA AQUÍ para cambiar la ruta) =====
+// Valores en fracciones del tamaño final de la escena, medidos desde su posición final:
+// x negativo = izquierda, x positivo = derecha; y positivo = abajo, y negativo = arriba.
+const ESCALA_INICIAL = 0.5; // qué tan pequeña ("lejos") empieza
+const INICIO_X = -0.4; // punto de partida: esquina de arriba a la izquierda
+const INICIO_Y = -0.35;
+const CURVA_X = 0; // punto que "jala" la curva (la moto no pasa por él, solo se dobla hacia él)
+const CURVA_Y = -0.3;
+
+const GRADIENTE_FONDO = ["#1A4837", "#12392D", "#0F2F26", "#0C211C"] as const;
+const UBICACIONES_GRADIENTE = [0, 0.35, 0.7, 1] as const;
 
 export function AnimatedSplashOverlay() {
+  const { width: anchoPantalla, height: altoPantalla } = useWindowDimensions();
+  const anchoBase = anchoPantalla;
+  const altoBase = anchoPantalla * PROPORCION;
+
   const isLoading = useAuthStore((s) => s.isLoading);
+  const haySesion = useAuthStore((s) => Boolean(s.user));
+  const destino = useSplashTargetStore((s) => s.rect);
+
   const [minimoCumplido, setMinimoCumplido] = useState(false);
   const [tiempoAgotado, setTiempoAgotado] = useState(false);
+  const [esperaAgotada, setEsperaAgotada] = useState(false);
+  const [motoLlego, setMotoLlego] = useState(false);
   const [visible, setVisible] = useState(true);
-  const temporizadoresIniciados = useRef(false);
+  const acercamientoIniciado = useRef(false);
+
+  // Posición final de la moto. Si la bienvenida no la reporta, se asume centrada.
+  const progreso = useSharedValue(0);
+  const destinoX = useSharedValue(0);
+  const destinoY = useSharedValue((altoPantalla - altoBase) / 2);
+  const destinoEscala = useSharedValue(1);
+
+  // Arranque: ocultar el splash nativo y lanzar los temporizadores
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+    const temporizadorMinimo = setTimeout(() => setMinimoCumplido(true), MINIMO_MS);
+    const temporizadorEspera = setTimeout(() => setEsperaAgotada(true), ESPERA_DESTINO_MS);
+    // Libera el overlay aunque la sesión nunca termine de cargar
+    const temporizadorMaximo = setTimeout(() => setTiempoAgotado(true), MAXIMO_MS);
+    return () => {
+      clearTimeout(temporizadorMinimo);
+      clearTimeout(temporizadorEspera);
+      clearTimeout(temporizadorMaximo);
+    };
+  }, []);
+
+  // La moto arranca recién cuando sabe a dónde va: así hace UN solo recorrido (sin "L")
+  const sinBienvenida = !isLoading && haySesion;
+  useEffect(() => {
+    if (acercamientoIniciado.current) {
+      // Caso raro: la posición llegó con la moto ya en camino → se corrige suavemente
+      if (destino) {
+        const animacion = { duration: ATERRIZAJE_MS, easing: Easing.inOut(Easing.cubic) };
+        destinoX.value = withTiming(destino.x, animacion);
+        destinoY.value = withTiming(destino.y, animacion);
+        destinoEscala.value = withTiming(destino.width / anchoBase, animacion);
+      }
+      return;
+    }
+    if (!destino && !sinBienvenida && !esperaAgotada) return;
+
+    acercamientoIniciado.current = true;
+    if (destino) {
+      destinoX.value = destino.x;
+      destinoY.value = destino.y;
+      destinoEscala.value = destino.width / anchoBase;
+    }
+    progreso.value = withTiming(
+      1,
+      { duration: ACERCAMIENTO_MS, easing: Easing.out(Easing.cubic) },
+      (terminado) => {
+        "worklet";
+        if (terminado) scheduleOnRN(setMotoLlego, true);
+      }
+    );
+  }, [destino, sinBienvenida, esperaAgotada, anchoBase, progreso, destinoX, destinoY, destinoEscala]);
+
+  // Salida: moto en su sitio, tiempo mínimo cumplido y sesión cargada
+  const listo = motoLlego && minimoCumplido && (!isLoading || tiempoAgotado);
+  useEffect(() => {
+    if (!listo) return;
+    const temporizador = setTimeout(() => setVisible(false), PAUSA_FINAL_MS);
+    return () => clearTimeout(temporizador);
+  }, [listo]);
+
+  const estiloMoto = useAnimatedStyle(() => {
+    const p = progreso.value;
+    const q = 1 - p;
+    const s = destinoEscala.value;
+    const anchoFinal = anchoBase * s;
+    const altoFinal = altoBase * s;
+    // Curva de Bézier cuadrática: parte de INICIO, se dobla hacia CURVA y termina en (0, 0)
+    const desplazamientoX = (q * q * INICIO_X + 2 * q * p * CURVA_X) * anchoFinal;
+    const desplazamientoY = (q * q * INICIO_Y + 2 * q * p * CURVA_Y) * altoFinal;
+    const centroX = destinoX.value + anchoFinal / 2 + desplazamientoX;
+    const centroY = destinoY.value + altoFinal / 2 + desplazamientoY;
+    return {
+      opacity: interpolate(p, [0, 0.3], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        { translateX: centroX - anchoBase / 2 },
+        { translateY: centroY - altoBase / 2 },
+        { scale: s * (ESCALA_INICIAL + (1 - ESCALA_INICIAL) * p) },
+      ],
+    };
+  });
 
   if (!visible) return null;
 
-  const animate = minimoCumplido && (!isLoading || tiempoAgotado);
-
-  const splashKeyframe = new Keyframe({
-    0: {
-      transform: [{ scale: 1 }],
-      opacity: 1,
-    },
-    20: {
-      opacity: 1,
-    },
-    70: {
-      opacity: 0,
-      easing: Easing.elastic(0.7),
-    },
-    100: {
-      opacity: 0,
-      transform: [{ scale: 1 }],
-      easing: Easing.elastic(0.7),
-    },
-  });
-
-  const image = (
-    <Image
-      style={styles.image}
-      source={require("@/assets/images/logo-altokke-v2.png")}
-      contentFit="contain"
-    />
-  );
-
-  return animate ? (
-    <Animated.View
-      entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
-        "worklet";
-        if (finished) {
-          scheduleOnRN(setVisible, false);
-        }
-      })}
-      style={styles.splashOverlay}
-    >
-      {image}
-    </Animated.View>
-  ) : (
-    <View
-      onLayout={() => {
-        if (temporizadoresIniciados.current) return;
-        temporizadoresIniciados.current = true;
-        SplashScreen.hideAsync().finally(() => {
-          setTimeout(() => {
-            setMinimoCumplido(true);
-          }, 1500);
-          // Libera el overlay aunque la sesión nunca termine de cargar
-          setTimeout(() => {
-            setTiempoAgotado(true);
-          }, TIEMPO_MAXIMO);
-        });
-      }}
-      style={styles.splashOverlay}
-    >
-      {image}
-    </View>
-  );
-}
-
-const keyframe = new Keyframe({
-  0: {
-    transform: [{ scale: INITIAL_SCALE_FACTOR }],
-  },
-  100: {
-    transform: [{ scale: 1 }],
-    easing: Easing.elastic(0.7),
-  },
-});
-
-const logoKeyframe = new Keyframe({
-  0: {
-    transform: [{ scale: 1.3 }],
-    opacity: 0,
-  },
-  40: {
-    transform: [{ scale: 1.3 }],
-    opacity: 0,
-    easing: Easing.elastic(0.7),
-  },
-  100: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-    easing: Easing.elastic(0.7),
-  },
-});
-
-const glowKeyframe = new Keyframe({
-  0: {
-    transform: [{ rotateZ: "0deg" }],
-  },
-  100: {
-    transform: [{ rotateZ: "7200deg" }],
-  },
-});
-
-export function AnimatedIcon() {
   return (
-    <View style={styles.iconContainer}>
-      <Animated.View
-        entering={glowKeyframe.duration(60 * 1000 * 4)}
-        style={styles.glow}
-      >
+    <Animated.View style={styles.overlay} exiting={FadeOut.duration(DESVANECIDO_MS)}>
+      <LinearGradient
+        colors={GRADIENTE_FONDO}
+        locations={UBICACIONES_GRADIENTE}
+        style={StyleSheet.absoluteFill}
+      />
+      <Animated.View style={[styles.moto, { width: anchoBase, height: altoBase }, estiloMoto]}>
         <Image
-          style={styles.glow}
-          source={require("@/assets/images/logo-glow.png")}
-        />
-      </Animated.View>
-
-      <Animated.View
-        style={styles.imageContainer}
-        entering={logoKeyframe.duration(DURATION)}
-      >
-        <Image
-          style={styles.image}
-          source={require("@/assets/images/logo-altokke-v2.png")}
+          source={require("@/assets/images/mototaxi-splash.png")}
+          style={StyleSheet.absoluteFill}
           contentFit="contain"
         />
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  imageContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  glow: {
-    width: 201,
-    height: 201,
-    position: "absolute",
-  },
-  iconContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 128,
-    height: 128,
-    zIndex: 100,
-  },
-  image: {
-    width: 200,
-    height: 80,
-  },
-  background: {
-    borderRadius: 40,
-    experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
-    width: 128,
-    height: 128,
-    position: "absolute",
-  },
-  splashOverlay: {
+  overlay: {
     position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#0F211A",
-    alignItems: "center",
-    justifyContent: "center",
+    // Va antes del <Slot /> en el layout: sin esto, las pantallas lo taparían
     zIndex: 1000,
+  },
+  moto: {
+    position: "absolute",
+    left: 0,
+    top: 0,
   },
 });
