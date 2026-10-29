@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback, useEffect, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
@@ -26,6 +27,64 @@ const FILTROS: { id: Filtro; titulo: string }[] = [
   { id: "Cancelado", titulo: "Cancelados" },
 ];
 
+const Separador = () => <View style={styles.separadorItem} />;
+
+const TarjetaHistorialConductor = React.memo(function TarjetaHistorialConductor({
+  viaje,
+}: {
+  viaje: ViajeReal;
+}) {
+  const completado = viaje.estado === "Completado";
+
+  return (
+    <View style={styles.tarjeta}>
+      <View style={styles.filaHeader}>
+        <Text style={styles.fecha}>
+          {viaje.fecha}, {viaje.hora}
+        </Text>
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: completado ? "#E5F6ED" : "#FDE8E8" },
+          ]}
+        >
+          <Ionicons
+            name={completado ? "checkmark-circle" : "close-circle"}
+            size={13}
+            color={completado ? paletaColores.verde : paletaColores.error}
+          />
+          <Text
+            style={[
+              styles.badgeText,
+              { color: completado ? paletaColores.verde : paletaColores.error },
+            ]}
+          >
+            {viaje.estado}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.rutaBox}>
+        <View style={styles.puntoOrigen} />
+        <Text style={styles.rutaTexto} numberOfLines={1}>
+          {viaje.origen}
+        </Text>
+      </View>
+      <View style={styles.rutaLinea} />
+      <View style={styles.rutaBox}>
+        <View style={styles.puntoDestino} />
+        <Text style={styles.rutaTexto} numberOfLines={1}>
+          {viaje.destino}
+        </Text>
+      </View>
+
+      <View style={styles.filaFooter}>
+        <Text style={styles.monto}>S/ {viaje.monto.toFixed(2)}</Text>
+      </View>
+    </View>
+  );
+});
+
 export default function HistorialConductor() {
   const { perfil } = usePerfilConductor();
   const [filtro, setFiltro] = useState<Filtro>("todos");
@@ -42,7 +101,8 @@ export default function HistorialConductor() {
         .from("viajes")
         .select("id, creado_en, origen_texto, destino_texto, tarifa_final, tarifa_estimada, estado")
         .eq("conductor_id", perfil.id)
-        .order("creado_en", { ascending: false });
+        .order("creado_en", { ascending: false })
+        .limit(50);
 
       if (rows) {
         const mapeados: ViajeReal[] = rows.map((v) => {
@@ -69,14 +129,44 @@ export default function HistorialConductor() {
   }, [perfil.id]);
 
   useEffect(() => {
-    cargarHistorial();
+    void cargarHistorial();
   }, [cargarHistorial]);
 
-  const filtrados = viajes.filter((v) => filtro === "todos" || v.estado === filtro);
+  const filtrados = useMemo(() => {
+    return viajes.filter((v) => filtro === "todos" || v.estado === filtro);
+  }, [viajes, filtro]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: ViajeReal }) => <TarjetaHistorialConductor viaje={item} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item: ViajeReal) => item.id, []);
+
+  const renderEmpty = useMemo(
+    () => (
+      <View style={styles.vacio}>
+        <Ionicons
+          name="car-outline"
+          size={48}
+          color={paletaColores.textoSecundarioClaro}
+        />
+        <Text style={styles.vacioTexto}>
+          No hay viajes registrados en esta sección.
+        </Text>
+      </View>
+    ),
+    []
+  );
 
   return (
     <View style={styles.container}>
-      <CabeceraConductor titulo="Historial" subtitulo="Tus viajes y carreras completadas" mostrarAtras compacta />
+      <CabeceraConductor
+        titulo="Historial"
+        subtitulo="Tus viajes y carreras completadas"
+        mostrarAtras
+        compacta
+      />
 
       <View style={styles.resumen}>
         <View style={styles.resumenDato}>
@@ -85,7 +175,9 @@ export default function HistorialConductor() {
         </View>
         <View style={styles.separador} />
         <View style={styles.resumenDato}>
-          <Text style={[styles.resumenValor, { color: paletaColores.verde }]}>S/ {totales.totalGanado.toFixed(2)}</Text>
+          <Text style={[styles.resumenValor, { color: paletaColores.verde }]}>
+            S/ {totales.totalGanado.toFixed(2)}
+          </Text>
           <Text style={styles.resumenEtiqueta}>Total ganado</Text>
         </View>
       </View>
@@ -94,54 +186,40 @@ export default function HistorialConductor() {
         {FILTROS.map((op) => {
           const activo = op.id === filtro;
           return (
-            <Pressable key={op.id} style={[styles.filtro, activo && styles.filtroActivo]} onPress={() => setFiltro(op.id)}>
-              <Text style={[styles.filtroTexto, activo && styles.filtroTextoActivo]}>{op.titulo}</Text>
+            <Pressable
+              key={op.id}
+              style={[styles.filtro, activo && styles.filtroActivo]}
+              onPress={() => setFiltro(op.id)}
+            >
+              <Text
+                style={[styles.filtroTexto, activo && styles.filtroTextoActivo]}
+              >
+                {op.titulo}
+              </Text>
             </Pressable>
           );
         })}
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={cargarHistorial} />}
-      >
-        {filtrados.length === 0 ? (
-          <View style={styles.vacio}>
-            <Ionicons name="car-outline" size={48} color={paletaColores.textoSecundarioClaro} />
-            <Text style={styles.vacioTexto}>No hay viajes registrados en esta sección.</Text>
-          </View>
-        ) : (
-          filtrados.map((v) => {
-            const completado = v.estado === "Completado";
-            return (
-              <View key={v.id} style={styles.tarjeta}>
-                <View style={styles.filaHeader}>
-                  <Text style={styles.fecha}>{v.fecha}, {v.hora}</Text>
-                  <View style={[styles.badge, { backgroundColor: completado ? "#E5F6ED" : "#FDE8E8" }]}>
-                    <Ionicons name={completado ? "checkmark-circle" : "close-circle"} size={13} color={completado ? paletaColores.verde : paletaColores.error} />
-                    <Text style={[styles.badgeText, { color: completado ? paletaColores.verde : paletaColores.error }]}>{v.estado}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.rutaBox}>
-                  <View style={styles.puntoOrigen} />
-                  <Text style={styles.rutaTexto} numberOfLines={1}>{v.origen}</Text>
-                </View>
-                <View style={styles.rutaLinea} />
-                <View style={styles.rutaBox}>
-                  <View style={styles.puntoDestino} />
-                  <Text style={styles.rutaTexto} numberOfLines={1}>{v.destino}</Text>
-                </View>
-
-                <View style={styles.filaFooter}>
-                  <Text style={styles.monto}>S/ {v.monto.toFixed(2)}</Text>
-                </View>
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
+      <View style={styles.listaContenedor}>
+        <FlashList
+          data={filtrados}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          ItemSeparatorComponent={Separador}
+          ListEmptyComponent={renderEmpty}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scroll}
+          refreshControl={
+            <RefreshControl
+              refreshing={cargando}
+              onRefresh={cargarHistorial}
+              tintColor={paletaColores.verde}
+              colors={[paletaColores.verde]}
+            />
+          }
+        />
+      </View>
     </View>
   );
 }
@@ -184,6 +262,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 18,
     marginTop: 12,
+    marginBottom: 8,
   },
   filtro: {
     paddingHorizontal: 16,
@@ -205,10 +284,15 @@ const styles = StyleSheet.create({
   filtroTextoActivo: {
     color: "#FFFFFF",
   },
+  listaContenedor: {
+    flex: 1,
+  },
   scroll: {
     padding: 18,
-    gap: 12,
     paddingBottom: 40,
+  },
+  separadorItem: {
+    height: 12,
   },
   vacio: {
     alignItems: "center",
