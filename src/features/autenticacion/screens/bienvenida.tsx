@@ -1,3 +1,4 @@
+import { EscenaMototaxi } from "@/features/autenticacion/components/EscenaMototaxi";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -44,13 +45,7 @@ export default function PantallaBienvenida() {
           </View>
 
           <View style={styles.centro}>
-            <Image
-              source={require("@/assets/images/escena-mototaxi.png")}
-              style={styles.imagenEscena}
-              contentFit="contain"
-              accessibilityRole="image"
-              accessibilityLabel="Mototaxi Altokke recorriendo la ciudad"
-            />
+            <EscenaMototaxi />
           </View>
 
           <View style={styles.acciones}>
@@ -88,7 +83,6 @@ const styles = StyleSheet.create({
   marca: { fontFamily: "Outfit_700Bold", letterSpacing: -1.5, textAlign: "center", includeFontPadding: false },
   eslogan: { marginTop: 2, fontFamily: "Outfit_400Regular", fontSize: 21, lineHeight: 28, color: "#E8EFE9", textAlign: "center" },
   centro: { flex: 1, minHeight: 200, alignItems: "center", justifyContent: "center" },
-  imagenEscena: { width: "100%", aspectRatio: 1508 / 1320 },
   acciones: { width: "100%", gap: 20 },
   botonPresionado: { opacity: 0.9, transform: [{ scale: 0.985 }] },
   boton: { height: 50, borderRadius: 30, alignItems: "center", justifyContent: "center", flexDirection: "row", paddingHorizontal: 20 },
