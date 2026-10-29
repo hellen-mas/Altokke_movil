@@ -42,6 +42,8 @@ const coloresOscuro = {
   errorFondo: "#382323",
 } as const;
 
+export type ColoresTema = typeof coloresClaro | typeof coloresOscuro;
+
 export function useAltokkeTheme() {
   const esquemaSistema = useColorScheme();
   const modoPreferido = useTemaStore(
