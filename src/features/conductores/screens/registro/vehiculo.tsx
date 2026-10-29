@@ -31,19 +31,12 @@ export default function VehiculoConductor() {
 
   const {
     placa,
-    setPlaca,
     marca,
-    setMarca,
     modelo,
-    setModelo,
     anio,
-    setAnio,
     color,
-    setColor,
     capacidad,
-    setCapacidad,
     confirmacionVeracidad,
-    setConfirmacionVeracidad,
     nombre,
     apellidos,
     dni,
@@ -57,6 +50,7 @@ export default function VehiculoConductor() {
     licenciaConducir,
     soat,
     antecedentesPenales,
+    actualizarFormulario,
   } = useRegistroConductor();
 
   const anioActual = new Date().getFullYear();
@@ -205,7 +199,7 @@ export default function VehiculoConductor() {
               placeholder="Placa"
               nombreIcono="card-outline"
               value={placa}
-              onChangeText={(texto) => setPlaca(texto.toUpperCase())}
+              onChangeText={(texto) => actualizarFormulario({ placa: texto.toUpperCase() })}
               autoCapitalize="characters"
               autoCorrect={false}
               maxLength={10}
@@ -215,7 +209,7 @@ export default function VehiculoConductor() {
               placeholder="Marca"
               nombreIcono="car-outline"
               value={marca}
-              onChangeText={setMarca}
+              onChangeText={(texto) => actualizarFormulario({ marca: texto })}
               autoCapitalize="words"
               variante={esOscuro ? "oscuro" : "claro"}
             />
@@ -223,7 +217,7 @@ export default function VehiculoConductor() {
               placeholder="Modelo"
               nombreIcono="settings-outline"
               value={modelo}
-              onChangeText={setModelo}
+              onChangeText={(texto) => actualizarFormulario({ modelo: texto })}
               autoCapitalize="words"
               variante={esOscuro ? "oscuro" : "claro"}
             />
@@ -234,7 +228,7 @@ export default function VehiculoConductor() {
                   nombreIcono="calendar-outline"
                   value={anio}
                   onChangeText={(texto) =>
-                    setAnio(texto.replace(/\D/g, ""))
+                    actualizarFormulario({ anio: texto.replace(/\D/g, "") })
                   }
                   keyboardType="number-pad"
                   maxLength={4}
@@ -247,7 +241,7 @@ export default function VehiculoConductor() {
                   placeholder="Color"
                   nombreIcono="color-palette-outline"
                   value={color}
-                  onChangeText={setColor}
+                  onChangeText={(texto) => actualizarFormulario({ color: texto })}
                   autoCapitalize="words"
                   variante={esOscuro ? "oscuro" : "claro"}
                 />
@@ -259,7 +253,7 @@ export default function VehiculoConductor() {
               nombreIcono="people-outline"
               value={capacidad}
               onChangeText={(texto) =>
-                setCapacidad(texto.replace(/[^1-4]/g, ""))
+                actualizarFormulario({ capacidad: texto.replace(/[^1-4]/g, "") })
               }
               keyboardType="number-pad"
               maxLength={1}
@@ -270,7 +264,7 @@ export default function VehiculoConductor() {
           <Pressable
             style={styles.confirmacion}
             onPress={() =>
-              setConfirmacionVeracidad((valor) => !valor)
+              actualizarFormulario({ confirmacionVeracidad: !confirmacionVeracidad })
             }
             accessibilityRole="checkbox"
             accessibilityState={{

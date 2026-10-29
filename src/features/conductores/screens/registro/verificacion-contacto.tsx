@@ -1,8 +1,7 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import { IndicadorPasos } from "@/shared/components/ui";
-import { SelectorFotoPerfil } from "@/shared/components/ui";
+import { IndicadorPasos, SelectorFotoPerfil } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
@@ -32,13 +31,10 @@ export default function VerificacionContactoConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
   const {
     telefono,
-    setTelefono,
     correoRespaldo,
-    setCorreoRespaldo,
     direccion,
-    setDireccion,
     foto,
-    setFoto,
+    actualizarFormulario,
   } = useRegistroConductor();
 
   const [telefonoEnFoco, setTelefonoEnFoco] =
@@ -54,7 +50,9 @@ export default function VerificacionContactoConductor() {
   const mostrarErrorTelefono = intentoContinuar && !telefonoCorrecto;
 
   const cambiarTelefono = (texto: string) => {
-    setTelefono(sanitizarTelefono(texto));
+    actualizarFormulario({
+      telefono: sanitizarTelefono(texto),
+    });
   };
 
   const continuar = () => {
@@ -210,7 +208,7 @@ export default function VerificacionContactoConductor() {
               placeholder="Correo de respaldo (opcional)"
               nombreIcono="mail-outline"
               value={correoRespaldo}
-              onChangeText={setCorreoRespaldo}
+              onChangeText= {(texto) => actualizarFormulario({ correoRespaldo: texto })}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -220,7 +218,7 @@ export default function VerificacionContactoConductor() {
               placeholder="Dirección actual"
               nombreIcono="location-outline"
               value={direccion}
-              onChangeText={setDireccion}
+              onChangeText={(texto) => actualizarFormulario({ direccion: texto })}
               autoCapitalize="sentences"
               variante={esOscuro ? "oscuro" : "claro"}
             />
@@ -231,7 +229,7 @@ export default function VerificacionContactoConductor() {
             <SelectorFotoPerfil
               fotoUri={foto}
               descripcion="Para que puedan reconocerte."
-              alCambiarFoto={(uri) => setFoto(uri)}
+              alCambiarFoto={(uri) => actualizarFormulario({ foto: uri })}
               variante={esOscuro ? "oscuro" : "claro"}
             />
           </View>

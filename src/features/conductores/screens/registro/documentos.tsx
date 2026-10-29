@@ -32,11 +32,9 @@ export default function DocumentosConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
     const {
         licenciaConducir,
-        setLicenciaConducir,
         soat,
-        setSoat,
         antecedentesPenales,
-        setAntecedentesPenales
+        actualizarFormulario
     } = useRegistroConductor();
 
     const [seleccionando, setSeleccionando] = useState(false);
@@ -81,15 +79,15 @@ export default function DocumentosConductor() {
 
             switch (tipo) {
                 case "licencia":
-                    setLicenciaConducir(documento);
+                    actualizarFormulario({licenciaConducir: documento});
                     break;
 
                 case "soat":
-                    setSoat(documento);
+                    actualizarFormulario({soat: documento});
                     break;
 
                 case "antecedentes":
-                    setAntecedentesPenales(documento);
+                    actualizarFormulario({antecedentesPenales: documento});
                     break;
             }
         } catch (error) {

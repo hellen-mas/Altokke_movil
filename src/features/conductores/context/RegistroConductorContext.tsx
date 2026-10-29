@@ -1,4 +1,3 @@
-import React from "react";
 import { create } from "zustand";
 import { ArchivoDocumento } from "@/features/conductores/types/conductor";
 
@@ -59,65 +58,12 @@ const estadoInicial: DatosFormularioConductor = {
 };
 
 interface ConductorStore extends DatosFormularioConductor {
-  setNombre: (v: string) => void;
-  setApellidos: (v: string) => void;
-  setDni: (v: string) => void;
-  setFechaNacimiento: (v: Date | null) => void;
-  setCorreo: (v: string) => void;
-  setContrasena: (v: string) => void;
-  setConfirmarContrasena: (v: string) => void;
-  setTelefono: (v: string) => void;
-  setCodigo: (v: string) => void;
-  setCorreoRespaldo: (v: string) => void;
-  setDireccion: (v: string) => void;
-  setFoto: (v: string | null) => void;
-  setDniFrente: (v: string | null) => void;
-  setDniReverso: (v: string | null) => void;
-  setSelfie: (v: string | null) => void;
-  setLicenciaConducir: (v: ArchivoDocumento | null) => void;
-  setSoat: (v: ArchivoDocumento | null) => void;
-  setAntecedentesPenales: (v: ArchivoDocumento | null) => void;
-  setPlaca: (v: string) => void;
-  setMarca: (v: string) => void;
-  setModelo: (v: string) => void;
-  setAnio: (v: string) => void;
-  setColor: (v: string) => void;
-  setCapacidad: (v: string) => void;
-  setConfirmacionVeracidad: (v: boolean | ((prev: boolean) => boolean)) => void;
-  limpiar: () => void;
+  actualizarFormulario: (datos: Partial<DatosFormularioConductor>) => void;
+  limpiarFormulario: () => void;
 }
 
 export const useRegistroConductor = create<ConductorStore>((set) => ({
   ...estadoInicial,
-  setNombre: (nombre) => set({ nombre }),
-  setApellidos: (apellidos) => set({ apellidos }),
-  setDni: (dni) => set({ dni }),
-  setFechaNacimiento: (fechaNacimiento) => set({ fechaNacimiento }),
-  setCorreo: (correo) => set({ correo }),
-  setContrasena: (contrasena) => set({ contrasena }),
-  setConfirmarContrasena: (confirmarContrasena) => set({ confirmarContrasena }),
-  setTelefono: (telefono) => set({ telefono }),
-  setCodigo: (codigo) => set({ codigo }),
-  setCorreoRespaldo: (correoRespaldo) => set({ correoRespaldo }),
-  setDireccion: (direccion) => set({ direccion }),
-  setFoto: (foto) => set({ foto }),
-  setDniFrente: (dniFrente) => set({ dniFrente }),
-  setDniReverso: (dniReverso) => set({ dniReverso }),
-  setSelfie: (selfie) => set({ selfie }),
-  setLicenciaConducir: (licenciaConducir) => set({ licenciaConducir }),
-  setSoat: (soat) => set({ soat }),
-  setAntecedentesPenales: (antecedentesPenales) => set({ antecedentesPenales }),
-  setPlaca: (placa) => set({ placa }),
-  setMarca: (marca) => set({ marca }),
-  setModelo: (modelo) => set({ modelo }),
-  setAnio: (anio) => set({ anio }),
-  setColor: (color) => set({ color }),
-  setCapacidad: (capacidad) => set({ capacidad }),
-  setConfirmacionVeracidad: (val) =>
-    set((s) => ({
-      confirmacionVeracidad: typeof val === "function" ? val(s.confirmacionVeracidad) : val,
-    })),
-  limpiar: () => set(estadoInicial),
+  actualizarFormulario: (datos) => set(datos),
+  limpiarFormulario: () => set(estadoInicial),
 }));
-
-export const RegistroConductorProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;

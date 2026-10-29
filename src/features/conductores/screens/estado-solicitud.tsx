@@ -5,8 +5,9 @@ import {
 } from "@/features/conductores/services/conductorService";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -60,37 +61,36 @@ const ESTADOS: Record<
 };
 
 export default function EstadoSolicitudScreen() {
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { colores } = useAltokkeTheme();
 
-  const [estado, setEstado] = useState<EstadoConductor | null>(null);
-  const [cargando, setCargando] = useState(true);
-
-  const consultarEstado = useCallback(async () => {
-    setCargando(true);
-
-    try {
+  const {
+    data: estado,
+    isFetching: cargando,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["estado-solicitud-conductor"],
+    queryFn: async () => {
       const user = await authService.obtenerUsuarioActual();
 
       if (!user) {
         router.replace("/login");
-        return;
+        return null;
       }
 
-      const estadoActual = await obtenerEstadoConductor(user.id);
-      setEstado(estadoActual);
-    } catch (error: any) {
-      Alert.alert(
-        "No se pudo consultar",
-        error?.message || "Inténtalo nuevamente."
-      );
-    } finally {
-      setCargando(false);
-    }
-  }, []);
+      return obtenerEstadoConductor(user.id);
+    },
+    staleTime: 0,
+  });
 
   useEffect(() => {
-    consultarEstado();
-  }, [consultarEstado]);
+    if (error) {
+      Alert.alert(
+        "No se pudo consultar",
+        error.message || "Inténtalo nuevamente."
+      );
+    }
+  }, [error]);
 
   const cerrarSesion = async () => {
     try {
@@ -252,7 +252,7 @@ export default function EstadoSolicitudScreen() {
             onPress={
               esAprobado
                 ? () => router.replace("/inicio")
-                : () => void consultarEstado()
+                : () => void refetch()
             }
             style={({ pressed }) => [
               styles.botonPrincipal,
