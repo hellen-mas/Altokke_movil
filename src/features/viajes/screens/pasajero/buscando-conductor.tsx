@@ -3,14 +3,14 @@ import { Redirect, router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
+import { PanelDeslizableViaje } from "@/features/viajes/components/PanelDeslizableViaje";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { PulsoBusqueda } from "@/features/viajes/components/PulsoBusqueda";
 import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
@@ -18,7 +18,6 @@ import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
   CONDUCTORES_CERCANOS,
-  ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
@@ -29,17 +28,12 @@ import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
 
-const PANEL_SOBRE_MAPA = 20;
-const PROPORCION_MAPA = 0.3;
-
 // Si nadie acepta en este tiempo, se avisa que no hay conductores disponibles
 const TIEMPO_MAXIMO_BUSQUEDA = 2 * 60 * 1000;
 
 export default function PantallaBuscandoConductor() {
   const { colores } = useAltokkeTheme();
   const resumen = useResumenViaje();
-  const insets = useSafeAreaInsets();
-  const { height: altoPantalla } = useWindowDimensions();
   const { solicitarCancelacion, cancelando } = useCancelarViaje("buscando");
 
   const { viajeActivoId } = useViaje();
@@ -63,8 +57,15 @@ export default function PantallaBuscandoConductor() {
     return <Redirect href="/destino" />;
   }
 
-  const { origen, destino, servicio, metodoPago, tarifa, minutos, ruta } =
-    resumen;
+  const {
+    origen,
+    origenLugar,
+    destino,
+    servicio,
+    metodoPago,
+    tarifa,
+    ruta,
+  } = resumen;
 
   const verMiViaje = () => {
     router.replace("/viaje-activo");
@@ -76,254 +77,298 @@ export default function PantallaBuscandoConductor() {
   };
 
   return (
-    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
-      <CabeceraPasajero
-        titulo={conductorEncontrado ? "Conductor encontrado" : "Buscando conductor"}
+    <GestureHandlerRootView style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
+      <CabeceraFlujoViaje
+        titulo={
+          conductorEncontrado
+            ? "Conductor encontrado"
+            : "Buscando conductor"
+        }
         subtitulo={
           conductorEncontrado
-            ? `Llega en aproximadamente ${minutos} min`
-            : "Estamos buscando un mototaxi cerca de ti"
+            ? "Tu conductor aceptó la solicitud"
+            : "Estamos esperando una respuesta"
         }
-        paddingInferior={12}
+        mostrarRegreso={false}
       />
 
-      <MapaBase
-        centro={CENTRO_BAGUA}
-        origen={origen}
-        destino={destino.coordenadas}
-        ruta={ruta}
-        conductores={
-          conductorEncontrado ? [CONDUCTORES_CERCANOS[0]] : CONDUCTORES_CERCANOS
-        }
-        margenInferior={PANEL_SOBRE_MAPA + 6}
-        style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
-      />
+      <View style={styles.zonaMapa}>
+        <MapaBase
+          centro={CENTRO_BAGUA}
+          origen={origen}
+          destino={destino.coordenadas}
+          ruta={ruta}
+          conductores={
+            conductorEncontrado ? [CONDUCTORES_CERCANOS[0]] : CONDUCTORES_CERCANOS
+          }
+          margenInferior={0}
+          style={styles.mapaCompleto}
+        />
 
-      <View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: colores.superficie,
-            borderColor: colores.linea,
-          },
-        ]}
-      >
-        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contenido}
-        >
-          {conductorEncontrado ? (
-            <>
-              <View
-                style={[
-                  styles.avisoEncontrado,
-                  { backgroundColor: colores.exitoFondo },
-                ]}
-              >
-                <Ionicons
-                  name="checkmark-circle"
-                  size={22}
-                  color={colores.exitoTexto}
+        <PanelDeslizableViaje
+          posiciones={["28%", "60%", "90%"]}
+          posicionInicial={1}
+          footer={
+            <View
+              style={[
+                styles.pieFijo,
+                { backgroundColor: colores.superficie },
+              ]}
+            >
+              {conductorEncontrado ? (
+                <BotonPrincipal
+                  titulo="Ver mi viaje"
+                  mostrarIcono
+                  icono="arrow-forward"
+                  onPress={verMiViaje}
                 />
-                <Text style={[styles.avisoTexto, { color: colores.texto }]}>
-                  ¡Tu mototaxi va en camino!
-                </Text>
-              </View>
-
-              {/* Conductor */}
-              <Text style={[styles.seccion, { color: colores.texto }]}>
-                Tu conductor
-              </Text>
-              <TarjetaConductor conductor={conductor} />
-
-              <View style={styles.acciones}>
+              ) : (
                 <Pressable
-                  onPress={() => llamarConductor(conductor?.telefono)}
+                  onPress={solicitarCancelacion}
+                  disabled={cancelando}
                   style={({ pressed }) => [
-                    styles.accion,
-                    { backgroundColor: colores.exitoFondo },
-                    pressed && { opacity: 0.8 },
+                    styles.botonCancelar,
+                    {
+                      borderColor: colores.error,
+                      backgroundColor: colores.superficie,
+                      marginTop: 0,
+                      marginBottom: 0,
+                    },
+                    (pressed || cancelando) && {
+                      backgroundColor: colores.errorFondo,
+                    },
+                    cancelando && { opacity: 0.6 },
                   ]}
                 >
-                  <Ionicons name="call" size={18} color={colores.exitoTexto} />
                   <Text
-                    style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                    style={[
+                      styles.botonCancelarTexto,
+                      { color: colores.error },
+                    ]}
                   >
-                    Llamar
+                    {cancelando ? "Cancelando..." : "Cancelar viaje"}
                   </Text>
                 </Pressable>
-                <Pressable
-                  onPress={() => escribirConductor(conductor?.telefono)}
-                  style={({ pressed }) => [
-                    styles.accion,
-                    { backgroundColor: colores.exitoFondo },
-                    pressed && { opacity: 0.8 },
+              )}
+            </View>
+          }
+        >
+
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contenido}
+          >
+            {conductorEncontrado ? (
+              <>
+                <View
+                  style={[
+                    styles.avisoEncontrado,
+                    {
+                      backgroundColor: colores.exitoFondo,
+                      borderColor: colores.primario,
+                    },
                   ]}
                 >
                   <Ionicons
-                    name="chatbubble-ellipses"
-                    size={18}
+                    name="checkmark-circle"
+                    size={22}
                     color={colores.exitoTexto}
                   />
-                  <Text
-                    style={[styles.accionTexto, { color: colores.exitoTexto }]}
-                  >
-                    Mensaje
+                  <Text style={[styles.avisoTexto, { color: colores.texto }]}>
+                    ¡Encontramos un conductor para ti!
                   </Text>
-                </Pressable>
-              </View>
-            </>
-          ) : mostrarSinConductor ? (
-            <View style={styles.buscando}>
-              <Ionicons name="alert-circle" size={44} color={colores.error} />
-              <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
-                No hay mototaxis disponibles
-              </Text>
-              <Text
+                </View>
+
+                {/* Conductor */}
+                <Text style={[styles.seccion, { color: colores.texto }]}>
+                  Tu conductor
+                </Text>
+                <TarjetaConductor conductor={conductor} />
+
+                <View style={styles.acciones}>
+                  <Pressable
+                    onPress={() => llamarConductor(conductor?.telefono)}
+                    style={({ pressed }) => [
+                      styles.accion,
+                      { backgroundColor: colores.exitoFondo },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <Ionicons name="call" size={18} color={colores.exitoTexto} />
+                    <Text
+                      style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                    >
+                      Llamar
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => escribirConductor(conductor?.telefono)}
+                    style={({ pressed }) => [
+                      styles.accion,
+                      { backgroundColor: colores.exitoFondo },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <Ionicons
+                      name="chatbubble-ellipses"
+                      size={18}
+                      color={colores.exitoTexto}
+                    />
+                    <Text
+                      style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                    >
+                      Mensaje
+                    </Text>
+                  </Pressable>
+                </View>
+              </>
+            ) : mostrarSinConductor ? (
+              <View
                 style={[
-                  styles.buscandoDetalle,
-                  { color: colores.secundario },
+                  styles.buscando,
+                  styles.tarjetaEstado,
+                  {
+                    backgroundColor: colores.campo,
+                    borderColor: colores.linea,
+                  },
                 ]}
               >
-                Nadie aceptó tu viaje todavía. Puedes seguir esperando o cancelar.
-              </Text>
-              <View style={styles.botonSeguir}>
-                <BotonPrincipal titulo="Seguir buscando" onPress={seguirBuscando} />
+                <Ionicons
+                  name="time-outline"
+                  size={42}
+                  color={colores.secundario}
+                />
+                <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
+                  La búsqueda está tardando
+                </Text>
+                <Text
+                  style={[
+                    styles.buscandoDetalle,
+                    { color: colores.secundario },
+                  ]}
+                >
+                  Nadie aceptó tu viaje todavía. Puedes seguir esperando o cancelar.
+                </Text>
+                <View style={styles.botonSeguir}>
+                  <BotonPrincipal titulo="Seguir buscando" onPress={seguirBuscando} />
+                </View>
               </View>
-            </View>
-          ) : (
-            <View style={styles.buscando}>
-              <PulsoBusqueda />
-              <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
-                Buscando el mototaxi más cercano
-              </Text>
-              <Text
+            ) : (
+              <View
                 style={[
-                  styles.buscandoDetalle,
-                  { color: colores.secundario },
+                  styles.buscando,
+                  styles.tarjetaEstado,
+                  {
+                    backgroundColor: colores.superficie,
+                    borderColor: colores.linea,
+                  },
                 ]}
               >
-                Esto puede tardar unos segundos. No cierres la aplicación.
-              </Text>
-            </View>
-          )}
-
-          {/* Resumen del viaje */}
-          <Text style={[styles.seccion, { color: colores.texto }]}>
-            Resumen del viaje
-          </Text>
-          <View
-            style={[
-              styles.tarjetaResumen,
-              { backgroundColor: colores.campo },
-            ]}
-          >
-            <View style={styles.filaLugar}>
-              <Ionicons
-                name="radio-button-on"
-                size={18}
-                color={colores.exitoTexto}
-              />
-              <Text
-                style={[styles.lugarTexto, { color: colores.texto }]}
-                numberOfLines={1}
-              >
-                {ORIGEN_EJEMPLO.nombre}
-              </Text>
-            </View>
-
-            <View style={styles.filaLugar}>
-              <Ionicons
-                name="location-sharp"
-                size={18}
-                color={colores.error}
-              />
-              <Text
-                style={[styles.lugarTexto, { color: colores.texto }]}
-                numberOfLines={1}
-              >
-                {destino.nombre}
-              </Text>
-            </View>
-
-            <View
-              style={[styles.separador, { backgroundColor: colores.linea }]}
-            />
-
-            <View style={styles.datos}>
-              <View style={styles.dato}>
-                <Text
-                  style={[styles.datoEtiqueta, { color: colores.secundario }]}
-                >
-                  Servicio
+                <PulsoBusqueda />
+                <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
+                  Buscando el mototaxi más cercano
                 </Text>
                 <Text
-                  style={[styles.datoValor, { color: colores.texto }]}
+                  style={[
+                    styles.buscandoDetalle,
+                    { color: colores.secundario },
+                  ]}
                 >
-                  {servicio === "express" ? "Express" : "Normal"}
+                  Esto puede tardar unos segundos. No cierres la aplicación.
                 </Text>
               </View>
-              <View style={styles.dato}>
-                <Text
-                  style={[styles.datoEtiqueta, { color: colores.secundario }]}
-                >
-                  Pago
-                </Text>
-                <Text
-                  style={[styles.datoValor, { color: colores.texto }]}
-                >
-                  {NOMBRE_METODO_PAGO[metodoPago]}
-                </Text>
-              </View>
-              <View style={styles.dato}>
-                <Text
-                  style={[styles.datoEtiqueta, { color: colores.secundario }]}
-                >
-                  Tarifa
-                </Text>
-                <Text
-                  style={[styles.datoValor, { color: colores.texto }]}
-                >
-                  {formatearSoles(tarifa)}
-                </Text>
-              </View>
-            </View>
-          </View>
+            )}
 
-          <Pressable
-            onPress={solicitarCancelacion}
-            disabled={cancelando}
-            style={({ pressed }) => [
-              styles.botonCancelar,
-              { borderColor: colores.error },
-              (pressed || cancelando) && { backgroundColor: colores.errorFondo },
-              cancelando && { opacity: 0.6 },
-            ]}
-          >
-            <Text style={[styles.botonCancelarTexto, { color: colores.error }]}>
-              {cancelando ? "Cancelando..." : "Cancelar viaje"}
+            {/* Resumen del viaje */}
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Resumen del viaje
             </Text>
-          </Pressable>
-        </ScrollView>
+            <View
+              style={[
+                styles.tarjetaResumen,
+                {
+                  backgroundColor: colores.superficie,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
+              <View style={styles.filaLugar}>
+                <Ionicons
+                  name="radio-button-on"
+                  size={18}
+                  color={colores.exitoTexto}
+                />
+                <Text
+                  style={[styles.lugarTexto, { color: colores.texto }]}
+                  numberOfLines={1}
+                >
+                  {origenLugar.nombre}
+                </Text>
+              </View>
 
-        {conductorEncontrado && (
-          <View
-            style={[
-              styles.pie,
-              {
-                borderTopColor: colores.linea,
-                backgroundColor: colores.superficie,
-                paddingBottom: Math.max(insets.bottom, 14),
-              },
-            ]}
-          >
-            <BotonPrincipal titulo="Ver mi viaje" onPress={verMiViaje} />
-          </View>
-        )}
+              <View style={styles.filaLugar}>
+                <Ionicons
+                  name="location-sharp"
+                  size={18}
+                  color={colores.error}
+                />
+                <Text
+                  style={[styles.lugarTexto, { color: colores.texto }]}
+                  numberOfLines={1}
+                >
+                  {destino.nombre}
+                </Text>
+              </View>
+
+              <View
+                style={[styles.separador, { backgroundColor: colores.linea }]}
+              />
+
+              <View style={styles.datos}>
+                <View style={styles.dato}>
+                  <Text
+                    style={[styles.datoEtiqueta, { color: colores.secundario }]}
+                  >
+                    Servicio
+                  </Text>
+                  <Text
+                    style={[styles.datoValor, { color: colores.texto }]}
+                  >
+                    {servicio === "express" ? "Express" : "Normal"}
+                  </Text>
+                </View>
+                <View style={styles.dato}>
+                  <Text
+                    style={[styles.datoEtiqueta, { color: colores.secundario }]}
+                  >
+                    Pago
+                  </Text>
+                  <Text
+                    style={[styles.datoValor, { color: colores.texto }]}
+                  >
+                    {NOMBRE_METODO_PAGO[metodoPago]}
+                  </Text>
+                </View>
+                <View style={styles.dato}>
+                  <Text
+                    style={[styles.datoEtiqueta, { color: colores.secundario }]}
+                  >
+                    Tarifa
+                  </Text>
+                  <Text
+                    style={[styles.datoValor, { color: colores.texto }]}
+                  >
+                    {formatearSoles(tarifa)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </BottomSheetScrollView>
+        </PanelDeslizableViaje>
       </View>
-    </View>
+
+      
+    </GestureHandlerRootView>
   );
 }
 
@@ -332,71 +377,85 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  panel: {
+  zonaMapa: {
     flex: 1,
-    marginTop: -PANEL_SOBRE_MAPA,
-    paddingTop: 10,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
+    position: "relative",
   },
 
-  asa: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 10,
+  mapaCompleto: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+
+  pieFijo: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
 
   contenido: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 24,
   },
 
   buscando: {
     alignItems: "center",
-    paddingTop: 4,
+    paddingTop: 8,
+  },
+
+  tarjetaEstado: {
+    borderWidth: 1,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 22,
+    gap: 6,
   },
 
   buscandoTitulo: {
-    marginTop: 4,
-    fontSize: 18,
+    marginTop: 8,
+    fontSize: 19,
     fontWeight: "800",
     textAlign: "center",
+    letterSpacing: -0.3,
   },
 
   buscandoDetalle: {
     marginTop: 4,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
     textAlign: "center",
   },
 
   avisoEncontrado: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    padding: 12,
-    borderRadius: 14,
+    gap: 12,
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
   },
 
   avisoTexto: {
+    flex: 1,
     fontSize: 15,
     fontWeight: "700",
+    lineHeight: 21,
   },
 
   seccion: {
-    marginTop: 16,
-    marginBottom: 8,
-    fontSize: 14,
+    marginTop: 22,
+    marginBottom: 12,
+    fontSize: 16,
     fontWeight: "800",
   },
 
   acciones: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 10,
+    marginTop: 14,
   },
 
   accion: {
@@ -405,8 +464,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    height: 44,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 999,
   },
 
   accionTexto: {
@@ -415,15 +474,17 @@ const styles = StyleSheet.create({
   },
 
   tarjetaResumen: {
-    gap: 8,
-    padding: 12,
-    borderRadius: 14,
+    gap: 12,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
   },
 
   filaLugar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
+    minHeight: 28,
   },
 
   lugarTexto: {
@@ -434,14 +495,17 @@ const styles = StyleSheet.create({
 
   separador: {
     height: 1,
+    marginVertical: 4,
   },
 
   datos: {
     flexDirection: "row",
+    gap: 8,
   },
 
   dato: {
     flex: 1,
+    gap: 5,
   },
 
   datoEtiqueta: {
@@ -453,29 +517,23 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  pie: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    borderTopWidth: 1,
-  },
-
   botonCancelar: {
-    height: 48,
-    marginTop: 16,
+    height: 50,
+    marginTop: 22,
     marginBottom: 8,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
-    borderWidth: 1.5,
+    borderRadius: 999,
+    borderWidth: 1,
   },
 
   botonCancelarTexto: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
   },
 
   botonSeguir: {
     alignSelf: "stretch",
-    marginTop: 12,
+    marginTop: 16,
   },
 });

@@ -3,22 +3,20 @@ import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import {
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
+import { PanelDeslizableViaje } from "@/features/viajes/components/PanelDeslizableViaje";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
-  COLOR_CABECERA,
-  ORIGEN_INICIAL_BAGUA,
 } from "@/features/viajes/constants/pasajero";
 import { useViajeStore } from "@/features/viajes/store/viajeStore";
 import { viajeService } from "@/features/viajes/services/viajeService";
@@ -33,9 +31,6 @@ import {
   interpolarRuta,
 } from "@/features/viajes/utils/viaje";
 import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
-
-const PANEL_SOBRE_MAPA = 20;
-const PROPORCION_MAPA = 0.3;
 
 // Estados reales del viaje, en el orden en que avanza la barra de progreso
 const ESTADOS_PROGRESO = [
@@ -66,8 +61,6 @@ export default function PantallaViajeActivo() {
   const { colores } = useAltokkeTheme();
   const viajeActivoId = useViajeStore((s) => s.viajeActivoId);
   const resumen = useResumenViaje();
-  const insets = useSafeAreaInsets();
-  const { height: altoPantalla } = useWindowDimensions();
   const [horaSalida] = useState(() => new Date());
 
   const { viaje, conectado } = useViajeEnVivo(viajeActivoId);
@@ -89,7 +82,7 @@ export default function PantallaViajeActivo() {
     return <Redirect href="/destino" />;
   }
 
-  const { origen, destino, tarifa, minutos, ruta } = resumen;
+  const { origen, origenLugar, destino, tarifa, minutos, ruta } = resumen;
 
   // Si el conductor envía su ubicación se usa esa; si no, una posición aproximada sobre la ruta
   const ubicacionReal =
@@ -103,7 +96,7 @@ export default function PantallaViajeActivo() {
 
   const compartirViaje = () => {
     Share.share({
-      message: `Sigue mi viaje en Altokke: voy de ${ORIGEN_INICIAL_BAGUA.nombre} a ${destino.nombre}. Llegada estimada: ${formatearHora(horaLlegada)}.`,
+      message: `Sigue mi viaje en Altokke: voy de ${origenLugar.nombre} a ${destino.nombre}. Llegada estimada: ${formatearHora(horaLlegada)}.`,
     }).catch((err) => {
       console.warn("Aviso al compartir viaje:", err);
     });
@@ -121,11 +114,11 @@ export default function PantallaViajeActivo() {
   };
 
   return (
-    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
-      <CabeceraPasajero
+    <GestureHandlerRootView style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
+      <CabeceraFlujoViaje
         titulo={terminado ? "Viaje finalizado" : "Viaje en curso"}
         subtitulo={SUBTITULOS_ETAPA[etapa]}
-        paddingInferior={16}
+        mostrarRegreso={false}
       >
         {/* Progreso del viaje */}
         <View style={styles.progreso}>
@@ -152,7 +145,7 @@ export default function PantallaViajeActivo() {
                       borderColor: colores.primario,
                     },
                     indice === etapa && {
-                      borderColor: "#FFFFFF",
+                      borderColor: colores.exitoTexto,
                     },
                   ]}
                 />
@@ -176,306 +169,297 @@ export default function PantallaViajeActivo() {
             <Text style={styles.tiempoEtiqueta}>Tiempo estimado</Text>
           </View>
         </View>
-      </CabeceraPasajero>
+      </CabeceraFlujoViaje>
 
-      <MapaBase
-        centro={CENTRO_BAGUA}
-        origen={origen}
-        destino={destino.coordenadas}
-        ruta={ruta}
-        conductores={[posicionMoto]}
-        margenInferior={PANEL_SOBRE_MAPA + 6}
-        style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
-      />
+      <View style={styles.zonaMapa}>
+        <MapaBase
+          centro={CENTRO_BAGUA}
+          origen={origen}
+          destino={destino.coordenadas}
+          ruta={ruta}
+          conductores={[posicionMoto]}
+          margenInferior={0}
+          style={styles.mapaCompleto}
+        />
 
-      <View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: colores.superficie,
-            borderColor: colores.linea,
-          },
-        ]}
-      >
-        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contenido}
+        <PanelDeslizableViaje
+          posiciones={["30%", "65%", "90%"]}
+          posicionInicial={1}
+          footer={
+            terminado ? (
+              <View style={styles.pieFijo}>
+                <BotonPrincipal
+                  titulo="Calificar viaje"
+                  onPress={calificarViaje}
+                />
+              </View>
+            ) : undefined
+          }
         >
-          {!conectado && (
-            <View
-              style={[
-                styles.avisoSinConexion,
-                { backgroundColor: colores.errorFondo },
-              ]}
-            >
-              <Ionicons
-                name="cloud-offline-outline"
-                size={18}
-                color={colores.error}
-              />
-              <Text
-                style={[styles.avisoSinConexionTexto, { color: colores.error }]}
-              >
-                Sin conexión. Reintentando...
-              </Text>
-            </View>
-          )}
 
-          {terminado && (
-            <View
-              style={[
-                styles.avisoLlegada,
-                { backgroundColor: colores.exitoFondo },
-              ]}
-            >
-              <Ionicons
-                name="flag"
-                size={20}
-                color={colores.exitoTexto}
-              />
-              <Text style={[styles.avisoTexto, { color: colores.texto }]}>
-                ¡Llegaste a tu destino!
-              </Text>
-            </View>
-          )}
-
-          {!ubicacionReal && !terminado && (
-            <View style={styles.avisoAproximado}>
-              <Ionicons
-                name="information-circle-outline"
-                size={16}
-                color={colores.secundario}
-              />
-              <Text
-                style={[styles.avisoAproximadoTexto, { color: colores.secundario }]}
-              >
-                Ubicación aproximada del conductor
-              </Text>
-            </View>
-          )}
-
-          <Text style={[styles.seccion, { color: colores.texto }]}>
-            Tu conductor
-          </Text>
-          <TarjetaConductor conductor={conductor} />
-
-          <View style={styles.acciones}>
-            <Pressable
-              onPress={() => llamarConductor(conductor?.telefono)}
-              style={({ pressed }) => [
-                styles.accion,
-                { backgroundColor: colores.exitoFondo },
-                pressed && { opacity: 0.8 },
-              ]}
-            >
-              <Ionicons name="call" size={18} color={colores.exitoTexto} />
-              <Text
-                style={[styles.accionTexto, { color: colores.exitoTexto }]}
-              >
-                Llamar
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => escribirConductor(conductor?.telefono)}
-              style={({ pressed }) => [
-                styles.accion,
-                { backgroundColor: colores.exitoFondo },
-                pressed && { opacity: 0.8 },
-              ]}
-            >
-              <Ionicons
-                name="chatbubble-ellipses"
-                size={18}
-                color={colores.exitoTexto}
-              />
-              <Text
-                style={[styles.accionTexto, { color: colores.exitoTexto }]}
-              >
-                Mensaje
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={compartirViaje}
-              style={({ pressed }) => [
-                styles.accion,
-                { backgroundColor: colores.exitoFondo },
-                pressed && { opacity: 0.8 },
-              ]}
-            >
-              <Ionicons
-                name="share-social"
-                size={18}
-                color={colores.exitoTexto}
-              />
-              <Text
-                style={[styles.accionTexto, { color: colores.exitoTexto }]}
-              >
-                Compartir
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Recorrido */}
-          <View
-            style={[
-              styles.tarjetaRecorrido,
-              { backgroundColor: colores.campo },
-            ]}
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contenido}
           >
-            <View style={styles.filaLugar}>
-              <Ionicons
-                name="radio-button-on"
-                size={20}
-                color={colores.exitoTexto}
-              />
-              <View style={styles.lugarTextos}>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Origen
-                </Text>
+            {!conectado && (
+              <View
+                style={[
+                  styles.avisoSinConexion,
+                  { backgroundColor: colores.errorFondo },
+                ]}
+              >
+                <Ionicons
+                  name="cloud-offline-outline"
+                  size={18}
+                  color={colores.error}
+                />
                 <Text
-                  style={[styles.lugarNombre, { color: colores.texto }]}
-                  numberOfLines={1}
+                  style={[styles.avisoSinConexionTexto, { color: colores.error }]}
                 >
-                  {ORIGEN_INICIAL_BAGUA.nombre}
+                  Sin conexión. Reintentando...
                 </Text>
               </View>
-              <Text style={[styles.hora, { color: colores.texto }]}>
-                {formatearHora(horaSalida)}
-              </Text>
-            </View>
+            )}
 
-            <View
-              style={[styles.separador, { backgroundColor: colores.linea }]}
-            />
-
-            <View style={styles.filaLugar}>
-              <Ionicons
-                name="location-sharp"
-                size={20}
-                color={colores.error}
-              />
-              <View style={styles.lugarTextos}>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Destino
+            {terminado && (
+              <View
+                style={[
+                  styles.avisoLlegada,
+                  { backgroundColor: colores.exitoFondo },
+                ]}
+              >
+                <Ionicons
+                  name="flag"
+                  size={20}
+                  color={colores.exitoTexto}
+                />
+                <Text style={[styles.avisoTexto, { color: colores.texto }]}>
+                  ¡Llegaste a tu destino!
                 </Text>
+              </View>
+            )}
+
+            {!ubicacionReal && !terminado && (
+              <View style={styles.avisoAproximado}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={16}
+                  color={colores.secundario}
+                />
                 <Text
-                  style={[styles.lugarNombre, { color: colores.texto }]}
-                  numberOfLines={1}
+                  style={[styles.avisoAproximadoTexto, { color: colores.secundario }]}
                 >
-                  {destino.nombre}
+                  Ubicación aproximada del conductor
                 </Text>
               </View>
-              <View style={styles.llegada}>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Llegada estimada
-                </Text>
-                <Text style={[styles.hora, { color: colores.texto }]}>
-                  {formatearHora(horaLlegada)}
-                </Text>
-              </View>
-            </View>
-          </View>
+            )}
 
-          {/* Tarifa y seguridad */}
-          <View
-            style={[
-              styles.tarifa,
-              { backgroundColor: colores.exitoFondo },
-            ]}
-          >
-            <View style={styles.tarifaMonto}>
-              <Ionicons
-                name="ticket-outline"
-                size={24}
-                color={colores.exitoTexto}
-              />
-              <View>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Tarifa estimada
-                </Text>
-                <Text style={[styles.tarifaValor, { color: colores.texto }]}>
-                  {formatearSoles(tarifa)}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.seguridad}>
-              <Ionicons
-                name="shield-checkmark"
-                size={22}
-                color={colores.exitoTexto}
-              />
-              <View style={styles.seguridadTextos}>
-                <Text
-                  style={[
-                    styles.seguridadTitulo,
-                    { color: colores.texto },
-                  ]}
-                >
-                  Tu seguridad es primero
-                </Text>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  ¿Necesitas ayuda?
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {esCancelable && (
-            <Pressable
-              onPress={solicitarCancelacion}
-              disabled={cancelando}
-              style={({ pressed }) => [
-                styles.botonCancelar,
-                { borderColor: colores.error },
-                (pressed || cancelando) && { backgroundColor: colores.errorFondo },
-                cancelando && { opacity: 0.6 },
-              ]}
-            >
-              <Ionicons name="close-circle-outline" size={20} color={colores.error} />
-              <Text style={[styles.botonCancelarTexto, { color: colores.error }]}>
-                {cancelando ? "Cancelando viaje..." : "Cancelar viaje"}
-              </Text>
-            </Pressable>
-          )}
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.reportar,
-              { backgroundColor: colores.errorFondo },
-              pressed && { opacity: 0.8 },
-            ]}
-          >
-            <Ionicons name="warning-outline" size={20} color={colores.error} />
-            <Text style={[styles.reportarTexto, { color: colores.error }]}>
-              Reportar un problema
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Tu conductor
             </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colores.error}
-            />
-          </Pressable>
-        </ScrollView>
+            <TarjetaConductor conductor={conductor} />
 
-        {terminado && (
-          <View
-            style={[
-              styles.pie,
-              {
-                borderTopColor: colores.linea,
-                backgroundColor: colores.superficie,
-                paddingBottom: Math.max(insets.bottom, 14),
-              },
-            ]}
-          >
-            <BotonPrincipal titulo="Calificar viaje" onPress={calificarViaje} />
-          </View>
-        )}
+            <View style={styles.acciones}>
+              <Pressable
+                onPress={() => llamarConductor(conductor?.telefono)}
+                style={({ pressed }) => [
+                  styles.accion,
+                  { backgroundColor: colores.exitoFondo },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Ionicons name="call" size={18} color={colores.exitoTexto} />
+                <Text
+                  style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                >
+                  Llamar
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => escribirConductor(conductor?.telefono)}
+                style={({ pressed }) => [
+                  styles.accion,
+                  { backgroundColor: colores.exitoFondo },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses"
+                  size={18}
+                  color={colores.exitoTexto}
+                />
+                <Text
+                  style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                >
+                  Mensaje
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={compartirViaje}
+                style={({ pressed }) => [
+                  styles.accion,
+                  { backgroundColor: colores.exitoFondo },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Ionicons
+                  name="share-social"
+                  size={18}
+                  color={colores.exitoTexto}
+                />
+                <Text
+                  style={[styles.accionTexto, { color: colores.exitoTexto }]}
+                >
+                  Compartir
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Recorrido */}
+            <View
+              style={[
+                styles.tarjetaRecorrido,
+                { backgroundColor: colores.campo },
+              ]}
+            >
+              <View style={styles.filaLugar}>
+                <Ionicons
+                  name="radio-button-on"
+                  size={20}
+                  color={colores.exitoTexto}
+                />
+                <View style={styles.lugarTextos}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    Origen
+                  </Text>
+                  <Text
+                    style={[styles.lugarNombre, { color: colores.texto }]}
+                    numberOfLines={1}
+                  >
+                    {origenLugar.nombre}
+                  </Text>
+                </View>
+                <Text style={[styles.hora, { color: colores.texto }]}>
+                  {formatearHora(horaSalida)}
+                </Text>
+              </View>
+
+              <View
+                style={[styles.separador, { backgroundColor: colores.linea }]}
+              />
+
+              <View style={styles.filaLugar}>
+                <Ionicons
+                  name="location-sharp"
+                  size={20}
+                  color={colores.error}
+                />
+                <View style={styles.lugarTextos}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    Destino
+                  </Text>
+                  <Text
+                    style={[styles.lugarNombre, { color: colores.texto }]}
+                    numberOfLines={1}
+                  >
+                    {destino.nombre}
+                  </Text>
+                </View>
+                <View style={styles.llegada}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    Llegada estimada
+                  </Text>
+                  <Text style={[styles.hora, { color: colores.texto }]}>
+                    {formatearHora(horaLlegada)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Tarifa y seguridad */}
+            <View
+              style={[
+                styles.tarifa,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
+              <View style={styles.tarifaMonto}>
+                <Ionicons
+                  name="ticket-outline"
+                  size={24}
+                  color={colores.exitoTexto}
+                />
+                <View>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    Tarifa estimada
+                  </Text>
+                  <Text style={[styles.tarifaValor, { color: colores.texto }]}>
+                    {formatearSoles(tarifa)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.seguridad}>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={22}
+                  color={colores.exitoTexto}
+                />
+                <View style={styles.seguridadTextos}>
+                  <Text
+                    style={[
+                      styles.seguridadTitulo,
+                      { color: colores.texto },
+                    ]}
+                  >
+                    Tu seguridad es primero
+                  </Text>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    ¿Necesitas ayuda?
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {esCancelable && (
+              <Pressable
+                onPress={solicitarCancelacion}
+                disabled={cancelando}
+                style={({ pressed }) => [
+                  styles.botonCancelar,
+                  { borderColor: colores.error },
+                  (pressed || cancelando) && { backgroundColor: colores.errorFondo },
+                  cancelando && { opacity: 0.6 },
+                ]}
+              >
+                <Ionicons name="close-circle-outline" size={20} color={colores.error} />
+                <Text style={[styles.botonCancelarTexto, { color: colores.error }]}>
+                  {cancelando ? "Cancelando viaje..." : "Cancelar viaje"}
+                </Text>
+              </Pressable>
+            )}
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.reportar,
+                { backgroundColor: colores.errorFondo },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Ionicons name="warning-outline" size={20} color={colores.error} />
+              <Text style={[styles.reportarTexto, { color: colores.error }]}>
+                Reportar un problema
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colores.error}
+              />
+            </Pressable>
+          </BottomSheetScrollView>
+        </PanelDeslizableViaje>
       </View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -485,6 +469,25 @@ const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
   },
+  
+  zonaMapa: {
+    flex: 1,
+    position: "relative",
+  },
+
+  mapaCompleto: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+
+  pieFijo: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
 
   progreso: {
     flexDirection: "row",
@@ -493,9 +496,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 12,
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.14)",
+    backgroundColor: "#F0F5F2",
   },
 
   pasos: {
@@ -509,7 +510,7 @@ const styles = StyleSheet.create({
     left: "12.5%",
     right: "12.5%",
     height: 2,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "#C9D8CF",
   },
 
   pistaRelleno: {
@@ -526,19 +527,19 @@ const styles = StyleSheet.create({
     width: TAMANO_PUNTO,
     height: TAMANO_PUNTO,
     borderRadius: TAMANO_PUNTO / 2,
-    backgroundColor: COLOR_CABECERA,
+    backgroundColor: "#FFFFFF",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: "#C9D8CF",
   },
 
   pasoTexto: {
     fontSize: 10,
-    color: "rgba(255, 255, 255, 0.7)",
+    color: "#64776D",
   },
 
   pasoTextoAlcanzado: {
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#286847",
   },
 
   tiempo: {
@@ -546,40 +547,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: "rgba(57, 200, 135, 0.2)",
+    backgroundColor: "#E0F3E7",
   },
 
   tiempoValor: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: "#286847",
   },
 
   tiempoEtiqueta: {
     fontSize: 9,
-    color: "rgba(255, 255, 255, 0.8)",
-  },
-
-  panel: {
-    flex: 1,
-    marginTop: -PANEL_SOBRE_MAPA,
-    paddingTop: 10,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
-  },
-
-  asa: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 10,
+    color: "#52675A",
   },
 
   contenido: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 24,
   },
 
   avisoLlegada: {
@@ -714,12 +698,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: "700",
-  },
-
-  pie: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    borderTopWidth: 1,
   },
 
   botonCancelar: {

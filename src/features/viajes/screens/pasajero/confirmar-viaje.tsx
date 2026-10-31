@@ -4,13 +4,11 @@ import { ReactNode, useRef, useState } from "react";
 import {
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
 import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
@@ -21,9 +19,10 @@ import { viajeService } from "@/features/viajes/services/viajeService";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles } from "@/features/viajes/utils/viaje";
 import { ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { PanelDeslizableViaje } from "@/features/viajes/components/PanelDeslizableViaje";
 
-const PANEL_SOBRE_MAPA = 20;
-const PROPORCION_MAPA = 0.3;
 // Distancia mínima permitida para solicitar un viaje.
 const DISTANCIA_MINIMA_KM = 0.1; // 100 metros
 const coordenadasValidas = (latitude: number, longitude: number) =>
@@ -104,7 +103,6 @@ export default function PantallaConfirmarViaje() {
     ubicacionActual 
   } = useViaje();
   const resumen = useResumenViaje();
-  const { height: altoPantalla } = useWindowDimensions();
   const [creandoViaje, setCreandoViaje] = useState(false);
   const solicitudEnProceso = useRef(false);
   
@@ -306,286 +304,281 @@ export default function PantallaConfirmarViaje() {
   };
 
   return (
-    <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
-      <CabeceraPasajero />
-
-      <MapaBase
-        centro={origen}
-        origen={origen}
-        ubicacionActual={ubicacionActual}
-        destino={destino.coordenadas}
-        ruta={ruta}
-        margenInferior={PANEL_SOBRE_MAPA + 6}
-        style={{ height: Math.round(altoPantalla * PROPORCION_MAPA) }}
+    <GestureHandlerRootView style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
+      <CabeceraFlujoViaje
+        titulo="Confirmar viaje"
+        subtitulo="Revisa los detalles antes de continuar"
       />
 
-      <View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: colores.superficie,
-            borderColor: colores.linea,
-          },
-        ]}
-      >
-        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
+      <View style={styles.zonaMapa}>
+        <MapaBase
+          centro={origen}
+          origen={origen}
+          ubicacionActual={ubicacionActual}
+          destino={destino.coordenadas}
+          ruta={ruta}
+          margenInferior={0}
+          style={styles.mapaCompleto}
+        />
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contenido}
+        <PanelDeslizableViaje
+          posiciones={["35%", "65%", "90%"]}
+          posicionInicial={1}
+          footer={
+            <View style={styles.pieFijo}>
+              <BotonPrincipal
+                titulo={creandoViaje ? "Solicitando viaje..." : "Confirmar viaje"}
+                mostrarIcono
+                icono="arrow-forward"
+                onPress={confirmarViaje}
+                cargando={creandoViaje}
+                disabled={creandoViaje}
+              />
+            </View>
+          }
         >
-          <Text style={[styles.titulo, { color: colores.texto }]}>
-            Confirma tu viaje
-          </Text>
-          <Text style={[styles.subtitulo, { color: colores.secundario }]}>
-            Revisa los datos antes de solicitar tu mototaxi.
-          </Text>
-
-          {/* Origen y destino */}
-          <View style={[styles.tarjeta, { backgroundColor: colores.campo }]}>
-            <View style={styles.filaLugar}>
-              <View
-                style={[
-                  styles.iconoLugar,
-                  { backgroundColor: colores.exitoFondo },
-                ]}
-              >
-                <Ionicons
-                  name="radio-button-on"
-                  size={20}
-                  color={colores.exitoTexto}
-                />
-              </View>
-              <View style={styles.textoLugar}>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Origen
-                </Text>
-                <Text style={[styles.lugarNombre, { color: colores.texto }]}>
-                  {origenLugar.nombre}
-                </Text>
-              </View>
-            </View>
-
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contenido}
+          >
+            {/* Origen y destino */}
             <View
-              style={[styles.separador, { backgroundColor: colores.linea }]}
-            />
-
-            <View style={styles.filaLugar}>
-              <View
-                style={[
-                  styles.iconoLugar,
-                  styles.iconoDestino,
-                  { backgroundColor: colores.errorFondo },
-                ]}
-              >
-                <Ionicons
-                  name="location-sharp"
-                  size={20}
-                  color={colores.error}
-                />
-              </View>
-              <View style={styles.textoLugar}>
-                <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Destino
-                </Text>
-                <Text style={[styles.lugarNombre, { color: colores.texto }]}>
-                  {destino.nombre}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Tipo de servicio */}
-          <Text style={[styles.seccion, { color: colores.texto }]}>
-            Tipo de servicio
-          </Text>
-          <View style={styles.opciones}>
-            {SERVICIOS.map((opcion) => {
-              const seleccionada = opcion.id === servicio;
-
-              return (
-                <Pressable
-                  key={opcion.id}
-                  onPress={() => setTipoServicio(opcion.id)}
+              style={[
+                styles.tarjeta,
+                {
+                  backgroundColor: colores.superficie,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
+              <View style={styles.filaLugar}>
+                <View
                   style={[
-                    styles.opcion,
-                    {
-                      backgroundColor: seleccionada
-                        ? colores.exitoFondo
-                        : colores.superficie,
-                      borderColor: seleccionada
-                        ? colores.primario
-                        : colores.linea,
-                    },
+                    styles.iconoLugar,
+                    { backgroundColor: colores.exitoFondo },
                   ]}
                 >
-                  {opcion.icono(
-                    seleccionada ? colores.exitoTexto : colores.secundario
-                  )}
-                  <View style={styles.opcionTextos}>
+                  <Ionicons
+                    name="radio-button-on"
+                    size={20}
+                    color={colores.exitoTexto}
+                  />
+                </View>
+                <View style={styles.textoLugar}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    PUNTO DE RECOJO
+                  </Text>
+                  <Text style={[styles.lugarNombre, { color: colores.texto }]}>
+                    {origenLugar.nombre}
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={[styles.separador, { backgroundColor: colores.linea }]}
+              />
+
+              <View style={styles.filaLugar}>
+                <View
+                  style={[
+                    styles.iconoLugar,
+                    styles.iconoDestino,
+                    { backgroundColor: colores.errorFondo },
+                  ]}
+                >
+                  <Ionicons
+                    name="location-sharp"
+                    size={20}
+                    color={colores.error}
+                  />
+                </View>
+                <View style={styles.textoLugar}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    DESTINO
+                  </Text>
+                  <Text style={[styles.lugarNombre, { color: colores.texto }]}>
+                    {destino.nombre}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Tipo de servicio */}
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Tipo de servicio
+            </Text>
+            <View style={styles.opciones}>
+              {SERVICIOS.map((opcion) => {
+                const seleccionada = opcion.id === servicio;
+
+                return (
+                  <Pressable
+                    key={opcion.id}
+                    onPress={() => setTipoServicio(opcion.id)}
+                    style={({ pressed }) => [
+                      styles.opcion,
+                      {
+                        backgroundColor: seleccionada
+                          ? colores.exitoFondo
+                          : colores.superficie,
+                        borderColor: seleccionada
+                          ? colores.primario
+                          : colores.linea,
+                      },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    {opcion.icono(
+                      seleccionada ? colores.exitoTexto : colores.secundario
+                    )}
+                    <View style={styles.opcionTextos}>
+                      <Text
+                        style={[
+                          styles.opcionTitulo,
+                          {
+                            color: seleccionada
+                              ? colores.exitoTexto
+                              : colores.texto,
+                          },
+                        ]}
+                      >
+                        {opcion.titulo}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.opcionDetalle,
+                          { color: colores.secundario },
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {opcion.descripcion}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={seleccionada ? "radio-button-on" : "radio-button-off"}
+                      size={18}
+                      color={
+                        seleccionada
+                          ? colores.exitoTexto
+                          : colores.secundario
+                      }
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Método de pago */}
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Método de pago
+            </Text>
+            <View style={styles.opciones}>
+              {METODOS_PAGO.map((metodo) => {
+                const seleccionado = metodo.id === metodoPago;
+
+                return (
+                  <Pressable
+                    key={metodo.id}
+                    onPress={() => setMetodoPago(metodo.id)}
+                    style={({ pressed }) => [
+                      styles.metodo,
+                      {
+                        backgroundColor: seleccionado
+                          ? colores.exitoFondo
+                          : colores.superficie,
+                        borderColor: seleccionado
+                          ? colores.primario
+                          : colores.linea,
+                      },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <View style={styles.metodoIcono}>
+                      {metodo.icono(
+                        seleccionado ? colores.exitoTexto : colores.secundario
+                      )}
+                    </View>
                     <Text
                       style={[
                         styles.opcionTitulo,
                         {
-                          color: seleccionada
+                          color: seleccionado
                             ? colores.exitoTexto
                             : colores.texto,
                         },
                       ]}
                     >
-                      {opcion.titulo}
+                      {metodo.titulo}
                     </Text>
                     <Text
                       style={[
                         styles.opcionDetalle,
                         { color: colores.secundario },
                       ]}
-                      numberOfLines={2}
+                      numberOfLines={1}
                     >
-                      {opcion.descripcion}
+                      {metodo.detalle}
                     </Text>
-                  </View>
-                  <Ionicons
-                    name={seleccionada ? "radio-button-on" : "radio-button-off"}
-                    size={18}
-                    color={
-                      seleccionada
-                        ? colores.primario
-                        : colores.secundario
-                    }
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Ionicons
+                      name={
+                        seleccionado ? "radio-button-on" : "radio-button-off"
+                      }
+                      size={16}
+                      color={
+                        seleccionado
+                          ? colores.exitoTexto
+                          : colores.secundario
+                      }
+                      style={styles.metodoRadio}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
 
-          {/* Método de pago */}
-          <Text style={[styles.seccion, { color: colores.texto }]}>
-            Método de pago
-          </Text>
-          <View style={styles.opciones}>
-            {METODOS_PAGO.map((metodo) => {
-              const seleccionado = metodo.id === metodoPago;
-
-              return (
-                <Pressable
-                  key={metodo.id}
-                  onPress={() => setMetodoPago(metodo.id)}
+            {/* Tarifa */}
+            <View
+              style={[
+                styles.tarifa,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
+              <View style={styles.tarifaMonto}>
+                <View
                   style={[
-                    styles.metodo,
-                    {
-                      backgroundColor: seleccionado
-                        ? colores.exitoFondo
-                        : colores.superficie,
-                      borderColor: seleccionado
-                        ? colores.primario
-                        : colores.linea,
-                    },
+                    styles.tarifaIcono,
+                    { backgroundColor: colores.superficie },
                   ]}
                 >
-                  <View style={styles.metodoIcono}>
-                    {metodo.icono(
-                      seleccionado ? colores.exitoTexto : colores.secundario
-                    )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.opcionTitulo,
-                      {
-                        color: seleccionado
-                          ? colores.exitoTexto
-                          : colores.texto,
-                      },
-                    ]}
-                  >
-                    {metodo.titulo}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.opcionDetalle,
-                      { color: colores.secundario },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {metodo.detalle}
-                  </Text>
                   <Ionicons
-                    name={
-                      seleccionado ? "radio-button-on" : "radio-button-off"
-                    }
-                    size={16}
-                    color={
-                      seleccionado
-                        ? colores.primario
-                        : colores.secundario
-                    }
-                    style={styles.metodoRadio}
+                    name="ticket-outline"
+                    size={22}
+                    color={colores.exitoTexto}
                   />
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Tarifa */}
-          <View
-            style={[
-              styles.tarifa,
-              { backgroundColor: colores.exitoFondo },
-            ]}
-          >
-            <View style={styles.tarifaMonto}>
-              <View
-                style={[
-                  styles.tarifaIcono,
-                  { backgroundColor: colores.superficie },
-                ]}
-              >
-                <Ionicons
-                  name="ticket-outline"
-                  size={22}
-                  color={colores.exitoTexto}
-                />
+                </View>
+                <View>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    Tarifa estimada
+                  </Text>
+                  <Text style={[styles.tarifaValor, { color: colores.texto }]}>
+                    {formatearSoles(tarifa)}
+                  </Text>
+                </View>
               </View>
-              <View>
+
+              <View style={styles.tarifaDetalle}>
+                <Text style={[styles.tarifaDato, { color: colores.texto }]}>
+                  {kilometros.toFixed(1)} km · {minutos} min
+                </Text>
                 <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                  Tarifa estimada
-                </Text>
-                <Text style={[styles.tarifaValor, { color: colores.texto }]}>
-                  {formatearSoles(tarifa)}
+                  Distancia · Tiempo estimado
                 </Text>
               </View>
             </View>
-
-            <View style={styles.tarifaDetalle}>
-              <Text style={[styles.tarifaDato, { color: colores.texto }]}>
-                {kilometros.toFixed(1)} km · {minutos} min
-              </Text>
-              <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-                Distancia · Tiempo estimado
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-
-        <View
-          style={[
-            styles.pie,
-            {
-              borderTopColor: colores.linea,
-              backgroundColor: colores.superficie,
-            },
-          ]}
-        >
-          <BotonPrincipal 
-            titulo={creandoViaje ? "Solicitando viaje..." : "Confirmar viaje"}
-            onPress={confirmarViaje} 
-            cargando={creandoViaje}
-            disabled={creandoViaje}
-          />
-        </View>
+          </BottomSheetScrollView>
+        </PanelDeslizableViaje>
       </View>
-
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -594,26 +587,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  panel: {
+  zonaMapa: {
     flex: 1,
-    marginTop: -PANEL_SOBRE_MAPA,
-    paddingTop: 10,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
+    position: "relative",
   },
 
-  asa: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 10,
+  mapaCompleto: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+
+  pieFijo: {
+    paddingHorizontal: 16,
+    paddingTop: 10, 
+    paddingBottom: 8,
   },
 
   contenido: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 24,
   },
 
   titulo: {
@@ -628,20 +623,22 @@ const styles = StyleSheet.create({
   },
 
   tarjeta: {
-    padding: 12,
-    borderRadius: 14,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
   },
 
   filaLugar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
+    minHeight: 48,
   },
 
   iconoLugar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -654,29 +651,31 @@ const styles = StyleSheet.create({
 
   separador: {
     height: 1,
-    marginVertical: 8,
-    marginLeft: 44,
+    marginVertical: 12,
+    marginLeft: 54,
   },
 
   etiqueta: {
     fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
 
   lugarNombre: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
   },
 
   seccion: {
-    marginTop: 14,
-    marginBottom: 8,
-    fontSize: 14,
+    marginTop: 22,
+    marginBottom: 12,
+    fontSize: 16,
     fontWeight: "800",
   },
 
   opciones: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
   },
 
   opcion: {
@@ -684,37 +683,40 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    padding: 10,
-    borderRadius: 14,
+    padding: 14,
+    minHeight: 90,
+    borderRadius: 18,
     borderWidth: 1.5,
   },
 
   opcionTextos: {
     flex: 1,
+    gap: 4,
   },
 
   opcionTitulo: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
   },
 
   opcionDetalle: {
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 11,
+    lineHeight: 15,
   },
 
   metodo: {
     flex: 1,
     alignItems: "flex-start",
-    gap: 2,
-    padding: 10,
-    borderRadius: 14,
+    gap: 5,
+    minHeight: 100,
+    padding: 12,
+    borderRadius: 18,
     borderWidth: 1.5,
   },
 
   metodoIcono: {
-    height: 28,
-    marginBottom: 2,
+    height: 30,
+    marginBottom: 4,
     justifyContent: "center",
   },
 
@@ -743,9 +745,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    marginTop: 14,
-    padding: 12,
-    borderRadius: 14,
+    marginTop: 22,
+    padding: 16,
+    borderRadius: 20,
   },
 
   tarifaMonto: {
@@ -763,7 +765,7 @@ const styles = StyleSheet.create({
   },
 
   tarifaValor: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "800",
   },
 
@@ -778,8 +780,8 @@ const styles = StyleSheet.create({
 
   pie: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingTop: 12,
+    paddingBottom: 30,
     borderTopWidth: 1,
   },
 });

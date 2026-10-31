@@ -5,8 +5,6 @@ import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
 import {
   CENTRO_BAGUA,
-  COLOR_CABECERA,
-  CONDUCTORES_CERCANOS,
   ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
 import { useViajeStore, type TipoServicio } from "@/features/viajes/store/viajeStore";
@@ -16,8 +14,8 @@ import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajer
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ReactNode, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
 import { viajeService } from "@/features/viajes/services/viajeService";
 
@@ -25,47 +23,58 @@ const SERVICIOS: {
   id: TipoServicio;
   titulo: string;
   descripcion: string;
-  icono: (color: string) => ReactNode;
 }[] = [
   {
     id: "normal",
     titulo: "Normal",
     descripcion: "Económico y confiable",
-    icono: (color) => <IconoMototaxi size={28} color={color} />,
   },
   {
     id: "express",
     titulo: "Express",
     descripcion: "Llegas más rápido",
-    icono: (color) => <Ionicons name="flash" size={26} color={color} />,
   },
   {
     id: "reserva",
     titulo: "Reserva",
-    descripcion: "Programa tu viaje",
-    icono: (color) => (
-      <Ionicons name="calendar-outline" size={26} color={color} />
-    ),
+    descripcion: "Proximamente",
   },
 ];
 
 export default function PantallaMapa() {
-  const { colores, esOscuro } = useAltokkeTheme();
-  const tipoServicio = useViajeStore((s) => s.tipoServicio);
-  const setTipoServicio = useViajeStore((s) => s.setTipoServicio);
-  const destino = useViajeStore((s) => s.destino);
-  const setDestino = useViajeStore((s) => s.setDestino);
-  const setOrigen = useViajeStore((s) => s.setOrigen);
-  const setMetodoPago = useViajeStore((s) => s.setMetodoPago);
-  const viajeActivoId = useViajeStore((s) => s.viajeActivoId);
-  const setViajeActivoId = useViajeStore((s) => s.setViajeActivoId);
-  const verificandoViajeActivo = useViajeStore((s) => s.verificandoViajeActivo);
+  const { colores } = useAltokkeTheme();
+  const { userId } = useAuth();
   const { hayNoLeidas } = useNotificaciones();
   const nombre = useNombrePasajero();
   const { perfil } = usePerfilPasajero();
-  const modoSimple = perfil?.preferencias?.modoSimple === true;
-  const { userId } = useAuth();
+
+  const tipoServicio = useViajeStore((s) => s.tipoServicio);
+  const setTipoServicio = useViajeStore((s) => s.setTipoServicio);
+  const origen = useViajeStore((s) => s.origen);
+  const destino = useViajeStore((s) => s.destino);
+  const ubicacionActual = useViajeStore((s) => s.ubicacionActual);
+  const errorUbicacion = useViajeStore((s) => s.errorUbicacion);
+  
+  const setDestino = useViajeStore((s) => s.setDestino);
+  const setOrigen = useViajeStore((s) => s.setOrigen);
+  const setMetodoPago = useViajeStore((s) => s.setMetodoPago);
+
+  const viajeActivoId = useViajeStore((s) => s.viajeActivoId);
+  const setViajeActivoId = useViajeStore((s) => s.setViajeActivoId);
+  const verificandoViajeActivo = useViajeStore((s) => s.verificandoViajeActivo);
+
   const [abriendoViaje, setAbriendoViaje] = useState(false);
+
+  const hayViajeActivo = Boolean(viajeActivoId);
+  const origenConfirmado = origen.id !== ORIGEN_EJEMPLO.id;
+  const bloqueandoSolicitud =
+    verificandoViajeActivo || abriendoViaje;
+
+  const direccionOrigen = origenConfirmado
+    ? origen.detalle || origen.nombre
+    : ubicacionActual
+      ? "Ubicación GPS disponible"
+      : "Selecciona tu punto de recojo";
 
   const continuarViaje = async () => {
     if (!userId || !viajeActivoId || abriendoViaje || verificandoViajeActivo) {
@@ -75,7 +84,6 @@ export default function PantallaMapa() {
     setAbriendoViaje(true);
 
     try {
-      // Consultar el estado real antes de navegar.
       const viaje = await viajeService.obtenerViajeActivoPasajero(userId);
 
       if (!viaje) {
@@ -117,7 +125,6 @@ export default function PantallaMapa() {
         return;
       }
 
-      // Restaurar los datos originales del viaje.
       setOrigen({
         id: `origen-viaje-${viaje.id}`,
         nombre: viaje.origen_texto ?? "Origen registrado",
@@ -203,25 +210,70 @@ export default function PantallaMapa() {
     ];
   }, [perfil]);
 
-  const seleccionarDestinoFrecuente = (item: (typeof destinosFrecuentes)[number]) => {
-    if (item.esGuardado && item.coordenadas) {
-      setDestino({
-        id: `frecuente-${item.nombre}`,
-        nombre: item.nombre,
-        detalle: item.detalle,
-        coordenadas: item.coordenadas,
-      });
-      router.push("/confirmar-viaje");
-    } else {
-      router.push("/cuenta/direcciones");
-    }
-  };
-
   const irADestino = () => {
+    if (hayViajeActivo) {
+      void continuarViaje();
+      return;
+    }
+
+    if (bloqueandoSolicitud) return;
+
     router.push("/destino");
   };
 
+  const seleccionarServicio = (servicio: TipoServicio) => {
+    if (hayViajeActivo || bloqueandoSolicitud) return;
+
+    if (servicio === "reserva") {
+      Alert.alert(
+        "Próximamente",
+        "La programación de viajes todavía no está disponible. Por ahora puedes solicitar un viaje Normal o Express."
+      );
+      return;
+    }
+
+    setTipoServicio(servicio);
+  };
+
+  const seleccionarDestinoFrecuente = (item: (typeof destinosFrecuentes)[number]) => {
+    if (hayViajeActivo) {
+      void continuarViaje();
+      return;
+    }
+
+    if (bloqueandoSolicitud) return;
+
+    if (!item.esGuardado || !item.coordenadas) {
+      router.push("/cuenta/direcciones");
+      return;
+    }
+
+    setDestino({
+      id: `frecuente-${item.nombre}`,
+      nombre: item.nombre,
+      detalle: item.detalle,
+      coordenadas: item.coordenadas,
+    });
+
+    router.push("/confirmar-viaje");
+  };
+
   const solicitarMototaxi = () => {
+    if (bloqueandoSolicitud) return;
+
+    if (hayViajeActivo) {
+      void continuarViaje();
+      return;
+    }
+
+    if (tipoServicio === "reserva") {
+      Alert.alert(
+        "Servicio no disponible",
+        "Selecciona Normal o Express para solicitar un mototaxi."
+      );
+      return;
+    }
+
     router.push(destino ? "/confirmar-viaje" : "/destino");
   };
 
@@ -233,9 +285,9 @@ export default function PantallaMapa() {
       >
         {/* Cabecera */}
         <CabeceraPasajero
-          titulo={nombre ? `Hola, ${nombre} 👋` : "Hola 👋"}
+          titulo={nombre ? `Hola, ${nombre} !` : "Hola !"}
           subtitulo="¿A dónde te llevamos hoy?"
-          paddingInferior={72}
+          paddingInferior={12}
           hayNotificaciones={hayNoLeidas}
         />
 
@@ -245,307 +297,491 @@ export default function PantallaMapa() {
             styles.tarjetaRuta,
             {
               backgroundColor: colores.superficie,
-              borderColor: colores.linea,
             },
           ]}
         >
           <View style={styles.filaOrigen}>
-            <View
-              style={[
-                styles.iconoOrigen,
-                { backgroundColor: colores.exitoFondo },
-              ]}
-            >
-              <Ionicons
-                name="radio-button-on"
-                size={20}
-                color={colores.exitoTexto}
+            <View style={styles.indicadorOrigen}>
+              <View
+                style={[
+                  styles.puntoOrigen,
+                  { backgroundColor: colores.exitoTexto },
+                ]}
               />
             </View>
 
             <View style={styles.textoOrigen}>
-              <Text style={[styles.origenTitulo, { color: colores.texto }]}>
-                Tu ubicación actual
+              <Text style={[styles.etiquetaUbicacion, { color: colores.secundario }]}>
+                PUNTO DE RECOJO
               </Text>
+
               <Text
-                style={[styles.origenDetalle, { color: colores.secundario }]}
+                style={[styles.origenDetalle, { color: colores.texto }]}
+                numberOfLines={2}
               >
-                Bagua, Amazonas
+                {direccionOrigen}
               </Text>
             </View>
 
-            <View
-              style={[
-                styles.botonIntercambio,
-                { backgroundColor: colores.campo },
-              ]}
+            <Pressable
+              onPress={irADestino}
+              disabled={bloqueandoSolicitud}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Cambiar punto de recojo"
+              style={styles.botonEditar}
             >
               <Ionicons
-                name="swap-vertical"
-                size={18}
+                name="create-outline"
+                size={20}
                 color={colores.secundario}
               />
-            </View>
+            </Pressable>
           </View>
+
+          <View
+            style={[
+              styles.divisorRuta,
+              { backgroundColor: colores.linea },
+            ]}
+          />
 
           <Pressable
             onPress={irADestino}
+            disabled={bloqueandoSolicitud}
+            accessibilityRole="button"
+            accessibilityLabel="Seleccionar destino"
             style={({ pressed }) => [
-              styles.campoDestino,
-              {
-                backgroundColor: colores.campo,
-                minHeight: modoSimple ? 64 : 48,
-                borderRadius: modoSimple ? 18 : 12,
-              },
-              pressed && { opacity: 0.8 },
+              styles.filaDestino,
+              pressed && { opacity: 0.65 },
             ]}
           >
-            <Ionicons
-              name="location-sharp"
-              size={20}
-              color={destino ? colores.error : colores.secundario}
-            />
+            <View style={styles.indicadorDestino}>
+              <Ionicons
+                name="location-sharp"
+                size={20}
+                color={colores.error}
+              />
+            </View>
+
             <Text
               style={[
-                styles.campoDestinoTexto,
+                styles.destinoTexto,
                 {
                   color: destino ? colores.texto : colores.secundario,
-                  fontSize: modoSimple ? 19 : 16,
                 },
-                destino && styles.campoDestinoElegido,
               ]}
               numberOfLines={1}
             >
-              {destino ? destino.nombre : "¿A dónde vamos?"}
+              {destino?.nombre || "¿A dónde vamos?"}
             </Text>
 
-            {destino && (
-              <Pressable onPress={() => setDestino(null)} hitSlop={10}>
+            {destino && !hayViajeActivo ? (
+              <Pressable
+                onPress={(event) => {
+                  event.stopPropagation();
+                  setDestino(null);
+                }}
+                disabled={bloqueandoSolicitud}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Quitar destino"
+              >
                 <Ionicons
                   name="close-circle"
-                  size={22}
+                  size={21}
                   color={colores.secundario}
                 />
               </Pressable>
+            ) : (
+              <Ionicons
+                name="chevron-forward"
+                size={19}
+                color={colores.secundario}
+              />
             )}
           </Pressable>
         </View>
+
+        {errorUbicacion && !origenConfirmado && (
+          <View style={styles.avisoUbicacion}>
+            <Ionicons
+              name="information-circle-outline"
+              size={17}
+              color={colores.secundario}
+            />
+            <Text
+              style={[
+                styles.avisoTexto,
+                { color: colores.secundario },
+              ]}
+            >
+              {errorUbicacion}
+            </Text>
+          </View>
+        )}
         
         {/* Tarjeta de viaje activo */}
         {verificandoViajeActivo ? (
           <View
             style={[
-              styles.tarjetaContinuar,
+              styles.viajeActivo,
               {
-                backgroundColor: colores.superficie,
-                borderColor: colores.linea,
+                backgroundColor: colores.campo
               },
             ]}
           >
+            <ActivityIndicator
+              size="small"
+              color={colores.exitoTexto}
+            />
             <Text style={{ color: colores.secundario }}>Verificando tus viajes activos...</Text>
           </View>
         ) : viajeActivoId ? (
           <Pressable
             onPress={() => void continuarViaje()}
             disabled={abriendoViaje}
-            style={[
-              styles.tarjetaContinuar,
-              {
-                backgroundColor: colores.exitoFondo,
-                borderColor: colores.primario,
-                opacity: abriendoViaje ? 0.6 : 1,
-              },
-            ]} 
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.viajeActivo,
+              { backgroundColor: colores.exitoFondo },
+              pressed && { opacity: 0.8 },
+            ]}
           >
             <Ionicons
               name="car-sport-outline"
-              size={26}
+              size={28}
               color={colores.exitoTexto}
             />
 
-            <View style={{ flex: 1 }}>
+            <View style={styles.viajeActivoTextos}>
               <Text
-                style={{
-                  color: colores.exitoTexto,
-                  fontSize: 16,
-                  fontWeight: "800",
-                }}
+                style={[
+                  styles.viajeActivoTitulo,
+                  { color: colores.texto },
+                ]}
               >
-                Tienes un viaje activo
+                Tienes un viaje en curso
               </Text>
 
               <Text
-                style={{
-                  color: colores.secundario,
-                  fontSize: 13,
-                  marginTop: 3,
-                }}
+                style={[
+                  styles.textoPequeno,
+                  { color: colores.secundario },
+                ]}
               >
                 {abriendoViaje
-                  ? "Recuperando tu solicitud..."
-                  : "Toca aquí para continuar tu viaje"}
+                  ? "Recuperando tu viaje..."
+                  : "Toca para continuar"}
               </Text>
             </View>
-
-            <Ionicons
-              name="chevron-forward"
-              size={22}
-              color={colores.exitoTexto}
-            />
+            
+            {abriendoViaje ? (
+              <ActivityIndicator
+                color={colores.exitoTexto}
+              />
+            ) : (
+              <Ionicons
+                name="arrow-forward"
+                size={20}
+                color={colores.exitoTexto}
+              />
+            )}
           </Pressable>
         ): null}
 
         {/* Mapa */}
-        <MapaBase
-          centro={CENTRO_BAGUA}
-          origen={destino ? ORIGEN_EJEMPLO.coordenadas : undefined}
-          destino={destino?.coordenadas}
-          conductores={CONDUCTORES_CERCANOS}
-          style={styles.mapa}
-        />
+        <View style={styles.seccionMapa}>
+          <MapaBase
+            centro={
+              ubicacionActual ??
+              (origenConfirmado
+                ? origen.coordenadas
+                : CENTRO_BAGUA)
+            }
+            origen={
+              origenConfirmado
+                ? origen.coordenadas
+                : undefined
+            }
+            ubicacionActual={ubicacionActual ?? undefined}
+            destino={destino?.coordenadas}
+            conductores={[]}
+            style={styles.mapa}
+          />
+        </View>
 
         {/* Tipo de servicio */}
-        <View style={styles.servicios}>
-          {SERVICIOS.map((servicio) => {
-            const seleccionado = servicio.id === tipoServicio;
+        <View style={styles.encabezadoServicios}>
+          <Text
+            style={[
+              styles.seccionTitulo,
+              { color: colores.texto },
+            ]}
+          >
+            Elige cómo viajar
+          </Text>
 
-            return (
-              <Pressable
-                key={servicio.id}
-                onPress={() => setTipoServicio(servicio.id)}
-                style={[
-                  styles.servicio,
-                  {
-                    backgroundColor: seleccionado
-                      ? colores.exitoFondo
-                      : colores.superficie,
-                    borderColor: seleccionado
-                      ? colores.primario
-                      : colores.linea,
-                  },
-                ]}
-              >
-                {servicio.icono(
-                  seleccionado ? colores.exitoTexto : colores.secundario
-                )}
-                <Text
+          <Text
+            style={[
+              styles.seccionDescripcion,
+              { color: colores.secundario },
+            ]}
+          >
+            Selecciona el servicio que prefieras
+          </Text>
+        </View>
+
+          <View style={styles.servicios}>
+            {SERVICIOS.map((servicio) => {
+              const seleccionado = servicio.id === tipoServicio;
+
+              return (
+                <Pressable
+                  key={servicio.id}
+                  onPress={() => seleccionarServicio(servicio.id)}
+                  disabled={hayViajeActivo || bloqueandoSolicitud}
                   style={[
-                    styles.servicioTitulo,
+                    styles.servicio,
                     {
-                      color: seleccionado
-                        ? colores.exitoTexto
-                        : colores.texto,
+                      backgroundColor: seleccionado
+                        ? colores.exitoFondo
+                        : colores.superficie,
+                      borderColor: seleccionado
+                        ? colores.primario
+                        : colores.linea,
                     },
                   ]}
                 >
-                  {servicio.titulo}
-                </Text>
-                <Text
+                  <View style={styles.servicioIcono}>
+                    {servicio.id === "normal" ? (
+                      <IconoMototaxi
+                        size={27}
+                        color={
+                          seleccionado ? colores.exitoTexto : colores.texto
+                        }
+                      />
+                    ) : (
+                      <Ionicons
+                        name={
+                          servicio.id === "express"
+                            ? "flash-outline"
+                            : "calendar-outline"
+                        }
+                        size={25}
+                        color={
+                          seleccionado
+                            ? colores.exitoTexto
+                            : colores.secundario
+                        }
+                      />
+                    )}
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.servicioTitulo,
+                      {
+                        color: seleccionado
+                          ? colores.exitoTexto
+                          : colores.texto,
+                      },
+                    ]}
+                  >
+                    {servicio.titulo}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.servicioDetalle,
+                      { color: colores.secundario },
+                    ]}
+                  >
+                    {servicio.descripcion}
+                  </Text>
+
+                  {servicio.id === "reserva" && (
+                  <View
+                    style={[
+                      styles.etiquetaProximamente,
+                      { backgroundColor: colores.campo },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.textoProximamente,
+                        { color: colores.secundario },
+                      ]}
+                    >
+                      Pronto
+                    </Text>
+                  </View>
+                )}
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Destinos frecuentes */}
+          <View style={styles.encabezadoFrecuentes}>
+            <View style={styles.tituloFrecuentes}>
+              <Text
+                style={[
+                  styles.seccionTitulo,
+                  { color: colores.texto },
+                ]}
+              >
+                Destinos frecuentes
+              </Text>
+
+              <Text
+                style={[
+                  styles.seccionDescripcion,
+                  { color: colores.secundario },
+                ]}
+              >
+                Tus lugares habituales
+              </Text>
+            </View>
+
+            <Pressable 
+              onPress={() =>
+                router.push("/cuenta/direcciones")
+              }
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Ver direcciones guardadas"
+              style={styles.verTodos}
+            >
+              <Text
+                style={[
+                  styles.verTodosTexto,
+                  { color: colores.texto },
+                ]}
+              >
+                Ver todos
+              </Text>
+
+              <Ionicons
+                name="chevron-forward"
+                size={15}
+                color={colores.secundario}
+              />
+            </Pressable>
+          </View>
+          
+          <View style={styles.frecuentes}>
+            {destinosFrecuentes.map((item) => (
+              <Pressable
+                key={item.nombre}
+                onPress={() =>
+                  seleccionarDestinoFrecuente(item)
+                }
+                disabled={bloqueandoSolicitud}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.frecuente,
+                  {
+                    backgroundColor: colores.superficie,
+                    borderColor: colores.linea,
+                  },
+                  pressed && { opacity: 0.75 },
+                ]}
+              >
+                <View
                   style={[
-                    styles.servicioDescripcion,
-                    { color: colores.secundario },
+                    styles.frecuenteIcono,
+                    {
+                      backgroundColor: colores.campo,
+                    },
                   ]}
                 >
-                  {servicio.descripcion}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Ionicons
+                    name={item.icono}
+                    size={21}
+                    color={colores.texto}
+                  />
+                </View>
 
-        {/* Destinos frecuentes */}
-        <View style={styles.encabezadoSeccion}>
-          <Text style={[styles.seccionTitulo, { color: colores.texto }]}>
-            Destinos frecuentes
-          </Text>
-          <Pressable onPress={irADestino} hitSlop={8}>
-            <Text style={[styles.verTodos, { color: colores.exitoTexto }]}>
-              Ver todos ›
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.frecuentes}>
-          {destinosFrecuentes.map((item) => (
-            <Pressable
-              key={item.nombre}
-              onPress={() => seleccionarDestinoFrecuente(item)}
-              style={[
-                styles.frecuente,
-                {
-                  backgroundColor: colores.superficie,
-                  borderColor: colores.linea,
-                },
-              ]}
-            >
-              <Ionicons
-                name={item.icono}
-                size={22}
-                color={colores.exitoTexto}
-              />
-              <View style={styles.frecuenteTextos}>
                 <Text
-                  style={[styles.frecuenteNombre, { color: colores.texto }]}
+                  style={[
+                    styles.frecuenteNombre,
+                    { color: colores.texto },
+                  ]}
                   numberOfLines={1}
-                  adjustsFontSizeToFit
                 >
                   {item.nombre}
                 </Text>
+
                 <Text
                   style={[
                     styles.frecuenteDetalle,
                     { color: colores.secundario },
                   ]}
-                  numberOfLines={2}
+                  numberOfLines={1}
                 >
-                  {item.detalle}
+                  {item.esGuardado
+                    ? item.detalle
+                    : "Configurar"}
                 </Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+              </Pressable>
+            ))}
+          </View>
 
-        {/* Mensaje de seguridad */}
-        <View
-          style={[
-            styles.seguridad,
-            {
-              backgroundColor: esOscuro ? colores.superficie : COLOR_CABECERA,
-              borderColor: colores.linea,
-              borderWidth: esOscuro ? 1 : 0,
-            },
-          ]}
-        >
-          <Ionicons
-            name="shield-checkmark"
-            size={38}
-            color={colores.exitoTexto}
-          />
-          <View style={styles.seguridadTextos}>
-            <Text style={[styles.seguridadTitulo, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
-              Viaja más seguro en Bagua
-            </Text>
-            <Text
+          {/* Mensaje de seguridad */}
+          <View style={styles.seguridad}>
+            <View
               style={[
-                styles.seguridadDetalle,
-                { color: esOscuro ? colores.secundario : "rgba(255, 255, 255, 0.8)" },
+                styles.seguridadIcono,
+                { backgroundColor: colores.campo },
               ]}
             >
-              Conductores verificados y de confianza
-            </Text>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={23}
+                color={colores.exitoTexto}
+              />
+            </View>
+
+            <View style={styles.seguridadTextos}>
+              <Text
+                style={[
+                  styles.seguridadTitulo,
+                  { color: colores.texto },
+                ]}
+              >
+                Viaja con tranquilidad
+              </Text>
+
+              <Text
+                style={[
+                  styles.seguridadDetalle,
+                  { color: colores.secundario },
+                ]}
+              >
+                Revisa los datos de tu conductor antes de viajar.
+              </Text>
+            </View>
           </View>
-        </View>
 
-        <BotonPrincipal
-          titulo="Solicitar mototaxi"
-          onPress={solicitarMototaxi}
-          estilo={[
-            styles.botonSolicitar,
-            modoSimple && { minHeight: 62 },
-          ]}
-        />
+          {/* Acción principal */}
+          <BotonPrincipal
+            titulo={
+              verificandoViajeActivo
+                ? "Verificando viajes..."
+                : hayViajeActivo
+                  ? "Continuar mi viaje"
+                  : "Solicitar mototaxi"
+            }
+            onPress={solicitarMototaxi}
+            cargando={
+              verificandoViajeActivo || abriendoViaje
+            }
+            disabled={bloqueandoSolicitud}
+            mostrarIcono={!bloqueandoSolicitud}
+            icono="arrow-forward"
+            estilo={styles.botonSolicitar}
+          />
       </ScrollView>
-
     </View>
   );
 }
@@ -556,192 +792,325 @@ const styles = StyleSheet.create({
   },
 
   contenido: {
-    paddingBottom: 24,
+    paddingBottom: 28,
   },
 
+  // ORIGEN Y DESTINO
+
   tarjetaRuta: {
-    marginTop: -52,
     marginHorizontal: 16,
-    padding: 14,
-    gap: 10,
-    borderRadius: 18,
-    borderWidth: 1,
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 22,
   },
 
   filaOrigen: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 4,
+    minHeight: 64,
+    gap: 10,
   },
 
-  iconoOrigen: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  indicadorOrigen: {
+    width: 24,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  puntoOrigen: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
   },
 
   textoOrigen: {
     flex: 1,
+    gap: 4,
   },
 
-  origenTitulo: {
-    fontSize: 15,
+  etiquetaUbicacion: {
+    fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 0.8,
   },
 
   origenDetalle: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 19,
   },
 
-  botonIntercambio: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  botonEditar: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  campoDestino: {
-    minHeight: 48,
+  divisorRuta: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 34,
+  },
+
+  filaDestino: {
+    minHeight: 62,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
   },
 
-  campoDestinoTexto: {
+  indicadorDestino: {
+    width: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  destinoTexto: {
     flex: 1,
     fontSize: 16,
+    fontWeight: "600",
   },
 
-  campoDestinoElegido: {
-    fontWeight: "700",
+  avisoUbicacion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 10,
+    marginHorizontal: 20,
   },
 
-  mapa: {
-    height: 190,
+  avisoTexto: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
+  // VIAJE ACTIVO
+
+  viajeActivo: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginTop: 14,
     marginHorizontal: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 18,
   },
 
-  servicios: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 14,
-    marginHorizontal: 16,
-  },
-
-  servicio: {
+  viajeActivoTextos: {
     flex: 1,
     gap: 4,
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
   },
 
-  servicioTitulo: {
-    marginTop: 4,
+  viajeActivoTitulo: {
     fontSize: 15,
     fontWeight: "700",
   },
 
-  servicioDescripcion: {
+  textoPequeno: {
     fontSize: 12,
-    lineHeight: 16,
   },
 
-  encabezadoSeccion: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 20,
+  // MAPA
+
+  seccionMapa: {
+    marginTop: 16,
     marginHorizontal: 16,
+  },
+
+  mapa: {
+    height: 238,
+    borderRadius: 20,
+  },
+
+  // SERVICIOS
+
+  encabezadoServicios: {
+    marginTop: 22,
+    marginHorizontal: 18,
+    gap: 4,
   },
 
   seccionTitulo: {
     fontSize: 17,
     fontWeight: "800",
+    letterSpacing: -0.35,
+  },
+
+  seccionDescripcion: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  servicios: {
+    flexDirection: "row",
+    gap: 9,
+    marginTop: 13,
+    marginHorizontal: 16,
+  },
+
+  servicio: {
+    flex: 1,
+    minHeight: 118,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderRadius: 18,
+  },
+
+  servicioIcono: {
+    minHeight: 30,
+    justifyContent: "center",
+    marginBottom: 3,
+  },
+
+  servicioTitulo: {
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  servicioDetalle: {
+    fontSize: 11,
+    textAlign: "center",
+  },
+
+  indicadorSeleccion: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+  },
+
+  etiquetaProximamente: {
+    position: "absolute",
+    top: 8,
+    right: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  textoProximamente: {
+    fontSize: 9,
+    fontWeight: "700",
+  },
+
+  // LUGARES
+
+  encabezadoFrecuentes: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 27,
+    marginHorizontal: 18,
+  },
+
+  tituloFrecuentes: {
+    flex: 1,
+    gap: 4,
   },
 
   verTodos: {
-    fontSize: 14,
-    fontWeight: "700",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingVertical: 10,
+    paddingLeft: 8,
+  },
+
+  verTodosTexto: {
+    fontSize: 13,
+    fontWeight: "600",
   },
 
   frecuentes: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
+    gap: 9,
+    marginTop: 13,
     marginHorizontal: 16,
   },
 
   frecuente: {
     flex: 1,
-    alignItems: "flex-start",
+    minHeight: 116,
+    alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 12,
+    borderRadius: 17,
+    borderWidth: StyleSheet.hairlineWidth,
   },
 
-  frecuenteTextos: {
-    alignSelf: "stretch",
+  frecuenteIcono: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
   },
 
   frecuenteNombre: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
+    textAlign: "center",
   },
 
   frecuenteDetalle: {
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 10,
+    textAlign: "center",
   },
+
+  // SEGURIDAD
 
   seguridad: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginTop: 16,
-    marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 16,
+    marginTop: 22,
+    marginHorizontal: 18,
+    paddingVertical: 12,
+  },
+
+  seguridadIcono: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
   },
 
   seguridadTextos: {
     flex: 1,
+    gap: 3,
   },
 
   seguridadTitulo: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "700",
   },
 
   seguridadDetalle: {
-    marginTop: 2,
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 17,
   },
+
+  // BOTÓN PRINCIPAL
 
   botonSolicitar: {
+    marginTop: 22,
+    marginHorizontal: 16,
     width: "auto",
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-
-  tarjetaContinuar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginHorizontal: 16,
-    marginTop: 14,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    minHeight: 54,
   },
 });

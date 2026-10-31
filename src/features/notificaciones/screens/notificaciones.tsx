@@ -3,7 +3,7 @@ import { useNotificaciones } from "@/features/notificaciones/context/Notificacio
 import type { NotificacionItem } from "@/features/notificaciones/types/notificaciones";
 import { useAltokkeTheme, type ColoresTema } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,74 +14,147 @@ import {
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 
-const Separador = () => <View style={styles.separador} />;
+type Filtro = "todas" | "noLeidas";
 
-const TarjetaNotificacion = React.memo(function TarjetaNotificacion({
+function fechaValida(fechaIso: string): number {
+  const fecha = new Date(fechaIso).getTime();
+  return Number.isFinite(fecha) ? fecha : 0;
+}
+
+function formatearFecha(fechaIso: string, horaOriginal: string): string {
+  const fechaMs = fechaValida(fechaIso);
+  if (!fechaMs) return horaOriginal;
+
+  const fecha = new Date(fechaMs);
+  const ahora = new Date();
+
+  const esHoy = fecha.toDateString() === ahora.toDateString();
+
+  if (esHoy) {
+    const minutos = Math.max(
+      0,
+      Math.floor((ahora.getTime() - fechaMs) / 60000)
+    );
+
+    if (minutos < 1) return "Ahora";
+    if (minutos < 60) return `Hace ${minutos} min`;
+
+    return fecha.toLocaleTimeString("es-PE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  const ayer = new Date(ahora);
+  ayer.setDate(ahora.getDate() - 1);
+
+  if (fecha.toDateString() === ayer.toDateString()) {
+    return "Ayer";
+  }
+
+  return fecha.toLocaleDateString("es-PE", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function NotificacionFila({
   notificacion,
   colores,
-  onMarcar,
+  onAbrir,
+  onEliminar,
 }: {
   notificacion: NotificacionItem;
   colores: ColoresTema;
-  onMarcar: (id: string) => void;
+  onAbrir: (id: string) => void;
+  onEliminar: (id: string) => void;
 }) {
+  const nueva = !notificacion.leida;
+
   return (
     <Pressable
-      onPress={() => onMarcar(notificacion.id)}
+      onPress={() => onAbrir(notificacion.id)}
+      onLongPress={() => onEliminar(notificacion.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`${notificacion.titulo}. ${notificacion.mensaje}`}
+      accessibilityHint="Toca para marcar como leída. Mantén presionado para eliminar."
       style={({ pressed }) => [
-        styles.tarjeta,
+        styles.fila,
         {
-          backgroundColor: colores.superficie,
-          borderColor: notificacion.leida ? colores.linea : colores.primario,
+          backgroundColor: nueva
+            ? colores.exitoFondo
+            : colores.fondo,
         },
-        pressed && { opacity: 0.8 },
+        pressed && { opacity: 0.75 },
       ]}
     >
       <View
         style={[
           styles.icono,
           {
-            backgroundColor: notificacion.leida
-              ? colores.campo
-              : colores.exitoFondo,
+            backgroundColor: nueva
+              ? colores.superficie
+              : colores.campo,
           },
         ]}
       >
         <Ionicons
           name={notificacion.icono}
-          size={22}
-          color={notificacion.leida ? colores.secundario : colores.exitoTexto}
+          size={21}
+          color={
+            nueva ? colores.exitoTexto : colores.secundario
+          }
         />
       </View>
 
-      <View style={styles.textos}>
+      <View style={styles.contenidoFila}>
+        <View style={styles.filaTitulo}>
+          <Text
+            style={[
+              styles.tituloNotificacion,
+              {
+                color: colores.texto,
+                fontWeight: nueva ? "700" : "600",
+              },
+            ]}
+          >
+            {notificacion.titulo}
+          </Text>
+
+          {nueva && (
+            <View
+              style={[
+                styles.puntoNuevo,
+                { backgroundColor: colores.exitoTexto },
+              ]}
+            />
+          )}
+        </View>
+
         <Text
           style={[
-            styles.titulo,
-            {
-              color: colores.texto,
-              fontWeight: notificacion.leida ? "600" : "800",
-            },
+            styles.mensaje,
+            { color: colores.secundario },
           ]}
         >
-          {notificacion.titulo}
-        </Text>
-        <Text style={[styles.mensaje, { color: colores.secundario }]}>
           {notificacion.mensaje}
         </Text>
-        <Text style={[styles.hora, { color: colores.secundario }]}>
-          {notificacion.hora}
+
+        <Text
+          style={[
+            styles.fecha,
+            { color: colores.secundario },
+          ]}
+        >
+          {formatearFecha(
+            notificacion.fechaIso,
+            notificacion.hora
+          )}
         </Text>
       </View>
-
-      {!notificacion.leida && (
-        <View
-          style={[styles.puntoNuevo, { backgroundColor: colores.error }]}
-        />
-      )}
     </Pressable>
   );
-});
+}
 
 export default function PantallaNotificaciones() {
   const { colores } = useAltokkeTheme();
@@ -89,105 +162,238 @@ export default function PantallaNotificaciones() {
     notificaciones,
     marcarComoLeida,
     marcarTodasLeidas,
-    hayNoLeidas,
+    eliminarNotificacion,
     cargando,
   } = useNotificaciones();
 
-  const handleMarcarTodasLeidas = useCallback(async () => {
-    await marcarTodasLeidas();
-    Alert.alert(
-      "Notificaciones",
-      "Todas las notificaciones han sido marcadas como leídas."
-    );
-  }, [marcarTodasLeidas]);
+  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [procesando, setProcesando] = useState(false);
 
-  const renderItem = useCallback(
-    ({ item }: { item: NotificacionItem }) => (
-      <TarjetaNotificacion
-        notificacion={item}
-        colores={colores}
-        onMarcar={marcarComoLeida}
-      />
-    ),
-    [colores, marcarComoLeida]
+  const cantidadNoLeidas = useMemo(
+    () => notificaciones.filter((n) => !n.leida).length,
+    [notificaciones]
   );
 
-  const keyExtractor = useCallback((item: NotificacionItem) => item.id, []);
+  const listaFiltrada = useMemo(() => {
+    const lista =
+      filtro === "noLeidas"
+        ? notificaciones.filter((n) => !n.leida)
+        : [...notificaciones];
 
-  const renderHeader = useMemo(() => {
-    if (!hayNoLeidas) return null;
-    return (
-      <View style={styles.headerContenedor}>
-        <Pressable
-          style={[styles.botonMarcarTodas, { borderColor: colores.linea }]}
-          onPress={handleMarcarTodasLeidas}
-        >
-          <Ionicons
-            name="checkmark-done-outline"
-            size={18}
-            color={colores.exitoTexto}
-          />
-          <Text
-            style={[styles.textoMarcarTodas, { color: colores.exitoTexto }]}
-          >
-            Marcar todas como leídas
-          </Text>
-        </Pressable>
-      </View>
+    return lista.sort(
+      (a, b) =>
+        fechaValida(b.fechaIso) - fechaValida(a.fechaIso)
     );
-  }, [hayNoLeidas, colores, handleMarcarTodasLeidas]);
+  }, [notificaciones, filtro]);
 
-  const renderEmpty = useMemo(() => {
-    if (cargando) {
-      return (
-        <View style={styles.centroVacio}>
-          <ActivityIndicator size="large" color={colores.primario} />
-          <Text style={[styles.textoVacio, { color: colores.secundario }]}>
-            Cargando notificaciones...
-          </Text>
-        </View>
+  const abrirNotificacion = (id: string) => {
+    void marcarComoLeida(id);
+  };
+
+  const confirmarEliminar = (id: string) => {
+    Alert.alert(
+      "Eliminar notificación",
+      "¿Quieres quitar esta notificación de tu bandeja?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => void eliminarNotificacion(id),
+        },
+      ]
+    );
+  };
+
+  const marcarTodas = async () => {
+    if (cantidadNoLeidas === 0 || procesando) return;
+
+    setProcesando(true);
+
+    try {
+      await marcarTodasLeidas();
+    } catch (error) {
+      console.warn("Error al marcar notificaciones:", error);
+      Alert.alert(
+        "No se pudo completar",
+        "Inténtalo nuevamente."
       );
+    } finally {
+      setProcesando(false);
     }
-    return (
-      <View style={styles.centroVacio}>
-        <View
-          style={[
-            styles.iconoVacio,
-            { backgroundColor: colores.superficie, borderColor: colores.linea },
-          ]}
-        >
-          <Ionicons
-            name="notifications-off-outline"
-            size={36}
-            color={colores.secundario}
-          />
-        </View>
-        <Text style={[styles.tituloVacio, { color: colores.texto }]}>
-          No tienes notificaciones
-        </Text>
-        <Text style={[styles.textoVacio, { color: colores.secundario }]}>
-          Aquí aparecerán las actualizaciones en tiempo real sobre tus viajes y
-          avisos importantes.
-        </Text>
+  };
+
+  const listaVacia = (
+    <View style={styles.estadoVacio}>
+      <View
+        style={[
+          styles.iconoVacio,
+          { backgroundColor: colores.campo },
+        ]}
+      >
+        <Ionicons
+          name={
+            filtro === "noLeidas"
+              ? "checkmark-done-outline"
+              : "notifications-outline"
+          }
+          size={32}
+          color={colores.secundario}
+        />
       </View>
-    );
-  }, [cargando, colores]);
+
+      <Text
+        style={[
+          styles.tituloVacio,
+          { color: colores.texto },
+        ]}
+      >
+        {filtro === "noLeidas"
+          ? "Todo al día"
+          : "Aún no tienes notificaciones"}
+      </Text>
+
+      <Text
+        style={[
+          styles.descripcionVacio,
+          { color: colores.secundario },
+        ]}
+      >
+        {filtro === "noLeidas"
+          ? "No tienes notificaciones pendientes por leer."
+          : "Aquí recibirás las novedades y actualizaciones de tus viajes."}
+      </Text>
+    </View>
+  );
 
   return (
     <View style={[styles.pantalla, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Notificaciones" />
 
+      <View style={styles.barraSuperior}>
+        <View style={styles.filtros}>
+          <Pressable
+            onPress={() => setFiltro("todas")}
+            accessibilityRole="button"
+            accessibilityState={{
+              selected: filtro === "todas",
+            }}
+            style={[
+              styles.filtro,
+              {
+                backgroundColor:
+                  filtro === "todas"
+                    ? colores.exitoFondo
+                    : colores.campo,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.filtroTexto,
+                {
+                  color:
+                    filtro === "todas"
+                      ? colores.exitoTexto
+                      : colores.secundario,
+                },
+              ]}
+            >
+              Todas
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setFiltro("noLeidas")}
+            accessibilityRole="button"
+            accessibilityState={{
+              selected: filtro === "noLeidas",
+            }}
+            style={[
+              styles.filtro,
+              {
+                backgroundColor:
+                  filtro === "noLeidas"
+                    ? colores.exitoFondo
+                    : colores.campo,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.filtroTexto,
+                {
+                  color:
+                    filtro === "noLeidas"
+                      ? colores.exitoTexto
+                      : colores.secundario,
+                },
+              ]}
+            >
+              No leídas
+              {cantidadNoLeidas > 0
+                ? ` (${cantidadNoLeidas})`
+                : ""}
+            </Text>
+          </Pressable>
+        </View>
+
+        {cantidadNoLeidas > 0 && (
+          <Pressable
+            onPress={() => void marcarTodas()}
+            disabled={procesando}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Marcar todas como leídas"
+          >
+            <Text
+              style={[
+                styles.marcarTodas,
+                { color: colores.exitoTexto },
+              ]}
+            >
+              {procesando ? "Marcando..." : "Marcar leídas"}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+
       <View style={styles.listaContenedor}>
-        <FlashList
-          data={notificaciones}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          ItemSeparatorComponent={Separador}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmpty}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contenido}
-        />
+        {cargando ? (
+          <View style={styles.cargando}>
+            <ActivityIndicator
+              size="small"
+              color={colores.exitoTexto}
+            />
+            <Text style={{ color: colores.secundario }}>
+              Cargando notificaciones...
+            </Text>
+          </View>
+        ) : (
+          <FlashList
+            data={listaFiltrada}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <NotificacionFila
+                notificacion={item}
+                colores={colores}
+                onAbrir={abrirNotificacion}
+                onEliminar={confirmarEliminar}
+              />
+            )}
+            ListEmptyComponent={listaVacia}
+            ItemSeparatorComponent={() => (
+              <View
+                style={[
+                  styles.separador,
+                  { backgroundColor: colores.linea },
+                ]}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contenidoLista}
+          />
+        )}
       </View>
     </View>
   );
@@ -197,90 +403,135 @@ const styles = StyleSheet.create({
   pantalla: {
     flex: 1,
   },
+
+  barraSuperior: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
+
+  filtros: {
+    flexDirection: "row",
+    gap: 7,
+  },
+
+  filtro: {
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+
+  filtroTexto: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  marcarTodas: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
   listaContenedor: {
     flex: 1,
   },
-  contenido: {
-    padding: 16,
-    paddingBottom: 32,
+
+  contenidoLista: {
+    paddingBottom: 28,
   },
-  separador: {
-    height: 12,
-  },
-  headerContenedor: {
-    marginBottom: 12,
-  },
-  botonMarcarTodas: {
+
+  fila: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    alignItems: "flex-start",
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 17,
+    minHeight: 98,
   },
-  textoMarcarTodas: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  tarjeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
+
   icono: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 43,
+    height: 43,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
-  textos: {
+
+  contenidoFila: {
     flex: 1,
-    gap: 4,
+    gap: 5,
   },
-  titulo: {
-    fontSize: 16,
-    fontWeight: "600",
+
+  filaTitulo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
   },
-  mensaje: {
-    fontSize: 13,
-    lineHeight: 18,
+
+  tituloNotificacion: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 19,
   },
-  hora: {
-    fontSize: 11,
-  },
+
   puntoNuevo: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
   },
-  centroVacio: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 24,
-    gap: 12,
+
+  mensaje: {
+    fontSize: 13,
+    lineHeight: 19,
   },
+
+  fecha: {
+    marginTop: 3,
+    fontSize: 11,
+  },
+
+  separador: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 72,
+    marginRight: 18,
+  },
+
+  estadoVacio: {
+    alignItems: "center",
+    paddingHorizontal: 32,
+    paddingTop: 110,
+    gap: 10,
+  },
+
   iconoVacio: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
     marginBottom: 8,
   },
+
   tituloVacio: {
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
   },
-  textoVacio: {
-    fontSize: 14,
+
+  descripcionVacio: {
+    fontSize: 13,
     lineHeight: 20,
     textAlign: "center",
+  },
+
+  cargando: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingTop: 110,
   },
 });
