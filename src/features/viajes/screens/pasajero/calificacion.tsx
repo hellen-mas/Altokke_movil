@@ -1,6 +1,5 @@
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
 import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
-import { ORIGEN_EJEMPLO } from "@/features/viajes/constants/pasajero";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useAuth } from "@/features/autenticacion/context/AuthContext";
@@ -99,7 +98,7 @@ export default function PantallaCalificacion() {
     return <Redirect href="/mapa" />;
   }
 
-  const { destino, tarifa, metodoPago } = resumen;
+  const { origenLugar, destino, tarifa, metodoPago } = resumen;
 
   const alternarEtiqueta = (id: string) => {
     setEtiquetas((actuales) =>
@@ -111,7 +110,7 @@ export default function PantallaCalificacion() {
 
   const guardarViaje = (calificacion?: number) => {
     registrarViaje({
-      origen: ORIGEN_EJEMPLO.nombre,
+      origen: origenLugar.nombre,
       destino: destino.nombre,
       lugarDestino: destino,
       tarifa,
@@ -159,10 +158,10 @@ export default function PantallaCalificacion() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
       >
-        <CabeceraPasajero
+        <CabeceraFlujoViaje
           titulo="Califica tu viaje"
-          subtitulo="Llegaste a tu destino"
-          paddingInferior={48}
+          subtitulo="Cuéntanos cómo fue tu experiencia"
+          mostrarRegreso={false}
         />
 
         {/* Viaje finalizado */}
@@ -256,7 +255,7 @@ export default function PantallaCalificacion() {
                     style={[styles.lugar, { color: colores.texto }]}
                     numberOfLines={1}
                   >
-                    {ORIGEN_EJEMPLO.nombre}
+                    {origenLugar.nombre}
                   </Text>
                 </View>
                 <View style={styles.filaLugar}>
@@ -471,11 +470,11 @@ const styles = StyleSheet.create({
   finalizado: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginTop: -34,
+    gap: 12,
+    marginTop: 16,
     marginHorizontal: 16,
-    padding: 14,
-    borderRadius: 16,
+    padding: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
 
@@ -485,7 +484,8 @@ const styles = StyleSheet.create({
 
   finalizadoTitulo: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "700",
+    letterSpacing: -0.3,
   },
 
   finalizadoFecha: {
@@ -494,9 +494,9 @@ const styles = StyleSheet.create({
   },
 
   insignia: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
     fontSize: 11,
     fontWeight: "700",
     overflow: "hidden",
@@ -519,14 +519,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginHorizontal: 16,
-    padding: 12,
-    borderRadius: 14,
+    padding: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
 
   recorrido: {
     flex: 1,
-    gap: 10,
+    gap: 16,
   },
 
   filaLugar: {
@@ -549,8 +549,9 @@ const styles = StyleSheet.create({
   },
 
   tarifaValor: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
+    letterSpacing: -0.5,
   },
 
   pregunta: {
@@ -562,13 +563,16 @@ const styles = StyleSheet.create({
 
   calificar: {
     alignItems: "center",
-    gap: 6,
-    marginTop: 12,
+    gap: 12,
+    marginTop: 22,
+    marginBottom: 8,
   },
 
   estrellas: {
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
   },
 
   textoCalificacion: {
@@ -579,18 +583,19 @@ const styles = StyleSheet.create({
   etiquetas: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 14,
+    justifyContent: "center",
+    gap: 10,
+    marginTop: 18,
     marginHorizontal: 16,
   },
 
   etiqueta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    height: 38,
-    borderRadius: 19,
+    gap: 7,
+    paddingHorizontal: 14,
+    height: 40,
+    borderRadius: 999,
     borderWidth: 1,
   },
 
@@ -601,14 +606,15 @@ const styles = StyleSheet.create({
 
   comentario: {
     marginHorizontal: 16,
-    padding: 12,
-    borderRadius: 14,
+    padding: 16,
+    borderRadius: 20,
     borderWidth: 1,
   },
 
   comentarioInput: {
-    minHeight: 64,
+    minHeight: 90,
     fontSize: 14,
+    lineHeight: 21,
     textAlignVertical: "top",
   },
 
@@ -645,21 +651,21 @@ const styles = StyleSheet.create({
   pie: {
     gap: 12,
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 12,
     borderTopWidth: 1,
   },
 
   botonEnviar: {
-    height: 56,
+    height: 54,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    borderRadius: 16,
+    borderRadius: 999,
   },
 
   botonEnviarTexto: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
   },
 

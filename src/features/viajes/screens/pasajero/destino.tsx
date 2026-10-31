@@ -1,5 +1,5 @@
 
-import { CabeceraPasajero } from "@/features/pasajeros/components/CabeceraPasajero";
+import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
 import {
@@ -16,22 +16,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import * as Location from "expo-location";
 import type { PuntoMapa } from "../../types/tiposMapa";
-
-const PANEL_SOBRE_MAPA = 20;
-const PROPORCION_MAPA = 0.3;
-const ALTO_MAPA_CON_TECLADO = 110;
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+} from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { PanelDeslizableViaje } from "@/features/viajes/components/PanelDeslizableViaje";
 
 function normalizar(texto: string) {
   return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -57,8 +54,10 @@ export default function PantallaDestino() {
   const [busqueda, setBusqueda] = useState(destino?.nombre ?? "");
   const [editandoOrigen, setEditandoOrigen] = useState(false);
   const [busquedaOrigen, setBusquedaOrigen] = useState("");
-  const [tecladoVisible, setTecladoVisible] = useState(false);
-  const { height: altoPantalla } = useWindowDimensions();
+  const panelRef = useRef<BottomSheet>(null);
+  const expandirPanel = () => {
+    panelRef.current?.snapToIndex(2);
+  };
 
   // Obtener la ubicación real del pasajero
   useEffect(() => {
@@ -169,24 +168,6 @@ export default function PantallaDestino() {
     return [...guardadas, ...unicos];
   }, [perfil]);
 
-  useEffect(() => {
-    const alMostrar = Keyboard.addListener("keyboardDidShow", () =>
-      setTecladoVisible(true),
-    );
-    const alOcultar = Keyboard.addListener("keyboardDidHide", () =>
-      setTecladoVisible(false),
-    );
-
-    return () => {
-      alMostrar.remove();
-      alOcultar.remove();
-    };
-  }, []);
-
-  const altoMapa = tecladoVisible
-    ? ALTO_MAPA_CON_TECLADO
-    : Math.round(altoPantalla * PROPORCION_MAPA);
-
   // Si ya hay un destino elegido, se muestra la lista completa para poder cambiarlo
   const resultados = editandoOrigen
     ? filtrarLugares(busquedaOrigen, listaLugares)
@@ -218,6 +199,7 @@ export default function PantallaDestino() {
     }
     
     Keyboard.dismiss();
+    expandirPanel();
   };
 
   const seleccionarPuntoMapa = (coordenadas: PuntoMapa) => {
@@ -345,263 +327,276 @@ export default function PantallaDestino() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.pantalla, { backgroundColor: colores.fondo }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <GestureHandlerRootView
+      style={[
+        styles.pantalla,
+        { backgroundColor: colores.fondo },
+      ]}
     >
-      <CabeceraPasajero subtitulo="¿A dónde te llevamos hoy?" />
-
-      <MapaBase
-        centro={origen.coordenadas}
-        origen={origen.coordenadas}
-        destino={destino?.coordenadas}
-        margenInferior={PANEL_SOBRE_MAPA + 6}
-        style={{ height: altoMapa }}
-        onSeleccionarPunto={(coordenadas) => {
-          void seleccionarPuntoMapa(coordenadas);
-        }}
+      <CabeceraFlujoViaje
+        titulo="Seleccionar destino"
+        subtitulo="Busca un lugar o selecciónalo en el mapa"
       />
 
-      <View style={styles.ayudaMapa}>
-        <Ionicons
-          name="finger-print-outline"
-          size={15}
-          color={colores.secundario}
+      <View style={styles.zonaMapa}>
+        <MapaBase
+          centro={origen.coordenadas}
+          origen={origen.coordenadas}
+          destino={destino?.coordenadas}
+          margenInferior={0}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+          onSeleccionarPunto={(coordenadas) => {
+            void seleccionarPuntoMapa(coordenadas);
+          }}
         />
-        <Text style={[styles.ayudaMapaTexto, { color: colores.secundario }]}>
-          Mantén presionado el mapa para elegir {editandoOrigen ? "tu punto de recojo" : "un destino"}
-        </Text>
-      </View>
 
-      <View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: colores.superficie,
-            borderColor: colores.linea,
-          },
-        ]}
-      >
-        <View style={[styles.asa, { backgroundColor: colores.linea }]} />
-
-        {/* Origen */}
-        <View style={[styles.filaOrigen, { backgroundColor: colores.campo }]}>
-          <View
-            style={[
-              styles.iconoOrigen,
-              { backgroundColor: colores.exitoFondo },
-            ]}
-          >
-            <Ionicons
-              name="radio-button-on"
-              size={20}
-              color={colores.exitoTexto}
-            />
-          </View>
-
-          <View style={styles.textoOrigen}>
-            <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-              Origen
-            </Text>
-
-            {editandoOrigen ? (
-              <TextInput
-                value={busquedaOrigen}
-                onChangeText={setBusquedaOrigen}
-                placeholder="Buscar punto de recojo..."
-                placeholderTextColor={colores.secundario}
-                style={[styles.origenNombre, { color: colores.texto }]}
-                autoFocus
-                autoCorrect={false}
-                returnKeyType="search"
+        {/* Panel deeslizable del mapa */}
+        <PanelDeslizableViaje
+          referencia={panelRef}
+          posicionInicial={1}
+          footer={destino && !editandoOrigen ? (
+            <View style={[styles.pie, { backgroundColor: colores.superficie, borderTopColor: colores.linea }]}>
+              <BotonPrincipal
+                titulo="Confirmar destino"
+                mostrarIcono
+                icono="arrow-forward"
+                onPress={confirmarDestino}
               />
-            ) : (
-              <Pressable
-                onPress={() => {
-                  setEditandoOrigen(true);
-                  setBusquedaOrigen("");
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Editar origen"
-              >
-                <Text
-                  style={[styles.origenNombre, { color: colores.texto }]}
-                  numberOfLines={1}
-                >
-                  {origen.nombre}
-                </Text>
-                <Text
-                  style={[styles.etiqueta, { color: colores.secundario }]}
-                  numberOfLines={1}
-                >
-                  {origen.detalle}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-
-          <Pressable
-            onPress={intercambiarLugares}
-            accessibilityRole="button"
-            accessibilityLabel="Intercambiar origen y destino"
-            style={({ pressed }) => [
-              styles.botonIntercambio,
-              { 
-                backgroundColor: pressed
-                  ? colores.exitoFondo
-                  : colores.superficie,
-              },
+            </View>
+          ) : undefined}
+        >
+          <BottomSheetScrollView
+            style={styles.listaDeslizable}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.contenidoPanel,
+              { paddingBottom: destino && !editandoOrigen ? 112 : 24 },
             ]}
           >
-            <Ionicons
-              name="swap-vertical"
-              size={18}
-              color={colores.primario}
-            />
-          </Pressable>
-        </View>
-
-        {/* Destino */}
-        <View
-          style={[
-            styles.campoDestino,
-            {
-              backgroundColor: colores.campo,
-              borderColor: colores.primario,
-            },
-          ]}
-        >
-          <Ionicons
-            name="location-sharp"
-            size={20}
-            color={colores.exitoTexto}
-          />
-
-          <View style={styles.campoDestinoTexto}>
-            <Text style={[styles.etiqueta, { color: colores.secundario }]}>
-              Destino
-            </Text>
-            <TextInput
-              value={busqueda}
-              onChangeText={(texto) => {
-                if (editandoOrigen) {
-                  setEditandoOrigen(false);
-                  setBusquedaOrigen("");
-                }
-
-                cambiarBusqueda(texto);
-              }}
-              placeholder={"¿A dónde vamos?"}
-              placeholderTextColor={colores.secundario}
-              style={[styles.input, { color: colores.texto }]}
-              autoCorrect={false}
-            />
-          </View>
-
-          {busqueda.length > 0 && (
-            <Pressable onPress={limpiarBusqueda} hitSlop={10}>
+            <View style={styles.ayudaMapa}>
               <Ionicons
-                name="close-circle"
-                size={22}
+                name="finger-print-outline"
+                size={15}
                 color={colores.secundario}
               />
-            </Pressable>
-          )}
-        </View>
+              <Text style={[styles.ayudaMapaTexto, { color: colores.secundario }]}>
+                Mantén presionado el mapa para elegir {editandoOrigen ? "tu punto de recojo" : "un destino"}
+              </Text>
+            </View>
 
-        <Text
-          style={[
-            styles.etiqueta,
-            {
-              color: colores.secundario,
-              marginTop: 12,
-              marginBottom: 4,
-              fontWeight: "700",
-            },
-          ]}
-        >
-          {editandoOrigen
-            ? "SELECCIONA TU PUNTO DE RECOJO"
-            : "SELECCIONA TU DESTINO"}
-        </Text>
+            {/* Origen */}
+              <View
+                style={[
+                  styles.filaOrigen,
+                  {
+                    backgroundColor: colores.campo,
+                    borderColor: colores.linea,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.iconoOrigen,
+                    { backgroundColor: colores.exitoFondo },
+                  ]}
+                >
+                  <Ionicons
+                    name="radio-button-on"
+                    size={20}
+                    color={colores.exitoTexto}
+                  />
+                </View>
 
-        {/* Sugerencias */}
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.lista}
-        >
-          {resultados.length === 0 && (
-            <Text style={[styles.sinResultados, { color: colores.secundario }]}>
-              No encontramos lugares con “{editandoOrigen ? busquedaOrigen : busqueda}”.
-            </Text>
-          )}
+                <View style={styles.textoOrigen}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    PUNTO DE RECOJO
+                  </Text>
 
-          {resultados.map((lugar) => {
-            const elegido = editandoOrigen 
-              ? lugar.id === origen.id
-              : lugar.id === destino?.id;
+                  {editandoOrigen ? (
+                    <BottomSheetTextInput
+                      value={busquedaOrigen}
+                      onFocus={expandirPanel}
+                      onChangeText={setBusquedaOrigen}
+                      placeholder="Buscar punto de recojo..."
+                      placeholderTextColor={colores.secundario}
+                      style={[styles.origenNombre, { color: colores.texto }]}
+                      autoFocus
+                      autoCorrect={false}
+                      returnKeyType="search"
+                    />
+                  ) : (
+                    <Pressable
+                      onPress={() => {
+                        setEditandoOrigen(true);
+                        setBusquedaOrigen("");
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Editar origen"
+                    >
+                      <Text
+                        style={[styles.origenNombre, { color: colores.texto }]}
+                        numberOfLines={1}
+                      >
+                        {origen.nombre}
+                      </Text>
+                      <Text
+                        style={[styles.etiqueta, { color: colores.secundario }]}
+                        numberOfLines={1}
+                      >
+                        {origen.detalle}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+                <Pressable
+                  onPress={intercambiarLugares}
+                  accessibilityRole="button"
+                  accessibilityLabel="Intercambiar origen y destino"
+                  style={({ pressed }) => [
+                    styles.botonIntercambio,
+                    { 
+                      backgroundColor: pressed
+                        ? colores.exitoFondo
+                        : colores.superficie,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="swap-vertical"
+                    size={20}
+                    color={colores.exitoTexto}
+                  />
+                </Pressable>
+              </View>
 
-            return (
-              <Pressable
-                key={lugar.id}
-                onPress={() => seleccionarLugar(lugar)}
-                style={({ pressed }) => [
-                  styles.lugar,
-                  (pressed || elegido) && {
-                    backgroundColor: colores.exitoFondo,
+              {/* Destino */}
+              <View
+                style={[
+                  styles.campoDestino,
+                  {
+                    backgroundColor: colores.superficie,
+                    borderColor: colores.primario,
                   },
                 ]}
               >
                 <Ionicons
                   name="location-sharp"
                   size={20}
-                  color={elegido ? colores.exitoTexto : colores.secundario}
+                  color={colores.exitoTexto}
                 />
 
-                <View style={styles.lugarTextos}>
-                  <Text style={[styles.lugarNombre, { color: colores.texto }]}>
-                    {lugar.nombre}
+                <View style={styles.campoDestinoTexto}>
+                  <Text style={[styles.etiqueta, { color: colores.secundario }]}>
+                    DESTINO
                   </Text>
-                  <Text
-                    style={[
-                      styles.lugarDetalle,
-                      { color: colores.secundario },
-                    ]}
-                  >
-                    {lugar.detalle}
-                  </Text>
+                  <BottomSheetTextInput
+                    value={busqueda}
+                    onFocus={expandirPanel}
+                    onChangeText={(texto) => {
+                      if (editandoOrigen) {
+                        setEditandoOrigen(false);
+                        setBusquedaOrigen("");
+                      }
+
+                      cambiarBusqueda(texto);
+                    }}
+                    placeholder={"¿A dónde vamos?"}
+                    placeholderTextColor={colores.secundario}
+                    style={[styles.input, { color: colores.texto }]}
+                    autoCorrect={false}
+                  />
                 </View>
 
-                <Ionicons
-                  name={elegido ? "checkmark-circle" : "chevron-forward"}
-                  size={elegido ? 22 : 18}
-                  color={elegido ? colores.exitoTexto : colores.secundario}
-                />
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+                {busqueda.length > 0 && (
+                  <Pressable onPress={limpiarBusqueda} hitSlop={10}>
+                    <Ionicons
+                      name="close-circle"
+                      size={22}
+                      color={colores.secundario}
+                    />
+                  </Pressable>
+                )}
+              </View>
+              <Text
+                style={[
+                  styles.etiqueta,
+                  {
+                    color: colores.secundario,
+                    marginTop: 18,
+                    marginBottom: 4,
+                    fontWeight: "800",
+                  },
+                ]}
+              >
+                {editandoOrigen
+                  ? "Lugares para recogerme"
+                  : "Lugares sugeridos"}
+              </Text>
 
-        {destino && !editandoOrigen && (
-          <View
-            style={[
-              styles.pie,
-              {
-                borderTopColor: colores.linea,
-                backgroundColor: colores.superficie,
-              },
-            ]}
-          >
-            <BotonPrincipal
-              titulo="Confirmar destino"
-              onPress={confirmarDestino}
-            />
-          </View>
-        )}
+              {/* Sugerencias */}
+              <View style={styles.lista}>
+                {resultados.length === 0 && (
+                  <Text style={[styles.sinResultados, { color: colores.secundario }]}>
+                    No encontramos lugares con “{editandoOrigen ? busquedaOrigen : busqueda}”.
+                  </Text>
+                )}
+
+                {resultados.map((lugar) => {
+                  const elegido = editandoOrigen 
+                    ? lugar.id === origen.id
+                    : lugar.id === destino?.id;
+
+                  return (
+                    <Pressable
+                      key={lugar.id}
+                      onPress={() => seleccionarLugar(lugar)}
+                      style={({ pressed }) => [
+                        styles.lugar,
+                        (pressed || elegido) && {
+                          backgroundColor: colores.exitoFondo,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="location-sharp"
+                        size={20}
+                        color={elegido ? colores.exitoTexto : colores.secundario}
+                      />
+
+                      <View style={styles.lugarTextos}>
+                        <Text style={[styles.lugarNombre, { color: colores.texto }]}>
+                          {lugar.nombre}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.lugarDetalle,
+                            { color: colores.secundario },
+                          ]}
+                        >
+                          {lugar.detalle}
+                        </Text>
+                      </View>
+
+                      <Ionicons
+                        name={elegido ? "checkmark-circle" : "chevron-forward"}
+                        size={elegido ? 22 : 18}
+                        color={elegido ? colores.exitoTexto : colores.secundario}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+          </BottomSheetScrollView>
+        </PanelDeslizableViaje>
       </View>
-
-    </KeyboardAvoidingView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -610,46 +605,47 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  panel: {
+  zonaMapa: {
     flex: 1,
-    marginTop: -PANEL_SOBRE_MAPA,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
+    position: "relative",
   },
 
-  asa: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 12,
+  contenidoPanel: {
+    paddingHorizontal: 16,
+    paddingBottom: 2,
+  },
+
+  listaDeslizable: {
+    flex: 1,
   },
 
   filaOrigen: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 12,
-    borderRadius: 14,
+    padding: 14,
+    minHeight: 76,
+    borderRadius: 18,
+    borderWidth: 1,
   },
 
   iconoOrigen: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
 
   textoOrigen: {
     flex: 1,
+    gap: 3,
   },
 
   etiqueta: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
 
   origenNombre: {
@@ -658,9 +654,9 @@ const styles = StyleSheet.create({
   },
 
   botonIntercambio: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -669,32 +665,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginTop: 10,
+    marginTop: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingVertical: 13,
+    minHeight: 68,
+    borderRadius: 18,
     borderWidth: 1.5,
   },
 
   campoDestinoTexto: {
     flex: 1,
+    gap: 3,
   },
 
   input: {
-    paddingVertical: 2,
+    paddingVertical: 3,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
   },
 
   pie: {
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderTopWidth: 1,
   },
 
   lista: {
-    paddingTop: 10,
-    paddingBottom: 16,
+    paddingTop: 6,
+    paddingBottom: 10,
   },
 
   sinResultados: {
@@ -707,13 +706,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    minHeight: 64,
   },
 
   lugarTextos: {
     flex: 1,
+    gap: 3,
   },
 
   lugarNombre: {
@@ -722,8 +723,8 @@ const styles = StyleSheet.create({
   },
 
   lugarDetalle: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
+    lineHeight: 17,
   },
 
   ayudaMapa: {
@@ -732,11 +733,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
   },
 
   ayudaMapaTexto: {
     fontSize: 11,
     flexShrink: 1,
   },
+
 });
