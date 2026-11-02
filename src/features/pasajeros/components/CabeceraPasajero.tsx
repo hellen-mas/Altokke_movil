@@ -1,21 +1,22 @@
-import { COLOR_CABECERA } from "@/features/viajes/constants/pasajero";
+
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { ReactNode } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import type { ReactNode } from "react";
+import { 
+  Image, 
+  Pressable, 
+  StyleSheet, 
+  Text, 
+  View } 
+from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
-  /** Texto grande bajo el logo (por ejemplo el saludo) */
   titulo?: string;
   subtitulo?: string;
-  /** Espacio extra abajo, para pantallas donde una tarjeta se monta sobre la cabecera */
   paddingInferior?: number;
-  /** Contenido extra bajo el subtítulo (por ejemplo la barra de progreso del viaje) */
   children?: ReactNode;
-
-  /** Muestra el punto de aviso en la campana cuando hay notificaciones por leer */
   hayNotificaciones?: boolean;
 }
 
@@ -29,54 +30,68 @@ export function CabeceraPasajero({
   const insets = useSafeAreaInsets();
   const { colores, esOscuro } = useAltokkeTheme();
 
-  const bgCabecera = esOscuro ? colores.superficie : COLOR_CABECERA;
+  const fondoMarca = esOscuro
+    ? colores.superficie
+    : "#33875F";
 
   return (
-    <View
-      style={[
-        styles.cabecera,
-        {
-          paddingTop: insets.top + 12,
-          paddingBottom: paddingInferior,
-          backgroundColor: bgCabecera,
-        },
-      ]}
-    >
-      <View style={styles.filaLogo}>
-        <Image
-          source={require("@/assets/images/logo-altokke-v2.png")}
-          style={styles.logoImagen}
-          resizeMode="contain"
-        />
-        <Text style={[styles.logoTexto, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
-          Altokke
-        </Text>
+    <View style={{ backgroundColor: colores.fondo }}>
+
+      {/* Barra de marca */}
+      <View
+        style={[
+          styles.barraMarca,
+          {
+            paddingTop: insets.top + 8,
+            backgroundColor: fondoMarca,
+          },
+        ]}
+      >
+        <View style={styles.identidad}>
+          <Image
+            source={require("@/assets/images/logo-altokke-v2.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+
+          <Text
+            style={[
+              styles.nombreMarca,
+              { color: esOscuro ? colores.texto : "#FFFFFF" },
+            ]}
+          >
+            altokke
+          </Text>
+        </View>
 
         <Pressable
           onPress={() => router.push("/notificaciones")}
-          style={[
-            styles.botonNotificaciones,
-            {
-              backgroundColor: esOscuro ? colores.campo : "rgba(255,255,255,0.15)",
-              borderColor: esOscuro ? colores.linea : "rgba(255,255,255,0.25)",
-            },
-          ]}
-          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Notificaciones"
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.botonNotificaciones,
+            {
+              backgroundColor: esOscuro
+                ? colores.campo
+                : "rgba(255,255,255,0.14)",
+            },
+            pressed && { opacity: 0.7 },
+          ]}
         >
           <Ionicons
-            name="notifications"
-            size={22}
+            name="notifications-outline"
+            size={21}
             color={esOscuro ? colores.texto : "#FFFFFF"}
           />
+
           {hayNotificaciones && (
             <View
               style={[
-                styles.puntoNuevo,
+                styles.indicadorNotificacion,
                 {
                   backgroundColor: colores.error,
-                  borderColor: bgCabecera,
+                  borderColor: fondoMarca,
                 },
               ]}
             />
@@ -84,76 +99,119 @@ export function CabeceraPasajero({
         </Pressable>
       </View>
 
-      {titulo && (
-        <Text style={[styles.titulo, { color: esOscuro ? colores.texto : "#FFFFFF" }]}>
-          {titulo}
-        </Text>
-      )}
-      {subtitulo && (
-        <Text
-          style={[
-            styles.subtitulo,
-            { color: esOscuro ? colores.secundario : "rgba(255,255,255,0.8)" },
-          ]}
-        >
-          {subtitulo}
-        </Text>
-      )}
+      {/* Saludo del pasajero*/}
+      {(titulo || subtitulo || children) && (
+          <View
+            style={[
+              styles.contenido,
+              { paddingBottom: paddingInferior },
+            ]}
+          >
+            {titulo && (
+              <Text
+                style={[
+                  styles.titulo,
+                  { color: colores.texto },
+                ]}
+                numberOfLines={2}
+              >
+                {titulo}
+              </Text>
+            )}
 
-      {children}
-    </View>
+            {subtitulo && (
+              <Text
+                style={[
+                  styles.subtitulo,
+                  { color: colores.secundario },
+                ]}
+              >
+                {subtitulo}
+              </Text>
+            )}
+
+            {children}
+
+            <View
+              style={[
+                styles.acento,
+                { backgroundColor: colores.primario },
+              ]}
+            />
+          </View>
+          )}
+        </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cabecera: {
+  barraMarca: {
     paddingHorizontal: 20,
-  },
-
-  filaLogo: {
+    paddingBottom: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+    justifyContent: "space-between",
+    minHeight: 60,
   },
 
-  logoImagen: {
-    width: 30,
-    height: 30,
-  },
-
-  logoTexto: {
+  identidad: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
     flex: 1,
-    fontSize: 22,
-    fontWeight: "700",
+  },
+
+  logo: {
+    width: 34,
+    height: 34,
+  },
+
+  nombreMarca: {
+    fontSize: 23,
+    fontWeight: "800",
+    letterSpacing: -0.9,
   },
 
   botonNotificaciones: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
   },
 
-  puntoNuevo: {
+  indicadorNotificacion: {
     position: "absolute",
-    right: 0,
-    top: 0,
-    width: 12,
-    height: 12,
+    top: 2,
+    right: 2,
+    width: 11,
+    height: 11,
     borderRadius: 6,
     borderWidth: 2,
+  },
+
+  contenido: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
 
   titulo: {
     fontSize: 24,
     fontWeight: "800",
+    letterSpacing: -0.6,
+    lineHeight: 30,
   },
 
   subtitulo: {
     fontSize: 14,
-    marginTop: 2,
+    lineHeight: 21,
+    marginTop: 5,
+  },
+
+  acento: {
+    width: 32,
+    height: 3,
+    borderRadius: 999,
+    marginTop: 14,
   },
 });
