@@ -95,6 +95,7 @@ export default function PasajeroTabsLayout() {
         name="cuenta"
         options={{
           title: "Cuenta",
+          popToTopOnBlur: true,
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
