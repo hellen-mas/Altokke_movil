@@ -486,6 +486,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      registrar_documento_conductor: {
+        Args: {
+          p_tipo:
+            Database["public"]["Enums"]["tipo_documento"];
+          p_ruta: string;
+        };
+        Returns: undefined;
+      };
       reservar_otp_conductor: { Args: { p_telefono: string }; Returns: Json }
       cancelar_viaje_pasajero: { Args: { p_viaje_id: string }; Returns: undefined }
       aceptar_viaje: { Args: { p_viaje_id: string }; Returns: undefined }

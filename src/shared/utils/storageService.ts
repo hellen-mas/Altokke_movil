@@ -1,4 +1,4 @@
-import { supabase } from "@/shared/api/supabase";
+import { supabase, invocarEdgeFunction } from "@/shared/api/supabase";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -67,6 +67,24 @@ export const storageService = {
       encoding: FileSystem.EncodingType.Base64,
     });
 
+    // Validar las fotos de perfil antes de almacenarlas
+    if (bucket === "avatars" && !esPdf) {
+      const resultado = await invocarEdgeFunction<{
+        ok: boolean;
+        valid: boolean;
+      }>("upload-avatar", {
+        validateOnly: true,
+        base64,
+        mimeType: "image/jpeg",
+      });
+
+      if (!resultado.ok || !resultado.valid) {
+        throw new Error (
+          "La fotografía no superó la validación de seguridad"
+        );
+      }
+    }
+
     const { error } = await supabase.storage
       .from(bucket)
       .upload(ruta, decode(base64), {
@@ -94,45 +112,100 @@ export const storageService = {
       return [];
     }
 
-    const registros = await Promise.all(
-      documentosValidos.map(async ({ tipo, adjunto }) => {
-        const info = typeof adjunto === "string" ? { uri: adjunto } : adjunto;
-        const nombreNorm = (info.nombre || "").toLowerCase();
-        const uriNorm = (info.uri || "").toLowerCase().split("?")[0];
-        const esPdf =
-          info.tipo === "application/pdf" ||
-          nombreNorm.endsWith(".pdf") ||
-          uriNorm.endsWith(".pdf");
-        const extension = esPdf ? "pdf" : "jpg";
-        const ruta = `${usuarioId}/${tipo.toLowerCase()}-${Date.now()}.${extension}`;
+    // Consultar los documentos ya registrados
+    const { data: existentes, error: errorConsulta } = await supabase
+      .from("documentos")
+      .select("tipo, url_archivo, estado, fecha_subida")
+      .eq("usuario_id", usuarioId)
+      .order("fecha_subida", { ascending: false });
 
-        await this.subirArchivo(bucket, ruta, info.uri, {
-          esPdf,
-          anchoMaximo: 1200,
-          calidad: 0.75,
-        });
+    if (errorConsulta) {
+      throw new Error(
+        `No se pudieron consultar los documentos: ${errorConsulta.message}`
+      );
+    }
 
-        return {
+    const registros : RegistroDocumentoSubido[] = [];
+
+    for (const { tipo, adjunto } of documentosValidos) {
+      // Evitar volver a registrar documentos existentes.
+      const documentoExistente = existentes?.find(
+        (documento) => 
+          documento.tipo === tipo &&
+          (documento.estado === "pendiente" ||
+            documento.estado === "aprobado" )
+      );
+
+      if (documentoExistente) {
+        registros.push({
           usuario_id: usuarioId,
           tipo,
-          url_archivo: ruta,
-        };
-      })
-    );
+          url_archivo: documentoExistente.url_archivo,
+        });
+        continue;
+      }
 
-    const { error } = await supabase.from("documentos").insert(registros);
-    if (error) {
-      throw new Error(`Error al registrar documentos en base de datos: ${error.message}`);
+      const info: ArchivoSubida =
+        typeof adjunto === "string"
+          ? { uri: adjunto }
+          : adjunto;
+
+      const nombreNorm = (info.nombre || "").toLowerCase();
+      const uriNorm = (info.uri || "")
+        .toLowerCase()
+        .split("?")[0];
+
+      const esPdf =
+        info.tipo === "application/pdf" ||
+        nombreNorm.endsWith(".pdf") ||
+        uriNorm.endsWith(".pdf");
+
+      const extension = esPdf ? "pdf" : "jpg";
+
+      // Ruta estable para poder repetir una subida fallida.
+      const ruta = `${usuarioId}/${tipo.toLowerCase()}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 10)}.${extension}`;
+
+      await this.subirArchivo(bucket, ruta, info.uri, {
+        esPdf,
+        anchoMaximo: 1200,
+        calidad: 0.75,
+      });
+
+      const registro: RegistroDocumentoSubido = {
+        usuario_id: usuarioId,
+        tipo,
+        url_archivo: ruta,
+      };
+
+      const { error: errorRegistro } = await supabase.rpc(
+        "registrar_documento_conductor",
+        {
+          p_tipo: tipo,
+          p_ruta: ruta,
+        }
+      );
+
+      if (errorRegistro) {
+        throw new Error(
+          `No se pudo registrar ${tipo}: ${errorRegistro.message}`
+        );
+      }
+
+      registros.push(registro);
     }
 
     return registros;
+
   },
 
-  /**
-   * Obtiene la URL pública de un recurso almacenado
-   */
-  obtenerUrlPublica(bucket: string, ruta: string): string {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(ruta);
+  // Obtiene la URL pública de un archivo almacenado
+  obtenerUrlPublica(bucket: string, ruta: string) : string {
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(ruta);
+    
     return data.publicUrl;
   },
 };
