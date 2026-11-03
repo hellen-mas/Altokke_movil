@@ -8,7 +8,6 @@ export default function PasajeroTabsLayout() {
 
   return (
     <Tabs
-      initialRouteName="mapa"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colores.exitoTexto,
@@ -35,7 +34,13 @@ export default function PasajeroTabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? colores.exitoTexto
+                    : colores.secundario
+              }
               size={size}
             />
           ),
@@ -49,7 +54,13 @@ export default function PasajeroTabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "time" : "time-outline"}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? colores.exitoTexto
+                    : colores.secundario
+              }
               size={size}
             />
           ),
@@ -67,7 +78,13 @@ export default function PasajeroTabsLayout() {
                   ? "help-circle"
                   : "help-circle-outline"
               }
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? colores.exitoTexto
+                    : colores.secundario
+              }
               size={size}
             />
           ),
@@ -81,7 +98,13 @@ export default function PasajeroTabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? colores.exitoTexto
+                    : colores.secundario
+              }
               size={size}
             />
           ),
