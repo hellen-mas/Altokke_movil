@@ -90,6 +90,37 @@ Deno.serve(async (req: Request) => {
       return respuestaJson({ error: 'Faltan datos requeridos (imagen o id de usuario).' }, 400)
     }
 
+    // Verificar que el usuario sea propietario de la cuenta
+    // antes de permitir guardar o actualizar su avatar.
+    if (!validateOnly) {
+      const authorization = req.headers.get("authorization") || "";
+      const token = authorization.replace(/^Bearer\s+/i, "");
+
+      if (!token || !userId) {
+        return respuestaJson(
+          { error: "Debes iniciar sesión para subir una fotografía." },
+          401
+        );
+      }
+
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      );
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabaseAuth.auth.getUser(token);
+
+      if (authError || !user || user.id !== userId) {
+        return respuestaJson(
+          { error: "No tienes permiso para modificar esta fotografía." },
+          403
+        );
+      }
+    }
+
     // 1. Verificación de credenciales de moderación
     const apiUser = Deno.env.get('SIGHTENGINE_USER')
     const apiSecret = Deno.env.get('SIGHTENGINE_SECRET')

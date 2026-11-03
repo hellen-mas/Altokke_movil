@@ -75,12 +75,12 @@ export async function subirFotoAvatar(
 ): Promise<ResultadoAvatar> {
   try {
     const base64 = typeof uriOrInfo === "string" ? base64Param : (uriOrInfo.base64 || base64Param);
-    const data = await invocarEdgeFunction<{ avatarUrl: string }>("upload-avatar", {
+    const data = await invocarEdgeFunction<{ url: string }>("upload-avatar", {
       userId,
       base64,
       mimeType: "image/jpeg",
     });
-    return { ok: true, url: data.avatarUrl };
+    return { ok: true, url: data.url };
   } catch (err: any) {
     return { ok: false, error: err.message || "Error al subir foto de perfil." };
   }
