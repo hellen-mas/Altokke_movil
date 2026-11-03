@@ -1,4 +1,6 @@
 import { supabase } from "@/shared/api/supabase";
+import { subirFotoAvatar } from "@/shared/utils/avatar";
+import * as FileSystem from "expo-file-system/legacy";
 import {
   TipoDocumento,
   ArchivoSubida,
@@ -82,29 +84,88 @@ export const conductorService = {
     datosPersonales: { nombre: string; apellidos: string; telefono: string; dni: string }
   ): Promise<string> {
     const emailNorm = correo.trim().toLowerCase();
-    const { data: sesionData } = await supabase.auth.getSession();
+
+    const validarUsuarioConductor = (
+      usuario: {
+        id: string;
+        email?: string;
+        user_metadata?: Record<string, any>;
+      }
+    ) : string => {
+      if (
+        usuario.email?.toLowerCase() !== emailNorm ||
+        usuario.user_metadata?.rol !== "conductor"
+      ) {
+        throw new Error (
+          "Esta cuenta no corresponde a un conductor. Verifica tus datos."
+        );
+      }
+
+      return usuario.id;
+    };
+
+    const { data: sesionData, error: errorSesion } = await supabase.auth.getSession();
+
+    if (errorSesion) throw errorSesion;
+    const usuarioActual = sesionData.session?.user;
 
     if (
-      sesionData?.session?.user &&
-      sesionData.session.user.email?.toLowerCase() === emailNorm &&
-      sesionData.session.user.user_metadata?.rol === "conductor"
+      usuarioActual?.email?.toLowerCase() === emailNorm
     ) {
-      return sesionData.session.user.id;
+      return validarUsuarioConductor(usuarioActual);
     }
 
-    await supabase.auth.signOut({ scope: "local" });
+    if (usuarioActual) {
+      const { error: errorSalida } =
+        await supabase.auth.signOut({ scope: "local" });
 
+      if (errorSalida) throw errorSalida;
+    }
+
+    // Crear cuenta si todavía no existe
     const { data, error } = await supabase.auth.signUp({
       email: emailNorm,
       password: contrasena,
       options: { data: { ...datosPersonales, rol: "conductor" } },
     });
 
-    if (error) throw error;
-    if (!data.user) throw new Error("No se pudo crear la cuenta de conductor.");
-    if (!data.session) throw new Error("CONFIRMAR_CORREO");
+    if (!error && data.session?.user) {
+      return validarUsuarioConductor(data.session.user);
+    } 
 
-    return data.user.id;
+    const { data: acceso, error: errorAcceso } =
+      await supabase.auth.signInWithPassword({
+        email: emailNorm,
+        password: contrasena,
+      });
+
+    if (!errorAcceso && acceso.user && acceso.session) {
+      return validarUsuarioConductor(acceso.user);
+    }
+
+    if (
+      errorAcceso?.message?.toLowerCase().includes(
+        "email not confirmed"
+      )
+    ) {
+      throw new Error("CONFIRMAR_CORREO");
+    }
+
+    if (
+      error?.message?.toLowerCase().includes(
+        "already registered"
+      )
+    ) {
+      throw new Error(
+        "La cuenta ya existe. Ingresa la contraseña correcta para recuperar tu registro."
+      );
+    }
+
+    if (error) throw error;
+
+    throw new Error(
+      "No se pudo iniciar la sesión. Verifica tu correo y contraseña."
+    );
   },
 
   async subirArchivosConductor(
@@ -120,16 +181,27 @@ export const conductorService = {
     }
   ): Promise<void> {
     if (archivos.foto) {
-      const rutaAvatar = `${usuarioId}/perfil-${Date.now()}.jpg`;
-      await storageService.subirArchivo("avatars", rutaAvatar, archivos.foto, {
-        anchoMaximo: 800,
-        calidad: 0.8,
-      });
-      const avatarUrl = storageService.obtenerUrlPublica("avatars", rutaAvatar);
-      await supabase
-        .from("usuarios")
-        .update({ avatar_url: avatarUrl })
-        .eq("id", usuarioId);
+      // Preparar fotografías para enviarla a la Edge Function
+      const base64 = await FileSystem.readAsStringAsync(
+        archivos.foto,
+        {
+          encoding: FileSystem.EncodingType.Base64,
+        }
+      );
+
+      // Sightengine valida la imagen antes de almacenarla
+      const resultado = await subirFotoAvatar(
+        archivos.foto,
+        usuarioId,
+        base64
+      );
+      
+      if (!resultado.ok || !resultado.url) {
+        throw new Error (
+          resultado.error ||
+          `No se pudo validar y guardar la foto del conductor.`
+        );
+      }
     }
 
     const itemsBrutos: { tipo: TipoDocumento; adjunto?: DocumentoAdjunto | string | null }[] = [
@@ -157,6 +229,23 @@ export const conductorService = {
   },
 
   async registrarVehiculo(usuarioId: string, vehiculo: DatosVehiculo): Promise<void> {
+    const { data: existente, error: errorConsulta } = await supabase
+      .from("vehiculos")
+      .select("id")
+      .eq("conductor_id", usuarioId)
+      .eq("placa", vehiculo.placa.trim().toUpperCase())
+      .maybeSingle();
+    
+    if (errorConsulta) {
+      throw new Error (
+        `No se pudo verificar el vehículo: ${errorConsulta.message}`
+      );
+    }
+
+    if (existente) {
+      return;
+    }
+
     const { error } = await supabase.from("vehiculos").insert({
       conductor_id: usuarioId,
       placa: vehiculo.placa.trim().toUpperCase(),
@@ -167,7 +256,12 @@ export const conductorService = {
       capacidad: Number(vehiculo.capacidad),
       activo: false,
     });
-    if (error) throw error;
+
+    if (error) {
+      throw new Error (
+        `No se pudo registrar el vehículo ${error.message}`
+      );
+    }
   },
 
   async completarRegistroConductor(datos: DatosRegistroConductor): Promise<string> {
