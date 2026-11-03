@@ -106,7 +106,13 @@ export default function ConductorLayout() {
             <Ionicons
               name={focused ? "home" : "home-outline"}
               size={size}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? paletaColores.verde
+                    : paletaColores.textoSecundarioClaro
+              }
             />
           ),
         }}
@@ -125,7 +131,13 @@ export default function ConductorLayout() {
                   : "file-tray-full-outline"
               }
               size={size}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? paletaColores.verde
+                    : paletaColores.textoSecundarioClaro
+              }
             />
           ),
         }}
@@ -140,7 +152,13 @@ export default function ConductorLayout() {
             <Ionicons
               name={focused ? "wallet" : "wallet-outline"}
               size={size}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? paletaColores.verde
+                    : paletaColores.textoSecundarioClaro
+              }
             />
           ),
         }}
@@ -155,7 +173,13 @@ export default function ConductorLayout() {
             <Ionicons
               name={focused ? "person" : "person-outline"}
               size={size}
-              color={color}
+              color={
+                typeof color === "string"
+                  ? color
+                  : focused
+                    ? paletaColores.verde
+                    : paletaColores.textoSecundarioClaro
+              }
             />
           ),
         }}
