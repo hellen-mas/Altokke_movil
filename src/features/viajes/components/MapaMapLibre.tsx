@@ -253,7 +253,7 @@ export function MapaMapLibre({
 
   return (
     <View style={[styles.contenedor, style]}>
-      <WebView
+      <WebView<{}>
         ref={webviewRef}
         source={{ html, baseUrl: URL_BASE }}
         originWhitelist={["*"]}

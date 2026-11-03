@@ -40,7 +40,6 @@ export default function TabLayout() {
         <AuthProvider>
           <StatusBar 
             barStyle={esOscuro ? "light-content" : "dark-content"}
-            backgroundColor={colores.fondo}
           />
           <AnimatedSplashOverlay />
           <Slot />

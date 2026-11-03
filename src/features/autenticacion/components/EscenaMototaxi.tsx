@@ -1,14 +1,14 @@
 import { useSplashTargetStore } from "@/shared/store/splashTargetStore";
 import { Image } from "expo-image";
 import { useCallback, useRef } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type ViewInstance } from "react-native";
 
 /**
  * Escena de la mototaxi de la bienvenida. Además de mostrarse, mide dónde quedó
  * en pantalla y se lo avisa al splash para que la moto aterrice justo ahí.
  */
 export function EscenaMototaxi() {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   const setRect = useSplashTargetStore((s) => s.setRect);
 
   const medir = useCallback(() => {
