@@ -49,6 +49,7 @@ export const storageService = {
     let uriFinal = uri;
     const contentType = esPdf ? "application/pdf" : "image/jpeg";
 
+    // REDUCTOR DE IMAGENES: Optimiza fotos a ancho max 1200px y calidad JPEG 0.75-0.8 (PDFs pasan sin alterar)
     if (!esPdf) {
       const imagen = await ImageManipulator.manipulateAsync(
         uri,
@@ -103,6 +104,7 @@ export const storageService = {
   /**
    * Procesa, sube en paralelo y registra un lote de documentos en Storage y base de datos
    */
+  // BUCKET PRIVADO DOCUMENTOS-CONDUCTORES CON RLS: Bucket privado donde se guardan expedientes protegidos
   async subirLoteDocumentos(
     usuarioId: string,
     documentos: DocumentoParaSubir[],

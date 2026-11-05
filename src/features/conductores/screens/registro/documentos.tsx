@@ -40,6 +40,7 @@ export default function DocumentosConductor() {
     const [seleccionando, setSeleccionando] = useState(false);
     const seleccionEnCurso = useRef(false);
 
+    // GUARDADO DE DOCUMENTOS CONDUCTOR: Seleccion de licencia, SOAT y antecedentes mediante expo-document-picker
     const seleccionarArchivo = async(tipo: TipoDocumento) => {
         if (seleccionEnCurso.current) return;
 
@@ -47,6 +48,7 @@ export default function DocumentosConductor() {
         setSeleccionando(true);
 
         try {
+            // GUARDADO DE DOCUMENTOS CONDUCTOR: Abre el selector de archivos del sistema operativo (PDF, JPG, PNG)
             const resultado = await DocumentPicker.getDocumentAsync({
                 type: [
                     "application/pdf",
