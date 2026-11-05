@@ -38,51 +38,86 @@ export async function invocarEdgeFunction<T>(
     if (error) {
       let mensaje = "No se pudo completar la operación con el servidor.";
       let codigo: string | undefined;
+      let estadoHttp: number | undefined;
 
-      if (error.context instanceof Response) {
+      const contexto: unknown = error.context;
+      if (
+        contexto !== null &&
+        typeof contexto === "object" &&
+        "status" in contexto &&
+        typeof contexto.status === "number"
+      ) {
+        estadoHttp = contexto.status;
+      }
+
+      if (
+        contexto !== null &&
+        typeof contexto === "object" &&
+        "json" in contexto &&
+        typeof contexto.json === "function"
+      ) {
         try {
-          const detalle: unknown = await error.context.clone().json();
+          const respuesta = contexto as {
+            json: () => Promise<unknown>;
+            clone?: () => { json: () => Promise<unknown> };
+          };
+          const detalle = await (
+            typeof respuesta.clone === "function"
+              ? respuesta.clone().json()
+              : respuesta.json()
+          );
+
           if (
+            detalle !== null &&
             typeof detalle === "object" &&
-            detalle != null &&
             !Array.isArray(detalle)
           ) {
             const datos = detalle as Record<string, unknown>;
-
             if (typeof datos.error === "string") {
               mensaje = datos.error;
+            } else if (typeof datos.message === "string") {
+              mensaje = datos.message;
             }
             if (typeof datos.code === "string") {
               codigo = datos.code;
             }
           }
         } catch {
-          mensaje = error.message || mensaje;
+          // El servidor puede responder sin un cuerpo JSON.
         }
-      } else {
-        mensaje = error.message || mensaje;
       }
 
-      const fallo = new Error(
-        controller.signal.aborted
-          ? "La solicitud tardó más de lo esperado."
-          : mensaje
-      ) as Error & { code?: string };
+      if (!codigo && estadoHttp === 401) {
+        codigo = "NO_AUTORIZADO";
+        mensaje = "No se pudo autorizar la consulta. Revisa tu sesión e inténtalo nuevamente.";
+      } else if (!codigo && estadoHttp === 403) {
+        codigo = "NO_AUTORIZADO";
+        mensaje = "No tienes autorización para realizar esta consulta.";
+      } else if (mensaje === "Edge Function returned a non-2xx status code") {
+        mensaje = "El servidor rechazó la solicitud.";
+      } else if (
+        mensaje === "No se pudo completar la operación con el servidor." &&
+        estadoHttp
+      ) {
+        mensaje = `No se pudo completar la operación (HTTP ${estadoHttp}).`;
+      }
 
-      fallo.code = controller.signal.aborted
-        ? "TIEMPO_AGOTADO"
-        : codigo;
-
+      const fallo = new Error(mensaje) as Error & {
+        code?: string;
+        status?: number;
+      };
+      fallo.code = codigo;
+      fallo.status = estadoHttp;
       throw fallo;
     }
 
-    if (data?.error) {
-      const fallo = new Error(
-        String(data.error)
-      ) as Error & { code?: string };
-
-      if (typeof data.code === "string") {
-        fallo.code = data.code;
+    if (data && typeof data === "object" && "error" in data && data.error) {
+      const respuesta = data as { error: unknown; code?: unknown };
+      const fallo = new Error(String(respuesta.error)) as Error & {
+        code?: string;
+      };
+      if (typeof respuesta.code === "string") {
+        fallo.code = respuesta.code;
       }
       throw fallo;
     }
@@ -92,13 +127,11 @@ export async function invocarEdgeFunction<T>(
     if (
       controller.signal.aborted ||
       (error instanceof Error &&
-        (error.name === "AbortError" ||
-          error.name === "TimeoutError"))
+        (error.name === "AbortError" || error.name === "TimeoutError"))
     ) {
       const fallo = new Error(
         "La solicitud tardó más de lo esperado."
       ) as Error & { code: string };
-
       fallo.code = "TIEMPO_AGOTADO";
       throw fallo;
     }
