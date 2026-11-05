@@ -1,10 +1,12 @@
 import { Stack, Redirect } from "expo-router";
 import { ViajeProvider } from "@/features/viajes/context/ViajeContext";
-import { NotificacionesProvider } from "@/features/notificaciones/context/NotificacionesContext";
+import { useSincronizarNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 
 export default function PasajeroLayout() {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  useSincronizarNotificaciones();
 
   if (isLoading) {
     return null;
@@ -16,13 +18,11 @@ export default function PasajeroLayout() {
 
   return (
     <ViajeProvider>
-      <NotificacionesProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-      </NotificacionesProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
     </ViajeProvider>
   );
 }

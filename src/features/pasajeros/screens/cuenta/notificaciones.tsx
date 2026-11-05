@@ -3,7 +3,7 @@ import React from "react";
 import { ScrollView, StyleSheet, Switch, View } from "react-native";
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
 import { ItemMenu } from "@/features/pasajeros/components/ItemMenu";
-import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
+import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 
 type Clave =

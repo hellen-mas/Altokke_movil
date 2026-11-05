@@ -1,5 +1,5 @@
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
+import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
 import type { NotificacionItem } from "@/features/notificaciones/types/notificaciones";
 import { useAltokkeTheme, type ColoresTema } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";

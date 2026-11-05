@@ -8,7 +8,7 @@ import {
   ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
 import { useViajeStore, type TipoServicio } from "@/features/viajes/store/viajeStore";
-import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
+import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
 import { useNombrePasajero } from "@/features/pasajeros/hooks/use-nombre-pasajero";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
