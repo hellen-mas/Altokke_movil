@@ -1,78 +1,113 @@
 import NetInfo from "@react-native-community/netinfo";
 import { supabase, invocarEdgeFunction } from "@/shared/api/supabase";
+import {
+  CODIGOS_ERROR_DNI,
+  ErrorConsultaDni,
+  mapearRespuestaDni,
+  type DatosIdentidadDni,
+  type CodigoErrorDni,
+} from "./identidad.dto";
 
-const aTitulo = (str: string) =>
-  str.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
-
-const cacheDni = new Map<string, { nombres: string; apellidos: string }>();
+const cacheDni = new Map<string, DatosIdentidadDni>();
 
 const MENSAJE_SIN_CONEXION = "No tienes conexión a internet. Revisa tu conexión e inténtalo nuevamente.";
 
+function esCodigoDni(valor: unknown): valor is CodigoErrorDni {
+  return Object.values(CODIGOS_ERROR_DNI).some(
+    (codigo) => codigo === valor
+  );
+}
+
+function convertirError(error: unknown): ErrorConsultaDni {
+  if (error instanceof ErrorConsultaDni) {
+    return error;
+  }
+
+  const fallo = error as {
+    code?: unknown;
+    message?: unknown;
+    name?: unknown;
+  } | null;
+
+  const codigo = fallo?.code;
+
+  if (esCodigoDni(codigo)) {
+    return new ErrorConsultaDni(
+      codigo,
+      typeof fallo?.message === "string"
+        ? fallo.message
+        : "No fue posible consultar el DNI."
+    );
+  }
+
+  if (
+    fallo?.name === "AbortError" ||
+    fallo?.name === "TimeoutError"
+  ) {
+    return new ErrorConsultaDni(
+      CODIGOS_ERROR_DNI.TIMEOUT,
+      "La consulta de DNI tardó demasiado."
+    );
+  }
+
+  return new ErrorConsultaDni(
+    CODIGOS_ERROR_DNI.PROVEEDOR,
+    typeof fallo?.message === "string"
+      ? fallo.message
+      : "No fue posible consultar los datos del DNI."
+  );
+}
+
 export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
-    try {
-      const { data } = await supabase
-        .from("usuarios")
-        .select("id")
-        .eq("dni", dni.trim())
-        .maybeSingle();
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("dni", dni.trim())
+      .maybeSingle();
 
-      return Boolean(data);
-    } catch {
-      return false;
+    if (error) {
+      throw new ErrorConsultaDni(
+        CODIGOS_ERROR_DNI.PROVEEDOR,
+        "No se pudo verificar si el DNI ya está registrado."
+      );
     }
+
+    return Boolean(data);
   },
 
-  async validarIdentidadDNI(dni: string) {
+  async validarIdentidadDNI(dni: string): Promise<DatosIdentidadDni> {
     const limpio = dni.trim();
 
-    // Evita la espera de existeDni cuando NetInfo confirma que no hay red
-    const estadoRed = await NetInfo.fetch().catch(() => null);
-    if (estadoRed?.isConnected === false) {
-      const guardadoSinRed = cacheDni.get(limpio);
-      if (guardadoSinRed) return { ...guardadoSinRed };
-      throw new Error(MENSAJE_SIN_CONEXION);
+    if (!/^\d{8}$/.test(limpio)) {
+      throw new ErrorConsultaDni(
+        CODIGOS_ERROR_DNI.INVALIDO,
+        "El DNI debe contener exactamente 8 dígitos."
+      );
     }
 
-    const yaRegistrado = await this.existeDni(limpio);
-    if (yaRegistrado) {
-      const err = new Error("DNI_YA_REGISTRADO");
-      (err as any).code = "DNI_YA_REGISTRADO";
-      throw err;
-    }
+    const red = await NetInfo.fetch().catch(() => null);
 
-    const guardado = cacheDni.get(limpio);
-    if (guardado) return { ...guardado };
+    if (
+      red?.isConnected === false ||
+      red?.isInternetReachable === false
+    ) {
+      throw new ErrorConsultaDni(
+        CODIGOS_ERROR_DNI.SIN_CONEXION,
+        MENSAJE_SIN_CONEXION
+      );
+    }
 
     try {
-      const respuesta = await invocarEdgeFunction<{
-        ok: boolean;
-        nombres: string;
-        apellidos: string;
-      }>("consultar-dni", { dni: limpio }, 10000);
+      const respuesta = await invocarEdgeFunction<unknown>(
+        "consultar-dni",
+        { dni: limpio },
+        10000
+      );
 
-      const resultado = {
-        nombres: aTitulo(respuesta.nombres),
-        apellidos: aTitulo(respuesta.apellidos),
-      };
-
-      if (cacheDni.size >= 30) {
-        const primerKey = cacheDni.keys().next().value;
-        if (primerKey) cacheDni.delete(primerKey);
-      }
-      cacheDni.set(limpio, resultado);
-
-      return resultado;
-    } catch (err: any) {
-      if (err?.name === "AbortError") {
-        throw new Error("La consulta de DNI tardó más de lo esperado. Verifica tu conexión a internet.");
-      }
-      // Consulta el estado actual de la red para no culpar al servidor cuando falta internet
-      const redTrasFallo = await NetInfo.refresh().catch(() => null);
-      if (redTrasFallo?.isConnected === false || redTrasFallo?.isInternetReachable === false) {
-        throw new Error(MENSAJE_SIN_CONEXION);
-      }
-      throw new Error(err.message || "No se encontraron datos registrados para este DNI.");
+      return mapearRespuestaDni(respuesta);
+    } catch (error) {
+      throw convertirError(error);
     }
   },
 };

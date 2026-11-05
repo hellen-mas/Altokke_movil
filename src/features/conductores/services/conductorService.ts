@@ -78,6 +78,52 @@ export async function obtenerEstadoConductor(usuarioId: string): Promise<EstadoC
 }
 
 export const conductorService = {
+  async obtenerHistorialConductor(conductorId: string) {
+    if (!conductorId) {
+      throw new Error("Se requiere el ID del conductor.");
+    }
+
+    const { data, error } = await supabase
+      .from("viajes")
+      .select(
+        "id, creado_en, origen_texto, destino_texto, tarifa_final, tarifa_estimada, estado"
+      )
+      .eq("conductor_id", conductorId)
+      .order("creado_en", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      throw new Error(
+        `No se pudo consultar el historial: ${error.message}`
+      );
+    }
+
+    return (data ?? []).map((viaje) => {
+      const fecha = new Date(viaje.creado_en);
+
+      return {
+        id: viaje.id,
+        fecha: fecha.toLocaleDateString("es-PE", {
+          day: "2-digit",
+          month: "short",
+        }),
+        hora: fecha.toLocaleTimeString("es-PE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        origen: viaje.origen_texto,
+        destino: viaje.destino_texto,
+        monto: Number(
+          viaje.tarifa_final ?? viaje.tarifa_estimada ?? 0
+        ),
+        estado:
+          viaje.estado === "finalizado"
+            ? ("Completado" as const)
+            : ("Cancelado" as const),
+      };
+    });
+  },
+
   async asegurarSesionConductor(
     correo: string,
     contrasena: string,

@@ -32,27 +32,78 @@ export async function invocarEdgeFunction<T>(
   try {
     const { data, error } = await supabase.functions.invoke(nombreFuncion, {
       body,
-      headers: { "x-client-timeout": String(timeoutMs) },
+      signal: controller.signal,
     });
 
     if (error) {
       let mensaje = "No se pudo completar la operación con el servidor.";
+      let codigo: string | undefined;
+
       if (error.context instanceof Response) {
         try {
-          const detalle = await error.context.json();
-          mensaje = detalle.error || detalle.message || mensaje;
-        } catch {}
+          const detalle: unknown = await error.context.clone().json();
+          if (
+            typeof detalle === "object" &&
+            detalle != null &&
+            !Array.isArray(detalle)
+          ) {
+            const datos = detalle as Record<string, unknown>;
+
+            if (typeof datos.error === "string") {
+              mensaje = datos.error;
+            }
+            if (typeof datos.code === "string") {
+              codigo = datos.code;
+            }
+          }
+        } catch {
+          mensaje = error.message || mensaje;
+        }
+      } else {
+        mensaje = error.message || mensaje;
       }
-      throw new Error(mensaje);
+
+      const fallo = new Error(
+        controller.signal.aborted
+          ? "La solicitud tardó más de lo esperado."
+          : mensaje
+      ) as Error & { code?: string };
+
+      fallo.code = controller.signal.aborted
+        ? "TIEMPO_AGOTADO"
+        : codigo;
+
+      throw fallo;
     }
 
-    if (data?.error) throw new Error(data.error);
-    return data as T;
-  } catch (err: any) {
-    if (err?.name === "AbortError") {
-      throw new Error("La solicitud tardó más de lo esperado. Revisa tu conexión a internet.");
+    if (data?.error) {
+      const fallo = new Error(
+        String(data.error)
+      ) as Error & { code?: string };
+
+      if (typeof data.code === "string") {
+        fallo.code = data.code;
+      }
+      throw fallo;
     }
-    throw err;
+
+    return data as T;
+} catch (error: unknown) {
+    if (
+      controller.signal.aborted ||
+      (error instanceof Error &&
+        (error.name === "AbortError" ||
+          error.name === "TimeoutError"))
+    ) {
+      const fallo = new Error(
+        "La solicitud tardó más de lo esperado."
+      ) as Error & { code: string };
+
+      fallo.code = "TIEMPO_AGOTADO";
+      throw fallo;
+    }
+
+    throw error;
   } finally {
     clearTimeout(timer);
   }
