@@ -2,6 +2,8 @@ import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { authService } from "@/features/autenticacion/services/authService";
+// ZUSTAND: Import para limpieza defensiva del store de registro
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -39,6 +41,8 @@ export default function SolicitudEnviada() {
     setSaliendo(true);
 
     try {
+      // LIMPIEZA ZUSTAND: Limpieza defensiva del estado de registro al volver al login
+      useRegistroConductor.getState().limpiarFormulario();
       await authService.cerrarSesion();
       router.replace("/login");
     } catch {

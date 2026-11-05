@@ -85,6 +85,7 @@ export const storageService = {
       }
     }
 
+    // RLS: La subida a Storage es evaluada por politicas RLS en storage.objects (carpeta auth.uid())
     const { error } = await supabase.storage
       .from(bucket)
       .upload(ruta, decode(base64), {
@@ -179,6 +180,7 @@ export const storageService = {
         url_archivo: ruta,
       };
 
+      // RPC: Invocacion del procedimiento almacenado registrar_documento_conductor en PostgreSQL
       const { error: errorRegistro } = await supabase.rpc(
         "registrar_documento_conductor",
         {

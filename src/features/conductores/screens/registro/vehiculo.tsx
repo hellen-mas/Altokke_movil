@@ -29,6 +29,7 @@ export default function VehiculoConductor() {
   const [enviando, setEnviando] = useState(false);
   const envioEnCurso = useRef(false);
 
+  // ZUSTAND: Extraccion de los 25 campos acumulados durante las 5 etapas del registro
   const {
     placa,
     marca,
@@ -51,6 +52,8 @@ export default function VehiculoConductor() {
     soat,
     antecedentesPenales,
     actualizarFormulario,
+    // LIMPIEZA ZUSTAND: Metodo para liberar la memoria tras envio satisfactorio
+    limpiarFormulario,
   } = useRegistroConductor();
 
   const anioActual = new Date().getFullYear();
@@ -136,6 +139,9 @@ export default function VehiculoConductor() {
           capacidad: Number(capacidad),
         },
       });
+
+      // LIMPIEZA ZUSTAND: Se purga el estado de memoria RAM al confirmar envio exitoso
+      limpiarFormulario();
 
       Alert.alert(
         "Solicitud enviada",
