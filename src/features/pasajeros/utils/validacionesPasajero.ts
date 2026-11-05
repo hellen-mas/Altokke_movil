@@ -1,28 +1,20 @@
-import { calcularEdad } from "@/shared/utils/validaciones";
 import * as yup from "yup";
+import { reglaCorreo, reglaDni, reglaMayorEdad, reglaPasswordSegura, reglaTelefono } from "@/shared/utils/validacionesEsquemas";
 
 export const esquemaRegistroPasajero = yup.object({
   // Paso 1: Acceso
-  correo: yup.string().email("Correo inválido").required("Requerido"),
-  telefono: yup.string().required("Requerido").min(9, "Debe tener 9 dígitos"),
-  contrasena: yup.string()
-    .required("Requerido")
-    .min(8, "Mínimo 8 caracteres")
-    .matches(/[A-Z]/, "Falta una mayúscula")
-    .matches(/[a-z]/, "Falta una minúscula")
-    .matches(/[0-9]/, "Falta un número")
-    .matches(/[\W_]/, "Falta un símbolo"),
+  correo: reglaCorreo,
+  telefono: reglaTelefono,
+  contrasena: reglaPasswordSegura,
   confirmarContrasena: yup.string()
-    .required("Confirma tu contraseña")
+    .required("Requerido")
     .oneOf([yup.ref("contrasena")], "Las contraseñas no coinciden"),
 
   // Paso 2: Identidad
-  dni: yup.string().length(8, "El DNI debe tener 8 dígitos").required("Requerido"),
+  dni: reglaDni,
   nombres: yup.string().required("Requerido"),
   apellidos: yup.string().required("Requerido"),
-  fechaNacimiento: yup.string()
-    .required("Selecciona tu fecha de nacimiento")
-    .test("es-mayor-de-edad", "Debes tener al menos 18 años para registrarte", (val) => Boolean(val && calcularEdad(val) >= 18)),
+  fechaNacimiento: reglaMayorEdad,
   fotoPerfil: yup.string().nullable().optional(),
   fotoBase64: yup.string().nullable().optional(),
 });
