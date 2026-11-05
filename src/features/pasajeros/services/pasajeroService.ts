@@ -59,80 +59,77 @@ export interface PerfilPasajero {
   preferencias: PreferenciasPasajero;
 }
 
-const cachePerfilPasajero = new Map<string, PerfilPasajero>();
-
 function formatearPrimerNombre(nombre: string): string {
   if (!nombre) return "";
   const primer = nombre.trim().split(" ")[0];
   return primer ? primer.charAt(0).toUpperCase() + primer.slice(1).toLowerCase() : "";
 }
 
-export const pasajeroService = {
-  obtenerPerfilEnCache(userId: string): PerfilPasajero | null {
-    return cachePerfilPasajero.get(userId) || null;
-  },
+// Lee las preferencias guardadas en Supabase. Se usa antes de combinarlas
+// para no pisar datos con una copia vieja en memoria.
+async function obtenerPreferenciasActuales(userId: string): Promise<PreferenciasPasajero> {
+  const { data, error } = await supabase
+    .from("pasajeros_perfil")
+    .select("preferencias")
+    .eq("usuario_id", userId)
+    .maybeSingle();
 
+  if (error) throw error;
+  return (data?.preferencias as PreferenciasPasajero) || {};
+}
+
+export const pasajeroService = {
   async obtenerPerfil(userId: string, metadataUsuario?: any): Promise<PerfilPasajero> {
     if (!userId) throw new Error("Se requiere el ID de usuario para obtener su perfil");
 
-    try {
-      const [usuarioRes, perfilRes, viajesCountRes] = await Promise.all([
-        supabase
-          .from("usuarios")
-          .select("id, nombre, apellidos, telefono, avatar_url, foto_url")
-          .eq("id", userId)
-          .maybeSingle(),
-        supabase
-          .from("pasajeros_perfil")
-          .select("preferencias, calificacion_promedio")
-          .eq("usuario_id", userId)
-          .maybeSingle(),
-        supabase
-          .from("viajes")
-          .select("id", { count: "exact", head: true })
-          .eq("pasajero_id", userId)
-          .eq("estado", "finalizado"),
-      ]);
+    const [usuarioRes, perfilRes, viajesCountRes] = await Promise.all([
+      supabase
+        .from("usuarios")
+        .select("id, nombre, apellidos, telefono, avatar_url, foto_url")
+        .eq("id", userId)
+        .maybeSingle(),
+      supabase
+        .from("pasajeros_perfil")
+        .select("preferencias, calificacion_promedio")
+        .eq("usuario_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("viajes")
+        .select("id", { count: "exact", head: true })
+        .eq("pasajero_id", userId)
+        .eq("estado", "finalizado"),
+    ]);
 
-      const dataUsuario = usuarioRes.data;
-      const dataPerfil = perfilRes.data;
+    const dataUsuario = usuarioRes.data;
+    const dataPerfil = perfilRes.data;
 
-      const nombre = (
-        dataUsuario?.nombre ||
-        metadataUsuario?.nombre ||
-        metadataUsuario?.full_name?.split(" ")[0] ||
-        "Pasajero"
-      ).trim();
+    const nombre = (
+      dataUsuario?.nombre ||
+      metadataUsuario?.nombre ||
+      metadataUsuario?.full_name?.split(" ")[0] ||
+      "Pasajero"
+    ).trim();
 
-      const apellidos = (dataUsuario?.apellidos || metadataUsuario?.apellidos || "").trim();
-      const preferencias: PreferenciasPasajero = (dataPerfil?.preferencias as PreferenciasPasajero) || {};
+    const apellidos = (dataUsuario?.apellidos || metadataUsuario?.apellidos || "").trim();
+    const preferencias: PreferenciasPasajero = (dataPerfil?.preferencias as PreferenciasPasajero) || {};
 
-      const perfil: PerfilPasajero = {
-        id: userId,
-        nombre,
-        apellidos,
-        nombreCompleto: apellidos ? `${nombre} ${apellidos}` : nombre,
-        primerNombre: formatearPrimerNombre(nombre),
-        correo: metadataUsuario?.email || "",
-        telefono: dataUsuario?.telefono || metadataUsuario?.telefono || "",
-        fotoUrl: dataUsuario?.avatar_url || dataUsuario?.foto_url || metadataUsuario?.avatar_url || null,
-        calificacion: Number(dataPerfil?.calificacion_promedio ?? 5.0),
-        viajesCount: viajesCountRes.count ?? 0,
-        dni: metadataUsuario?.dni || preferencias.dni || "Sin registrar",
-        fechaNacimiento: metadataUsuario?.fecha_nacimiento || preferencias.fechaNacimiento || "Sin registrar",
-        genero: preferencias.genero || "Sin registrar",
-        contactoEmergencia: preferencias.contactoEmergencia,
-        preferencias,
-      };
-
-      cachePerfilPasajero.set(userId, perfil);
-      return perfil;
-    } catch (error) {
-      console.warn("Aviso al consultar perfil de pasajero:", error);
-      const cacheado = cachePerfilPasajero.get(userId);
-      if (cacheado) return cacheado;
-      throw error;
-    }
+    return {
+      id: userId,
+      nombre,
+      apellidos,
+      nombreCompleto: apellidos ? `${nombre} ${apellidos}` : nombre,
+      primerNombre: formatearPrimerNombre(nombre),
+      correo: metadataUsuario?.email || "",
+      telefono: dataUsuario?.telefono || metadataUsuario?.telefono || "",
+      fotoUrl: dataUsuario?.avatar_url || dataUsuario?.foto_url || metadataUsuario?.avatar_url || null,
+      calificacion: Number(dataPerfil?.calificacion_promedio ?? 5.0),
+      viajesCount: viajesCountRes.count ?? 0,
+      dni: metadataUsuario?.dni || preferencias.dni || "Sin registrar",
+      fechaNacimiento: metadataUsuario?.fecha_nacimiento || preferencias.fechaNacimiento || "Sin registrar",
+      genero: preferencias.genero || "Sin registrar",
+      contactoEmergencia: preferencias.contactoEmergencia,
+      preferencias,
+    };
   },
 
   async actualizarDatosPersonales(
@@ -146,9 +143,7 @@ export const pasajeroService = {
       genero?: string;
       contactoEmergencia?: { nombre: string; telefono: string };
     }
-  ): Promise<PerfilPasajero> {
-    const perfilActual = cachePerfilPasajero.get(userId);
-
+  ): Promise<void> {
     const camposUsuario: { nombre?: string; apellidos?: string; telefono?: string } = {};
     if (datos.nombre !== undefined) camposUsuario.nombre = datos.nombre.trim();
     if (datos.apellidos !== undefined) camposUsuario.apellidos = datos.apellidos.trim();
@@ -162,26 +157,25 @@ export const pasajeroService = {
       if (error) throw error;
     }
 
-    const nuevasPreferencias: PreferenciasPasajero = {
-      ...(perfilActual?.preferencias || {}),
-    };
+    const nuevasPreferencias: Partial<PreferenciasPasajero> = {};
     if (datos.dni !== undefined) nuevasPreferencias.dni = datos.dni.trim();
     if (datos.fechaNacimiento !== undefined) nuevasPreferencias.fechaNacimiento = datos.fechaNacimiento;
     if (datos.genero !== undefined) nuevasPreferencias.genero = datos.genero;
     if (datos.contactoEmergencia !== undefined) nuevasPreferencias.contactoEmergencia = datos.contactoEmergencia;
 
-    await this.guardarPreferencias(userId, nuevasPreferencias);
+    if (Object.keys(nuevasPreferencias).length > 0) {
+      await this.guardarPreferencias(userId, nuevasPreferencias);
+    }
 
+    // Solo viajan los campos que cambiaron; los que quedan en undefined no se tocan.
     supabase.auth.updateUser({
       data: {
-        nombre: datos.nombre ?? perfilActual?.nombre,
-        apellidos: datos.apellidos ?? perfilActual?.apellidos,
-        telefono: datos.telefono ?? perfilActual?.telefono,
-        dni: datos.dni ?? perfilActual?.dni,
+        nombre: datos.nombre,
+        apellidos: datos.apellidos,
+        telefono: datos.telefono,
+        dni: datos.dni,
       },
     }).catch((err) => console.warn("Aviso al sincronizar auth metadata:", err));
-
-    return await this.obtenerPerfil(userId);
   },
 
   /**
@@ -193,9 +187,9 @@ export const pasajeroService = {
     userId: string,
     nuevasPreferencias: Partial<PreferenciasPasajero>
   ): Promise<PreferenciasPasajero> {
-    const perfilActual = cachePerfilPasajero.get(userId);
+    const actuales = await obtenerPreferenciasActuales(userId);
     const preferenciasCombinadas: PreferenciasPasajero = {
-      ...(perfilActual?.preferencias || {}),
+      ...actuales,
       ...nuevasPreferencias,
     };
 
@@ -219,17 +213,12 @@ export const pasajeroService = {
       );
     }
 
-    if (perfilActual) {
-      perfilActual.preferencias = preferenciasCombinadas;
-      cachePerfilPasajero.set(userId, perfilActual);
-    }
-
     return preferenciasCombinadas;
   },
 
   async guardarDireccion(userId: string, direccion: DireccionGuardada): Promise<DireccionGuardada[]> {
-    const perfilActual = cachePerfilPasajero.get(userId);
-    const direcciones = [...(perfilActual?.preferencias.direcciones || [])];
+    const actuales = await obtenerPreferenciasActuales(userId);
+    const direcciones = [...(actuales.direcciones || [])];
     const index = direcciones.findIndex((d) => d.id === direccion.id);
 
     if (index >= 0) {
@@ -243,8 +232,8 @@ export const pasajeroService = {
   },
 
   async eliminarDireccion(userId: string, direccionId: string): Promise<DireccionGuardada[]> {
-    const perfilActual = cachePerfilPasajero.get(userId);
-    const direcciones = (perfilActual?.preferencias.direcciones || []).filter((d) => d.id !== direccionId);
+    const actuales = await obtenerPreferenciasActuales(userId);
+    const direcciones = (actuales.direcciones || []).filter((d) => d.id !== direccionId);
     await this.guardarPreferencias(userId, { direcciones });
     return direcciones;
   },

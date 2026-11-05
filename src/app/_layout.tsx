@@ -14,7 +14,6 @@ import NetInfo from "@react-native-community/netinfo";
 import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppState, Platform, StatusBar } from "react-native";
 
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -54,6 +53,16 @@ export default function TabLayout() {
       focusManager.setFocused(estado === "active");
     });
     return () => suscripcion.remove();
+  }, []);
+
+   // Al cerrar sesión o entrar con otra cuenta se borra la caché:
+  // así nunca se ven datos de la cuenta anterior.
+  useEffect(() => {
+    return useAuthStore.subscribe((estado, anterior) => {
+      if (anterior.userId && estado.userId !== anterior.userId) {
+        queryClient.clear();
+      }
+    });
   }, []);
 
   if (!fontsLoaded) return null;
