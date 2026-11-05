@@ -163,6 +163,59 @@ export default function Configuracion() {
     }
   };
 
+  const [desactivandoCuenta, setDesactivandoCuenta] = useState(false);
+
+  const confirmarDesactivarCuenta = () => {
+    if (desactivandoCuenta || eliminandoCuenta) return;
+
+    Alert.alert(
+      "Desactivar cuenta",
+      "¿Deseas pausar temporalmente tu cuenta de Altokke? Tu perfil no estará visible y podrás reactivarla contactando con soporte.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Desactivar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDesactivandoCuenta(true);
+              const servicio = authService as typeof authService & {
+                desactivarMiCuenta?: () => Promise<void>;
+              };
+              if (typeof servicio.desactivarMiCuenta === "function") {
+                await servicio.desactivarMiCuenta();
+              } else {
+                const usuario = await authService.obtenerUsuarioActual();
+                if (usuario?.id) {
+                  const { supabase } = await import("@/shared/api/supabase");
+                  await supabase
+                    .from("usuarios")
+                    .update({
+                      estado_cuenta: "desactivado",
+                      desactivado_en: new Date().toISOString(),
+                      motivo_desactivacion: "Solicitud del usuario",
+                    })
+                    .eq("id", usuario.id);
+                  await authService.cerrarSesion();
+                }
+              }
+              router.replace("/(auth)/bienvenida");
+            } catch (error: unknown) {
+              Alert.alert(
+                "No se pudo desactivar la cuenta",
+                error instanceof Error
+                  ? error.message
+                  : "Inténtalo nuevamente."
+              );
+            } finally {
+              setDesactivandoCuenta(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const confirmarEliminarCuenta = () => {
     if (eliminandoCuenta) return;
 
@@ -415,6 +468,62 @@ export default function Configuracion() {
                 size={18}
                 color={colores.secundario}
               />
+            </Pressable>
+
+            <View
+              style={[styles.separador, { backgroundColor: colores.linea }]}
+            />
+
+            <Pressable
+              onPress={confirmarDesactivarCuenta}
+              disabled={desactivandoCuenta || eliminandoCuenta}
+              accessibilityRole="button"
+              accessibilityLabel="Desactivar cuenta"
+              style={({ pressed }) => [
+                styles.fila,
+                pressed && {
+                  backgroundColor: colores.campo,
+                },
+                desactivandoCuenta && { opacity: 0.6 },
+              ]}
+            >
+              <Ionicons
+                name="pause-circle-outline"
+                size={22}
+                color="#E5A93C"
+              />
+
+              <View style={styles.textos}>
+                <Text
+                  style={[
+                    styles.filaTitulo,
+                    { color: "#E5A93C" },
+                  ]}
+                >
+                  Desactivar cuenta
+                </Text>
+
+                <Text
+                  style={[styles.filaSubtitulo, { color: colores.secundario }]}
+                >
+                  {desactivandoCuenta
+                    ? "Desactivando..."
+                    : "Pausar mi cuenta temporalmente"}
+                </Text>
+              </View>
+
+              {desactivandoCuenta ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#E5A93C"
+                />
+              ) : (
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colores.secundario}
+                />
+              )}
             </Pressable>
 
             <View

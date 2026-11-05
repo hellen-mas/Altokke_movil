@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,327 +11,55 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
-import {
-  DireccionGuardada,
-  pasajeroService,
-} from "@/features/pasajeros/services/pasajeroService";
-import { useViaje } from "@/features/viajes/context/ViajeContext";
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import MapView, { Marker } from "react-native-maps";
-import type { PuntoMapa } from "@/features/viajes/types/tiposMapa";
+import {
+  BarraSuperiorNavegacion,
+  TarjetaDireccion,
+} from "@/shared/components/ui";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { CENTRO_BAGUA } from "@/features/viajes/constants/pasajero";
-import * as Location from "expo-location";
-
-const ICONOS_DISPONIBLES: {
-  id: string;
-  nombre: keyof typeof Ionicons.glyphMap;
-  etiqueta: string;
-}[] = [
-  { id: "home", nombre: "home-outline", etiqueta: "Casa" },
-  { id: "trabajo", nombre: "briefcase-outline", etiqueta: "Trabajo" },
-  { id: "estudio", nombre: "school-outline", etiqueta: "Estudios" },
-  { id: "gym", nombre: "fitness-outline", etiqueta: "Gimnasio" },
-  { id: "corazon", nombre: "heart-outline", etiqueta: "Favorito" },
-  { id: "ubicacion", nombre: "location-outline", etiqueta: "Punto" },
-];
+import {
+  useDireccionesGuardadas,
+  ICONOS_DISPONIBLES,
+} from "@/features/pasajeros/hooks/useDireccionesGuardadas";
+import type { DireccionGuardada } from "@/features/pasajeros/services/pasajeroService";
 
 export default function DireccionesGuardadas() {
   const { colores } = useAltokkeTheme();
-  const { userId } = useAuth();
-  const { perfil, recargar } = usePerfilPasajero();
-  const { setDestino } = useViaje();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [nombre, setNombre] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [iconoSeleccionado, setIconoSeleccionado] = useState<keyof typeof Ionicons.glyphMap>("home-outline");
-  const [guardando, setGuardando] = useState(false);
-  const [coordenadasSeleccionadas, setCoordenadasSeleccionadas] = useState<PuntoMapa | null>(null);
-  const [buscandoDireccion, setBuscandoDireccion] = useState(false);
-  const consultaDireccionRef = useRef(0);
-  const direccionEditadaRef = useRef(false);
-  const mapaRef = useRef<MapView | null>(null);
-  const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      consultaDireccionRef.current += 1;
-    };
-  }, []);
-
-  const direccionesGuardadas = perfil?.preferencias?.direcciones ?? [];
-
-  const abrirModalAgregar = () => {
-    setNombre("");
-    setDireccion("");
-    setIconoSeleccionado("home-outline");
-    setCoordenadasSeleccionadas(null);
-    setModalVisible(true);
-    consultaDireccionRef.current += 1;
-    direccionEditadaRef.current = false;
-    setBuscandoDireccion(false);
-  };
-
-  const cerrarModalAgregar = () => {
-    consultaDireccionRef.current += 1;
-    setBuscandoDireccion(false);
-    setModalVisible(false);
-  };
-  
-  const seleccionarUbicacion = async (punto: PuntoMapa) => {
-    setCoordenadasSeleccionadas(punto);
-    const numeroConsulta = ++consultaDireccionRef.current;
-
-    direccionEditadaRef.current = false;
-    setBuscandoDireccion(true);
-    setDireccion("");
-
-    try {
-      const resultados = await Location.reverseGeocodeAsync(punto);
-
-      // Ignorar resultados de puntos anteriores o de un modal cerrado.
-      if (
-        numeroConsulta !== consultaDireccionRef.current ||
-        direccionEditadaRef.current
-      ) {
-        return;
-      }
-
-      const lugar = resultados[0];
-      if (!lugar) {
-        return;
-      }
-
-      const calle = [lugar.street, lugar.streetNumber]
-        .filter(Boolean)
-        .join(" ");
-
-      const localidad = lugar.district || lugar.city || lugar.subregion;
-
-      const direccionEncontrada = [calle || lugar.name, localidad]
-        .filter(Boolean)
-        .join(", ");
-
-      if (direccionEncontrada) {
-        setDireccion(direccionEncontrada);
-      }
-    } catch (error) {
-      if (numeroConsulta === consultaDireccionRef.current) {
-        console.warn("No se pudo obtener la dirección:", error);
-      }
-    } finally {
-      if (numeroConsulta === consultaDireccionRef.current) {
-        setBuscandoDireccion(false);
-      }
-    }
-  };
-
-  const buscarDireccionEnMapa = async () => {
-    const texto = direccion.trim();
-
-    if (!texto || buscandoUbicacion || guardando) {
-      if (!texto) {
-        Alert.alert(
-          "Escribe una dirección",
-          "Ingresa una calle o referencia para buscarla en el mapa."
-        );
-      }
-      return;
-    }
-
-    setBuscandoUbicacion(true);
-
-    // Invalidar cualquier búsqueda inversa anterior.
-    const numeroConsulta = ++consultaDireccionRef.current;
-    setBuscandoDireccion(false);
-
-    try {
-      const resultados = await Location.geocodeAsync(
-        `${texto}, Bagua, Amazonas, Perú`
-      );
-
-      if (numeroConsulta !== consultaDireccionRef.current) return;
-
-      if (resultados.length === 0) {
-        Alert.alert(
-          "Dirección no encontrada",
-          "No encontramos esa dirección. Intenta escribir una referencia más precisa o marca el punto manualmente."
-        );
-        return;
-      }
-
-      const punto = resultados[0];
-
-      if (
-        !Number.isFinite(punto.latitude) ||
-        !Number.isFinite(punto.longitude) ||
-        Math.abs(punto.latitude) > 90 ||
-        Math.abs(punto.longitude) > 180
-      ) {
-        Alert.alert(
-          "Ubicación no válida",
-          "No se pudo obtener una ubicación válida para esta dirección."
-        );
-        return;
-      }
-
-      Alert.alert(
-        "Ubicación aproximada encontrada",
-        "Altokke encontró una posible ubicación. Verifica el marcador en el mapa antes de guardar.",
-        [
-          {
-            text: "Cancelar",
-            style: "cancel",
-          },
-          {
-            text: "Mostrar en el mapa",
-            onPress: () => {
-              const coordenadas = {
-                latitude: punto.latitude,
-                longitude: punto.longitude,
-              };
-
-              // Evitar que una consulta anterior cambie el texto.
-              consultaDireccionRef.current += 1;
-              direccionEditadaRef.current = true;
-
-              setCoordenadasSeleccionadas(coordenadas);
-
-              mapaRef.current?.animateToRegion(
-                {
-                  ...coordenadas,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005,
-                },
-                500
-              );
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.warn("Error al buscar la dirección:", error);
-
-      Alert.alert(
-        "No se pudo buscar",
-        "Comprueba tu conexión o selecciona el lugar manualmente en el mapa."
-      );
-    } finally {
-      setBuscandoUbicacion(false);
-    }
-  };
-
-  const guardarDireccion = async () => {
-    if (!nombre.trim() || !direccion.trim()) {
-      Alert.alert("Campos requeridos", "Por favor ingresa un nombre y una dirección.");
-      return;
-    }
-
-    if (!userId) {
-      Alert.alert("Sesión requerida", "Inicia sesión para guardar direcciones en tu cuenta.");
-      return;
-    }
-
-    if (
-      !coordenadasSeleccionadas ||
-      typeof coordenadasSeleccionadas.latitude !== "number" ||
-      typeof coordenadasSeleccionadas.longitude !== "number" ||
-      !Number.isFinite(coordenadasSeleccionadas.latitude) ||
-      !Number.isFinite(coordenadasSeleccionadas.longitude) ||
-      Math.abs(coordenadasSeleccionadas.latitude) > 90 ||
-      Math.abs(coordenadasSeleccionadas.longitude) > 180
-    ) {
-      Alert.alert(
-        "Selecciona una ubicación válida",
-        "Marca en el mapa el punto exacto de esta dirección."
-      );
-      return;
-    }
-
-    // Invalidar cualquier consulta pendiente antes de guardar.
-    consultaDireccionRef.current += 1;
-    setBuscandoDireccion(false);
-
-    try {
-      setGuardando(true);
-      const nueva: DireccionGuardada = {
-        id: `dir-${Date.now()}`,
-        nombre: nombre.trim(),
-        direccion: direccion.trim(),
-        icono: iconoSeleccionado,
-        coordenadas: coordenadasSeleccionadas,
-      };
-
-      await pasajeroService.guardarDireccion(userId, nueva);
-      await recargar();
-      cerrarModalAgregar();
-
-      Alert.alert("Éxito", "Dirección guardada correctamente.");
-    } catch (err: any) {
-      Alert.alert("Error al guardar", err?.message || "No se pudo registrar la dirección.");
-    } finally {
-      setGuardando(false);
-    }
-  };
+  const {
+    direccionesGuardadas,
+    modalVisible,
+    nombre,
+    setNombre,
+    direccion,
+    setDireccion,
+    iconoSeleccionado,
+    setIconoSeleccionado,
+    guardando,
+    coordenadasSeleccionadas,
+    buscandoDireccion,
+    buscandoUbicacion,
+    mapaRef,
+    abrirModalAgregar,
+    cerrarModalAgregar,
+    seleccionarUbicacionEnMapa,
+    buscarDireccionTexto,
+    guardarDireccion,
+    pedirViajeHacia,
+    eliminarDireccion,
+  } = useDireccionesGuardadas();
 
   const opcionesDireccion = (lugar: DireccionGuardada) => {
     Alert.alert(lugar.nombre, lugar.direccion, [
       {
         text: "Pedir viaje hacia aquí",
-        onPress: () => {
-          const coordenadas = lugar.coordenadas;
-
-          if (
-            !coordenadas ||
-            !Number.isFinite(coordenadas.latitude) ||
-            !Number.isFinite(coordenadas.longitude) ||
-            Math.abs(coordenadas.latitude) > 90 ||
-            Math.abs(coordenadas.longitude) > 180
-          ) {
-            Alert.alert(
-              "Ubicación no definida", 
-              "Esta dirección todavía no tiene un punto exacato en el mapa. Selecciona su ubicación antes de solicitar un mototaxi.",
-              [
-                {
-                  text: "Seleccionar ubicación",
-                  onPress: () => router.push("/destino"),
-                },
-                {
-                  text: "Cancelar",
-                  style: "cancel",
-                },
-              ]
-            );
-
-            return;
-          }
-
-          setDestino({
-            id: lugar.id,
-            nombre: lugar.nombre,
-            detalle: lugar.direccion,
-            coordenadas,
-          });
-
-          router.push("/confirmar-viaje");
-        },
+        onPress: () => pedirViajeHacia(lugar),
       },
       {
         text: "Eliminar dirección",
         style: "destructive",
-        onPress: async () => {
-          if (!userId) return;
-          try {
-            await pasajeroService.eliminarDireccion(userId, lugar.id);
-            await recargar();
-            Alert.alert("Eliminado", "La dirección fue eliminada.");
-          } catch {
-            Alert.alert("Aviso", "No se pudo eliminar la dirección.");
-          }
-        },
+        onPress: () => eliminarDireccion(lugar.id),
       },
       { text: "Cancelar", style: "cancel" },
     ]);
@@ -340,19 +67,13 @@ export default function DireccionesGuardadas() {
 
   return (
     <View style={[styles.container, { backgroundColor: colores.fondo }]}>
-      <EncabezadoPantalla titulo="Mis direcciones" />
+      <BarraSuperiorNavegacion titulo="Mis direcciones" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
       >
-
-        <Text
-          style={[
-            styles.descripcionPantalla,
-            { color: colores.secundario },
-          ]}
-        >
+        <Text style={[styles.descripcionPantalla, { color: colores.secundario }]}>
           Guarda tus lugares frecuentes para llegar más rápido.
         </Text>
 
@@ -370,19 +91,16 @@ export default function DireccionesGuardadas() {
                 color={colores.exitoTexto}
               />
             </View>
-
             <Text style={[styles.vacioTitulo, { color: colores.texto }]}>
               Aún no tienes direcciones
             </Text>
-
             <Text
               style={[
                 styles.vacioDescripcion,
                 { color: colores.secundario },
               ]}
             >
-              Agrega tu casa, trabajo o cualquier lugar al que viajes
-              con frecuencia.
+              Agrega tu casa, trabajo o cualquier lugar al que viajes con frecuencia.
             </Text>
           </View>
         ) : (
@@ -396,69 +114,17 @@ export default function DireccionesGuardadas() {
             ]}
           >
             {direccionesGuardadas.map((lugar, index) => (
-              <View key={lugar.id}>
-                <Pressable
-                  onPress={() => opcionesDireccion(lugar)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Opciones para ${lugar.nombre}`}
-                  style={({ pressed }) => [
-                    styles.filaDireccion,
-                    pressed && {
-                      backgroundColor: colores.campo,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.iconoFondo,
-                      { backgroundColor: colores.exitoFondo },
-                    ]}
-                  >
-                    <Ionicons
-                      name={
-                        (lugar.icono as keyof typeof Ionicons.glyphMap) ||
-                        "location-outline"
-                      }
-                      size={22}
-                      color={colores.exitoTexto}
-                    />
-                  </View>
-
-                  <View style={styles.textos}>
-                    <Text
-                      style={[styles.nombre, { color: colores.texto }]}
-                      numberOfLines={1}
-                    >
-                      {lugar.nombre}
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.direccion,
-                        { color: colores.secundario },
-                      ]}
-                      numberOfLines={2}
-                    >
-                      {lugar.direccion}
-                    </Text>
-                  </View>
-
-                  <Ionicons
-                    name="ellipsis-horizontal"
-                    size={22}
-                    color={colores.secundario}
-                  />
-                </Pressable>
-
-                {index !== direccionesGuardadas.length - 1 && (
-                  <View
-                    style={[
-                      styles.separadorDireccion,
-                      { backgroundColor: colores.linea },
-                    ]}
-                  />
-                )}
-              </View>
+              <TarjetaDireccion
+                key={lugar.id}
+                nombre={lugar.nombre}
+                direccion={lugar.direccion}
+                icono={
+                  (lugar.icono as keyof typeof Ionicons.glyphMap) ||
+                  "location-outline"
+                }
+                onPress={() => opcionesDireccion(lugar)}
+                mostrarSeparador={index !== direccionesGuardadas.length - 1}
+              />
             ))}
           </View>
         )}
@@ -470,21 +136,19 @@ export default function DireccionesGuardadas() {
           style={({ pressed }) => [
             styles.botonAgregar,
             {
-              backgroundColor: pressed
-                ? colores.primarioPresionado
-                : colores.primario,
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
             },
+            pressed && { backgroundColor: colores.campo },
           ]}
         >
-          <Ionicons name="add" size={21} color={colores.textoBoton} />
-
-          <Text style={styles.textoBotonAgregar}>
+          <Ionicons name="add-circle" size={24} color={colores.exitoTexto} />
+          <Text style={[styles.textoBotonAgregar, { color: colores.texto }]}>
             Agregar dirección
           </Text>
         </Pressable>
       </ScrollView>
 
-      {/* Modal Agregar Dirección */}
       <Modal
         visible={modalVisible}
         transparent
@@ -492,11 +156,28 @@ export default function DireccionesGuardadas() {
         onRequestClose={cerrarModalAgregar}
       >
         <View style={styles.modalFondo}>
-          <View style={[styles.modalCaja, { backgroundColor: colores.superficie, borderColor: colores.linea }]}>
-            <Text style={[styles.modalTitulo, { color: colores.texto }]}>Nueva dirección</Text>
+          <View
+            style={[
+              styles.modalCaja,
+              {
+                backgroundColor: colores.superficie,
+                borderColor: colores.linea,
+              },
+            ]}
+          >
+            <Text style={[styles.modalTitulo, { color: colores.texto }]}>
+              Nueva dirección
+            </Text>
 
             <TextInput
-              style={[styles.inputModal, { color: colores.textoCampo, backgroundColor: colores.campo, borderColor: colores.linea }]}
+              style={[
+                styles.inputModal,
+                {
+                  color: colores.textoCampo,
+                  backgroundColor: colores.campo,
+                  borderColor: colores.linea,
+                },
+              ]}
               placeholder="Nombre (ej. Casa, Universidad, Trabajo)"
               placeholderTextColor={colores.secundario}
               value={nombre}
@@ -504,20 +185,22 @@ export default function DireccionesGuardadas() {
             />
 
             <TextInput
-              style={[styles.inputModal, { color: colores.textoCampo, backgroundColor: colores.campo, borderColor: colores.linea }]}
+              style={[
+                styles.inputModal,
+                {
+                  color: colores.textoCampo,
+                  backgroundColor: colores.campo,
+                  borderColor: colores.linea,
+                },
+              ]}
               placeholder="Dirección o referencia exacta"
               placeholderTextColor={colores.secundario}
               value={direccion}
-              onChangeText={(texto) => {
-                consultaDireccionRef.current += 1;
-                direccionEditadaRef.current = true;
-                setDireccion(texto);
-                setCoordenadasSeleccionadas(null);
-              }}
+              onChangeText={setDireccion}
             />
 
             <Pressable
-              onPress={() => void buscarDireccionEnMapa()}
+              onPress={buscarDireccionTexto}
               disabled={buscandoUbicacion || guardando}
               style={[
                 styles.botonBuscarDireccion,
@@ -536,7 +219,6 @@ export default function DireccionesGuardadas() {
                   color={colores.exitoTexto}
                 />
               )}
-
               <Text style={{ color: colores.exitoTexto, fontWeight: "700" }}>
                 {buscandoUbicacion
                   ? "Buscando ubicación..."
@@ -545,7 +227,9 @@ export default function DireccionesGuardadas() {
             </Pressable>
 
             {buscandoDireccion && (
-              <Text style={{ color: colores.secundario, fontSize: 12 }}>Buscando la dirección del punto seleccionado...</Text>
+              <Text style={{ color: colores.secundario, fontSize: 12 }}>
+                Buscando la dirección del punto seleccionado...
+              </Text>
             )}
 
             <Text style={[styles.etiquetaIconos, { color: colores.texto }]}>
@@ -562,12 +246,7 @@ export default function DireccionesGuardadas() {
                 longitudeDelta: 0.015,
               }}
               onPress={(evento) => {
-                const punto = evento.nativeEvent.coordinate;
-
-                void seleccionarUbicacion({
-                  latitude: punto.latitude,
-                  longitude: punto.longitude,
-                });
+                seleccionarUbicacionEnMapa(evento.nativeEvent.coordinate);
               }}
             >
               {coordenadasSeleccionadas && (
@@ -585,7 +264,7 @@ export default function DireccionesGuardadas() {
                   ? colores.exitoTexto
                   : colores.secundario,
                 fontSize: 12,
-                marginTop: 4,
+                marginTop: 2,
               }}
             >
               {coordenadasSeleccionadas
@@ -593,7 +272,9 @@ export default function DireccionesGuardadas() {
                 : "Toca el mapa para seleccionar tu ubicación."}
             </Text>
 
-            <Text style={[styles.etiquetaIconos, { color: colores.texto }]}>Selecciona un ícono:</Text>
+            <Text style={[styles.etiquetaIconos, { color: colores.texto }]}>
+              Selecciona un ícono:
+            </Text>
             <View style={styles.grillaIconos}>
               {ICONOS_DISPONIBLES.map((ico) => {
                 const seleccionado = iconoSeleccionado === ico.nombre;
@@ -603,8 +284,12 @@ export default function DireccionesGuardadas() {
                     style={[
                       styles.opcionIcono,
                       {
-                        backgroundColor: seleccionado ? colores.primario : colores.campo,
-                        borderColor: seleccionado ? colores.primario : colores.linea,
+                        backgroundColor: seleccionado
+                          ? colores.primario
+                          : colores.campo,
+                        borderColor: seleccionado
+                          ? colores.primario
+                          : colores.linea,
                       },
                     ]}
                     onPress={() => setIconoSeleccionado(ico.nombre)}
@@ -621,15 +306,28 @@ export default function DireccionesGuardadas() {
 
             <View style={styles.modalBotones}>
               <Pressable
-                style={[styles.botonModal, { borderColor: colores.linea, borderWidth: 1 }]}
+                style={[
+                  styles.botonModal,
+                  { borderColor: colores.linea, borderWidth: 1 },
+                ]}
                 onPress={cerrarModalAgregar}
                 disabled={guardando}
               >
-                <Text style={[styles.botonTextoSecundario, { color: colores.secundario }]}>Cancelar</Text>
+                <Text
+                  style={[
+                    styles.botonTextoSecundario,
+                    { color: colores.secundario },
+                  ]}
+                >
+                  Cancelar
+                </Text>
               </Pressable>
 
               <Pressable
-                style={[styles.botonModal, { backgroundColor: colores.primario }]}
+                style={[
+                  styles.botonModal,
+                  { backgroundColor: colores.primario },
+                ]}
                 onPress={guardarDireccion}
                 disabled={guardando}
               >
@@ -648,214 +346,27 @@ export default function DireccionesGuardadas() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  contenido: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-
-  fila: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 56,
-  },
-
-  iconoFondo: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  textos: {
-    flex: 1,
-  },
-
-  nombre: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  direccion: {
-    marginTop: 3,
-    fontSize: 13,
-  },
-
-  agregar: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  modalFondo: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-
-  modalCaja: {
-    width: "100%",
-    maxWidth: 380,
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 22,
-    gap: 14,
-  },
-
-  modalTitulo: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-
-  inputModal: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 14,
-  },
-
-  etiquetaIconos: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginTop: 4,
-  },
-
-  grillaIconos: {
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-  },
-
-  opcionIcono: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  modalBotones: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
-  },
-
-  botonModal: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  botonTextoSecundario: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
-  botonTextoPrimario: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  mapaDireccion: {
-    width: "100%",
-    height: 190,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-
-  botonBuscarDireccion: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  
-  descripcionPantalla: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 18,
-    marginBottom: 22,
-  },
-
-  listaDirecciones: {
-    borderRadius: 18,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-
-  filaDireccion: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    minHeight: 76,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-
-  separadorDireccion: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 72,
-    marginRight: 16,
-  },
-
-  botonAgregar: {
-    minHeight: 50,
-    backgroundColor: "#83D5AA",
-    borderRadius: 999,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 24,
-  },
-
-  textoBotonAgregar: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#0C211C",
-  },
-
-  estadoVacio: {
-    alignItems: "center",
-    paddingVertical: 38,
-    paddingHorizontal: 20,
-  },
-
-  iconoVacio: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-
-  vacioTitulo: {
-    fontSize: 17,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-
-  vacioDescripcion: {
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: "center",
-    marginTop: 8,
-  },
-
+  container: { flex: 1 },
+  contenido: { paddingHorizontal: 20, paddingBottom: 30 },
+  descripcionPantalla: { fontSize: 13, lineHeight: 18, marginTop: 16, marginBottom: 16 },
+  estadoVacio: { alignItems: "center", justifyContent: "center", paddingVertical: 48, gap: 10 },
+  iconoVacio: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center" },
+  vacioTitulo: { fontSize: 16, fontWeight: "700" },
+  vacioDescripcion: { fontSize: 13, textAlign: "center", maxWidth: 280, lineHeight: 18 },
+  listaDirecciones: { borderWidth: 1, borderRadius: 18, overflow: "hidden", marginBottom: 16 },
+  botonAgregar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 16, borderWidth: 1 },
+  textoBotonAgregar: { fontSize: 14, fontWeight: "700" },
+  modalFondo: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", paddingHorizontal: 20 },
+  modalCaja: { borderRadius: 20, borderWidth: 1, padding: 18, gap: 10 },
+  modalTitulo: { fontSize: 18, fontWeight: "800", marginBottom: 2 },
+  inputModal: { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 14 },
+  botonBuscarDireccion: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 12 },
+  etiquetaIconos: { fontSize: 13, fontWeight: "600", marginTop: 4 },
+  mapaDireccion: { width: "100%", height: 140, borderRadius: 12 },
+  grillaIconos: { flexDirection: "row", gap: 8, justifyContent: "space-between" },
+  opcionIcono: { flex: 1, height: 42, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  modalBotones: { flexDirection: "row", gap: 10, marginTop: 8 },
+  botonModal: { flex: 1, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  botonTextoSecundario: { fontSize: 14, fontWeight: "600" },
+  botonTextoPrimario: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
 });

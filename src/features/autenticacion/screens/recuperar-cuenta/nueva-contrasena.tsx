@@ -3,21 +3,30 @@ import {
   CampoTextoHookForm,
   ContenedorPantalla,
   EncabezadoPagina,
+  MedidorPasswordSeguro,
+  PiePaginaAutenticacion,
 } from "@/shared/components/ui";
-import { MedidorPasswordSeguro, PiePaginaAutenticacion } from "@/features/autenticacion/components";
-import { paletaColores } from "@/shared/theme/paletaColores";
-import { authService } from "@/features/autenticacion/services/authService";
-import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { useCambiarPassword } from "@/features/autenticacion/hooks/useCambiarPassword";
 import { esquemaNuevaContrasena } from "@/features/autenticacion/utils/validacionesAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Alert, StyleSheet, View } from "react-native";
 
 export default function NuevoPasswordScreen() {
-  const [loading, setLoading] = useState(false);
+  const { colores, esOscuro } = useAltokkeTheme();
+  const { cargando, cambiarPassword } = useCambiarPassword({
+    onExito: () => {
+      Alert.alert(
+        "Contraseña actualizada",
+        "Tu contraseña se actualizó correctamente. Por favor inicia sesión con tu nueva clave.",
+        [{ text: "Iniciar sesión", onPress: () => router.replace("/login") }]
+      );
+    },
+  });
 
   const { control, handleSubmit } = useForm({
     resolver: yupResolver(esquemaNuevaContrasena),
@@ -26,28 +35,21 @@ export default function NuevoPasswordScreen() {
 
   const passwordActual = useWatch({ control, name: "password" }) || "";
 
-  const onSubmit = async (data: any) => {
-    setLoading(true);
-    try {
-      await authService.actualizarPassword(data.password);
-      Alert.alert(
-        "Contraseña actualizada",
-        "Tu contraseña se actualizó correctamente. Por favor inicia sesión con tu nueva clave.",
-        [{ text: "Iniciar sesión", onPress: () => router.replace("/login") }]
-      );
-    } catch (error: any) {
-      Alert.alert("Error al actualizar", traducirErrorAuth(error));
-    } finally {
-      setLoading(false);
-    }
+  const onSubmit = async (data: { password?: string; confirmPassword?: string }) => {
+    if (!data.password || !data.confirmPassword) return;
+    await cambiarPassword(data.password, data.confirmPassword);
   };
+
+  const gradienteFondo = esOscuro
+    ? (["#0f281e", colores.fondo] as const)
+    : (["#1d5538ff", colores.fondo] as const);
 
   return (
     <LinearGradient
-      colors={["#1d5538ff", paletaColores.background]}
+      colors={gradienteFondo}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 0.7 }}
-      style={styles.pantalla}
+      style={[styles.pantalla, { backgroundColor: colores.fondo }]}
     >
       <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
         <View style={styles.topSection}>
@@ -78,17 +80,24 @@ export default function NuevoPasswordScreen() {
 
             <BotonPrincipal
               titulo="Guardar contraseña"
-              cargando={loading}
+              cargando={cargando}
               onPress={handleSubmit(onSubmit, () =>
-                Alert.alert("Datos incompletos", "Las contraseñas no coinciden o no cumplen con los requisitos.")
+                Alert.alert(
+                  "Datos incompletos",
+                  "Las contraseñas no coinciden o no cumplen con los requisitos de seguridad."
+                )
               )}
-              disabled={loading}
+              disabled={cargando}
             />
           </View>
         </View>
 
         <View style={styles.bottomContainer}>
-          <PiePaginaAutenticacion textoPregunta="¿Deseas cancelar?" textoEnlace="Iniciar sesión" ruta="/login" />
+          <PiePaginaAutenticacion
+            textoPregunta="¿Deseas cancelar?"
+            textoEnlace="Iniciar sesión"
+            ruta="/login"
+          />
         </View>
       </ContenedorPantalla>
     </LinearGradient>
@@ -97,8 +106,14 @@ export default function NuevoPasswordScreen() {
 
 const styles = StyleSheet.create({
   pantalla: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, flexGrow: 1, justifyContent: "space-between" },
-  topSection: { gap: 16 },
-  formContainer: { gap: 16, marginTop: 10 },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+    flexGrow: 1,
+    justifyContent: "space-between",
+  },
+  topSection: { gap: 20 },
+  formContainer: { gap: 14 },
   bottomContainer: { marginTop: "auto", paddingTop: 16 },
 });

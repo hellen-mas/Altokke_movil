@@ -1,64 +1,92 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
-import { AvisoInformativo, BotonPrincipal, CampoTexto } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
-import { supabase } from "@/shared/api/supabase";
 import { router } from "expo-router";
+import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import {
+  AvisoInformativo,
+  BotonPrincipal,
+  CampoTexto,
+} from "@/shared/components/ui";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { useCambiarPassword } from "@/features/autenticacion/hooks/useCambiarPassword";
 
 export default function CambiarContrasena() {
+  const { colores } = useAltokkeTheme();
   const [contrasenaActual, setContrasenaActual] = useState("");
   const [nuevaContrasena, setNuevaContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
-  const [cargando, setCargando] = useState(false);
 
-  const guardarCambios = async () => {
-    if (!contrasenaActual || !nuevaContrasena || !confirmarContrasena) {
-      return Alert.alert("Campos incompletos", "Completa todos los campos.");
-    }
-    if (nuevaContrasena.length < 8) {
-      return Alert.alert("Contraseña muy corta", "La nueva contraseña debe tener al menos 8 caracteres.");
-    }
-    if (nuevaContrasena !== confirmarContrasena) {
-      return Alert.alert("Las contraseñas no coinciden", "Verifica que ambas contraseñas nuevas sean iguales.");
-    }
-    if (contrasenaActual === nuevaContrasena) {
-      return Alert.alert("Usa una contraseña diferente", "La nueva contraseña debe ser distinta de la actual.");
-    }
-
-    try {
-      setCargando(true);
-      const { error } = await supabase.auth.updateUser({ password: nuevaContrasena });
-      if (error) throw error;
-
-      Alert.alert("Contraseña actualizada", "Tu contraseña fue actualizada correctamente.", [
-        { text: "Entendido", onPress: () => router.back() },
-      ]);
+  const { cargando, cambiarPassword } = useCambiarPassword({
+    onExito: () => {
+      Alert.alert(
+        "Contraseña actualizada",
+        "Tu contraseña fue actualizada correctamente.",
+        [{ text: "Entendido", onPress: () => router.back() }]
+      );
       setContrasenaActual("");
       setNuevaContrasena("");
       setConfirmarContrasena("");
-    } catch (err: any) {
-      Alert.alert("Error", err?.message || "No se pudo actualizar la contraseña.");
-    } finally {
-      setCargando(false);
+    },
+  });
+
+  const guardarCambios = async () => {
+    if (!contrasenaActual) {
+      Alert.alert("Campo incompleto", "Ingresa tu contraseña actual.");
+      return;
     }
+    await cambiarPassword(nuevaContrasena, confirmarContrasena, contrasenaActual);
   };
 
   return (
-    <View style={styles.container}>
-      <CabeceraConductor titulo="Cambiar contraseña" subtitulo="Actualiza tu contraseña de acceso" mostrarAtras compacta />
+    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
+      <CabeceraConductor
+        titulo="Cambiar contraseña"
+        subtitulo="Actualiza tu contraseña de acceso"
+        mostrarAtras
+        compacta
+      />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.introCard}>
-          <Ionicons name="lock-closed-outline" size={24} color={paletaColores.verde} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View
+          style={[
+            styles.introCard,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
+          <Ionicons
+            name="lock-closed-outline"
+            size={24}
+            color={colores.exitoTexto}
+          />
           <View style={{ flex: 1 }}>
-            <Text style={styles.introTitulo}>Protege tu cuenta</Text>
-            <Text style={styles.introDescripcion}>Utiliza una contraseña segura y diferente a la de otros servicios.</Text>
+            <Text style={[styles.introTitulo, { color: colores.texto }]}>
+              Protege tu cuenta
+            </Text>
+            <Text
+              style={[styles.introDescripcion, { color: colores.secundario }]}
+            >
+              Utiliza una contraseña segura y diferente a la de otros servicios.
+            </Text>
           </View>
         </View>
 
-        <View style={styles.formularioCard}>
+        <View
+          style={[
+            styles.formularioCard,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
           <CampoTexto
             etiqueta="Contraseña actual"
             placeholder="Ingresa tu contraseña actual"
@@ -68,7 +96,7 @@ export default function CambiarContrasena() {
           />
           <CampoTexto
             etiqueta="Nueva contraseña"
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Mínimo 8 caracteres (mayús, min, núm, símb)"
             value={nuevaContrasena}
             onChangeText={setNuevaContrasena}
             esPassword
@@ -85,6 +113,7 @@ export default function CambiarContrasena() {
             titulo="Actualizar contraseña"
             onPress={guardarCambios}
             cargando={cargando}
+            disabled={cargando}
             estilo={{ marginTop: 12 }}
           />
         </View>
@@ -100,36 +129,22 @@ export default function CambiarContrasena() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
-  },
-  scrollContent: {
-    padding: 20,
-    gap: 16,
-  },
+  container: { flex: 1 },
+  scrollContent: { padding: 16, gap: 16 },
   introCard: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    gap: 12,
     padding: 16,
     borderRadius: 16,
-    gap: 12,
+    borderWidth: 1,
+    alignItems: "center",
   },
-  introTitulo: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: paletaColores.textPrimary,
-  },
-  introDescripcion: {
-    fontSize: 13,
-    color: paletaColores.textSecondary,
-    marginTop: 2,
-  },
+  introTitulo: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
+  introDescripcion: { fontSize: 13, lineHeight: 18 },
   formularioCard: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderRadius: 20,
-    gap: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 14,
   },
 });
