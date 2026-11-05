@@ -32,27 +32,111 @@ export async function invocarEdgeFunction<T>(
   try {
     const { data, error } = await supabase.functions.invoke(nombreFuncion, {
       body,
-      headers: { "x-client-timeout": String(timeoutMs) },
+      signal: controller.signal,
     });
 
     if (error) {
       let mensaje = "No se pudo completar la operación con el servidor.";
-      if (error.context instanceof Response) {
-        try {
-          const detalle = await error.context.json();
-          mensaje = detalle.error || detalle.message || mensaje;
-        } catch {}
+      let codigo: string | undefined;
+      let estadoHttp: number | undefined;
+
+      const contexto: unknown = error.context;
+      if (
+        contexto !== null &&
+        typeof contexto === "object" &&
+        "status" in contexto &&
+        typeof contexto.status === "number"
+      ) {
+        estadoHttp = contexto.status;
       }
-      throw new Error(mensaje);
+
+      if (
+        contexto !== null &&
+        typeof contexto === "object" &&
+        "json" in contexto &&
+        typeof contexto.json === "function"
+      ) {
+        try {
+          const respuesta = contexto as {
+            json: () => Promise<unknown>;
+            clone?: () => { json: () => Promise<unknown> };
+          };
+          const detalle = await (
+            typeof respuesta.clone === "function"
+              ? respuesta.clone().json()
+              : respuesta.json()
+          );
+
+          if (
+            detalle !== null &&
+            typeof detalle === "object" &&
+            !Array.isArray(detalle)
+          ) {
+            const datos = detalle as Record<string, unknown>;
+            if (typeof datos.error === "string") {
+              mensaje = datos.error;
+            } else if (typeof datos.message === "string") {
+              mensaje = datos.message;
+            }
+            if (typeof datos.code === "string") {
+              codigo = datos.code;
+            }
+          }
+        } catch {
+          // El servidor puede responder sin un cuerpo JSON.
+        }
+      }
+
+      if (!codigo && estadoHttp === 401) {
+        codigo = "NO_AUTORIZADO";
+        mensaje = "No se pudo autorizar la consulta. Revisa tu sesión e inténtalo nuevamente.";
+      } else if (!codigo && estadoHttp === 403) {
+        codigo = "NO_AUTORIZADO";
+        mensaje = "No tienes autorización para realizar esta consulta.";
+      } else if (mensaje === "Edge Function returned a non-2xx status code") {
+        mensaje = "El servidor rechazó la solicitud.";
+      } else if (
+        mensaje === "No se pudo completar la operación con el servidor." &&
+        estadoHttp
+      ) {
+        mensaje = `No se pudo completar la operación (HTTP ${estadoHttp}).`;
+      }
+
+      const fallo = new Error(mensaje) as Error & {
+        code?: string;
+        status?: number;
+      };
+      fallo.code = codigo;
+      fallo.status = estadoHttp;
+      throw fallo;
     }
 
-    if (data?.error) throw new Error(data.error);
-    return data as T;
-  } catch (err: any) {
-    if (err?.name === "AbortError") {
-      throw new Error("La solicitud tardó más de lo esperado. Revisa tu conexión a internet.");
+    if (data && typeof data === "object" && "error" in data && data.error) {
+      const respuesta = data as { error: unknown; code?: unknown };
+      const fallo = new Error(String(respuesta.error)) as Error & {
+        code?: string;
+      };
+      if (typeof respuesta.code === "string") {
+        fallo.code = respuesta.code;
+      }
+      throw fallo;
     }
-    throw err;
+
+    return data as T;
+  } catch (error: unknown) {
+    if (
+      controller.signal.aborted ||
+      (error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError"))
+    ) {
+      const fallo = new Error(
+        "La solicitud tardó más de lo esperado."
+      ) as Error & { code: string };
+      fallo.code = "TIEMPO_AGOTADO";
+      throw fallo;
+    }
+
+    throw error;
   } finally {
     clearTimeout(timer);
   }
