@@ -8,7 +8,6 @@ import {
 } from "@/shared/components/ui";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { useRegistroPasajero } from "@/features/pasajeros/store/registroPasajeroStore";
-import { supabase } from "@/shared/api/supabase";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
 import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
@@ -137,12 +136,12 @@ export default function PasajeroPreferenciasScreen() {
         );
 
       } else {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
+        const sesion = await authService.obtenerSesionActiva();
+        if (!sesion) {
           throw new Error("No hay una sesión activa para completar el registro.");
         }
 
-        await authService.actualizarPerfilOAuth(sessionData.session.user.id, {
+        await authService.actualizarPerfilOAuth(sesion.user.id, {
           nombres,
           apellidos,
           telefono,
