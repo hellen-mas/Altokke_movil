@@ -62,7 +62,7 @@ export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
     const limpio = dni.trim();
 
-    if (!/^\\d{8}$/.test(limpio)) {
+    if (!/^\d{8}$/.test(limpio)) {
       throw new ErrorConsultaDni(
         CODIGOS_ERROR_DNI.INVALIDO,
         "El DNI debe contener exactamente 8 dígitos."
