@@ -6,7 +6,7 @@ import {
 } from "@/shared/components/ui";
 import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
 import { BotonRedesSociales } from "@/shared/components/ui/BotonRedesSociales";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
 import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";

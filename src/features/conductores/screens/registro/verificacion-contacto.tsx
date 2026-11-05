@@ -4,7 +4,7 @@ import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
 import { IndicadorPasos, SelectorFotoPerfil } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { 
   esTelefonoValido, 
   sanitizarTelefono 

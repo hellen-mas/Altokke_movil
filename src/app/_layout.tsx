@@ -1,10 +1,18 @@
+import { useAuthStore } from "@/features/autenticacion/store/authStore";
 import { AnimatedSplashOverlay } from "@/shared/components/animated/animated-icon";
-import { AuthProvider } from "@/features/autenticacion/context/AuthContext";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_700Bold,
+  useFonts,
+} from "@expo-google-fonts/outfit";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "react-native";
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
+import NetInfo from "@react-native-community/netinfo";
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AppState, Platform, StatusBar } from "react-native";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -12,17 +20,20 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,
       retry: 2,
     },
+    mutations: {
+      // Registro, cuentas y documentos no se reintentan solos: podrían duplicarse.
+      retry: 0,
+    },
   },
 });
 
-SplashScreen.preventAutoHideAsync();
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((estado) => {
+    setOnline(Boolean(estado.isConnected));
+  })
+);
 
-import {
-  useFonts,
-  Outfit_400Regular,
-  Outfit_500Medium,
-  Outfit_700Bold,
-} from "@expo-google-fonts/outfit";
+SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const { esOscuro, colores } = useAltokkeTheme();
@@ -32,18 +43,38 @@ export default function TabLayout() {
     Outfit_700Bold,
   });
 
+  useEffect(() => {
+    return useAuthStore.getState().init();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const suscripcion = AppState.addEventListener("change", (estado) => {
+      focusManager.setFocused(estado === "active");
+    });
+    return () => suscripcion.remove();
+  }, []);
+
+   // Al cerrar sesión o entrar con otra cuenta se borra la caché:
+  // así nunca se ven datos de la cuenta anterior.
+  useEffect(() => {
+    return useAuthStore.subscribe((estado, anterior) => {
+      if (anterior.userId && estado.userId !== anterior.userId) {
+        queryClient.clear();
+      }
+    });
+  }, []);
+
   if (!fontsLoaded) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={esOscuro ? DarkTheme : DefaultTheme}>
-        <AuthProvider>
-          <StatusBar 
-            barStyle={esOscuro ? "light-content" : "dark-content"}
-          />
-          <AnimatedSplashOverlay />
-          <Slot />
-        </AuthProvider>
+        <StatusBar 
+           barStyle={esOscuro ? "light-content" : "dark-content"}
+        />
+        <AnimatedSplashOverlay />
+        <Slot />
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -14,7 +14,7 @@ import {
 
 import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { seleccionarFotoGaleria, subirFotoAvatar } from "@/shared/utils/avatar";

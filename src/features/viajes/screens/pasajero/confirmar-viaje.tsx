@@ -14,7 +14,7 @@ import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
 import { MetodoPago, useViaje } from "@/features/viajes/context/ViajeContext";
 import { ServicioViaje, useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles } from "@/features/viajes/utils/viaje";

@@ -1,6 +1,6 @@
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
 import { IdMetodoPago, METODOS_PAGO } from "@/features/pasajeros/constants/cuenta";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";

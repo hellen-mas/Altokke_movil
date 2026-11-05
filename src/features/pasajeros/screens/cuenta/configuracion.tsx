@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 import { EncabezadoPantalla } from "@/features/pasajeros/components/EncabezadoPantalla";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";
