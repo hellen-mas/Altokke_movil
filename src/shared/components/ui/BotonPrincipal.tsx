@@ -1,5 +1,6 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -65,7 +66,7 @@ export function BotonPrincipal({
         <View style={estilos.contenido}>
           <Text
             style={[
-              estilos.texto, 
+              estilos.texto,
               { color: colores.textoBoton },
               estiloTexto,
             ]}

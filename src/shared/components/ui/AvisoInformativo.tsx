@@ -1,6 +1,6 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import React, { use } from "react";
+import React from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 export interface AvisoInformativoProps {

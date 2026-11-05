@@ -3,60 +3,45 @@ import {
   CampoTextoHookForm,
   ContenedorPantalla,
   EncabezadoPagina,
+  PiePaginaAutenticacion,
 } from "@/shared/components/ui";
-import { PiePaginaAutenticacion } from "@/features/autenticacion/components";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { authService } from "@/features/autenticacion/services/authService";
-import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { useRecuperarPassword } from "@/features/autenticacion/hooks/useRecuperarPassword";
 import {
   esquemaRecuperar,
   TipoDatosRecuperar,
 } from "@/features/autenticacion/utils/validacionesAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
-import { Alert, StyleSheet, View } from "react-native";
-
-const ultimoEnvioPorCorreo = new Map<string, number>();
-const ESPERA_MS = 60000;
+import { StyleSheet, View } from "react-native";
 
 export default function RecuperarPasswordScreen() {
   const { colores } = useAltokkeTheme();
-  const [loading, setLoading] = useState(false);
+  const { loading, solicitarCodigo } = useRecuperarPassword();
   const { control, handleSubmit } = useForm<TipoDatosRecuperar>({
     resolver: yupResolver(esquemaRecuperar),
     defaultValues: { correo: "" },
   });
 
-  const onSubmit = async ({ correo }: TipoDatosRecuperar) => {
-    if (loading) return;
-    const normalizado = correo.trim().toLowerCase();
-    const ultimo = ultimoEnvioPorCorreo.get(normalizado);
-
-    if (ultimo && Date.now() - ultimo < ESPERA_MS) {
-      const seg = Math.ceil((ESPERA_MS - (Date.now() - ultimo)) / 1000);
-      return Alert.alert("Espera un momento", `Podrás solicitar otro código en ${seg} segundos.`);
-    }
-
-    setLoading(true);
-    try {
-      await authService.solicitarRecuperacionPassword(normalizado);
-      ultimoEnvioPorCorreo.set(normalizado, Date.now());
-      router.push(`/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(normalizado)}`);
-    } catch (error: any) {
-      Alert.alert("Error al enviar código", traducirErrorAuth(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <ContenedorPantalla estiloContenedorContenido={styles.scrollContent}>
       <View style={styles.topSection}>
-        <View style={[styles.iconoHero, { backgroundColor: colores.exitoFondo, borderColor: colores.linea }]}>
-          <Ionicons name="mail-unread-outline" size={36} color={colores.exitoTexto} />
+        <View
+          style={[
+            styles.iconoHero,
+            {
+              backgroundColor: colores.exitoFondo,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
+          <Ionicons
+            name="mail-unread-outline"
+            size={36}
+            color={colores.exitoTexto}
+          />
         </View>
 
         <EncabezadoPagina
@@ -81,7 +66,7 @@ export default function RecuperarPasswordScreen() {
             mostrarIcono
             icono="arrow-forward"
             cargando={loading}
-            onPress={handleSubmit(onSubmit)}
+            onPress={handleSubmit(solicitarCodigo)}
           />
         </View>
       </View>
@@ -89,8 +74,8 @@ export default function RecuperarPasswordScreen() {
       <View style={styles.bottomContainer}>
         <PiePaginaAutenticacion
           textoPregunta="¿Recordaste tu contraseña?"
-          ruta="/login"
           textoEnlace="Iniciar sesión"
+          ruta="/login"
         />
       </View>
     </ContenedorPantalla>
@@ -98,9 +83,24 @@ export default function RecuperarPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, flexGrow: 1, justifyContent: "space-between" },
-  topSection: { gap: 20 },
-  iconoHero: { width: 68, height: 68, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  formContainer: { gap: 14, marginTop: 4 },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
+    flexGrow: 1,
+    justifyContent: "space-between",
+  },
+  topSection: { gap: 24 },
+  iconoHero: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    marginTop: 8,
+  },
+  formContainer: { gap: 16 },
   bottomContainer: { marginTop: "auto", paddingTop: 16 },
 });

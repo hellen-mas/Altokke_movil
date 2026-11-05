@@ -6,10 +6,9 @@ import { CabeceraConductor } from "@/features/conductores/components/CabeceraCon
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
 import type { EstadoViaje } from "@/features/conductores/types/conductor";
-import { supabase } from "@/shared/api/supabase";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 
-type ViajeReal = {
+export type ViajeReal = {
   id: string;
   fecha: string;
   hora: string;
@@ -34,29 +33,44 @@ const TarjetaHistorialConductor = React.memo(function TarjetaHistorialConductor(
 }: {
   viaje: ViajeReal;
 }) {
+  const { colores } = useAltokkeTheme();
   const completado = viaje.estado === "Completado";
 
   return (
-    <View style={styles.tarjeta}>
+    <View
+      style={[
+        styles.tarjeta,
+        {
+          backgroundColor: colores.superficie,
+          borderColor: colores.linea,
+        },
+      ]}
+    >
       <View style={styles.filaHeader}>
-        <Text style={styles.fecha}>
+        <Text style={[styles.fecha, { color: colores.secundario }]}>
           {viaje.fecha}, {viaje.hora}
         </Text>
         <View
           style={[
             styles.badge,
-            { backgroundColor: completado ? "#E5F6ED" : "#FDE8E8" },
+            {
+              backgroundColor: completado
+                ? `${colores.exitoTexto}20`
+                : `${colores.error}20`,
+            },
           ]}
         >
           <Ionicons
             name={completado ? "checkmark-circle" : "close-circle"}
             size={13}
-            color={completado ? paletaColores.verde : paletaColores.error}
+            color={completado ? colores.exitoTexto : colores.error}
           />
           <Text
             style={[
               styles.badgeText,
-              { color: completado ? paletaColores.verde : paletaColores.error },
+              {
+                color: completado ? colores.exitoTexto : colores.error,
+              },
             ]}
           >
             {viaje.estado}
@@ -65,27 +79,50 @@ const TarjetaHistorialConductor = React.memo(function TarjetaHistorialConductor(
       </View>
 
       <View style={styles.rutaBox}>
-        <View style={styles.puntoOrigen} />
-        <Text style={styles.rutaTexto} numberOfLines={1}>
+        <View
+          style={[
+            styles.puntoOrigen,
+            { backgroundColor: colores.exitoTexto },
+          ]}
+        />
+        <Text
+          style={[styles.rutaTexto, { color: colores.texto }]}
+          numberOfLines={1}
+        >
           {viaje.origen}
         </Text>
       </View>
-      <View style={styles.rutaLinea} />
+      <View
+        style={[styles.rutaLinea, { backgroundColor: colores.linea }]}
+      />
       <View style={styles.rutaBox}>
-        <View style={styles.puntoDestino} />
-        <Text style={styles.rutaTexto} numberOfLines={1}>
+        <View
+          style={[
+            styles.puntoDestino,
+            { backgroundColor: colores.primario },
+          ]}
+        />
+        <Text
+          style={[styles.rutaTexto, { color: colores.texto }]}
+          numberOfLines={1}
+        >
           {viaje.destino}
         </Text>
       </View>
 
-      <View style={styles.filaFooter}>
-        <Text style={styles.monto}>S/ {viaje.monto.toFixed(2)}</Text>
+      <View
+        style={[styles.filaFooter, { borderTopColor: colores.linea }]}
+      >
+        <Text style={[styles.monto, { color: colores.texto }]}>
+          S/ {viaje.monto.toFixed(2)}
+        </Text>
       </View>
     </View>
   );
 });
 
 export default function HistorialConductor() {
+  const { colores } = useAltokkeTheme();
   const { perfil } = usePerfilConductor();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [viajes, setViajes] = useState<ViajeReal[]>([]);
@@ -97,47 +134,70 @@ export default function HistorialConductor() {
     setCargando(true);
     try {
       const resumen = await conductorService.obtenerResumenGanancias(perfil.id);
-      const { data: rows } = await supabase
-        .from("viajes")
-        .select("id, creado_en, origen_texto, destino_texto, tarifa_final, tarifa_estimada, estado")
-        .eq("conductor_id", perfil.id)
-        .order("creado_en", { ascending: false })
-        .limit(50);
 
-      if (rows) {
-        const mapeados: ViajeReal[] = rows.map((v) => {
-          const fecha = new Date(v.creado_en);
-          const estado: EstadoViaje = v.estado === "finalizado" ? "Completado" : "Cancelado";
-          return {
-            id: v.id,
-            fecha: fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "short" }),
-            hora: fecha.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }),
-            origen: v.origen_texto,
-            destino: v.destino_texto,
-            monto: Number(v.tarifa_final ?? v.tarifa_estimada ?? 0),
-            estado,
-          };
-        });
-        setViajes(mapeados);
-        setTotales({ totalViajes: mapeados.length, totalGanado: resumen.totalSemana });
+      // Consumo del método de servicio del Integrante 1 (sin Supabase en pantalla)
+      const servicio = conductorService as typeof conductorService & {
+        obtenerHistorialConductor?: (id: string) => Promise<ViajeReal[]>;
+      };
+
+      let lista: ViajeReal[] = [];
+      if (typeof servicio.obtenerHistorialConductor === "function") {
+        lista = await servicio.obtenerHistorialConductor(perfil.id);
       }
+
+      setViajes(lista);
+      setTotales({
+        totalViajes: lista.length,
+        totalGanado: resumen?.totalSemana ?? 0,
+      });
     } catch {
-      // Fallback silencioso con estado local
+      // Fallback silencioso con estado local seguro
     } finally {
       setCargando(false);
     }
   }, [perfil.id]);
 
   useEffect(() => {
-    void cargarHistorial();
-  }, [cargarHistorial]);
+    let montado = true;
+    const inicializar = async () => {
+      if (!perfil.id || perfil.id === "conductor-local") return;
+      try {
+        const resumen = await conductorService.obtenerResumenGanancias(perfil.id);
+        const servicio = conductorService as typeof conductorService & {
+          obtenerHistorialConductor?: (id: string) => Promise<ViajeReal[]>;
+        };
+
+        let lista: ViajeReal[] = [];
+        if (typeof servicio.obtenerHistorialConductor === "function") {
+          lista = await servicio.obtenerHistorialConductor(perfil.id);
+        }
+
+        if (montado) {
+          setViajes(lista);
+          setTotales({
+            totalViajes: lista.length,
+            totalGanado: resumen?.totalSemana ?? 0,
+          });
+        }
+      } catch {
+        // Fallback silencioso
+      }
+    };
+
+    void inicializar();
+    return () => {
+      montado = false;
+    };
+  }, [perfil.id]);
 
   const filtrados = useMemo(() => {
     return viajes.filter((v) => filtro === "todos" || v.estado === filtro);
   }, [viajes, filtro]);
 
   const renderItem = useCallback(
-    ({ item }: { item: ViajeReal }) => <TarjetaHistorialConductor viaje={item} />,
+    ({ item }: { item: ViajeReal }) => (
+      <TarjetaHistorialConductor viaje={item} />
+    ),
     []
   );
 
@@ -149,18 +209,18 @@ export default function HistorialConductor() {
         <Ionicons
           name="car-outline"
           size={48}
-          color={paletaColores.textoSecundarioClaro}
+          color={colores.secundario}
         />
-        <Text style={styles.vacioTexto}>
+        <Text style={[styles.vacioTexto, { color: colores.secundario }]}>
           No hay viajes registrados en esta sección.
         </Text>
       </View>
     ),
-    []
+    [colores.secundario]
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <CabeceraConductor
         titulo="Historial"
         subtitulo="Tus viajes y carreras completadas"
@@ -168,17 +228,39 @@ export default function HistorialConductor() {
         compacta
       />
 
-      <View style={styles.resumen}>
+      <View
+        style={[
+          styles.resumen,
+          {
+            backgroundColor: colores.superficie,
+            borderColor: colores.linea,
+          },
+        ]}
+      >
         <View style={styles.resumenDato}>
-          <Text style={styles.resumenValor}>{totales.totalViajes}</Text>
-          <Text style={styles.resumenEtiqueta}>Total de viajes</Text>
+          <Text style={[styles.resumenValor, { color: colores.texto }]}>
+            {totales.totalViajes}
+          </Text>
+          <Text
+            style={[styles.resumenEtiqueta, { color: colores.secundario }]}
+          >
+            Total de viajes
+          </Text>
         </View>
-        <View style={styles.separador} />
+        <View
+          style={[styles.separador, { backgroundColor: colores.linea }]}
+        />
         <View style={styles.resumenDato}>
-          <Text style={[styles.resumenValor, { color: paletaColores.verde }]}>
+          <Text
+            style={[styles.resumenValor, { color: colores.exitoTexto }]}
+          >
             S/ {totales.totalGanado.toFixed(2)}
           </Text>
-          <Text style={styles.resumenEtiqueta}>Total ganado</Text>
+          <Text
+            style={[styles.resumenEtiqueta, { color: colores.secundario }]}
+          >
+            Total ganado
+          </Text>
         </View>
       </View>
 
@@ -188,11 +270,28 @@ export default function HistorialConductor() {
           return (
             <Pressable
               key={op.id}
-              style={[styles.filtro, activo && styles.filtroActivo]}
+              style={[
+                styles.filtro,
+                {
+                  backgroundColor: activo
+                    ? colores.primario
+                    : colores.superficie,
+                  borderColor: activo
+                    ? colores.primario
+                    : colores.linea,
+                },
+              ]}
               onPress={() => setFiltro(op.id)}
             >
               <Text
-                style={[styles.filtroTexto, activo && styles.filtroTextoActivo]}
+                style={[
+                  styles.filtroTexto,
+                  {
+                    color: activo
+                      ? colores.textoBoton
+                      : colores.secundario,
+                  },
+                ]}
               >
                 {op.titulo}
               </Text>
@@ -214,8 +313,8 @@ export default function HistorialConductor() {
             <RefreshControl
               refreshing={cargando}
               onRefresh={cargarHistorial}
-              tintColor={paletaColores.verde}
-              colors={[paletaColores.verde]}
+              tintColor={colores.primario}
+              colors={[colores.primario]}
             />
           }
         />
@@ -227,7 +326,6 @@ export default function HistorialConductor() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
   },
   resumen: {
     flexDirection: "row",
@@ -235,9 +333,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
   },
   resumenDato: {
     flex: 1,
@@ -246,16 +342,13 @@ const styles = StyleSheet.create({
   resumenValor: {
     fontSize: 20,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
   resumenEtiqueta: {
     fontSize: 13,
-    color: paletaColores.textoSecundarioClaro,
     marginTop: 2,
   },
   separador: {
     width: 1,
-    backgroundColor: paletaColores.bordeClaro,
   },
   filtros: {
     flexDirection: "row",
@@ -268,21 +361,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-  },
-  filtroActivo: {
-    backgroundColor: paletaColores.verde,
-    borderColor: paletaColores.verde,
   },
   filtroTexto: {
     fontSize: 13,
     fontWeight: "600",
-    color: paletaColores.textoSecundarioClaro,
-  },
-  filtroTextoActivo: {
-    color: "#FFFFFF",
   },
   listaContenedor: {
     flex: 1,
@@ -302,14 +385,11 @@ const styles = StyleSheet.create({
   },
   vacioTexto: {
     fontSize: 15,
-    color: paletaColores.textoSecundarioClaro,
   },
   tarjeta: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
     gap: 8,
   },
   filaHeader: {
@@ -319,7 +399,6 @@ const styles = StyleSheet.create({
   },
   fecha: {
     fontSize: 13,
-    color: paletaColores.textoSecundarioClaro,
     fontWeight: "500",
   },
   badge: {
@@ -343,28 +422,23 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: paletaColores.verde,
   },
   puntoDestino: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: paletaColores.primary,
   },
   rutaLinea: {
     width: 2,
     height: 12,
-    backgroundColor: paletaColores.bordeClaro,
     marginLeft: 3,
   },
   rutaTexto: {
     fontSize: 14,
-    color: paletaColores.textoClaro,
     flex: 1,
   },
   filaFooter: {
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
     paddingTop: 10,
     marginTop: 4,
     alignItems: "flex-end",
@@ -372,6 +446,5 @@ const styles = StyleSheet.create({
   monto: {
     fontSize: 18,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
   },
 });
