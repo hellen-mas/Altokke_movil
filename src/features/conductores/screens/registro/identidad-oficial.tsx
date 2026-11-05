@@ -1,5 +1,5 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { DocumentoFoto } from "@/features/conductores/components/DocumentoFoto";
 import { IndicadorPasos } from "@/shared/components/ui";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";

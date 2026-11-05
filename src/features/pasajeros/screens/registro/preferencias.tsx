@@ -7,7 +7,7 @@ import {
   TarjetaOpcion,
 } from "@/shared/components/ui";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
+import { useRegistroPasajero } from "@/features/pasajeros/store/registroPasajeroStore";
 import { supabase } from "@/shared/api/supabase";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { authService } from "@/features/autenticacion/services/authService";

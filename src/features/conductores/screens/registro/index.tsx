@@ -6,7 +6,7 @@ import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
 import { MedidorPasswordSeguro } from "@/features/autenticacion/components/MedidorPasswordSeguro";
 import { PiePaginaAutenticacion } from "@/features/autenticacion/components/PiePaginaAutenticacion";
-import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDni";
 import { calcularEdad, sanitizarDNI } from "@/shared/utils/validaciones";
