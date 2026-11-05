@@ -7,11 +7,13 @@ import {
   Outfit_700Bold,
   useFonts,
 } from "@expo-google-fonts/outfit";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { StatusBar } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AppState, Platform, StatusBar } from "react-native";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,8 +21,18 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,
       retry: 2,
     },
+    mutations: {
+      // Registro, cuentas y documentos no se reintentan solos: podrían duplicarse.
+      retry: 0,
+    },
   },
 });
+
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((estado) => {
+    setOnline(Boolean(estado.isConnected));
+  })
+);
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,6 +46,14 @@ export default function TabLayout() {
 
   useEffect(() => {
     return useAuthStore.getState().init();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const suscripcion = AppState.addEventListener("change", (estado) => {
+      focusManager.setFocused(estado === "active");
+    });
+    return () => suscripcion.remove();
   }, []);
 
   if (!fontsLoaded) return null;
