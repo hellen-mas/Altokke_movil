@@ -88,7 +88,7 @@ export async function invocarEdgeFunction<T>(
     }
 
     return data as T;
-} catch (error: unknown) {
+  } catch (error: unknown) {
     if (
       controller.signal.aborted ||
       (error instanceof Error &&

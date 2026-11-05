@@ -13,7 +13,8 @@ type CodigoError =
   | "DNI_NO_ENCONTRADO"
   | "TIEMPO_AGOTADO"
   | "ERROR_PROVEEDOR"
-  | "NO_AUTORIZADO";
+  | "NO_AUTORIZADO"
+  | "DNI_YA_REGISTRADO";
 
 function responder(datos: unknown, status = 200): Response {
   return Response.json(datos, {
@@ -177,6 +178,45 @@ Deno.serve(async (req: Request): Promise<Response> => {
         "ERROR_PROVEEDOR",
         "No fue posible validar los datos de identidad.",
         502
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return errorDni(
+        "ERROR_PROVEEDOR",
+        "La verificación de registros no está disponible.",
+        503
+      );
+    }
+
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: registrado, error: errorRegistro } = await admin
+      .from("usuarios")
+      .select("id")
+      .eq("dni", dni)
+      .limit(1)
+      .maybeSingle();
+
+    if (errorRegistro) {
+      console.error("Fallo al verificar registro de DNI:", errorRegistro.code);
+      return errorDni(
+        "ERROR_PROVEEDOR",
+        "No se pudo comprobar el registro del DNI.",
+        503
+      );
+    }
+
+    if (registrado) {
+      return errorDni(
+        "DNI_YA_REGISTRADO",
+        "Este DNI ya se encuentra registrado.",
+        409
       );
     }
 

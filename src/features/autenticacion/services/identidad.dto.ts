@@ -33,12 +33,15 @@ export interface ApiPeruDniDTO {
 }
 
 export class ErrorConsultaDni extends Error {
+  readonly code: CodigoErrorDni;
+
   constructor(
     public readonly codigo: CodigoErrorDni,
     mensaje: string
   ) {
     super(mensaje);
     this.name = "ErrorConsultaDni";
+    this.code = codigo;
   }
 }
 

@@ -1,5 +1,5 @@
 import NetInfo from "@react-native-community/netinfo";
-import { supabase, invocarEdgeFunction } from "@/shared/api/supabase";
+import { invocarEdgeFunction } from "@/shared/api/supabase";
 import {
   CODIGOS_ERROR_DNI,
   ErrorConsultaDni,
@@ -60,20 +60,25 @@ function convertirError(error: unknown): ErrorConsultaDni {
 
 export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("id")
-      .eq("dni", dni.trim())
-      .maybeSingle();
+    const limpio = dni.trim();
 
-    if (error) {
+    if (!/^\\d{8}$/.test(limpio)) {
       throw new ErrorConsultaDni(
-        CODIGOS_ERROR_DNI.PROVEEDOR,
-        "No se pudo verificar si el DNI ya está registrado."
+        CODIGOS_ERROR_DNI.INVALIDO,
+        "El DNI debe contener exactamente 8 dígitos."
       );
     }
 
-    return Boolean(data);
+    try {
+      await invocarEdgeFunction<unknown>("consultar-dni", { dni: limpio }, 10000);
+      return false;
+    } catch (error) {
+      const convertido = convertirError(error);
+      if (convertido.codigo === CODIGOS_ERROR_DNI.DUPLICADO) {
+        return true;
+      }
+      throw convertido;
+    }
   },
 
   async validarIdentidadDNI(dni: string): Promise<DatosIdentidadDni> {
