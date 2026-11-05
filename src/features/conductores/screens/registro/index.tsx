@@ -8,7 +8,7 @@ import { MedidorPasswordSeguro } from "@/features/autenticacion/components/Medid
 import { PiePaginaAutenticacion } from "@/features/autenticacion/components/PiePaginaAutenticacion";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDni";
+import { useConsultaDniQuery as useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDniQuery";
 import { calcularEdad, sanitizarDNI } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
