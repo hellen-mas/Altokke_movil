@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import {
   conductorService,
   cachePerfilConductor,

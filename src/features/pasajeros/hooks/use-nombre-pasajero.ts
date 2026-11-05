@@ -1,4 +1,4 @@
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
 
 function formatearPrimerNombre(nombreCompleto: string) {

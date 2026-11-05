@@ -6,7 +6,7 @@ import {
   IndicadorPasos,
   TarjetaOpcion,
 } from "@/shared/components/ui";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
 import { supabase } from "@/shared/api/supabase";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";

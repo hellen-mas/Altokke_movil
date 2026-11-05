@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { supabase } from "@/shared/api/supabase";
 import {
   useNotificacionesStore,

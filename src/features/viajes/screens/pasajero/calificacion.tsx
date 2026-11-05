@@ -2,7 +2,7 @@ import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoVi
 import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import {
   formatearHora,
