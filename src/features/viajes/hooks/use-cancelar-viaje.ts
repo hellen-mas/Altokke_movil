@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import { router } from "expo-router";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { viajeService } from "@/features/viajes/services/viajeService";
-import { useNotificaciones } from "@/features/notificaciones/context/NotificacionesContext";
+import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
 import { supabase } from "@/shared/api/supabase";
 
 export const ESTADOS_CANCELABLES = [

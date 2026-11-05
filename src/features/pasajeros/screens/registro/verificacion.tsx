@@ -8,9 +8,9 @@ import {
   IndicadorPasos,
   SelectorFotoPerfil,
 } from "@/shared/components/ui";
-import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
+import { useRegistroPasajero } from "@/features/pasajeros/store/registroPasajeroStore";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDni";
+import { useConsultaDniQuery as useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDniQuery";
 import { esquemaPaso2 } from "@/features/pasajeros/utils/validacionesPasajero";
 import { sanitizarDNI, sanitizarTelefono } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";

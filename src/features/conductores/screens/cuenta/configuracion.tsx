@@ -1,7 +1,7 @@
 import { AvisoInformativo } from "@/shared/components/ui";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";

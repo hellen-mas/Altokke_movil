@@ -3,7 +3,7 @@ import { IndicadorPasos } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import { useRegistroConductor } from "@/features/conductores/context/RegistroConductorContext";
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { conductorService } from "@/features/conductores/services/conductorService";
 import { Ionicons } from "@expo/vector-icons";

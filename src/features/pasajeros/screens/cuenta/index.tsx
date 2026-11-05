@@ -5,7 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AvatarPerfil } from "@/features/pasajeros/components/AvatarPerfil";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { TituloAltokke } from "@/shared/components/ui/TituloAltokke";
 

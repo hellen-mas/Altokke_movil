@@ -1,31 +1,31 @@
-import { useAuth } from "@/features/autenticacion/context/AuthContext";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import {
   pasajeroService,
   type PerfilPasajero,
   type PreferenciasPasajero,
 } from "@/features/pasajeros/services/pasajeroService";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { User } from "@supabase/supabase-js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-function crearPerfilInicial(userId: string | null, user: any): PerfilPasajero | null {
-  if (!userId) return null;
+type DatosPersonales = Parameters<typeof pasajeroService.actualizarDatosPersonales>[1];
 
-  const cache = pasajeroService.obtenerPerfilEnCache(userId);
-  if (cache) return cache;
+// La clave incluye el userId: cada cuenta tiene su propia entrada en la caché.
+export const clavePerfilPasajero = (userId: string | null) =>
+  ["perfil-pasajero", userId] as const;
 
+// Perfil provisional con los datos de la sesión, mientras llega el de Supabase.
+function crearPerfilInicial(userId: string, user: User | null): PerfilPasajero {
   const metadata = user?.user_metadata;
 
   const nombre = (metadata?.nombre || metadata?.full_name?.split(" ")[0] || "Pasajero").trim();
   const apellidos = (metadata?.apellidos || "").trim();
-  const nombreCompleto = apellidos
-    ? `${nombre} ${apellidos}`
-    : nombre;
 
   return {
     id: userId,
     nombre,
     apellidos,
-    nombreCompleto,
+    nombreCompleto: apellidos ? `${nombre} ${apellidos}` : nombre,
     primerNombre: nombre.split(" ")[0],
     correo: user?.email || "",
     telefono: metadata?.telefono || "",
@@ -33,8 +33,7 @@ function crearPerfilInicial(userId: string | null, user: any): PerfilPasajero | 
     calificacion: 5.0,
     viajesCount: 0,
     dni: metadata?.dni || "Sin registrar",
-    fechaNacimiento:
-      metadata?.fecha_nacimiento || "Sin registrar",
+    fechaNacimiento: metadata?.fecha_nacimiento || "Sin registrar",
     genero: "Sin registrar",
     preferencias: {},
   };
@@ -43,28 +42,16 @@ function crearPerfilInicial(userId: string | null, user: any): PerfilPasajero | 
 export function usePerfilPasajero() {
   const { userId, user } = useAuth();
   const queryClient = useQueryClient();
+  const queryKey = clavePerfilPasajero(userId);
 
-  const queryKey = ["perfil-pasajero", userId] as const;
-
-  const {
-    data,
-    isPending,
-    isFetching,
-    refetch,
-  } = useQuery({
+  const { data, error, isPending, isFetching, refetch } = useQuery({
     queryKey,
-    queryFn: () =>
-      pasajeroService.obtenerPerfil(
-        userId!,
-        user?.user_metadata
-      ),
+    queryFn: () => pasajeroService.obtenerPerfil(userId!, user?.user_metadata),
     enabled: !!userId,
     staleTime: 1000 * 60 * 5,
     retry: 1,
   });
 
-  // Evita mostrar datos de otro usuario.
-  // Mientras carga, conserva el perfil inicial inmediato.
   const perfil: PerfilPasajero | null = userId
     ? data ?? crearPerfilInicial(userId, user)
     : null;
@@ -77,56 +64,40 @@ export function usePerfilPasajero() {
     const resultado = await refetch();
 
     if (resultado.error) {
-      console.warn(
-        "Aviso al recargar perfil de pasajero:",
-        resultado.error
-      );
+      console.warn("Aviso al recargar perfil de pasajero:", resultado.error);
     }
   }, [userId, refetch]);
 
-  const actualizarPerfil = useCallback(
-    async (datos: Parameters<typeof pasajeroService.actualizarDatosPersonales>[1]) => {
+  const mutacionDatos = useMutation({
+    mutationFn: (datos: DatosPersonales) => {
       if (!userId) throw new Error("No hay sesión activa");
-      const nuevo = await pasajeroService.actualizarDatosPersonales(userId, datos);
-      queryClient.setQueryData(
-        ["perfil-pasajero", userId],
-        nuevo
-      );
-
-      return nuevo;
+      return pasajeroService.actualizarDatosPersonales(userId, datos);
     },
-    [userId, queryClient]
-  );
+    // Tras guardar, el perfil queda "viejo" y TanStack lo vuelve a pedir a Supabase.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
 
-  const guardarPreferencias = useCallback(
-    async (nuevas: Partial<PreferenciasPasajero>) => {
+  const mutacionPreferencias = useMutation({
+    mutationFn: (nuevas: Partial<PreferenciasPasajero>) => {
       if (!userId) throw new Error("No hay sesión activa");
-      const prefs = await pasajeroService.guardarPreferencias(userId, nuevas);
-      queryClient.setQueryData<PerfilPasajero>(
-        ["perfil-pasajero", userId],
-        (actual) => {
-          const base =
-            actual ?? crearPerfilInicial(userId, user);
-
-          if (!base) return undefined;
-
-          return {
-            ...base,
-            preferencias: prefs,
-          };
-        }
-      );
-
-      return prefs;
+      return pasajeroService.guardarPreferencias(userId, nuevas);
     },
-    [userId, user, queryClient]
-  );
+    // Actualización controlada: ya sabemos cómo quedaron las preferencias,
+    // así que se escriben en la caché sin volver a consultar.
+    onSuccess: (prefs) => {
+      queryClient.setQueryData<PerfilPasajero>(queryKey, (actual) =>
+        actual ? { ...actual, preferencias: prefs } : actual
+      );
+    },
+  });
 
   return {
     perfil,
     cargando,
+    error,
+    guardando: mutacionDatos.isPending || mutacionPreferencias.isPending,
     recargar,
-    actualizarPerfil,
-    guardarPreferencias,
+    actualizarPerfil: mutacionDatos.mutateAsync,
+    guardarPreferencias: mutacionPreferencias.mutateAsync,
   };
 }

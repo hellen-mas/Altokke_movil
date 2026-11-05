@@ -6,7 +6,7 @@ import {
   IndicadorPasos,
 } from "@/shared/components/ui";
 import { MedidorPasswordSeguro, PiePaginaAutenticacion } from "@/features/autenticacion/components";
-import { useRegistroPasajero } from "@/features/pasajeros/context/RegistroPasajeroContext";
+import { useRegistroPasajero } from "@/features/pasajeros/store/registroPasajeroStore";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { esquemaPaso1 } from "@/features/pasajeros/utils/validacionesPasajero";
 import { yupResolver } from "@hookform/resolvers/yup";
