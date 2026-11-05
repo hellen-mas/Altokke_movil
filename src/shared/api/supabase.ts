@@ -12,8 +12,10 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Faltan las credenciales de Supabase. Revisa tu archivo .env");
 }
 
+// JWT: Cliente Supabase configurado con persistencia segura de tokens JWT
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   auth: {
+    // JWT: Almacenamiento cifrado en hardware para guardar y refrescar tokens de sesion
     storage: almacenamientoSeguro,
     autoRefreshToken: true,
     persistSession: true,

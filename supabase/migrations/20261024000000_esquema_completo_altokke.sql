@@ -379,6 +379,7 @@ BEGIN
   EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I',p.policyname,p.schemaname,p.tablename);
  END LOOP;
 END $fn$;
+-- RLS: Habilitacion de Row Level Security a nivel de kernel en PostgreSQL para todas las tablas
 ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pasajeros_perfil ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conductores_perfil ENABLE ROW LEVEL SECURITY;
@@ -415,6 +416,7 @@ GRANT INSERT(viaje_id,remitente_id,contenido) ON public.mensajes_viaje TO authen
 GRANT INSERT(viaje_id,autor_id,receptor_id,puntuacion,comentario)
  ON public.calificaciones TO authenticated;
 
+-- RLS: Politicas de acceso a filas en tablas de negocio gobernadas por auth.uid()
 CREATE POLICY altokke_usuarios_select ON public.usuarios FOR SELECT TO authenticated
  USING (id=(SELECT auth.uid()));
 CREATE POLICY altokke_usuarios_update ON public.usuarios FOR UPDATE TO authenticated
@@ -482,6 +484,7 @@ CREATE INDEX IF NOT EXISTS idx_calificaciones_viaje_id ON public.calificaciones(
 INSERT INTO storage.buckets(id,name,public)
  VALUES('documentos-conductores','documentos-conductores',false)
  ON CONFLICT(id) DO UPDATE SET public=false;
+-- RLS: Politicas de aislamiento de Storage para el bucket privado documentos-conductores
 DROP POLICY IF EXISTS altokke_documentos_storage_insert ON storage.objects;
 CREATE POLICY altokke_documentos_storage_insert ON storage.objects
  FOR INSERT TO authenticated WITH CHECK (

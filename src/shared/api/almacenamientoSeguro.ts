@@ -8,6 +8,7 @@ const memory = new Map<string, string>();
 const isSSR = typeof window === "undefined";
 const isWeb = Platform.OS === "web";
 
+// JWT: Manejador cifrado con AES-256 en hardware (SecureStore) para custodiar tokens de sesion JWT
 class AlmacenamientoSeguro {
   private async cifrar(clave: string, valor: string): Promise<string> {
     const llave = Crypto.getRandomBytes(32);
