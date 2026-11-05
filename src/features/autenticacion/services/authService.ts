@@ -72,6 +72,14 @@ const comprobarEstadoCuenta = async (usuarioId: string) => {
 };
 
 export const authService = {
+  async obtenerSesionActiva() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) throw error;
+
+    return data.session;
+  },
+
   async loginConPassword(email: string, contrasena: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail(email),
@@ -128,24 +136,62 @@ export const authService = {
       options: { data: extraerMetadata(datos) },
     });
     if (error) throw error;
+    let avatarExitoso = !datos.fotoPerfil;
+    let errorAvatar: string | undefined;
 
     if (data.user?.id && datos.fotoPerfil) {
-      subirFotoAvatar(datos.fotoPerfil, data.user.id, datos.fotoBase64 || undefined).catch((err) =>
-        console.warn("Aviso foto inicial:", err)
+      const resultado = await subirFotoAvatar(
+        datos.fotoPerfil,
+        data.user.id,
+        datos.fotoBase64 || undefined
       );
+
+      avatarExitoso = resultado.ok;
+
+      if (!resultado.ok) {
+        errorAvatar =
+          resultado.error ||
+          "No se pudo guardar la fotografía de perfil.";
+      }
+    } else if (datos.fotoPerfil) {
+      avatarExitoso = false;
+      errorAvatar = "No se obtuvo el usuario para guardar la fotografía.";
     }
-    return data;
+    return {
+      ...data,
+      usuario: data.user,
+      avatarExitoso,
+      errorAvatar,
+    };
   },
 
   async actualizarPerfilOAuth(userId: string, datos: PerfilOAuthInput) {
     const { error } = await supabase.auth.updateUser({ data: extraerMetadata(datos) });
     if (error) throw error;
 
+    let avatarExitoso = !datos.fotoPerfil;
+    let errorAvatar: string | undefined;
+
     if (datos.fotoPerfil) {
-      subirFotoAvatar(datos.fotoPerfil, userId, datos.fotoBase64 || undefined).catch((err) =>
-        console.warn("Aviso foto OAuth:", err)
+      const resultado = await subirFotoAvatar(
+        datos.fotoPerfil,
+        userId,
+        datos.fotoBase64 || undefined
       );
+
+      avatarExitoso = resultado.ok;
+
+      if (!resultado.ok) {
+        errorAvatar =
+          resultado.error ||
+          "No se pudo actualizar la fotografía.";
+      }
     }
+
+    return {
+      avatarExitoso,
+      errorAvatar,
+    };
   },
 
   async solicitarRecuperacionPassword(email: string) {

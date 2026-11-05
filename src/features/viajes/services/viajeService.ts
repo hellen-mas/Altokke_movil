@@ -169,6 +169,26 @@ export const viajeService = {
       return null;
     }
   },
+  async obtenerViajesParaNotificaciones(pasajeroId: string) {
+    if (!pasajeroId) {
+      throw new Error("Se requiere el ID del pasajero.");
+    }
+
+    const { data, error } = await supabase
+      .from("viajes")
+      .select("id, estado, creado_en")
+      .eq("pasajero_id", pasajeroId)
+      .order("creado_en", { ascending: false })
+      .limit(8);
+
+    if (error) {
+      throw new Error(
+        `No se pudieron consultar las notificaciones: ${error.message}`
+      );
+    }
+
+    return data ?? [];
+  },
 
   /**
    * Obtiene el historial de viajes de un pasajero desde Supabase
