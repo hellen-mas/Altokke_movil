@@ -39,6 +39,7 @@ export default function IdentidadOficialConductor() {
     const [capturando, setCapturando] = useState(false);
     const capturaEnCurso = useRef(false);
 
+    // USO DE CAMARA SIN INGRESAR A LA GALERIA: Dispara exclusivamente la camara fisica con launchCameraAsync
     const tomarFoto = async(tipo: TipoFoto) => {
         if (capturaEnCurso.current) return;
         capturaEnCurso.current = true;
@@ -55,6 +56,7 @@ export default function IdentidadOficialConductor() {
                 return;
             }
 
+            // USO DE CAMARA SIN INGRESAR A LA GALERIA: Captura directa sin selector de archivos ni galeria
             const resultado = await ImagePicker.launchCameraAsync({
                 allowsEditing: false,
                 quality: 0.9,

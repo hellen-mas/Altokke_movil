@@ -1,7 +1,7 @@
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { authService } from "@/features/autenticacion/services/authService";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { authService } from "@/features/autenticacion/services/authService";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 // ZUSTAND: Import para limpieza defensiva del store de registro
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -61,7 +61,7 @@ export default function SolicitudEnviada() {
       style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
-      <StatusBar style={esOscuro ? "light" : "dark"}/>
+      <StatusBar style={esOscuro ? "light" : "dark"} />
 
       <ScrollView
         style={[styles.scroll, { backgroundColor: colores.fondo }]}
@@ -169,7 +169,7 @@ export default function SolicitudEnviada() {
         </View>
       </ScrollView>
     </SafeAreaView>
-    
+
   );
 }
 

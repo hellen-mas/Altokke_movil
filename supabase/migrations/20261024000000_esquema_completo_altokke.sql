@@ -481,6 +481,7 @@ CREATE INDEX IF NOT EXISTS idx_viajes_estado ON public.viajes(estado);
 CREATE INDEX IF NOT EXISTS idx_mensajes_viaje_id ON public.mensajes_viaje(viaje_id);
 CREATE INDEX IF NOT EXISTS idx_calificaciones_viaje_id ON public.calificaciones(viaje_id);
 
+-- BUCKET PRIVADO DOCUMENTOS-CONDUCTORES CON RLS: Creación con public = false y políticas de carpeta privada por auth.uid()
 INSERT INTO storage.buckets(id,name,public)
  VALUES('documentos-conductores','documentos-conductores',false)
  ON CONFLICT(id) DO UPDATE SET public=false;
