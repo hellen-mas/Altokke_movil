@@ -31,7 +31,7 @@ Proyecto académico del curso **Programación de Aplicaciones Móviles**, Escuel
 - Edge Functions para consultar DNI, gestionar fotografías y realizar operaciones protegidas de cuenta.
 - Eliminación lógica de cuentas con controles de integridad.
 
-> La disponibilidad efectiva de integraciones externas, Google OAuth y operaciones administrativas depende de la configuración del entorno Supabase y de las pruebas efectuadas. El repositorio refleja el desarrollo académico del sistema; no es una declaración de certificación para producción.
+> La disponibilidad efectiva de integraciones externas, Google OAuth y operaciones administrativas depende de la configuración del entorno Supabase y de las pruebas efectuadas.
 
 ## Tecnologías y arquitectura
 
@@ -72,25 +72,6 @@ Altokke_movil/
 ├── package.json
 └── README.md
 ```
-
-### Flujo de verificación de DNI
-
-```text
-Pantalla de registro
-  → useConsultaDniQuery (TanStack Query)
-  → identidadService
-  → Edge Function consultar-dni
-       ├── Consulta al proveedor externo ApiPeru
-       └── Comprobación de DNI duplicado en PostgreSQL
-  → Respuesta validada y autocompletado de datos
-```
-
-La API externa y la comprobación de duplicados se ejecutan desde el servidor. Sus credenciales privadas no se incorporan a la aplicación. La consulta utiliza claves de caché por DNI con un tiempo de frescura de 24 horas; la unicidad definitiva debe verificarse también al registrar la cuenta.
-
-### Procesamiento de fotografías
-
-La aplicación permite seleccionar una imagen con Expo ImagePicker, optimizarla con Expo ImageManipulator y enviarla a una Edge Function, que integra la revisión de contenido mediante Sightengine y el almacenamiento en Supabase Storage.
-
 ## Instalación y ejecución
 
 ### Requisitos
@@ -156,8 +137,6 @@ Scripts adicionales:
 | `npm run web` | Ejecuta el proyecto en entorno web |
 | `npm run lint` | Ejecuta ESLint |
 | `npx tsc --noEmit` | Comprueba tipos TypeScript |
-
-Las pruebas en Expo Go no equivalen a validar una compilación de producción. Las funciones dependientes de APIs nativas o configuración de mapas pueden requerir un build específico.
 
 ## Trabajo colaborativo
 
