@@ -1,7 +1,11 @@
+import { RegistroPasajeroProvider } from "@/context/RegistroPasajeroContext";
 import { Stack } from "expo-router";
 
 export default function RegistroPasajeroLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}/>
+    // Provider permite compartir la información del registro sin tener que pasar datos una por una
+    <RegistroPasajeroProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </RegistroPasajeroProvider>
   );
 }

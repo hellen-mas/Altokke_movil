@@ -1,29 +1,16 @@
-
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { Redirect } from "expo-router";
 
 export default function Index() {
-  const {
-    isAuthenticated,
-    userRole,
-    isLoading,
-  } = useAuth();
+  const { isAuthenticated, userRole } = useAuth();
 
-  if (isLoading) return null;
-
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/bienvenida" />;
+  if (isAuthenticated) {
+    if (userRole === "conductor") {
+      return <Redirect href={"/inicio" as any} />;
+    }
+    return <Redirect href={"/mapa" as any} />;
   }
 
-  if (userRole === "conductor") {
-    return (
-      <Redirect href="/(auth)/estado-solicitud" />
-    );
-  }
-
-  if (userRole === "pasajero") {
-    return <Redirect href="/mapa" />;
-  }
-
-  return <Redirect href="/(auth)/bienvenida" />;
+  // Si no hay sesión, lo mandamos a la pantalla de bienvenida
+  return <Redirect href={"/(auth)/bienvenida" as any} />;
 }

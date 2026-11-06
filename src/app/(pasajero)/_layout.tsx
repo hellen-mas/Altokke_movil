@@ -1,17 +1,10 @@
 import { Stack, Redirect } from "expo-router";
-import { ViajeProvider } from "@/features/viajes/context/ViajeContext";
-import { useSincronizarNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
+import { ViajeProvider } from "@/context/ViajeContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PasajeroLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  useSincronizarNotificaciones();
+  const { isAuthenticated } = useAuth();
 
-  if (isLoading) {
-    return null;
-  }
-  
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }

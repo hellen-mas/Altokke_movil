@@ -1,164 +1,211 @@
-# ALTOKKE MÓVIL
+# 🛺 Altokke
 
-**Tu mototaxi, cuando lo necesites.**
+### Tu mototaxi, cuando lo necesites.
 
-ALTOKKE MÓVIL es una aplicación desarrollada con React Native, Expo y TypeScript para conectar pasajeros y conductores de mototaxis, organizar solicitudes de transporte y gestionar el servicio desde dispositivos móviles.
+**Altokke** es una aplicación móvil orientada al servicio de mototaxi que busca conectar pasajeros y conductores mediante una experiencia sencilla, rápida y organizada.
 
-Proyecto académico del curso **Programación de Aplicaciones Móviles**, Escuela Profesional de Ingeniería de Sistemas, **Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas (UNTRM)**.
+El proyecto se desarrolla como parte del curso **Programación de Aplicaciones Móviles** de la Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas (UNTRM).
 
-## Funcionalidades
+---
+
+## 📱 Sobre el proyecto
+
+Actualmente, la solicitud de un mototaxi suele realizarse mediante señas, llamadas o acuerdos directos. Altokke propone digitalizar este proceso mediante una aplicación móvil que permita gestionar el servicio desde el celular.
+
+La aplicación contempla dos tipos de usuario:
+
+### 👤 Pasajero
+- Crear una cuenta e iniciar sesión.
+- Seleccionar origen y destino.
+- Solicitar un mototaxi.
+- Consultar el estado de la solicitud.
+- Visualizar información del conductor.
+- Seguir el desarrollo del viaje.
+- Finalizar y calificar el servicio.
+- Consultar el historial de viajes.
+- Gestionar su cuenta y preferencias.
+
+### 🛺 Conductor
+- Registrarse mediante un proceso de verificación.
+- Registrar información personal.
+- Verificar información de contacto.
+- Registrar identidad y documentación.
+- Registrar información de su vehículo.
+- Recibir y gestionar solicitudes de viaje.
+- Consultar ganancias e historial.
+- Gestionar información personal, vehículo y documentos.
+- Acceder a opciones de seguridad y configuración.
+
+---
+
+## ✨ Estado actual
+
+> 🚧 **Avance 01 — Versión mínima navegable**
+
+La versión actual permite demostrar los principales flujos de navegación e interacción de Altokke.
+
+Algunas funcionalidades todavía utilizan información local o simulada y serán conectadas posteriormente con servicios persistentes y un backend.
+
+---
+
+## 🧭 Flujo principal
 
 ### Pasajero
-- Registro de cuenta en tres etapas: credenciales, verificación de identidad y preferencias.
-- Inicio de sesión con correo y contraseña; integración con Google OAuth.
-- Consulta de DNI y autocompletado de nombres y apellidos.
-- Selección y validación de fotografía de perfil.
-- Ubicación, selección de origen y destino, solicitud de viaje y seguimiento del servicio.
-- Historial de actividad, calificación, perfil y ajustes de cuenta.
+
+`Inicio de sesión`
+→ `Inicio`
+→ `Seleccionar destino`
+→ `Confirmar viaje`
+→ `Buscar conductor`
+→ `Conductor encontrado`
+→ `Viaje activo`
+→ `Finalizar`
+→ `Calificar`
 
 ### Conductor
-- Registro en cinco etapas: datos personales, contacto, identidad, documentos y vehículo.
-- Envío de solicitud para revisión y consulta de estado de aprobación.
-- Gestión de solicitudes de servicio, viaje activo, ganancias e historial.
-- Consulta y actualización de información personal, vehículo y documentación.
 
-### Autenticación y seguridad
-- Gestión de usuarios y sesiones mediante Supabase Auth.
-- Recuperación de contraseña por correo y código de verificación.
-- Acceso condicionado por rol, estado de cuenta y aprobación del conductor.
-- Políticas de seguridad a nivel de fila (**RLS**) en PostgreSQL.
-- Almacenamiento de avatares y documentos mediante Supabase Storage.
-- Edge Functions para consultar DNI, gestionar fotografías y realizar operaciones protegidas de cuenta.
-- Eliminación lógica de cuentas con controles de integridad.
+`Registro`
+→ `Datos personales`
+→ `Verificación`
+→ `Identidad`
+→ `Documentos`
+→ `Vehículo`
+→ `Enviar solicitud`
 
-> La disponibilidad efectiva de integraciones externas, Google OAuth y operaciones administrativas depende de la configuración del entorno Supabase y de las pruebas efectuadas.
+Una vez dentro de la aplicación:
 
-## Tecnologías y arquitectura
+`Inicio`
+→ `Solicitudes`
+→ `Aceptar viaje`
+→ `Viaje activo`
+→ `Finalizar`
+
+---
+
+## 🧰 Tecnologías utilizadas
 
 | Tecnología | Uso |
-| --- | --- |
-| React Native 0.88.1, React 19.3 y Expo SDK 58 | Aplicación móvil |
-| TypeScript | Tipado de módulos y modelos |
-| Expo Router | Navegación y rutas |
-| Zustand | Estado local y compartido |
-| TanStack Query v5 | Consultas remotas, caché y sincronización |
-| React Hook Form + Yup | Formularios y reglas de validación |
-| NetInfo | Detección de conectividad |
-| Supabase Auth + PostgreSQL + RLS | Identidad, datos y control de acceso |
-| Supabase Storage + Edge Functions | Archivos e integración segura con servicios externos |
-| Expo Location + React Native Maps | Geolocalización y mapas |
-| Expo ImagePicker, ImageManipulator y DocumentPicker | Selección y procesamiento de archivos |
-| Shopify FlashList | Listados de historial, solicitudes y notificaciones |
+|---|---|
+| **React Native** | Desarrollo de la aplicación móvil |
+| **Expo** | Entorno y herramientas de desarrollo |
+| **TypeScript** | Lenguaje principal del proyecto |
+| **Expo Router** | Navegación basada en archivos |
+| **Context API** | Manejo de estado compartido en determinados flujos |
+| **Expo ImagePicker** | Acceso a cámara y selección de imágenes |
+| **Expo DocumentPicker** | Selección de documentos |
 
-El proyecto utiliza **Screaming Architecture**, organizando el código por funcionalidades del negocio. Las rutas se separan de las pantallas y la lógica de acceso a datos se concentra en hooks y servicios.
+---
+
+## 📂 Estructura general
 
 ```text
 Altokke_movil/
-├── assets/                     # Imágenes y recursos visuales
+│
 ├── src/
-│   ├── app/                    # Rutas y layouts de Expo Router
-│   ├── features/
-│   │   ├── autenticacion/      # Registro, login, recuperación y sesiones
-│   │   ├── pasajeros/          # Registro y servicios del pasajero
-│   │   ├── conductores/        # Registro y servicios del conductor
-│   │   └── ...                 # Otros dominios funcionales
-│   └── shared/                 # UI, servicios compartidos, tipos y utilidades
-├── supabase/
-│   ├── functions/              # Funciones de servidor (Deno)
-│   ├── migrations/             # Cambios versionados del esquema
-│   └── config.toml
-├── app.json
-├── app.config.js
-├── package.json
+│   ├── app/             # Pantallas y navegación
+│   ├── components/      # Componentes reutilizables
+│   ├── constants/       # Constantes y datos utilizados
+│   ├── context/         # Contextos de la aplicación
+│   ├── hooks/           # Hooks personalizados
+│   └── types/           # Tipos e interfaces
+│
+├── assets/              # Recursos gráficos
+├── app.json             # Configuración de Expo
+├── package.json         # Dependencias y scripts
 └── README.md
 ```
-## Instalación y ejecución
 
-### Requisitos
-- Node.js y npm compatibles con el proyecto.
-- Git.
-- Dispositivo o emulador compatible con la versión de Expo utilizada.
-- Acceso a un proyecto Supabase configurado con el esquema, políticas, Storage y Edge Functions necesarios.
+---
 
-### 1. Clonar el repositorio
+# 🚀 Ejecutar el proyecto
+
+## Requisitos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- **Node.js**
+- **npm**
+- **Git**
+- **Expo Go** en un dispositivo móvil, o un emulador Android/iOS compatible.
+
+---
+
+## 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/hellen-mas/Altokke_movil.git
+```
+
+## 2. Ingresar al proyecto
+
+```bash
 cd Altokke_movil
 ```
 
-La rama **main** contiene la versión principal una vez fusionados los cambios aprobados. Durante el trabajo colaborativo, **develop** se utiliza para integración.
-
-### 2. Instalar dependencias
+## 3. Instalar las dependencias
 
 ```bash
 npm install
 ```
 
-### 3. Configurar el entorno
-
-Crear un archivo `.env` en la raíz del proyecto con la **URL y la clave pública** del proyecto Supabase:
-
-```dotenv
-EXPO_PUBLIC_SUPABASE_URL=TU_URL_PUBLICA
-EXPO_PUBLIC_SUPABASE_KEY=TU_CLAVE_PUBLICA
-# Alternativa admitida por el cliente:
-# EXPO_PUBLIC_SUPABASE_ANON_KEY=TU_CLAVE_PUBLICA
-```
-
-Para los mapas nativos de Android, configurar si corresponde:
-
-```dotenv
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=TU_CLAVE_DE_MAPAS_RESTRINGIDA
-```
-
-**Importante:** toda variable `EXPO_PUBLIC_*` se incorpora al cliente y **no es secreta**. Restringir la clave de Google Maps por aplicación y API en Google Cloud. No colocar tokens de ApiPeru, Sightengine ni `SUPABASE_SERVICE_ROLE_KEY` en `.env` del cliente. Esos secretos pertenecen al entorno seguro de las Edge Functions. No subir archivos `.env` con credenciales reales al repositorio.
-
-El funcionamiento de autenticación social, recuperación de cuenta y servicios externos también requiere la configuración correspondiente en Supabase.
-
-### 4. Ejecutar
+## 4. Iniciar Expo
 
 ```bash
-npm run start
+npx expo start
 ```
 
-Para reiniciar la caché de Metro:
+Después de iniciar el proyecto puedes:
+
+- Escanear el código QR utilizando **Expo Go**.
+- Ejecutar la aplicación en un emulador Android.
+- Utilizar las demás opciones disponibles en Expo según el entorno configurado.
+
+Si existen problemas relacionados con la caché, puede iniciarse nuevamente con:
 
 ```bash
 npx expo start -c
 ```
 
-Scripts adicionales:
+---
 
-| Comando | Función |
-| --- | --- |
-| `npm run android` | Abre el flujo de Expo para Android |
-| `npm run ios` | Abre el flujo de Expo para iOS, si el entorno lo permite |
-| `npm run web` | Ejecuta el proyecto en entorno web |
-| `npm run lint` | Ejecuta ESLint |
-| `npx tsc --noEmit` | Comprueba tipos TypeScript |
+# 👥 Equipo
 
-## Trabajo colaborativo
+| Integrante | GitHub | Participación principal |
+|---|---|---|
+| **Jhunior Aldahir Cercado Acuña** | `@jhunior-cercado` | Cuenta del pasajero y funcionalidades del conductor |
+| **Elvita Donina Garro Gómez** | `@doninaa` | Flujo principal de solicitud y viaje del pasajero |
+| **Hellen Shanela Mas Tuesta** | `@hellen-mas` | Registro y cuenta del conductor |
+| **Juan Carlos Sandoval Núñez** | `@Juan-Sandoval-Dev` | Autenticación, recuperación de cuenta y registro del pasajero |
 
-El equipo utiliza ramas de funcionalidades, revisión por Pull Requests y una rama `develop` para integrar avances. Los cambios aprobados se incorporan después a `main` como versión principal del proyecto.
-
-### Equipo
-
-- **Jhunior Aldahir Cercado Acuña**
-- **Elvita Donina Garro Gómez**
-- **Hellen Shanela Mas Tuesta**
-- **Juan Carlos Sandoval Núñez**
-
-Las contribuciones pueden consultarse en el historial de commits y Pull Requests del repositorio.
-
-## Información académica
-
-- **Universidad:** Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas.
-- **Carrera:** Ingeniería de Sistemas.
-- **Curso:** Programación de Aplicaciones Móviles.
-- **Proyecto:** ALTOKKE MÓVIL.
-- **Año:** 2026.
+> La participación individual también puede identificarse mediante el historial de **commits y contribuciones del repositorio**.
 
 ---
 
-**ALTOKKE MÓVIL — Tu mototaxi, cuando lo necesites.**
+## 🔜 Siguiente incremento
+
+Las siguientes etapas del proyecto contemplan:
+
+- Integración con un backend y base de datos.
+- Persistencia de usuarios, vehículos y documentos.
+- Verificación real de solicitudes de conductores.
+- Integración completa entre registro y cuenta.
+- Gestión persistente de viajes.
+- Mejoras de seguridad y autenticación.
+- Notificaciones y actualización del estado del servicio.
+
+---
+
+## 🎓 Información académica
+
+**Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas**  
+**Carrera:** Ingeniería de Sistemas  
+**Curso:** Programación de Aplicaciones Móviles  
+**Proyecto:** Altokke  
+**Avance:** 01 — Versión mínima navegable
+
+---
+
+<p align="center">
+  <strong>🛺 Altokke</strong><br>
+  <em>Tu mototaxi, cuando lo necesites.</em>
+</p>

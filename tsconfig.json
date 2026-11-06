@@ -4,21 +4,16 @@
     "jsx": "react-native",
     "strict": true,
     "paths": {
-      "@/assets/*": [
-        "./assets/*"
-      ],
       "@/*": [
         "./src/*"
+      ],
+      "@/assets/*": [
+        "./assets/*"
       ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "env.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "supabase/functions"
+    "**/*.tsx"
   ]
 }

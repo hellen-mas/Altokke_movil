@@ -1,1 +1,0 @@
-export { default } from "@/features/soporte/screens/pasajero/categoria-ayuda";

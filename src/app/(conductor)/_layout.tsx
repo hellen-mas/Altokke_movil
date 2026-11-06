@@ -1,77 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Redirect, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { supabase } from "@/shared/api/supabase";
-import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
 
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { paletaColores } from "@/paletaColores";
 
 export default function ConductorLayout() {
-  const [verificando, setVerificando] = useState(true);
-  const [autorizado, setAutorizado] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      let activo = true;
-
-      const verificarAcceso = async () => {
-        if (activo) {
-          setVerificando(true);
-          setAutorizado(false);
-        }
-
-        try {
-          const { data: { user } } =
-            await supabase.auth.getUser();
-
-          if (!user || user.user_metadata?.rol !== "conductor") {
-            if (activo) setAutorizado(false);
-            return;
-          }
-
-          const estado =
-            await obtenerEstadoConductor(user.id);
-
-          if (activo) {
-            setAutorizado(estado === "aprobado");
-          }
-        } catch (error) {
-          console.error("Error verificando conductor:", error);
-          if (activo) setAutorizado(false);
-        } finally {
-          if (activo) setVerificando(false);
-        }
-      };
-
-      verificarAcceso();
-
-      return () => {
-        activo = false;
-      };
-    }, [])
-  );
-
-  if (verificando) {
-    return (
-      <View style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center"
-      }}>
-        <ActivityIndicator
-          size="large"
-          color={paletaColores.verde}
-        />
-      </View>
-    );
-  }
-
-  if (!autorizado) {
-    return <Redirect href="/(auth)/estado-solicitud" />;
-  }
-
   return (
     <Tabs
       screenOptions={{
@@ -106,13 +38,7 @@ export default function ConductorLayout() {
             <Ionicons
               name={focused ? "home" : "home-outline"}
               size={size}
-              color={
-                typeof color === "string"
-                  ? color
-                  : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
-              }
+              color={color}
             />
           ),
         }}
@@ -131,13 +57,7 @@ export default function ConductorLayout() {
                   : "file-tray-full-outline"
               }
               size={size}
-              color={
-                typeof color === "string"
-                  ? color
-                  : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
-              }
+              color={color}
             />
           ),
         }}
@@ -152,13 +72,7 @@ export default function ConductorLayout() {
             <Ionicons
               name={focused ? "wallet" : "wallet-outline"}
               size={size}
-              color={
-                typeof color === "string"
-                  ? color
-                  : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
-              }
+              color={color}
             />
           ),
         }}
@@ -173,13 +87,7 @@ export default function ConductorLayout() {
             <Ionicons
               name={focused ? "person" : "person-outline"}
               size={size}
-              color={
-                typeof color === "string"
-                  ? color
-                  : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
-              }
+              color={color}
             />
           ),
         }}

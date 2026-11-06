@@ -31,9 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files
-.env
 .env*.local
-.env.local
 
 # typescript
 *.tsbuildinfo
@@ -43,22 +41,3 @@ example
 # generated native folders
 /ios
 /android
-
-# IDEs and editors
-.idea/
-.vscode/
-
-# AI and knowledge graph artifacts
-.agents/
-graphify-out/
-.tempmediaStorage/
-
-# Supabase local temp
-supabase/.temp/
-
-# Playwright artifacts
-.playwright-cli/
-.playwright-mcp/
-
-# Local documentation
-docs/
