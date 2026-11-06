@@ -1,26 +1,82 @@
-import { AnimatedSplashOverlay } from "@/components/animated-icon";
-import { AuthProvider } from "@/context/AuthContext";
+import { useAuthStore } from "@/features/autenticacion/store/authStore";
+import { AnimatedSplashOverlay } from "@/shared/components/animated/animated-icon";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_700Bold,
+  useFonts,
+} from "@expo-google-fonts/outfit";
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useColorScheme, StatusBar } from "react-native";
-import { paletaColores } from "@/paletaColores";
+import { useEffect } from "react";
+import NetInfo from "@react-native-community/netinfo";
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AppState, Platform, StatusBar } from "react-native";
 
-// Evita que la pantalla de carga inicial desaparezca antes que la app esté completamente lista
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 2,
+    },
+    mutations: {
+      // Registro, cuentas y documentos no se reintentan solos: podrían duplicarse.
+      retry: 0,
+    },
+  },
+});
+
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((estado) => {
+    setOnline(Boolean(estado.isConnected));
+  })
+);
+
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
-  // Detecta el tema del celular
-  const colorScheme = useColorScheme();
+  const { esOscuro, colores } = useAltokkeTheme();
+  const [fontsLoaded] = useFonts({
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_700Bold,
+  });
+
+  useEffect(() => {
+    return useAuthStore.getState().init();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const suscripcion = AppState.addEventListener("change", (estado) => {
+      focusManager.setFocused(estado === "active");
+    });
+    return () => suscripcion.remove();
+  }, []);
+
+   // Al cerrar sesión o entrar con otra cuenta se borra la caché:
+  // así nunca se ven datos de la cuenta anterior.
+  useEffect(() => {
+    return useAuthStore.subscribe((estado, anterior) => {
+      if (anterior.userId && estado.userId !== anterior.userId) {
+        queryClient.clear();
+      }
+    });
+  }, []);
+
+  if (!fontsLoaded) return null;
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      {/* Cualquier pantalla pueda saber si el usuario inició sesión */}
-      <AuthProvider>
-        <StatusBar barStyle="light-content" backgroundColor={paletaColores.fondo} />
-        {/*Dibuja la animacion de la pantalla de carga mientras cargan los datos*/}
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={esOscuro ? DarkTheme : DefaultTheme}>
+        <StatusBar 
+           barStyle={esOscuro ? "light-content" : "dark-content"}
+        />
         <AnimatedSplashOverlay />
         <Slot />
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
+
