@@ -115,6 +115,7 @@ export default function VerificacionContactoConductor() {
               : "on-drag"
           }
           showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets={true}
         >
           <View style={styles.encabezado}>
             <EncabezadoPagina
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
-    paddingBottom: 36,
+    paddingBottom: 80,
     backgroundColor: paletaColores.fondoClaro,
   },
 
@@ -339,6 +340,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: paletaColores.textoClaro,
     paddingVertical: 12,
+    fontVariant: ["tabular-nums"],
   },
 
   mensajeError: {

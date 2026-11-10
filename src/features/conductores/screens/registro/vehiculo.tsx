@@ -12,15 +12,8 @@ import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";
 
 import {
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+  Alert, Keyboard, KeyboardAvoidingView, Platform,
+  Pressable, ScrollView, StyleSheet, Text, View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -31,29 +24,10 @@ export default function VehiculoConductor() {
 
   // ZUSTAND: Extraccion de los 25 campos acumulados durante las 5 etapas del registro
   const {
-    placa,
-    marca,
-    modelo,
-    anio,
-    color,
-    capacidad,
-    confirmacionVeracidad,
-    nombre,
-    apellidos,
-    dni,
-    correo,
-    contrasena,
-    telefono,
-    foto,
-    dniFrente,
-    dniReverso,
-    selfie,
-    licenciaConducir,
-    soat,
-    antecedentesPenales,
-    actualizarFormulario,
-    // LIMPIEZA ZUSTAND: Metodo para liberar la memoria tras envio satisfactorio
-    limpiarFormulario,
+    placa, marca, modelo, anio, color, capacidad, confirmacionVeracidad,
+    nombre, apellidos, dni, correo, contrasena, telefono, foto,
+    dniFrente, dniReverso, selfie, licenciaConducir, soat, antecedentesPenales,
+    actualizarFormulario, limpiarFormulario,
   } = useRegistroConductor();
 
   const anioActual = new Date().getFullYear();
@@ -69,36 +43,20 @@ export default function VehiculoConductor() {
 
     const anioNumero = Number(anio);
 
-    if (
-      !/^\d{4}$/.test(anio) ||
-      anioNumero < 1980 ||
-      anioNumero > anioActual
-    ) {
-      Alert.alert(
-        "Año inválido",
-        `Ingresa un año entre 1980 y ${anioActual}.`
-      );
+    if (!/^\d{4}$/.test(anio) || anioNumero < 1980 || anioNumero > anioActual) {
+      Alert.alert("Año inválido", `Ingresa un año entre 1980 y ${anioActual}.`);
       return false;
     }
 
     const capacidadNumero = Number(capacidad);
 
-     if (
-      !/^[1-4]$/.test(capacidad) ||
-      !Number.isInteger(capacidadNumero)
-    ) {
-      Alert.alert(
-        "Capacidad inválida",
-        "La capacidad debe ser de 1 a 4 pasajeros."
-      );
+    if (!/^[1-4]$/.test(capacidad) || !Number.isInteger(capacidadNumero)) {
+      Alert.alert("Capacidad inválida", "La capacidad debe ser de 1 a 4 pasajeros.");
       return false;
     }
 
     if (!confirmacionVeracidad) {
-      Alert.alert(
-        "Confirmación requerida",
-        "Confirma que los datos ingresados son correctos."
-      );
+      Alert.alert("Confirmación requerida", "Confirma que los datos ingresados son correctos.");
       return false;
     }
 
@@ -146,18 +104,15 @@ export default function VehiculoConductor() {
       Alert.alert(
         "Solicitud enviada",
         "Recibimos tu información. Tu cuenta pasará por revisión.",
-        [{ 
-          text: "Endendido", 
-          onPress: () => 
-            router.replace("/registro-conductor/solicitud-enviada"), 
-        }],
+        [{ text: "Endendido", onPress: () => router.replace("/registro-conductor/solicitud-enviada") }],
         { cancelable: false }
       );
-    } catch (error: any) {
-      if (error?.message === "CONFIRMAR_CORREO") {
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      if (err.message === "CONFIRMAR_CORREO") {
         Alert.alert("Confirma tu correo", "Tu cuenta fue creada, pero debes confirmar tu correo antes de continuar.");
       } else {
-        Alert.alert("Error de registro", error?.message || "No se pudo completar el registro.");
+        Alert.alert("Error de registro", err.message || "No se pudo completar el registro.");
       }
     } finally {
       envioEnCurso.current = false;
@@ -179,11 +134,8 @@ export default function VehiculoConductor() {
           contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={
-            Platform.OS === "ios"
-              ? "interactive"
-              : "on-drag"
-          }
+          automaticallyAdjustKeyboardInsets={true}
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         >
           <View style={styles.encabezado}>
             <EncabezadoPagina
@@ -348,24 +300,17 @@ export default function VehiculoConductor() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-    
   );
 }
 
 const styles = StyleSheet.create({
-  areaSegura: {
-    flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
-  },
+  areaSegura: { flex: 1, backgroundColor: paletaColores.fondoClaro },
+  container: { flex: 1, backgroundColor: paletaColores.fondoClaro },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
-    paddingBottom: 36,
+    paddingBottom: 80,
     backgroundColor: paletaColores.fondoClaro,
   },
   encabezado: {

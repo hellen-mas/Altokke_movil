@@ -113,6 +113,7 @@ export default function DatosPersonalesConductor() {
           keyboardDismissMode={
             Platform.OS === "ios" ? "interactive" : "on-drag"
           }
+          automaticallyAdjustKeyboardInsets={true}
         >
           <View style={styles.encabezado}>
             <EncabezadoPagina
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
-    paddingBottom: 32,
+    paddingBottom: 80,
     backgroundColor: paletaColores.fondoClaro,
   },
   encabezado: {
