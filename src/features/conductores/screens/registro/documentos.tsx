@@ -30,6 +30,7 @@ type TipoDocumento =
 
 export default function DocumentosConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
+    // 4. zustand_uso: guarda licencia, soat y antecedentes (paso 4)
     const {
         licenciaConducir,
         soat,
@@ -40,7 +41,7 @@ export default function DocumentosConductor() {
     const [seleccionando, setSeleccionando] = useState(false);
     const seleccionEnCurso = useRef(false);
 
-    // GUARDADO DE DOCUMENTOS CONDUCTOR: Seleccion de licencia, SOAT y antecedentes mediante expo-document-picker
+    // 1. selector_documentos: permite adjuntar pdf o imagenes para soat y antecedentes
     const seleccionarArchivo = async(tipo: TipoDocumento) => {
         if (seleccionEnCurso.current) return;
 

@@ -28,6 +28,7 @@ type TipoFoto = "frente" | "reverso" | "selfie";
 
 export default function IdentidadOficialConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
+    // 3. zustand_uso: guarda fotos de dni y selfie (paso 3)
     const {
         dniFrente,
         dniReverso,
@@ -39,7 +40,7 @@ export default function IdentidadOficialConductor() {
     const [capturando, setCapturando] = useState(false);
     const capturaEnCurso = useRef(false);
 
-    // USO DE CAMARA SIN INGRESAR A LA GALERIA: Dispara exclusivamente la camara fisica con launchCameraAsync
+    // 1. camara_directa: usa solo camara fisica sin galeria para evitar fotos falsas
     const tomarFoto = async(tipo: TipoFoto) => {
         if (capturaEnCurso.current) return;
         capturaEnCurso.current = true;

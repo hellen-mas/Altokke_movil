@@ -70,6 +70,7 @@ export const storageService = {
     });
 
     // 1. sightengine: revisa que la foto de perfil sea apropiada
+    // 1. bucket_publico: avatars para fotos de perfil publicas
     if (bucket === "avatars" && !esPdf) {
       const resultado = await invocarEdgeFunction<{
         ok: boolean;
@@ -105,7 +106,7 @@ export const storageService = {
   /**
    * Procesa, sube en paralelo y registra un lote de documentos en Storage y base de datos
    */
-  // BUCKET PRIVADO DOCUMENTOS-CONDUCTORES CON RLS: Bucket privado donde se guardan expedientes protegidos
+  // 2. bucket_privado: documentos-conductores protegido con rls
   async subirLoteDocumentos(
     usuarioId: string,
     documentos: DocumentoParaSubir[],
