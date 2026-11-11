@@ -57,17 +57,17 @@ const estadoInicial: DatosFormularioConductor = {
   confirmacionVeracidad: false,
 };
 
-// ZUSTAND: Definicion del contrato del store para el registro de conductor
+// 1. ZUSTAND_BASE: Definición del contrato del store global en memoria RAM para los 25 campos del conductor
 interface ConductorStore extends DatosFormularioConductor {
   actualizarFormulario: (datos: Partial<DatosFormularioConductor>) => void;
-  // LIMPIEZA ZUSTAND: Metodo para reiniciar los 25 campos de la memoria RAM al estado vacio
+  // 5. ZUSTAND_LIMPIEZA: Método para reiniciar los 25 campos de la memoria RAM al estado vacío
   limpiarFormulario: () => void;
 }
 
-// ZUSTAND: Hook global para acumular datos en memoria RAM entre las 5 etapas del registro
+// 1. ZUSTAND_BASE: Hook global useRegistroConductor para retener datos entre las 5 etapas del registro
 export const useRegistroConductor = create<ConductorStore>((set) => ({
   ...estadoInicial,
   actualizarFormulario: (datos) => set(datos),
-  // LIMPIEZA ZUSTAND: Ejecuta el reseteo inmediato a estadoInicial
+  // 5. ZUSTAND_LIMPIEZA: Ejecuta el reseteo inmediato a estadoInicial
   limpiarFormulario: () => set(estadoInicial),
 }));

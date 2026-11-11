@@ -49,7 +49,7 @@ export const storageService = {
     let uriFinal = uri;
     const contentType = esPdf ? "application/pdf" : "image/jpeg";
 
-    // REDUCTOR DE IMAGENES: Optimiza fotos a ancho max 1200px y calidad JPEG 0.75-0.8 (PDFs pasan sin alterar)
+    // 1. STORAGE_REDUCCION_FOTOS: Optimiza fotos a ancho max 1200px y calidad JPEG 0.75-0.8 (PDFs pasan sin alterar)
     if (!esPdf) {
       const imagen = await ImageManipulator.manipulateAsync(
         uri,
@@ -64,11 +64,12 @@ export const storageService = {
       throw new Error("El archivo no existe en el dispositivo.");
     }
 
+    // 2. STORAGE_CONVERSION_BASE64_ARRAYBUFFER: FileSystem lee archivo local y lo convierte a Base64
     const base64 = await FileSystem.readAsStringAsync(uriFinal, {
       encoding: FileSystem.EncodingType.Base64,
     });
 
-    // Validar las fotos de perfil antes de almacenarlas
+    // 2. SIGHTENGINE_VALIDACION_AVATAR: Valida foto de perfil con IA antes de guardar en bucket avatars
     if (bucket === "avatars" && !esPdf) {
       const resultado = await invocarEdgeFunction<{
         ok: boolean;
@@ -86,7 +87,7 @@ export const storageService = {
       }
     }
 
-    // RLS: La subida a Storage es evaluada por politicas RLS en storage.objects (carpeta auth.uid())
+    // 3. STORAGE_RLS_BUCKET_PRIVADO: decode() pasa Base64 a ArrayBuffer y sube a Storage protegido por RLS (auth.uid)
     const { error } = await supabase.storage
       .from(bucket)
       .upload(ruta, decode(base64), {
@@ -182,7 +183,7 @@ export const storageService = {
         url_archivo: ruta,
       };
 
-      // RPC: Invocacion del procedimiento almacenado registrar_documento_conductor en PostgreSQL
+      // 4. STORAGE_RPC_POSTGRES: Procedimiento almacenado registrar_documento_conductor en PostgreSQL con pg_advisory_xact_lock
       const { error: errorRegistro } = await supabase.rpc(
         "registrar_documento_conductor",
         {
