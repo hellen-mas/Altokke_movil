@@ -58,7 +58,7 @@ function convertirError(error: unknown): ErrorConsultaDni {
   );
 }
 
-// 2. APIPERU_SERVICIO_MOVIL: Servicio que invoca la Edge Function consultar-dni en Supabase
+// 1. apiperu_servicio: llama a la funcion de supabase para consultar reniec
 export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
     const limpio = dni.trim();

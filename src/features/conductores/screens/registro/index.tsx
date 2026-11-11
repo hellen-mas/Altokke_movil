@@ -29,7 +29,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DatosPersonalesConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
-  // 2. ZUSTAND_USO_PASO1: Extracción y actualización de datos personales en el store global
+  // 2. zustand_uso: guarda datos personales (paso 1)
   const {
     nombre,
     apellidos,
@@ -41,7 +41,7 @@ export default function DatosPersonalesConductor() {
     actualizarFormulario,
   } = useRegistroConductor();
 
-  // 4. APIPERU_AUTORELLENADO_UI: Auto-completado de nombres y apellidos oficiales devueltos por RENIEC
+  // 3. apiperu_uso: llena nombres oficiales de reniec
   const {
     cargando: consultandoDni,
     error: errorDni,
@@ -63,7 +63,7 @@ export default function DatosPersonalesConductor() {
     }
   };
 
-  // 3. YUP_VALIDACION_UI: Validación previa antes de permitir avanzar a la pantalla 2
+  // 3. yup_uso: valida antes de pasar al paso 2
   const continuar = () => {
     Keyboard.dismiss();
     if (consultandoDni) {

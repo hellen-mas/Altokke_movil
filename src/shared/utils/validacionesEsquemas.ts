@@ -1,9 +1,7 @@
 import { calcularEdad } from "@/shared/utils/validaciones";
 import * as yup from "yup";
 
-// 1. YUP_REGLAS_BASE: Reglas de validación atómicas reutilizables en toda la aplicación
-
-// DNI: Exige 8 dígitos numéricos exactos
+// 1. yup_base: reglas para dni, telefono, correo y clave
 export const reglaDni = yup
   .string()
   .trim()

@@ -1,15 +1,13 @@
 import { reglaCorreo, reglaDni, reglaPasswordSegura } from "@/shared/utils/validacionesEsquemas";
 import * as yup from "yup";
 
-// 2. YUP_ESQUEMA_CONDUCTOR: Esquema declarativo de validación de datos personales del conductor
+// 2. yup_esquema: valida los datos personales del conductor
 export const esquemaDatosConductor = yup.object({
-  // Nombres y apellidos oficiales devueltos por RENIEC
   nombre: yup.string().trim().required("Debes consultar y validar tu DNI"),
   apellidos: yup.string().trim().required("Debes consultar y validar tu DNI"),
   dni: reglaDni,
   correo: reglaCorreo,
 
-  // Contraseña con mínimo 12 caracteres y prueba personalizada anti-datos personales
   contrasena: reglaPasswordSegura
     .min(12, "Debe tener al menos 12 caracteres")
     .test(

@@ -21,7 +21,7 @@ function mensajeDeError(error: unknown): string {
   return "No se pudo validar el DNI. Inténtalo nuevamente.";
 }
 
-// 3. APIPERU_HOOK_QUERY: Custom hook con TanStack Query para consultar DNI con validación a 8 dígitos y caché de 24h
+// 2. apiperu_hook: consulta el dni al escribir los 8 digitos
 export function useConsultaDniQuery(
   dni: string,
   onEncontrado?: (nombres: string, apellidos: string) => void
@@ -32,16 +32,15 @@ export function useConsultaDniQuery(
   const { data, error, isFetching, isSuccess, fetchStatus } = useQuery({
     queryKey: claveIdentidadDni(limpio),
     queryFn: () => identidadService.validarIdentidadDNI(limpio),
-    // enabled: Solo se dispara con 8 dígitos numéricos exactos (evita peticiones innecesarias)
+    // solo consulta cuando hay 8 digitos
     enabled: dniCompleto,
-    // staleTime / gcTime: Guarda en caché 24 horas para no pagar de más a la API ni saturar la red
+    // guarda en cache 24 horas para no repetir la consulta
     staleTime: UN_DIA,
     gcTime: UN_DIA,
-    // retry: false: Si el DNI no existe o está duplicado, no reintenta automáticamente
     retry: false,
   });
 
-  // useRef para evitar notificar repetidamente a la UI si la pantalla se re-renderiza
+  // avisa una sola vez para no repetir
   const ultimoNotificado = useRef<string | null>(null);
 
   useEffect(() => {
