@@ -49,7 +49,7 @@ export const storageService = {
     let uriFinal = uri;
     const contentType = esPdf ? "application/pdf" : "image/jpeg";
 
-    // 1. storage_comprimir: reduce la foto a 1200px para que no pese
+    // 1. storage_comprimir - bajamos la foto a 1200px
     if (!esPdf) {
       const imagen = await ImageManipulator.manipulateAsync(
         uri,
@@ -64,13 +64,13 @@ export const storageService = {
       throw new Error("El archivo no existe en el dispositivo.");
     }
 
-    // 2. storage_base64: convierte la foto a binario
+    // 2. storage_base64 - convertimos a base64 para subir
     const base64 = await FileSystem.readAsStringAsync(uriFinal, {
       encoding: FileSystem.EncodingType.Base64,
     });
 
-    // 1. sightengine: revisa que la foto de perfil sea apropiada
-    // 1. bucket_publico: avatars para fotos de perfil publicas
+    // 1. sightengine - valida la foto con ia
+    // 1. bucket_publico - fotos de perfil (avatars)
     if (bucket === "avatars" && !esPdf) {
       const resultado = await invocarEdgeFunction<{
         ok: boolean;
@@ -88,7 +88,7 @@ export const storageService = {
       }
     }
 
-    // 3. storage_privado: guarda en la carpeta del usuario con rls
+    // 3. storage_privado - guarda en la carpeta del usuario
     const { error } = await supabase.storage
       .from(bucket)
       .upload(ruta, decode(base64), {
@@ -106,7 +106,7 @@ export const storageService = {
   /**
    * Procesa, sube en paralelo y registra un lote de documentos en Storage y base de datos
    */
-  // 2. bucket_privado: documentos-conductores protegido con rls
+  // 2. bucket_privado - documentos protegidos con rls
   async subirLoteDocumentos(
     usuarioId: string,
     documentos: DocumentoParaSubir[],
@@ -184,7 +184,7 @@ export const storageService = {
         url_archivo: ruta,
       };
 
-      // 4. storage_bd: guarda la ruta en postgresql
+      // 4. storage_bd - guarda la ruta en postgresql
       const { error: errorRegistro } = await supabase.rpc(
         "registrar_documento_conductor",
         {

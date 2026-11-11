@@ -57,14 +57,14 @@ const estadoInicial: DatosFormularioConductor = {
   confirmacionVeracidad: false,
 };
 
-// 1. zustand_base: guarda los 25 campos del conductor en memoria
+// 1. zustand_base - estado global con los 25 campos
 interface ConductorStore extends DatosFormularioConductor {
   actualizarFormulario: (datos: Partial<DatosFormularioConductor>) => void;
-  // 5. zustand_limpieza: resetea el formulario al terminar
+  // 5. zustand_limpieza - resetea el formulario al terminar
   limpiarFormulario: () => void;
 }
 
-// 1. zustand_base: hook para compartir datos entre las 5 pantallas
+// 1. zustand_base - hook compartido entre las 5 pantallas
 export const useRegistroConductor = create<ConductorStore>((set) => ({
   ...estadoInicial,
   actualizarFormulario: (datos) => set(datos),

@@ -44,7 +44,7 @@ const coloresOscuro = {
 
 export type ColoresTema = typeof coloresClaro | typeof coloresOscuro;
 
-// 1. tema_dinamico: detecta modo claro/oscuro del celular y aplica la paleta
+// 1. tema_dinamico - tema claro u oscuro del celular
 export function useAltokkeTheme() {
   const esquemaSistema = useColorScheme();
   const modoPreferido = useTemaStore(

@@ -21,7 +21,7 @@ function mensajeDeError(error: unknown): string {
   return "No se pudo validar el DNI. Inténtalo nuevamente.";
 }
 
-// 2. apiperu_hook: consulta el dni al escribir los 8 digitos
+// 2. apiperu_hook - busca el dni al escribir 8 digitos
 export function useConsultaDniQuery(
   dni: string,
   onEncontrado?: (nombres: string, apellidos: string) => void

@@ -1,7 +1,7 @@
 import { calcularEdad } from "@/shared/utils/validaciones";
 import * as yup from "yup";
 
-// 1. yup_base: reglas para dni, telefono, correo y clave
+// 1. yup_base - reglas de dni, celular, correo y clave
 export const reglaDni = yup
   .string()
   .trim()

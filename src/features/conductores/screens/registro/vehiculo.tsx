@@ -20,10 +20,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function VehiculoConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
   const [enviando, setEnviando] = useState(false);
-  // 1. lock: evita doble clic si presionan rapido
+  // 1. lock - evita doble clic al enviar
   const envioEnCurso = useRef(false);
 
-  // 4. zustand_uso: saca todos los datos para enviar (paso 5)
+  // 4. zustand_uso - sacamos los datos para enviar (paso 5)
   const {
     placa, marca, modelo, anio, color, capacidad, confirmacionVeracidad,
     nombre, apellidos, dni, correo, contrasena, telefono, foto,
@@ -99,7 +99,7 @@ export default function VehiculoConductor() {
         },
       });
 
-      // 5. zustand_limpieza: borra los datos al terminar
+      // 5. zustand_limpieza - limpiamos la memoria al terminar
       limpiarFormulario();
 
       Alert.alert(

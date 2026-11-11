@@ -30,7 +30,7 @@ type TipoDocumento =
 
 export default function DocumentosConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
-    // 4. zustand_uso: guarda licencia, soat y antecedentes (paso 4)
+    // 4. zustand_uso - guardamos licencia y soat (paso 4)
     const {
         licenciaConducir,
         soat,
@@ -41,7 +41,7 @@ export default function DocumentosConductor() {
     const [seleccionando, setSeleccionando] = useState(false);
     const seleccionEnCurso = useRef(false);
 
-    // 1. selector_documentos: permite adjuntar pdf o imagenes para soat y antecedentes
+    // 1. selector_documentos - permite subir pdf o foto
     const seleccionarArchivo = async(tipo: TipoDocumento) => {
         if (seleccionEnCurso.current) return;
 
@@ -49,7 +49,6 @@ export default function DocumentosConductor() {
         setSeleccionando(true);
 
         try {
-            // GUARDADO DE DOCUMENTOS CONDUCTOR: Abre el selector de archivos del sistema operativo (PDF, JPG, PNG)
             const resultado = await DocumentPicker.getDocumentAsync({
                 type: [
                     "application/pdf",

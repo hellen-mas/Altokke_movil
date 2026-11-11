@@ -29,7 +29,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VerificacionContactoConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
-  // 3. zustand_uso: guarda telefono y foto (paso 2)
+  // 3. zustand_uso - guardamos telefono y foto (paso 2)
   const {
     telefono,
     correoRespaldo,

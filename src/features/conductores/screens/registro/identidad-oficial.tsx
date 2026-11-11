@@ -28,7 +28,7 @@ type TipoFoto = "frente" | "reverso" | "selfie";
 
 export default function IdentidadOficialConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
-    // 3. zustand_uso: guarda fotos de dni y selfie (paso 3)
+    // 3. zustand_uso - guardamos dni y selfie (paso 3)
     const {
         dniFrente,
         dniReverso,
@@ -40,7 +40,7 @@ export default function IdentidadOficialConductor() {
     const [capturando, setCapturando] = useState(false);
     const capturaEnCurso = useRef(false);
 
-    // 1. camara_directa: usa solo camara fisica sin galeria para evitar fotos falsas
+    // 1. camara_directa - solo camara, no galeria
     const tomarFoto = async(tipo: TipoFoto) => {
         if (capturaEnCurso.current) return;
         capturaEnCurso.current = true;
@@ -57,7 +57,6 @@ export default function IdentidadOficialConductor() {
                 return;
             }
 
-            // USO DE CAMARA SIN INGRESAR A LA GALERIA: Captura directa sin selector de archivos ni galeria
             const resultado = await ImagePicker.launchCameraAsync({
                 allowsEditing: false,
                 quality: 0.9,

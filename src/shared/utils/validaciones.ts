@@ -1,4 +1,4 @@
-// 1. edad: calcula la edad con hora de peru
+// 1. edad - calcula mayoria de edad
 export function calcularEdad(fecha: Date | string): number {
   if (!fecha) return 0;
   const d = typeof fecha === "string" ? new Date(fecha.includes("T") ? fecha : `${fecha}T00:00:00`) : fecha;
@@ -9,10 +9,10 @@ export function calcularEdad(fecha: Date | string): number {
   return (m < 0 || (m === 0 && hoy.getDate() < d.getDate())) ? edad - 1 : edad;
 }
 
-// 2. dni: limpia el dni a 8 numeros
+// 2. dni - deja solo 8 numeros
 export const sanitizarDNI = (texto: string) => texto.replace(/\D/g, "").slice(0, 8);
 
-// 3. telefono: quita el +51 y deja 9 numeros
+// 3. telefono - quita el +51 y deja 9 numeros
 export const sanitizarTelefono = (texto: string) => {
   const digitos = texto.replace(/\D/g, "");
   const sinPrefijo =

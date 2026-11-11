@@ -58,7 +58,7 @@ function convertirError(error: unknown): ErrorConsultaDni {
   );
 }
 
-// 1. apiperu_servicio: llama a la funcion de supabase para consultar reniec
+// 1. apiperu_servicio - consulta reniec desde supabase
 export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
     const limpio = dni.trim();

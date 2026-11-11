@@ -6,7 +6,7 @@ export const useUserRole = () => useAuthStore((s) => s.userRole);
 export const useIsAuthenticated = () => useAuthStore((s) => s.isAuthenticated);
 export const useIsLoading = () => useAuthStore((s) => s.isLoading);
 
-// 1. auth_hook: entrega estado de sesion, rol y metodos login/logout
+// 1. auth_hook - datos de la sesion actual
 export function useAuth() {
     return useAuthStore(
         useShallow((s) => ({

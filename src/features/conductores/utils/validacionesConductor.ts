@@ -1,7 +1,7 @@
 import { reglaCorreo, reglaDni, reglaPasswordSegura } from "@/shared/utils/validacionesEsquemas";
 import * as yup from "yup";
 
-// 2. yup_esquema: valida los datos personales del conductor
+// 2. yup_esquema - reglas del formulario de conductor
 export const esquemaDatosConductor = yup.object({
   nombre: yup.string().trim().required("Debes consultar y validar tu DNI"),
   apellidos: yup.string().trim().required("Debes consultar y validar tu DNI"),
