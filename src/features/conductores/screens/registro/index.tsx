@@ -1,5 +1,5 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { IndicadorPasos } from "@/shared/components/ui";
+import { IndicadorPasos, TarjetaDatosVerificados } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { CampoFechaNacimiento } from "@/shared/components/ui/CampoFechaNacimiento";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
@@ -157,22 +157,7 @@ export default function DatosPersonalesConductor() {
               !consultandoDni &&
               nombre.trim() !== "" &&
               apellidos.trim() !== "" && (
-                <View style={[styles.tarjetaVerificada, { backgroundColor: colores.exitoFondo, borderColor: colores.linea }]}>
-                  <View style={styles.cabeceraVerificada}>
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={18}
-                      color={colores.primario}
-                    />
-                    <Text style={[styles.tituloVerificado, { color: colores.exitoTexto }]}>
-                      Datos verificados
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.nombreVerificado, { color: colores.texto }]}>
-                    {`${nombre} ${apellidos}`}
-                  </Text>
-                </View>
+                <TarjetaDatosVerificados nombreCompleto={`${nombre} ${apellidos}`} />
               )}
 
             <CampoFechaNacimiento

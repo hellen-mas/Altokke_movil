@@ -1,5 +1,5 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { IndicadorPasos } from "@/shared/components/ui";
+import { BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
@@ -280,23 +280,7 @@ export default function VehiculoConductor() {
               onPress={enviarSolicitud}
             />
 
-            <Pressable
-              style={styles.botonVolver}
-              onPress={() => router.back()}
-              disabled={enviando}
-              accessibilityRole="button"
-              accessibilityLabel="Volver al paso anterior"
-            >
-              <Ionicons
-                name="arrow-back-outline"
-                size={18}
-                color={colores.secundario}
-              />
-
-              <Text style={[styles.textoVolver, { color: colores.secundario }]}>
-                Volver
-              </Text>
-            </Pressable>
+            <BotonVolverPaso />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

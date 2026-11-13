@@ -1,7 +1,7 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import { IndicadorPasos, SelectorFotoPerfil } from "@/shared/components/ui";
+import { BotonVolverPaso, IndicadorPasos, SelectorFotoPerfil } from "@/shared/components/ui";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
@@ -245,24 +245,7 @@ export default function VerificacionContactoConductor() {
               onPress={continuar}
             />
 
-            <Pressable
-              style={styles.botonVolver}
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Volver al paso anterior"
-            >
-              <Ionicons
-                name="arrow-back-outline"
-                size={18}
-                color={
-                  paletaColores.textoSecundarioClaro
-                }
-              />
-
-              <Text style={[styles.textoVolver, { color: colores.secundario }]}>
-                Volver
-              </Text>
-            </Pressable>
+            <BotonVolverPaso />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

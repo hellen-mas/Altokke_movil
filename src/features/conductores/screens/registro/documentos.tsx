@@ -1,7 +1,7 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { DocumentoArchivo } from "@/features/conductores/components/DocumentoArchivo";
-import { IndicadorPasos } from "@/shared/components/ui";
+import { BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { Ionicons } from "@expo/vector-icons";
@@ -199,22 +199,7 @@ export default function DocumentosConductor() {
                             disabled={seleccionando}
                         />
 
-                        <Pressable
-                            style={styles.botonVolver}
-                            onPress={() => router.back()}
-                            accessibilityRole="button"
-                            accessibilityLabel="Volver al paso anterior"
-                        >
-                            <Ionicons
-                            name="arrow-back-outline"
-                            size={18}
-                            color={colores.secundario}
-                            />
-
-                            <Text style={[styles.textoVolver, { color: colores.secundario }]}>
-                            Volver
-                            </Text>
-                        </Pressable>
+                        <BotonVolverPaso />
                     </View>
                 </ScrollView>
         </SafeAreaView>
