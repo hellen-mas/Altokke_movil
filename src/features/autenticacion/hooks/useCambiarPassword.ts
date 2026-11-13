@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import { authService } from "@/features/autenticacion/services/authService";
 import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
+import { useAsyncLock } from "@/shared/hooks/useAsyncLock";
 
 export interface OpcionesCambiarPassword {
   onExito?: () => void;
@@ -26,12 +27,10 @@ export function validarFortalezaPassword(password: string): { valida: boolean; m
 
 export function useCambiarPassword(opciones: OpcionesCambiarPassword = {}) {
   const [cargando, setCargando] = useState(false);
-  const cerrojoRef = useRef(false);
+  const { ejecutarSeguro } = useAsyncLock();
 
   const cambiarPassword = useCallback(
     async (nuevaPassword: string, confirmarPassword: string, passwordActual?: string): Promise<boolean> => {
-      if (cerrojoRef.current || cargando) return false;
-
       if (!nuevaPassword || !confirmarPassword) {
         Alert.alert("Campos incompletos", "Por favor completa todos los campos de contraseña.");
         return false;
@@ -53,30 +52,31 @@ export function useCambiarPassword(opciones: OpcionesCambiarPassword = {}) {
         return false;
       }
 
-      cerrojoRef.current = true;
-      setCargando(true);
+      const resultado = await ejecutarSeguro(async () => {
+        setCargando(true);
+        try {
+          await authService.actualizarPassword(nuevaPassword);
 
-      try {
-        await authService.actualizarPassword(nuevaPassword);
-
-        if (opciones.onExito) {
-          opciones.onExito();
-        } else {
-          Alert.alert(
-            "Contraseña actualizada",
-            "Tu contraseña se actualizó correctamente."
-          );
+          if (opciones.onExito) {
+            opciones.onExito();
+          } else {
+            Alert.alert(
+              "Contraseña actualizada",
+              "Tu contraseña se actualizó correctamente."
+            );
+          }
+          return true;
+        } catch (error: unknown) {
+          Alert.alert("Error al actualizar", traducirErrorAuth(error));
+          return false;
+        } finally {
+          setCargando(false);
         }
-        return true;
-      } catch (error: unknown) {
-        Alert.alert("Error al actualizar", traducirErrorAuth(error));
-        return false;
-      } finally {
-        cerrojoRef.current = false;
-        setCargando(false);
-      }
+      });
+
+      return resultado ?? false;
     },
-    [cargando, opciones]
+    [ejecutarSeguro, opciones]
   );
 
   return {

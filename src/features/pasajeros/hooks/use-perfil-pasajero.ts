@@ -4,6 +4,7 @@ import {
   type PerfilPasajero,
   type PreferenciasPasajero,
 } from "@/features/pasajeros/services/pasajeroService";
+import { extraerDatosUsuario } from "@/shared/utils/usuario";
 import type { User } from "@supabase/supabase-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -16,24 +17,21 @@ export const clavePerfilPasajero = (userId: string | null) =>
 
 // Perfil provisional con los datos de la sesión, mientras llega el de Supabase.
 function crearPerfilInicial(userId: string, user: User | null): PerfilPasajero {
-  const metadata = user?.user_metadata;
-
-  const nombre = (metadata?.nombre || metadata?.full_name?.split(" ")[0] || "Pasajero").trim();
-  const apellidos = (metadata?.apellidos || "").trim();
+  const datos = extraerDatosUsuario(user, "Pasajero");
 
   return {
     id: userId,
-    nombre,
-    apellidos,
-    nombreCompleto: apellidos ? `${nombre} ${apellidos}` : nombre,
-    primerNombre: nombre.split(" ")[0],
-    correo: user?.email || "",
-    telefono: metadata?.telefono || "",
-    fotoUrl: metadata?.avatar_url || metadata?.picture || null,
+    nombre: datos.nombre,
+    apellidos: datos.apellidos,
+    nombreCompleto: datos.nombreCompleto,
+    primerNombre: datos.primerNombre,
+    correo: datos.correo,
+    telefono: datos.telefono,
+    fotoUrl: datos.fotoUrl,
     calificacion: 5.0,
     viajesCount: 0,
-    dni: metadata?.dni || "Sin registrar",
-    fechaNacimiento: metadata?.fecha_nacimiento || "Sin registrar",
+    dni: datos.dni || "Sin registrar",
+    fechaNacimiento: datos.fechaNacimiento || "Sin registrar",
     genero: "Sin registrar",
     preferencias: {},
   };

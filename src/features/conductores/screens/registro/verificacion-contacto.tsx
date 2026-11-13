@@ -1,14 +1,16 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { CampoTexto } from "@/shared/components/ui/CampoTexto";
-import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import { BotonVolverPaso, IndicadorPasos, SelectorFotoPerfil } from "@/shared/components/ui";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import {
+  BotonPrincipal,
+  BotonVolverPaso,
+  CampoTelefonoPeru,
+  CampoTexto,
+  EncabezadoPagina,
+  IndicadorPasos,
+  SelectorFotoPerfil,
+} from "@/shared/components/ui";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
-import { 
-  esTelefonoValido, 
-  sanitizarTelefono 
-} from "@/shared/utils/validaciones";
+import { esTelefonoValido } from "@/shared/utils/validaciones";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -22,7 +24,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,23 +39,10 @@ export default function VerificacionContactoConductor() {
     actualizarFormulario,
   } = useRegistroConductor();
 
-  const [telefonoEnFoco, setTelefonoEnFoco] =
-    useState(false);
+  const [intentoContinuar, setIntentoContinuar] = useState(false);
 
-  const [intentoContinuar, setIntentoContinuar] =
-    useState(false);
-
-  const telefonoCorrecto = esTelefonoValido(
-    telefono.trim()
-  );
-
+  const telefonoCorrecto = esTelefonoValido(telefono.trim());
   const mostrarErrorTelefono = intentoContinuar && !telefonoCorrecto;
-
-  const cambiarTelefono = (texto: string) => {
-    actualizarFormulario({
-      telefono: sanitizarTelefono(texto),
-    });
-  };
 
   const continuar = () => {
     Keyboard.dismiss();
@@ -142,69 +130,14 @@ export default function VerificacionContactoConductor() {
 
           {/* Formulario */}
           <View style={styles.formulario}>
-            <View>
-              <View 
-                style={[
-                  styles.telefonoContainer,
-                  telefonoEnFoco &&
-                    styles.telefonoEnFoco,
-                  mostrarErrorTelefono && 
-                    styles.telefonoError,
-                  {
-                    backgroundColor: mostrarErrorTelefono ? colores.errorFondo : colores.campo,
-                    borderColor: mostrarErrorTelefono ? colores.error : telefonoEnFoco ? colores.exitoTexto : colores.linea,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="call-outline"
-                  size={22}
-                  color={
-                    telefonoEnFoco
-                      ? colores.exitoTexto
-                      : colores.secundario
-                  }
-                />
-
-                <Text style={[styles.prefijo, { color: colores.textoCampo }]}>
-                  +51
-                </Text>
-
-                <View style={[styles.separador, { backgroundColor: colores.linea }]} />
-
-                <TextInput
-                  style={[styles.telefonoInput, { color: colores.textoCampo }]}
-                  placeholder="Número de celular"
-                  placeholderTextColor={colores.secundario}
-                  value={telefono}
-                  onChangeText={cambiarTelefono}
-                  onFocus={() => setTelefonoEnFoco(true)}
-                  onBlur={() => setTelefonoEnFoco(false)}
-                  keyboardType="phone-pad"
-                  textContentType="telephoneNumber"
-                  autoComplete="tel"
-                  keyboardAppearance={esOscuro ? "dark" : "light"}
-                  maxLength={15}
-                  accessibilityLabel="Número de celular"
-
-                />
-              </View>
-
-              {mostrarErrorTelefono && (
-                <View style={styles.mensajeError}>
-                  <Ionicons
-                    name="alert-circle-outline"
-                    size={16}
-                    color={colores.error}
-                  />
-                  <Text style={[styles.textoError, { color: colores.error }]}>
-                    Ingresa un celular peruano válido
-                    de 9 dígitos.
-                  </Text>
-                </View>
-              )}
-            </View>
-            
+            <CampoTelefonoPeru
+              valor={telefono}
+              alCambiarTexto={(limpio) =>
+                actualizarFormulario({ telefono: limpio })
+              }
+              error={mostrarErrorTelefono}
+              mensajeError="Ingresa un celular peruano válido de 9 dígitos."
+            />
 
             <CampoTexto
               placeholder="Correo de respaldo (opcional)"
@@ -281,65 +214,6 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: 14,
     marginTop: 16,
-  },
-
-  telefonoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    minHeight: 56,
-    paddingHorizontal: 16,
-    gap: 10,
-    backgroundColor: paletaColores.inputClaro,
-    borderColor: paletaColores.bordeClaro,
-    borderWidth: 1,
-    borderRadius: 12,
-  },
-
-  telefonoEnFoco: {
-    borderColor: paletaColores.primary,
-    borderWidth: 1.5,
-    backgroundColor: paletaColores.inputClaro,
-  },
-
-  telefonoError: {
-    borderColor: paletaColores.error,
-    backgroundColor: "#FFF8F8",
-  },
-
-  prefijo: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: paletaColores.textoClaro,
-  },
-
-  separador: {
-    height: 22,
-    width: 1,
-    backgroundColor: paletaColores.bordeClaro,
-  },
-
-  telefonoInput: {
-    flex: 1,
-    fontSize: 16,
-    color: paletaColores.textoClaro,
-    paddingVertical: 12,
-    fontVariant: ["tabular-nums"],
-  },
-
-  mensajeError: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 7,
-    paddingHorizontal: 4,
-  },
-
-  textoError: {
-    flex: 1,
-    color: paletaColores.error,
-    fontSize: 12,
-    lineHeight: 18,
   },
 
   seccionFoto: {

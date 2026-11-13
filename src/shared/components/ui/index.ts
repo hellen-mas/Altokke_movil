@@ -7,6 +7,7 @@ export * from "./BotonVolverPaso";
 export * from "./CampoCodigoVerificacion";
 export * from "./CampoFechaNacimiento";
 export * from "./CampoPasswordConMedidor";
+export * from "./CampoTelefonoPeru";
 export * from "./CampoTexto";
 export * from "./CampoTextoHookForm";
 export * from "./ContenedorGrupoAjustes";

@@ -1,6 +1,7 @@
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { clavePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import type { PerfilPasajero } from "@/features/pasajeros/services/pasajeroService";
+import { extraerDatosUsuario } from "@/shared/utils/usuario";
 import { useQueryClient } from "@tanstack/react-query";
 
 function formatearPrimerNombre(nombreCompleto: string) {
@@ -18,11 +19,8 @@ export function useNombrePasajero(): string {
   if (!userId || !user) return "";
 
   const perfilCache = queryClient.getQueryData<PerfilPasajero>(clavePerfilPasajero(userId));
-  const nombreCompleto = 
-    perfilCache?.primerNombre ||
-    user.user_metadata?.nombre ||
-    user.user_metadata?.full_name ||
-    "";
+  const datos = extraerDatosUsuario(user, "Pasajero");
+  const nombreCompleto = perfilCache?.primerNombre || datos.nombreCompleto;
 
   return formatearPrimerNombre(nombreCompleto);
 }

@@ -4,18 +4,17 @@ import {
   type CodigoErrorDni,
 } from "@/features/autenticacion/services/identidad.dto";
 import { identidadService } from "@/features/autenticacion/services/identidadService";
+import { obtenerMensajeErrorDni } from "@/shared/utils/mensajesErrorDni";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 const UN_DIA = 1000 * 60 * 60 * 24;
-const MENSAJE_SIN_CONEXION =
-  "No tienes conexión a internet. La consulta se reanudará al volver la conexión.";
 
 export const claveIdentidadDni = (dni: string) => ["identidad-dni", dni] as const;
 
 function mensajeDeError(error: unknown): string {
-  if (error instanceof ErrorConsultaDni && error.codigo === CODIGOS_ERROR_DNI.DUPLICADO) {
-    return "Este número de DNI ya está registrado en otra cuenta de Altokke.";
+  if (error instanceof ErrorConsultaDni) {
+    return obtenerMensajeErrorDni(error.codigo, error.message);
   }
   if (error instanceof Error && error.message) return error.message;
   return "No se pudo validar el DNI. Inténtalo nuevamente.";
@@ -65,7 +64,11 @@ export function useConsultaDniQuery(
 
   return {
     cargando: isFetching,
-    error: sinConexion ? MENSAJE_SIN_CONEXION : error ? mensajeDeError(error) : "",
+    error: sinConexion
+      ? obtenerMensajeErrorDni(CODIGOS_ERROR_DNI.SIN_CONEXION)
+      : error
+      ? mensajeDeError(error)
+      : "",
     codigoError,
     dniVerificado: isSuccess ? limpio : "",
     esValido: dniCompleto && isSuccess,

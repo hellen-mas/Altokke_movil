@@ -4,6 +4,7 @@ import {
   type DatosVehiculo,
   type PerfilConductor,
 } from "@/features/conductores/services/conductorService";
+import { extraerDatosUsuario } from "@/shared/utils/usuario";
 import type { User } from "@supabase/supabase-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -18,23 +19,19 @@ export const clavePerfilConductor = (userId: string | null) =>
 // Perfil provisional mientras llega el de Supabase: solo datos reales de la sesión.
 // Lo que todavía no se conoce queda como "—" o pendiente, nunca inventado.
 function crearPerfilInicial(userId: string | null, user: User | null): PerfilConductor {
-  const meta = user?.user_metadata || {};
-  const nombre = (meta.nombre || "").trim();
-  const apellidos = (meta.apellidos || "").trim();
-  const nombreCompleto =
-    `${nombre} ${apellidos}`.trim() || user?.email?.split("@")[0] || "Conductor";
+  const datos = extraerDatosUsuario(user, "Conductor");
 
   return {
     id: userId || "",
-    nombre: nombreCompleto,
-    apellidos,
-    nombreCompleto,
-    correo: user?.email || "",
-    telefono: user?.phone || meta.telefono || "",
-    dni: meta.dni || "",
-    fechaNacimiento: meta.fechaNacimiento || "No especificada",
+    nombre: datos.nombreCompleto,
+    apellidos: datos.apellidos,
+    nombreCompleto: datos.nombreCompleto,
+    correo: datos.correo,
+    telefono: datos.telefono,
+    dni: datos.dni,
+    fechaNacimiento: datos.fechaNacimiento || "No especificada",
     ciudad: "Bagua, Amazonas",
-    foto: meta.avatar_url || meta.foto_url || null,
+    foto: datos.fotoUrl,
     calificacion: 5.0,
     viajes: 0,
     estado: "En verificación",

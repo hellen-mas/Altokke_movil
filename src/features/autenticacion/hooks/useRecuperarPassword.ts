@@ -4,17 +4,16 @@ import { router } from "expo-router";
 import { authService } from "@/features/autenticacion/services/authService";
 import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
 import { TipoDatosRecuperar } from "@/features/autenticacion/utils/validacionesAuth";
+import { useAsyncLock } from "@/shared/hooks/useAsyncLock";
 
 const ESPERA_COOLDOWN_MS = 60000;
 
 export function useRecuperarPassword() {
   const [loading, setLoading] = useState(false);
   const ultimoEnvioRef = useRef<Map<string, number>>(new Map());
-  const cerrojoRef = useRef(false);
+  const { ejecutarSeguro } = useAsyncLock();
 
   const solicitarCodigo = useCallback(async ({ correo }: TipoDatosRecuperar) => {
-    if (cerrojoRef.current || loading) return;
-
     const normalizado = correo.trim().toLowerCase();
     const ahora = Date.now(); // Llamada pura dentro de un evento asíncrono
     const ultimo = ultimoEnvioRef.current.get(normalizado);
@@ -28,22 +27,21 @@ export function useRecuperarPassword() {
       return;
     }
 
-    cerrojoRef.current = true;
-    setLoading(true);
-
-    try {
-      await authService.solicitarRecuperacionPassword(normalizado);
-      ultimoEnvioRef.current.set(normalizado, Date.now());
-      router.push(
-        `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(normalizado)}`
-      );
-    } catch (error: unknown) {
-      Alert.alert("Error al enviar código", traducirErrorAuth(error));
-    } finally {
-      cerrojoRef.current = false;
-      setLoading(false);
-    }
-  }, [loading]);
+    await ejecutarSeguro(async () => {
+      setLoading(true);
+      try {
+        await authService.solicitarRecuperacionPassword(normalizado);
+        ultimoEnvioRef.current.set(normalizado, Date.now());
+        router.push(
+          `/recuperar-cuenta/verificar-codigo?email=${encodeURIComponent(normalizado)}`
+        );
+      } catch (error: unknown) {
+        Alert.alert("Error al enviar código", traducirErrorAuth(error));
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [ejecutarSeguro]);
 
   return {
     loading,
