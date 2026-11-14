@@ -30,9 +30,10 @@ function crearHtml(centro: PuntoMapa, colorPrimario: string, colorError: string)
       align-items: center; justify-content: center; background: rgba(37, 99, 235, 0.15); }
     .punto-gps { width: 10px; height: 10px; border-radius: 8px; border: 3px solid #FFFFFF;
       background: #2563EB; }
-    .moto { width: 26px; height: 26px; border-radius: 15px; display: flex;
-      align-items: center; justify-content: center; font-size: 15px;
-      background: #2FAE73; border: 2px solid #FFFFFF; }
+    .moto { width: 22px; height: 22px; border-radius: 11px; display: flex;
+      align-items: center; justify-content: center;
+      background: #047857; border: 2.5px solid #FFFFFF; box-shadow: 0 2px 5px rgba(0,0,0,0.35); }
+    .moto-centro { width: 8px; height: 8px; border-radius: 4px; background: #FFFFFF; }
   </style>
 </head>
 <body>
@@ -99,8 +100,7 @@ function crearHtml(centro: PuntoMapa, colorPrimario: string, colorError: string)
       marcadores = [];
 
       datos.conductores.forEach(function (conductor) {
-        const moto = crearElemento("moto");
-        moto.textContent = "🛺";
+        const moto = crearElemento("moto", crearElemento("moto-centro"));
         agregarMarcador(conductor, { element: moto });
       });
 

@@ -1,0 +1,34 @@
+services:
+  # 1. Servicio de compilación y verificación de tipos en contenedor limpio
+  build-verify:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    command: ["npx", "tsc", "--noEmit"]
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  # 2. Servicio de pruebas de carga k6 contra endpoints de Supabase
+  k6-stress:
+    image: grafana/k6:latest
+    volumes:
+      - ./tests/k6:/scripts
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL:-https://tu-proyecto.supabase.co}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-tu-anon-key}
+      - PASAJERO_JWT=${PASAJERO_JWT:-Bearer TU_JWT_PASAJERO}
+      - CONDUCTOR_JWT=${CONDUCTOR_JWT:-Bearer TU_JWT_CONDUCTOR}
+    command: ["run", "/scripts/k6_load_test.js"]
+
+  # 3. Servicio de previsualización web para inspección automatizada por IA (Playwright)
+  web-preview:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    ports:
+      - "8081:8081"
+    command: ["npx", "expo", "start", "--web", "--port", "8081"]
+    volumes:
+      - .:/app
+      - /app/node_modules

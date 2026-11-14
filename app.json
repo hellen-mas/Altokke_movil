@@ -7,16 +7,34 @@
     "scheme": "altokkemovil",
     "userInterfaceStyle": "automatic",
     "jsEngine": "hermes",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/mototaxi-splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A130E"
+    },
     "ios": {
       "bundleIdentifier": "pe.altokke.movil",
       "jsEngine": "hermes"
     },
     "android": {
       "package": "pe.altokke.movil",
+      "versionCode": 1,
       "allowBackup": false,
       "usesCleartextTraffic": false,
       "jsEngine": "hermes",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
+        "backgroundColor": "#0A130E"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "VIBRATE"
+      ]
     },
     "web": {
       "output": "static"
