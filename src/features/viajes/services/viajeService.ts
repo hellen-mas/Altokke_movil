@@ -12,6 +12,7 @@ export interface CrearViajeInput {
   distanciaKm: number;
   tarifaEstimada: number;
   metodoPago: string;
+  pagaCon?: number;
 }
 
 export const viajeService = {
@@ -26,6 +27,7 @@ export const viajeService = {
         p_destino_lat: input.destinoLat,
         p_destino_lng: input.destinoLng,
         p_metodo_pago: input.metodoPago,
+        p_paga_con: input.pagaCon ?? null,
       });
 
       if (!rpcError && rpcData) {
@@ -43,6 +45,8 @@ export const viajeService = {
           tarifa_estimada: number;
           tarifa_final: number | null;
           metodo_pago: string | null;
+          paga_con: number | null;
+          vuelto_estimado: number | null;
           estado: string | null;
           creado_en: string;
           aceptado_en: string | null;
@@ -64,6 +68,11 @@ export const viajeService = {
           distancia_km: input.distanciaKm,
           tarifa_estimada: input.tarifaEstimada,
           metodo_pago: input.metodoPago,
+          paga_con: input.pagaCon ?? null,
+          vuelto_estimado:
+            input.pagaCon && input.pagaCon > input.tarifaEstimada
+              ? Number((input.pagaCon - input.tarifaEstimada).toFixed(2))
+              : null,
         })
         .select()
         .single();
