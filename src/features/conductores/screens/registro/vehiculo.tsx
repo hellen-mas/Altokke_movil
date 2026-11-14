@@ -6,6 +6,7 @@ import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { conductorService } from "@/features/conductores/services/conductorService";
+import { TerminosConductor } from "@/features/conductores/components/TerminosConductor";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -25,7 +26,7 @@ export default function VehiculoConductor() {
 
   // 4. zustand_uso - sacamos los datos para enviar (paso 5)
   const {
-    placa, marca, modelo, anio, color, capacidad, confirmacionVeracidad,
+    placa, marca, modelo, anio, color, capacidad, confirmacionVeracidad, terminosCondiciones,
     nombre, apellidos, dni, correo, contrasena, telefono, foto,
     dniFrente, dniReverso, selfie, licenciaConducir, soat, antecedentesPenales,
     actualizarFormulario, limpiarFormulario,
@@ -58,6 +59,14 @@ export default function VehiculoConductor() {
 
     if (!confirmacionVeracidad) {
       Alert.alert("Confirmación requerida", "Confirma que los datos ingresados son correctos.");
+      return false;
+    }
+
+    if (!terminosCondiciones) {
+      Alert.alert(
+        "Términos y condiciones",
+        "Debes leer y aceptar los términos y condiciones de conductor y la política de privacidad para continuar."
+      );
       return false;
     }
 
@@ -254,7 +263,15 @@ export default function VehiculoConductor() {
             </Text>
           </Pressable>
 
-           <View style={styles.aviso}>
+          {/* Términos y Condiciones del Conductor */}
+          <TerminosConductor
+            aceptado={terminosCondiciones}
+            onCambiar={(valor) =>
+              actualizarFormulario({ terminosCondiciones: valor })
+            }
+          />
+
+          <View style={styles.aviso}>
             <Ionicons
               name="shield-checkmark-outline"
               size={18}

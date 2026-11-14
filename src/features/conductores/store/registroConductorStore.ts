@@ -27,6 +27,7 @@ interface DatosFormularioConductor {
   color: string;
   capacidad: string;
   confirmacionVeracidad: boolean;
+  terminosCondiciones: boolean;
 }
 
 const estadoInicial: DatosFormularioConductor = {
@@ -55,6 +56,7 @@ const estadoInicial: DatosFormularioConductor = {
   color: "",
   capacidad: "",
   confirmacionVeracidad: false,
+  terminosCondiciones: false,
 };
 
 // 1. zustand_base - estado global con los 25 campos
