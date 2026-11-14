@@ -2,7 +2,8 @@ import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/shared/api/supabase";
 
-export type RolUsuario = "pasajero" | "conductor" | null;
+type RolUsuario = "pasajero" | "conductor" | null;
+export { type RolUsuario };
 
 export interface EstadoAutenticacion {
   session: Session | null;
@@ -51,8 +52,8 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
   logout: async () => {
     try {
       await supabase.auth.signOut();
-    } catch {
-      // Silenciar error en desconexión
+    } catch (err: unknown) {
+      console.warn("Aviso al cerrar sesion en Supabase:", err);
     }
     set({
       session: null,
@@ -99,10 +100,23 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
 
             if (error || !usuario) {
               console.warn(
-                "No se pudo verificar el estado de la cuenta:",
-                error
+                "No se pudo verificar el estado de la cuenta en backend:",
+                error?.message ?? error
               );
 
+              // Si es un error de red o timeout, preservamos la sesion local para no expulsar al usuario
+              const esErrorConectividad =
+                !error ||
+                error.message?.includes("Network request failed") ||
+                error.message?.includes("Failed to fetch") ||
+                error.message?.includes("timeout");
+
+              if (esErrorConectividad) {
+                get().setSession(ses);
+                return;
+              }
+
+              // Si la cuenta fue eliminada o el error es de autorizacion, cerramos sesion
               get().setSession(null);
               return;
             }
@@ -123,11 +137,12 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
             if (!activo || revisionActual !== revision) return;
 
             console.warn(
-              "Error verificando la cuenta:",
+              "Error verificando la cuenta (preservando sesion local ante caida de red):",
               error
             );
 
-            get().setSession(null);
+            // Ante excepcion de red imprevista, preservamos la sesion valida
+            get().setSession(ses);
           }
         };
 

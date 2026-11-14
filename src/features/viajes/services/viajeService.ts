@@ -30,7 +30,12 @@ export const viajeService = {
         p_paga_con: input.pagaCon ?? null,
       });
 
-      if (!rpcError && rpcData) {
+      if (rpcError) {
+        console.warn("Aviso al solicitar viaje vía RPC:", rpcError.message);
+        throw new Error(rpcError.message);
+      }
+
+      if (rpcData) {
         return rpcData as unknown as {
           id: string;
           pasajero_id: string;
@@ -54,37 +59,10 @@ export const viajeService = {
         };
       }
 
-      // 2. Fallback de compatibilidad
-      const { data, error } = await supabase
-        .from("viajes")
-        .insert({
-          pasajero_id: input.pasajeroId,
-          origen_texto: input.origenTexto,
-          destino_texto: input.destinoTexto,
-          origen_lat: input.origenLat,
-          origen_lng: input.origenLng,
-          destino_lat: input.destinoLat,
-          destino_lng: input.destinoLng,
-          distancia_km: input.distanciaKm,
-          tarifa_estimada: input.tarifaEstimada,
-          metodo_pago: input.metodoPago,
-          paga_con: input.pagaCon ?? null,
-          vuelto_estimado:
-            typeof input.pagaCon === "number" && input.pagaCon >= input.tarifaEstimada
-              ? Number((input.pagaCon - input.tarifaEstimada).toFixed(2))
-              : null,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.warn("Aviso al crear viaje en Supabase:", error.message);
-        return null;
-      }
-      return data;
+      return null;
     } catch (err) {
       console.warn("Excepción al crear viaje en Supabase:", err);
-      return null;
+      throw err;
     }
   },
 
