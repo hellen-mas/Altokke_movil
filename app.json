@@ -6,8 +6,16 @@
     "orientation": "portrait",
     "scheme": "altokkemovil",
     "userInterfaceStyle": "automatic",
-    "ios": {},
+    "jsEngine": "hermes",
+    "ios": {
+      "bundleIdentifier": "pe.altokke.movil",
+      "jsEngine": "hermes"
+    },
     "android": {
+      "package": "pe.altokke.movil",
+      "allowBackup": false,
+      "usesCleartextTraffic": false,
+      "jsEngine": "hermes",
       "predictiveBackGestureEnabled": false
     },
     "web": {
