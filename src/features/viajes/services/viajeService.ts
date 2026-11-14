@@ -17,6 +17,40 @@ export interface CrearViajeInput {
 export const viajeService = {
   async crearViaje(input: CrearViajeInput) {
     try {
+      // 1. Intento soberano mediante RPC seguro 'solicitar_viaje' con validación en servidor
+      const { data: rpcData, error: rpcError } = await supabase.rpc("solicitar_viaje", {
+        p_origen_texto: input.origenTexto,
+        p_destino_texto: input.destinoTexto,
+        p_origen_lat: input.origenLat,
+        p_origen_lng: input.origenLng,
+        p_destino_lat: input.destinoLat,
+        p_destino_lng: input.destinoLng,
+        p_metodo_pago: input.metodoPago,
+      });
+
+      if (!rpcError && rpcData) {
+        return rpcData as unknown as {
+          id: string;
+          pasajero_id: string;
+          conductor_id: string | null;
+          origen_texto: string;
+          destino_texto: string;
+          origen_lat: number;
+          origen_lng: number;
+          destino_lat: number;
+          destino_lng: number;
+          distancia_km: number | null;
+          tarifa_estimada: number;
+          tarifa_final: number | null;
+          metodo_pago: string | null;
+          estado: string | null;
+          creado_en: string;
+          aceptado_en: string | null;
+          finalizado_en: string | null;
+        };
+      }
+
+      // 2. Fallback de compatibilidad
       const { data, error } = await supabase
         .from("viajes")
         .insert({

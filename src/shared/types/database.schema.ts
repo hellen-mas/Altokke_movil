@@ -546,6 +546,30 @@ export type Database = {
           lng_actual: number | null
         }[]
       }
+      solicitar_viaje: {
+        Args: {
+          p_origen_texto: string
+          p_destino_texto: string
+          p_origen_lat: number
+          p_origen_lng: number
+          p_destino_lat: number
+          p_destino_lng: number
+          p_metodo_pago?: string | null
+          p_tipo_servicio?: string | null
+        }
+        Returns: Json
+      }
+      obtener_pasajero_viaje: {
+        Args: { p_viaje_id: string }
+        Returns: {
+          nombre: string
+          apellidos: string
+          foto_url: string | null
+          telefono: string | null
+          calificacion: number | null
+          viajes_completados: number | null
+        }[]
+      }
     }
     Enums: {
       estado_verificacion: "pendiente" | "aprobado" | "rechazado" | "suspendido"

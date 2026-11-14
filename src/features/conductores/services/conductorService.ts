@@ -80,26 +80,11 @@ export const conductorService = {
     });
   },
 
-  async asegurarSesionConductor(
-    correo: string,
-    contrasena: string,
-    datosPersonales: { nombre: string; apellidos: string; telefono: string; dni: string }
-  ): Promise<string> {
+  async asegurarSesionConductor(correo: string, contrasena: string, datosPersonales: { nombre: string; apellidos: string; telefono: string; dni: string }): Promise<string> {
     return registroConductorService.asegurarSesionConductor(correo, contrasena, datosPersonales);
   },
 
-  async subirArchivosConductor(
-    usuarioId: string,
-    archivos: {
-      foto?: string | null;
-      dniFrente?: string | null;
-      dniReverso?: string | null;
-      selfie?: string | null;
-      licenciaConducir?: DocumentoAdjunto | null;
-      soat?: DocumentoAdjunto | null;
-      antecedentesPenales?: DocumentoAdjunto | null;
-    }
-  ): Promise<void> {
+  async subirArchivosConductor(usuarioId: string, archivos: { foto?: string | null; dniFrente?: string | null; dniReverso?: string | null; selfie?: string | null; licenciaConducir?: DocumentoAdjunto | null; soat?: DocumentoAdjunto | null; antecedentesPenales?: DocumentoAdjunto | null; }): Promise<void> {
     return registroConductorService.subirArchivosConductor(usuarioId, archivos);
   },
 
@@ -144,10 +129,8 @@ export const conductorService = {
       const pData = pRes.data;
       const vData = vRes.data;
       const docsMap: Record<string, { estado: string }> = {
-        dni: { estado: "PENDIENTE" },
-        licencia: { estado: "PENDIENTE" },
-        soat: { estado: "PENDIENTE" },
-        tarjetaPropiedad: { estado: "PENDIENTE" },
+        dni: { estado: "PENDIENTE" }, licencia: { estado: "PENDIENTE" },
+        soat: { estado: "PENDIENTE" }, tarjetaPropiedad: { estado: "PENDIENTE" },
         antecedentesPenales: { estado: "PENDIENTE" },
       };
       for (const doc of dRes.data || []) {
@@ -204,13 +187,7 @@ export const conductorService = {
     usuarioId: string,
     datos: { nombre?: string; apellidos?: string; telefono?: string; fotoUrl?: string | null; enLinea?: boolean }
   ): Promise<void> {
-    const camposUsuario: {
-      nombre?: string;
-      apellidos?: string;
-      telefono?: string;
-      foto_url?: string | null;
-      avatar_url?: string | null;
-    } = {};
+    const camposUsuario: { nombre?: string; apellidos?: string; telefono?: string; foto_url?: string | null; avatar_url?: string | null } = {};
     if (datos.nombre !== undefined) camposUsuario.nombre = datos.nombre.trim();
     if (datos.apellidos !== undefined) camposUsuario.apellidos = datos.apellidos.trim();
     if (datos.telefono !== undefined) camposUsuario.telefono = datos.telefono.trim();
@@ -225,10 +202,7 @@ export const conductorService = {
     }
 
     if (datos.enLinea !== undefined) {
-      const { error } = await supabase
-        .from("conductores_perfil")
-        .update({ en_linea: datos.enLinea })
-        .eq("usuario_id", usuarioId);
+      const { error } = await supabase.from("conductores_perfil").update({ en_linea: datos.enLinea }).eq("usuario_id", usuarioId);
       if (error) throw error;
     }
 
@@ -381,6 +355,31 @@ export const conductorService = {
   async finalizarViaje(viajeId: string, _tarifaFinal?: number, _conductorId?: string): Promise<void> {
     const { error } = await supabase.rpc("finalizar_viaje", { p_viaje_id: viajeId });
     if (error) throw error;
+  },
+
+  async obtenerPasajeroViaje(viajeId: string) {
+    if (!viajeId) return null;
+    try {
+      const { data, error } = await supabase.rpc("obtener_pasajero_viaje", {
+        p_viaje_id: viajeId,
+      });
+      if (error || !data || data.length === 0) {
+        return null;
+      }
+      const p = data[0];
+      return {
+        nombre: p.nombre,
+        apellidos: p.apellidos,
+        nombreCompleto: `${p.nombre} ${p.apellidos}`.trim(),
+        fotoUrl: p.foto_url,
+        telefono: p.telefono,
+        calificacion: Number(p.calificacion ?? 5.0),
+        viajesCompletados: Number(p.viajes_completados ?? 0),
+      };
+    } catch (err) {
+      console.warn("Aviso al consultar pasajero del viaje:", err);
+      return null;
+    }
   },
 
   async obtenerEstadoConductor(usuarioId: string): Promise<EstadoConductor> {
