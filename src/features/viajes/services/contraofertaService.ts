@@ -30,6 +30,30 @@ export interface ResultadoSeleccionOferta {
 
 export const contraofertaService = {
   /**
+   * Valida localmente si una contraoferta cumple con los pisos y techos de Bagua.
+   */
+  validarLimitesContraoferta(tarifaOfertada: number, tarifaBase: number): {
+    valido: boolean;
+    razon?: string;
+    piso: number;
+    techo: number;
+  } {
+    const piso = Math.max(2.5, Number((tarifaBase * 0.7).toFixed(2)));
+    const techo = Number((tarifaBase * 1.5).toFixed(2));
+
+    if (isNaN(tarifaOfertada) || tarifaOfertada <= 0) {
+      return { valido: false, razon: "Tarifa inválida", piso, techo };
+    }
+    if (tarifaOfertada < piso) {
+      return { valido: false, razon: `Monto menor al piso regulado (S/ ${piso.toFixed(2)})`, piso, techo };
+    }
+    if (tarifaOfertada > techo) {
+      return { valido: false, razon: `Monto excede el techo permitido (S/ ${techo.toFixed(2)})`, piso, techo };
+    }
+    return { valido: true, piso, techo };
+  },
+
+  /**
    * Conductor envía una contraoferta regulada para un viaje solicitado.
    */
   async crearContraoferta(input: CrearContraofertaInput): Promise<{

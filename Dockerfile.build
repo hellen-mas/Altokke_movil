@@ -37,8 +37,8 @@ RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools \
 RUN yes | sdkmanager --licenses \
     && sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-# 4. Instalación global de Expo CLI y EAS CLI
-RUN npm install -g eas-cli expo-cli
+# 4. Instalación global de EAS CLI (Expo local via npx)
+RUN npm install -g eas-cli
 
 WORKDIR /app
 

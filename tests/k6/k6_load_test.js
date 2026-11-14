@@ -93,7 +93,7 @@ export default function () {
   // 2. Conductor oferta tarifa regulada
   const payloadOferta = JSON.stringify({
     p_viaje_id: viajeId,
-    p_tarifa_ofertada: 5.00,
+    p_tarifa: 5.00,
     p_tiempo_llegada_min: 3,
   });
 

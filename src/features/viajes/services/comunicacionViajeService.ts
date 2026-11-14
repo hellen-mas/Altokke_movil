@@ -106,6 +106,64 @@ export const comunicacionViajeService = {
   },
 
   /**
+   * Sube una nota de voz al bucket privado 'audios-comunicacion' y registra el mensaje.
+   */
+  async enviarNotaVoz(
+    viajeId: string,
+    remitenteId: string,
+    audioBytes: ArrayBuffer | Uint8Array,
+    nombreArchivo: string,
+    duracionSegundos: number
+  ): Promise<MensajeInApp | null> {
+    try {
+      const ruta = `${viajeId}/${Date.now()}_${nombreArchivo}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("audios-comunicacion")
+        .upload(ruta, audioBytes, {
+          contentType: "audio/m4a",
+          upsert: false,
+        });
+
+      if (uploadError || !uploadData) {
+        console.warn("Aviso al subir audio:", uploadError?.message);
+        return null;
+      }
+
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from("audios-comunicacion")
+        .createSignedUrl(uploadData.path, 3600);
+
+      if (signedError || !signedData?.signedUrl) {
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from("mensajes_viaje")
+        .insert({
+          viaje_id: viajeId,
+          remitente_id: remitenteId,
+          contenido: "[Nota de voz]",
+          tipo: "audio",
+          audio_url: signedData.signedUrl,
+          duracion_segundos: Math.min(Math.max(1, Math.round(duracionSegundos)), 30),
+          leido: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.warn("Aviso al registrar nota de voz:", error.message);
+        return null;
+      }
+
+      return data as unknown as MensajeInApp;
+    } catch (err) {
+      console.warn("Excepción al enviar nota de voz:", err);
+      return null;
+    }
+  },
+
+  /**
    * Obtiene la cronología de mensajes efímeros del viaje en curso.
    */
   async obtenerMensajesViaje(viajeId: string): Promise<MensajeInApp[]> {

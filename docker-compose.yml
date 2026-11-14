@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile.build
     ports:
       - "8081:8081"
-    command: ["npx", "expo", "start", "--web", "--port", "8081"]
+    command: ["npx", "expo", "start", "--web", "--port", "8081", "--host", "0.0.0.0"]
     volumes:
       - .:/app
       - /app/node_modules

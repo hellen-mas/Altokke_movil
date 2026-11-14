@@ -70,7 +70,7 @@ export const viajeService = {
           metodo_pago: input.metodoPago,
           paga_con: input.pagaCon ?? null,
           vuelto_estimado:
-            input.pagaCon && input.pagaCon > input.tarifaEstimada
+            typeof input.pagaCon === "number" && input.pagaCon >= input.tarifaEstimada
               ? Number((input.pagaCon - input.tarifaEstimada).toFixed(2))
               : null,
         })
