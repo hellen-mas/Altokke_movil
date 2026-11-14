@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import * as Location from "expo-location";
 import { AppState } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 import {
   useViajeStore,
   type TipoServicio,
@@ -11,7 +12,7 @@ import {
 import type { Lugar, ViajeHistorial } from "@/features/viajes/constants/pasajero";
 import type { PuntoMapa } from "../types/tiposMapa";
 
-export type { TipoServicio, MetodoPago };
+export { type TipoServicio, type MetodoPago };
 
 export type ViajeContextType = {
   tipoServicio: TipoServicio;
@@ -125,25 +126,25 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useViaje(): ViajeContextType {
-  const store = useViajeStore();
-
-  return {
-    tipoServicio: store.tipoServicio,
-    setTipoServicio: store.setTipoServicio,
-    metodoPago: store.metodoPago,
-    setMetodoPago: store.setMetodoPago,
-    origen: store.origen,
-    setOrigen: store.setOrigen,
-    ubicacionActual: store.ubicacionActual,
-    siguiendoUbicacion: store.siguiendoUbicacion,
-    errorUbicacion: store.errorUbicacion,
-    destino: store.destino,
-    setDestino: store.setDestino,
-    historial: store.historial,
-    viajeActivoId: store.viajeActivoId,
-    setViajeActivoId: store.setViajeActivoId,
-    verificandoViajeActivo: store.verificandoViajeActivo,
-    registrarViaje: store.registrarViaje,
-    recargarHistorial: () => store.recargarHistorial(),
-  };
+  return useViajeStore(
+    useShallow((store) => ({
+      tipoServicio: store.tipoServicio,
+      setTipoServicio: store.setTipoServicio,
+      metodoPago: store.metodoPago,
+      setMetodoPago: store.setMetodoPago,
+      origen: store.origen,
+      setOrigen: store.setOrigen,
+      ubicacionActual: store.ubicacionActual,
+      siguiendoUbicacion: store.siguiendoUbicacion,
+      errorUbicacion: store.errorUbicacion,
+      destino: store.destino,
+      setDestino: store.setDestino,
+      historial: store.historial,
+      viajeActivoId: store.viajeActivoId,
+      setViajeActivoId: store.setViajeActivoId,
+      verificandoViajeActivo: store.verificandoViajeActivo,
+      registrarViaje: store.registrarViaje,
+      recargarHistorial: () => store.recargarHistorial(),
+    }))
+  );
 }

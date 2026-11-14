@@ -133,6 +133,7 @@ export function useCancelarViaje(estadoActual?: string) {
   // Monitorear en tiempo real si el conductor cancela el viaje
   useEffect(() => {
     if (!viajeActivoId) return;
+    let activo = true;
 
     const canal = supabase
       .channel(`monitoreo_cancelacion_${viajeActivoId}`)
@@ -145,7 +146,8 @@ export function useCancelarViaje(estadoActual?: string) {
           filter: `id=eq.${viajeActivoId}`,
         },
         (payload) => {
-          const viaje = payload.new as any;
+          if (!activo) return;
+          const viaje = payload.new as { estado?: string } | null;
           if (viaje?.estado === "cancelado_conductor") {
             void procesarEstadoViaje(viajeActivoId, "cancelado_conductor");
             manejarCancelacionConductor();
@@ -155,6 +157,7 @@ export function useCancelarViaje(estadoActual?: string) {
       .subscribe();
 
     return () => {
+      activo = false;
       supabase.removeChannel(canal);
     };
   }, [viajeActivoId, procesarEstadoViaje, manejarCancelacionConductor]);

@@ -21,8 +21,12 @@ export async function calcularRutaMototaxi(
 ): Promise<ResultadoRutaMototaxi> {
   const url = `https://router.project-osrm.org/route/v1/driving/${origen.longitude},${origen.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson&steps=false`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
   try {
-    const respuesta = await fetch(url);
+    const respuesta = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (!respuesta.ok) {
       throw new Error(`Servidor OSRM respondió con estado HTTP ${respuesta.status}`);
     }
@@ -59,6 +63,7 @@ export async function calcularRutaMototaxi(
       tarifaSugeridaPen,
     };
   } catch (err) {
+    clearTimeout(timeoutId);
     console.warn("Fallo al consultar OSRM, generando ruta en línea recta de respaldo:", err);
 
     // Fallback euclidiano seguro si el servidor público tiene micro-corte

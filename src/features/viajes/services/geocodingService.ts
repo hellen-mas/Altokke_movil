@@ -26,11 +26,17 @@ export async function obtenerDireccionInversa(
   }
 
   // 1. Intento primario: Photon Komoot (ElasticSearch OSM, alta tolerancia a tildes)
+  const controllerPhoton = new AbortController();
+  const timeoutPhoton = setTimeout(() => controllerPhoton.abort(), 4000);
   try {
     const res = await fetch(
       `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`,
-      { headers: { Accept: "application/json" } }
+      {
+        headers: { Accept: "application/json" },
+        signal: controllerPhoton.signal,
+      }
     );
+    clearTimeout(timeoutPhoton);
     if (res.ok) {
       const data = await res.json();
       if (data?.features && data.features.length > 0) {
@@ -49,10 +55,13 @@ export async function obtenerDireccionInversa(
       }
     }
   } catch (err) {
+    clearTimeout(timeoutPhoton);
     console.warn("Photon no disponible, activando fallback Nominatim:", err);
   }
 
   // 2. Intento secundario: OpenStreetMap Nominatim con User-Agent institucional
+  const controllerNominatim = new AbortController();
+  const timeoutNominatim = setTimeout(() => controllerNominatim.abort(), 4000);
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
@@ -61,8 +70,10 @@ export async function obtenerDireccionInversa(
           "User-Agent": USER_AGENT,
           Accept: "application/json",
         },
+        signal: controllerNominatim.signal,
       }
     );
+    clearTimeout(timeoutNominatim);
     if (res.ok) {
       const data = await res.json();
       const addr = data.address || {};
@@ -79,6 +90,7 @@ export async function obtenerDireccionInversa(
       return resultado;
     }
   } catch (err) {
+    clearTimeout(timeoutNominatim);
     console.warn("Nominatim no disponible, utilizando coordenadas de respaldo:", err);
   }
 
