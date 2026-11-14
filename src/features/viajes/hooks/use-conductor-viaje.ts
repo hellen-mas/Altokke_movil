@@ -16,7 +16,10 @@ export function useConductorViaje(
   const [conductor, setConductor] = useState<ConductorViaje | null>(null);
 
   useEffect(() => {
-    if (!viajeId || !conductorId) return;
+    if (!viajeId || !conductorId) {
+      setConductor(null);
+      return;
+    }
     let activo = true;
 
     const cargar = () => {

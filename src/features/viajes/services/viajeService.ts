@@ -102,11 +102,14 @@ export const viajeService = {
     }
   },
 
-  /** Cancela el viaje mediante una transición validada en PostgreSQL. */
-  async cancelarViaje(viajeId: string) {
+  /** Cancela el viaje mediante una transición validada en PostgreSQL con soporte para motivo. */
+  async cancelarViaje(viajeId: string, motivo?: string) {
     if (!viajeId) return null;
     try {
-      const { error } = await supabase.rpc("cancelar_viaje_pasajero", { p_viaje_id: viajeId });
+      const { error } = await supabase.rpc("cancelar_viaje_pasajero", {
+        p_viaje_id: viajeId,
+        p_motivo: motivo ? motivo.trim() : null,
+      });
       if (error) throw error;
       const { data } = await supabase.from("viajes").select().eq("id", viajeId).maybeSingle();
       return data;

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { supabase } from "@/shared/api/supabase";
 import {
   HISTORIAL_EJEMPLO,
   ORIGEN_EJEMPLO,
@@ -114,9 +115,14 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
   },
 
   recargarHistorial: async (userId) => {
-    if (!userId) return;
+    let finalUserId = userId;
+    if (!finalUserId) {
+      const sesion = await supabase.auth.getUser();
+      finalUserId = sesion.data.user?.id;
+    }
+    if (!finalUserId) return;
     try {
-      const datos = await viajeService.obtenerHistorialPasajero(userId);
+      const datos = await viajeService.obtenerHistorialPasajero(finalUserId);
       if (datos && datos.length > 0) {
         set({ historial: datos });
       }

@@ -1,40 +1,16 @@
 import { supabase } from "@/shared/api/supabase";
-import { subirFotoAvatar } from "@/shared/utils/avatar";
-import * as FileSystem from "expo-file-system/legacy";
 import {
-  TipoDocumento,
-  ArchivoSubida,
-  DocumentoParaSubir,
-  storageService,
-} from "@/shared/utils/storageService";
+  registroConductorService,
+  DatosVehiculo,
+  DocumentoAdjunto,
+  DatosRegistroConductor,
+} from "./registroConductorService";
 
-export interface DatosVehiculo {
-  placa: string;
-  marca: string;
-  modelo: string;
-  anio: number;
-  color: string;
-  capacidad: number;
-}
-
-export type DocumentoAdjunto = ArchivoSubida;
-
-export interface DatosRegistroConductor {
-  correo: string;
-  contrasena: string;
-  nombre: string;
-  apellidos: string;
-  telefono: string;
-  dni: string;
-  foto?: string | null;
-  dniFrente?: string | null;
-  dniReverso?: string | null;
-  selfie?: string | null;
-  licenciaConducir?: DocumentoAdjunto | null;
-  soat?: DocumentoAdjunto | null;
-  antecedentesPenales?: DocumentoAdjunto | null;
-  vehiculo: DatosVehiculo;
-}
+export {
+  type DatosVehiculo,
+  type DocumentoAdjunto,
+  type DatosRegistroConductor,
+} from "./registroConductorService";
 
 export interface PerfilConductor {
   id: string;
@@ -79,47 +55,27 @@ export async function obtenerEstadoConductor(usuarioId: string): Promise<EstadoC
 
 export const conductorService = {
   async obtenerHistorialConductor(conductorId: string) {
-    if (!conductorId) {
-      throw new Error("Se requiere el ID del conductor.");
-    }
+    if (!conductorId) throw new Error("Se requiere el ID del conductor.");
 
     const { data, error } = await supabase
       .from("viajes")
-      .select(
-        "id, creado_en, origen_texto, destino_texto, tarifa_final, tarifa_estimada, estado"
-      )
+      .select("id, creado_en, origen_texto, destino_texto, tarifa_final, tarifa_estimada, estado")
       .eq("conductor_id", conductorId)
       .order("creado_en", { ascending: false })
       .limit(50);
 
-    if (error) {
-      throw new Error(
-        `No se pudo consultar el historial: ${error.message}`
-      );
-    }
+    if (error) throw new Error(`No se pudo consultar el historial: ${error.message}`);
 
     return (data ?? []).map((viaje) => {
       const fecha = new Date(viaje.creado_en);
-
       return {
         id: viaje.id,
-        fecha: fecha.toLocaleDateString("es-PE", {
-          day: "2-digit",
-          month: "short",
-        }),
-        hora: fecha.toLocaleTimeString("es-PE", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        fecha: fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "short" }),
+        hora: fecha.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }),
         origen: viaje.origen_texto,
         destino: viaje.destino_texto,
-        monto: Number(
-          viaje.tarifa_final ?? viaje.tarifa_estimada ?? 0
-        ),
-        estado:
-          viaje.estado === "finalizado"
-            ? ("Completado" as const)
-            : ("Cancelado" as const),
+        monto: Number(viaje.tarifa_final ?? viaje.tarifa_estimada ?? 0),
+        estado: viaje.estado === "finalizado" ? ("Completado" as const) : ("Cancelado" as const),
       };
     });
   },
@@ -129,89 +85,7 @@ export const conductorService = {
     contrasena: string,
     datosPersonales: { nombre: string; apellidos: string; telefono: string; dni: string }
   ): Promise<string> {
-    const emailNorm = correo.trim().toLowerCase();
-
-    const validarUsuarioConductor = (
-      usuario: {
-        id: string;
-        email?: string;
-        user_metadata?: Record<string, any>;
-      }
-    ) : string => {
-      if (
-        usuario.email?.toLowerCase() !== emailNorm ||
-        usuario.user_metadata?.rol !== "conductor"
-      ) {
-        throw new Error (
-          "Esta cuenta no corresponde a un conductor. Verifica tus datos."
-        );
-      }
-
-      return usuario.id;
-    };
-
-    const { data: sesionData, error: errorSesion } = await supabase.auth.getSession();
-
-    if (errorSesion) throw errorSesion;
-    const usuarioActual = sesionData.session?.user;
-
-    if (
-      usuarioActual?.email?.toLowerCase() === emailNorm
-    ) {
-      return validarUsuarioConductor(usuarioActual);
-    }
-
-    if (usuarioActual) {
-      const { error: errorSalida } =
-        await supabase.auth.signOut({ scope: "local" });
-
-      if (errorSalida) throw errorSalida;
-    }
-
-    // Crear cuenta si todavía no existe
-    const { data, error } = await supabase.auth.signUp({
-      email: emailNorm,
-      password: contrasena,
-      options: { data: { ...datosPersonales, rol: "conductor" } },
-    });
-
-    if (!error && data.session?.user) {
-      return validarUsuarioConductor(data.session.user);
-    } 
-
-    const { data: acceso, error: errorAcceso } =
-      await supabase.auth.signInWithPassword({
-        email: emailNorm,
-        password: contrasena,
-      });
-
-    if (!errorAcceso && acceso.user && acceso.session) {
-      return validarUsuarioConductor(acceso.user);
-    }
-
-    if (
-      errorAcceso?.message?.toLowerCase().includes(
-        "email not confirmed"
-      )
-    ) {
-      throw new Error("CONFIRMAR_CORREO");
-    }
-
-    if (
-      error?.message?.toLowerCase().includes(
-        "already registered"
-      )
-    ) {
-      throw new Error(
-        "La cuenta ya existe. Ingresa la contraseña correcta para recuperar tu registro."
-      );
-    }
-
-    if (error) throw error;
-
-    throw new Error(
-      "No se pudo iniciar la sesión. Verifica tu correo y contraseña."
-    );
+    return registroConductorService.asegurarSesionConductor(correo, contrasena, datosPersonales);
   },
 
   async subirArchivosConductor(
@@ -226,110 +100,15 @@ export const conductorService = {
       antecedentesPenales?: DocumentoAdjunto | null;
     }
   ): Promise<void> {
-    if (archivos.foto) {
-      // Preparar fotografías para enviarla a la Edge Function
-      const base64 = await FileSystem.readAsStringAsync(
-        archivos.foto,
-        {
-          encoding: FileSystem.EncodingType.Base64,
-        }
-      );
-
-      // Sightengine valida la imagen antes de almacenarla
-      const resultado = await subirFotoAvatar(
-        archivos.foto,
-        usuarioId,
-        base64
-      );
-      
-      if (!resultado.ok || !resultado.url) {
-        throw new Error (
-          resultado.error ||
-          `No se pudo validar y guardar la foto del conductor.`
-        );
-      }
-    }
-
-    const itemsBrutos: { tipo: TipoDocumento; adjunto?: DocumentoAdjunto | string | null }[] = [
-      { tipo: "DNI_FRONTAL", adjunto: archivos.dniFrente },
-      { tipo: "DNI_POSTERIOR", adjunto: archivos.dniReverso },
-      { tipo: "SELFIE", adjunto: archivos.selfie },
-      { tipo: "LICENCIA", adjunto: archivos.licenciaConducir },
-      { tipo: "SOAT", adjunto: archivos.soat },
-      { tipo: "ANTECEDENTES", adjunto: archivos.antecedentesPenales },
-    ];
-
-    const loteParaSubir: DocumentoParaSubir[] = [];
-    for (const item of itemsBrutos) {
-      if (item.adjunto) {
-        loteParaSubir.push({
-          tipo: item.tipo,
-          adjunto: item.adjunto,
-        });
-      }
-    }
-
-    if (loteParaSubir.length > 0) {
-      await storageService.subirLoteDocumentos(usuarioId, loteParaSubir);
-    }
+    return registroConductorService.subirArchivosConductor(usuarioId, archivos);
   },
 
   async registrarVehiculo(usuarioId: string, vehiculo: DatosVehiculo): Promise<void> {
-    const { data: existente, error: errorConsulta } = await supabase
-      .from("vehiculos")
-      .select("id")
-      .eq("conductor_id", usuarioId)
-      .eq("placa", vehiculo.placa.trim().toUpperCase())
-      .maybeSingle();
-    
-    if (errorConsulta) {
-      throw new Error (
-        `No se pudo verificar el vehículo: ${errorConsulta.message}`
-      );
-    }
-
-    if (existente) {
-      return;
-    }
-
-    const { error } = await supabase.from("vehiculos").insert({
-      conductor_id: usuarioId,
-      placa: vehiculo.placa.trim().toUpperCase(),
-      marca: vehiculo.marca.trim(),
-      modelo: vehiculo.modelo.trim(),
-      anio: Number(vehiculo.anio),
-      color: vehiculo.color.trim(),
-      capacidad: Number(vehiculo.capacidad),
-      activo: false,
-    });
-
-    if (error) {
-      throw new Error (
-        `No se pudo registrar el vehículo ${error.message}`
-      );
-    }
+    return registroConductorService.registrarVehiculo(usuarioId, vehiculo);
   },
 
   async completarRegistroConductor(datos: DatosRegistroConductor): Promise<string> {
-    const usuarioId = await this.asegurarSesionConductor(datos.correo, datos.contrasena, {
-      nombre: datos.nombre.trim(),
-      apellidos: datos.apellidos.trim(),
-      telefono: datos.telefono.trim(),
-      dni: datos.dni.trim(),
-    });
-
-    await this.subirArchivosConductor(usuarioId, {
-      foto: datos.foto,
-      dniFrente: datos.dniFrente,
-      dniReverso: datos.dniReverso,
-      selfie: datos.selfie,
-      licenciaConducir: datos.licenciaConducir,
-      soat: datos.soat,
-      antecedentesPenales: datos.antecedentesPenales,
-    });
-
-    await this.registrarVehiculo(usuarioId, datos.vehiculo);
-    return usuarioId;
+    return registroConductorService.completarRegistroConductor(datos);
   },
 
   async obtenerPerfilConductor(usuarioId: string): Promise<PerfilConductor | null> {
@@ -362,7 +141,6 @@ export const conductorService = {
 
       const usuario = uRes.data;
       if (!usuario) return null;
-
       const pData = pRes.data;
       const vData = vRes.data;
       const docsMap: Record<string, { estado: string }> = {
@@ -372,15 +150,14 @@ export const conductorService = {
         tarjetaPropiedad: { estado: "PENDIENTE" },
         antecedentesPenales: { estado: "PENDIENTE" },
       };
-
       for (const doc of dRes.data || []) {
         const t = (doc.tipo || "").toUpperCase();
         const est = (doc.estado || "pendiente").toUpperCase();
         if (t.includes("DNI")) docsMap.dni = { estado: est };
-        if (t.includes("LICENCIA")) docsMap.licencia = { estado: est };
-        if (t.includes("SOAT")) docsMap.soat = { estado: est };
-        if (t.includes("PROPIEDAD")) docsMap.tarjetaPropiedad = { estado: est };
-        if (t.includes("ANTECEDENTES")) docsMap.antecedentesPenales = { estado: est };
+        else if (t.includes("LICENCIA")) docsMap.licencia = { estado: est };
+        else if (t.includes("SOAT")) docsMap.soat = { estado: est };
+        else if (t.includes("PROPIEDAD")) docsMap.tarjetaPropiedad = { estado: est };
+        else if (t.includes("ANTECEDENTES")) docsMap.antecedentesPenales = { estado: est };
       }
 
       const nombre = (usuario.nombre || "").trim();
@@ -403,16 +180,10 @@ export const conductorService = {
         estado: pData?.estado === "aprobado" ? "Conductor activo" : "En verificación",
         enLinea: Boolean(pData?.en_linea),
         saldoBilletera: Number(pData?.saldo_billetera ?? 0),
-        vehiculo: vData
-          ? {
-              placa: vData.placa,
-              marca: vData.marca,
-              modelo: vData.modelo,
-              anio: vData.anio ?? 2026,
-              color: vData.color,
-              capacidad: vData.capacidad ?? 3,
-            }
-          : { placa: "M1-ALTO", marca: "Honda", modelo: "150", anio: 2026, color: "Negro", capacidad: 3 },
+        vehiculo: vData ? {
+          placa: vData.placa, marca: vData.marca, modelo: vData.modelo,
+          anio: vData.anio ?? 2026, color: vData.color, capacidad: vData.capacidad ?? 3,
+        } : { placa: "M1-ALTO", marca: "Honda", modelo: "150", anio: 2026, color: "Negro", capacidad: 3 },
         contactoEmergencia: { nombre: "Central Altokke", parentesco: "Soporte", telefono: "+51 987 654 321" },
         documentos: docsMap,
         seguridad: {
@@ -449,10 +220,7 @@ export const conductorService = {
     }
 
     if (Object.keys(camposUsuario).length > 0) {
-      const { error } = await supabase
-        .from("usuarios")
-        .update(camposUsuario)
-        .eq("id", usuarioId);
+      const { error } = await supabase.from("usuarios").update(camposUsuario).eq("id", usuarioId);
       if (error) throw error;
     }
 
@@ -554,20 +322,7 @@ export const conductorService = {
   async obtenerSolicitudesPendientes() {
     const { data } = await supabase
       .from("viajes")
-      .select(`
-        id,
-        pasajero_id,
-        origen_texto,
-        destino_texto,
-        origen_lat,
-        origen_lng,
-        destino_lat,
-        destino_lng,
-        distancia_km,
-        tarifa_estimada,
-        metodo_pago,
-        creado_en
-      `)
+      .select("id, pasajero_id, origen_texto, destino_texto, origen_lat, origen_lng, destino_lat, destino_lng, distancia_km, tarifa_estimada, metodo_pago, creado_en")
       .eq("estado", "buscando")
       .order("creado_en", { ascending: false })
       .limit(10);
@@ -577,6 +332,50 @@ export const conductorService = {
   async aceptarSolicitud(viajeId: string, _conductorId?: string): Promise<void> {
     const { error } = await supabase.rpc("aceptar_viaje", { p_viaje_id: viajeId });
     if (error) throw error;
+  },
+
+  async cambiarEstadoViaje(
+    viajeId: string,
+    nuevoEstado: "en_camino_origen" | "esperando_pasajero" | "en_viaje"
+  ): Promise<{ ok: boolean; viaje_id: string; estado_anterior: string; estado_nuevo: string }> {
+    const { data, error } = await supabase.rpc("cambiar_estado_viaje", {
+      p_viaje_id: viajeId,
+      p_nuevo_estado: nuevoEstado,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async cancelarViajeConductor(
+    viajeId: string,
+    motivo: string
+  ): Promise<{ ok: boolean; viaje_id: string; reabierto: boolean; motivo: string }> {
+    const { data, error } = await supabase.rpc("cancelar_viaje_conductor", {
+      p_viaje_id: viajeId,
+      p_motivo: motivo,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async obtenerViajeActivoConductor(conductorId: string) {
+    if (!conductorId) return null;
+    const estadosActivos = ["aceptado", "en_camino_origen", "esperando_pasajero", "en_viaje"] as const;
+
+    const { data, error } = await supabase
+      .from("viajes")
+      .select("*")
+      .eq("conductor_id", conductorId)
+      .in("estado", estadosActivos)
+      .order("creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Aviso al consultar viaje activo de conductor:", error.message);
+      return null;
+    }
+    return data;
   },
 
   async finalizarViaje(viajeId: string, _tarifaFinal?: number, _conductorId?: string): Promise<void> {
