@@ -13,10 +13,10 @@ import {
   LUGARES_BAGUA,
   ORIGEN_EJEMPLO,
 } from "@/features/viajes/constants/pasajero";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { router } from "expo-router";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 type EstadoSolicitud = "NUEVA" | "ACEPTADA" | "RECHAZADA";
 
@@ -29,6 +29,7 @@ const DISTANCIA_EJEMPLO = "1.3 km";
 const TIEMPO_EJEMPLO = "3 min";
 
 export default function SolicitudesConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const [estadoSolicitud, setEstadoSolicitud] =
     useState<EstadoSolicitud>("NUEVA");
 
@@ -49,7 +50,7 @@ export default function SolicitudesConductor() {
 
       <CabeceraConductor
         titulo="Solicitudes"
-        subtitulo="Solicitudes cercanas"
+        subtitulo="Cerca de ti"
         mostrarMarca
         mostrarAtras={false}
         compacta
@@ -69,7 +70,7 @@ export default function SolicitudesConductor() {
                 <Ionicons
                   name="notifications"
                   size={20}
-                  color={paletaColores.superficieClara}
+                  color={c.superficie}
                 />
               </View>
 
@@ -87,7 +88,7 @@ export default function SolicitudesConductor() {
                 <Ionicons
                   name="time-outline"
                   size={15}
-                  color={paletaColores.verde}
+                  color={c.primario}
                 />
                 <Text style={styles.tiempoCardTexto}>00:15</Text>
               </View>
@@ -125,7 +126,7 @@ export default function SolicitudesConductor() {
                     <Ionicons
                       name="star"
                       size={14}
-                      color={paletaColores.advertencia}
+                      color={c.ambar}
                     />
 
                     <Text style={styles.calificacionTexto}>
@@ -148,7 +149,7 @@ export default function SolicitudesConductor() {
                   <Ionicons
                     name="radio-button-on"
                     size={17}
-                    color={paletaColores.verde}
+                    color={c.primario}
                   />
                 </View>
 
@@ -172,7 +173,7 @@ export default function SolicitudesConductor() {
                   <Ionicons
                     name="location"
                     size={17}
-                    color={paletaColores.error}
+                    color={c.error}
                   />
                 </View>
 
@@ -193,7 +194,7 @@ export default function SolicitudesConductor() {
                     <Ionicons
                       name="cash-outline"
                       size={19}
-                      color={paletaColores.verde}
+                      color={c.primario}
                     />
                   </View>
 
@@ -215,7 +216,7 @@ export default function SolicitudesConductor() {
                     <Ionicons
                       name="navigate-outline"
                       size={19}
-                      color={paletaColores.verde}
+                      color={c.primario}
                     />
                   </View>
 
@@ -237,7 +238,7 @@ export default function SolicitudesConductor() {
                     <Ionicons
                       name="time-outline"
                       size={19}
-                      color={paletaColores.verde}
+                      color={c.primario}
                     />
                   </View>
 
@@ -268,7 +269,7 @@ export default function SolicitudesConductor() {
                 <Ionicons
                   name="close"
                   size={19}
-                  color={paletaColores.textoClaro}
+                  color={c.texto}
                 />
 
                 <Text style={styles.botonRechazarTexto}>
@@ -303,7 +304,7 @@ export default function SolicitudesConductor() {
               <Ionicons
                 name="checkmark-circle"
                 size={54}
-                color={paletaColores.verde}
+                color={c.primario}
               />
             </View>
 
@@ -320,7 +321,7 @@ export default function SolicitudesConductor() {
                 <Ionicons
                   name="person-outline"
                   size={20}
-                  color={paletaColores.verde}
+                  color={c.primario}
                 />
 
                 <View style={styles.resumenTextoContainer}>
@@ -338,7 +339,7 @@ export default function SolicitudesConductor() {
                 <Ionicons
                   name="location-outline"
                   size={20}
-                  color={paletaColores.verde}
+                  color={c.primario}
                 />
 
                 <View style={styles.resumenTextoContainer}>
@@ -356,7 +357,7 @@ export default function SolicitudesConductor() {
                 <Ionicons
                   name="flag-outline"
                   size={20}
-                  color={paletaColores.error}
+                  color={c.error}
                 />
 
                 <View style={styles.resumenTextoContainer}>
@@ -375,7 +376,7 @@ export default function SolicitudesConductor() {
               <Ionicons
                 name="information-circle-outline"
                 size={20}
-                color={paletaColores.verde}
+                color={c.primario}
               />
 
               <Text style={styles.avisoAceptadoTexto}>
@@ -391,7 +392,7 @@ export default function SolicitudesConductor() {
               <Ionicons
                 name="close-circle"
                 size={54}
-                color={paletaColores.error}
+                color={c.error}
               />
             </View>
 
@@ -424,15 +425,15 @@ export default function SolicitudesConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   scrollContent: {
@@ -451,13 +452,13 @@ const styles = StyleSheet.create({
   tituloPagina: {
     fontSize: 24,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   subtituloPagina: {
     marginTop: 4,
     fontSize: 13,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   estadoOnline: {
@@ -467,20 +468,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: "#E8F7F0",
+    backgroundColor: c.primarioSuave,
   },
 
   puntoOnline: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: paletaColores.verde,
+    backgroundColor: c.primario,
   },
 
   estadoOnlineTexto: {
     fontSize: 12,
     fontWeight: "700",
-    color: paletaColores.verde,
+    color: c.primario,
   },
 
   nuevaSolicitudCard: {
@@ -488,9 +489,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 14,
     borderRadius: 16,
-    backgroundColor: "#EAF8F1",
+    backgroundColor: c.primarioSuave,
     borderWidth: 1,
-    borderColor: "#CFECDD",
+    borderColor: c.borde,
     marginBottom: 16,
   },
 
@@ -500,7 +501,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.verde,
+    backgroundColor: c.primario,
     marginRight: 11,
   },
 
@@ -511,14 +512,14 @@ const styles = StyleSheet.create({
   nuevaSolicitudTitulo: {
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   nuevaSolicitudDescripcion: {
     marginTop: 2,
     fontSize: 11,
     lineHeight: 15,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   tiempoCard: {
@@ -528,13 +529,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
   },
 
   tiempoCardTexto: {
     fontSize: 11,
     fontWeight: "700",
-    color: paletaColores.verde,
+    color: c.primario,
   },
 
   mapaContainer: {
@@ -542,8 +543,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    backgroundColor: "#EAF0EC",
+    borderColor: c.borde,
+    backgroundColor: c.superficieSuave,
     marginBottom: 20,
   },
 
@@ -555,7 +556,7 @@ const styles = StyleSheet.create({
   seccionTitulo: {
     fontSize: 17,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
     marginBottom: 10,
   },
 
@@ -576,14 +577,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8F7F0",
+    backgroundColor: c.primarioSuave,
     marginRight: 11,
   },
 
   avatarTexto: {
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.verde,
+    color: c.primario,
   },
 
   pasajeroInfo: {
@@ -593,7 +594,7 @@ const styles = StyleSheet.create({
   pasajeroNombre: {
     fontSize: 15,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   calificacionFila: {
@@ -605,7 +606,7 @@ const styles = StyleSheet.create({
 
   calificacionTexto: {
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   servicioBadge: {
@@ -613,24 +614,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: "#EAF8F1",
+    backgroundColor: c.primarioSuave,
   },
 
   servicioTexto: {
     fontSize: 11,
     fontWeight: "800",
-    color: paletaColores.verde,
+    color: c.primario,
   },
 
   servicioSubtexto: {
     marginTop: 1,
     fontSize: 9,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   divisor: {
     height: 1,
-    backgroundColor: paletaColores.bordeClaro,
+    backgroundColor: c.borde,
     marginVertical: 14,
   },
 
@@ -646,7 +647,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAF8F1",
+    backgroundColor: c.primarioSuave,
     marginRight: 10,
   },
 
@@ -656,7 +657,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FBEAEA",
+    backgroundColor: c.errorSuave,
     marginRight: 10,
   },
 
@@ -666,27 +667,27 @@ const styles = StyleSheet.create({
 
   ubicacionEtiqueta: {
     fontSize: 10,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
     marginBottom: 2,
   },
 
   ubicacionValor: {
     fontSize: 12,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   badgeDistancia: {
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: "#EAF8F1",
+    backgroundColor: c.primarioSuave,
   },
 
   badgeDistanciaTexto: {
     fontSize: 10,
     fontWeight: "700",
-    color: paletaColores.verde,
+    color: c.primario,
   },
 
   datosGrid: {
@@ -698,9 +699,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 11,
     borderRadius: 12,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
   },
 
   datoIcono: {
@@ -709,21 +710,21 @@ const styles = StyleSheet.create({
 
   datoEtiqueta: {
     fontSize: 9,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   datoValor: {
     marginTop: 2,
     fontSize: 14,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   datoDetalle: {
     marginTop: 2,
     fontSize: 8,
     lineHeight: 11,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   botonesContainer: {
@@ -737,22 +738,22 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
   },
 
   botonRechazarPresionado: {
-    backgroundColor: "#EEF1EF",
+    backgroundColor: c.superficieSuave,
   },
 
   botonRechazarTexto: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   botonAceptar: {
@@ -763,11 +764,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: paletaColores.verde,
+    backgroundColor: c.primario,
   },
 
   botonAceptarPresionado: {
-    backgroundColor: paletaColores.botonPresionado,
+    backgroundColor: c.primarioPresionado,
   },
 
   botonAceptarTexto: {
@@ -787,7 +788,7 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAF8F1",
+    backgroundColor: c.primarioSuave,
     marginBottom: 18,
   },
 
@@ -797,14 +798,14 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FBEAEA",
+    backgroundColor: c.errorSuave,
     marginBottom: 18,
   },
 
   resultadoTitulo: {
     fontSize: 24,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
     textAlign: "center",
   },
 
@@ -814,7 +815,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     textAlign: "center",
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   resumenAceptado: {
@@ -822,9 +823,9 @@ const styles = StyleSheet.create({
     marginTop: 26,
     padding: 16,
     borderRadius: 18,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     gap: 16,
   },
 
@@ -840,14 +841,14 @@ const styles = StyleSheet.create({
 
   resumenEtiqueta: {
     fontSize: 10,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   resumenValor: {
     marginTop: 2,
     fontSize: 13,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   avisoAceptado: {
@@ -858,14 +859,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 9,
-    backgroundColor: "#EAF8F1",
+    backgroundColor: c.primarioSuave,
   },
 
   avisoAceptadoTexto: {
     flex: 1,
     fontSize: 12,
     lineHeight: 17,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   botonNuevaSolicitud: {
@@ -877,7 +878,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: paletaColores.verde,
+    backgroundColor: c.primario,
   },
 
   botonNuevaSolicitudTexto: {

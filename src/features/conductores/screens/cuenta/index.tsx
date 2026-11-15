@@ -7,10 +7,11 @@ import {
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function CuentaConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
     const { perfil } = usePerfilConductor();
 
     return (
@@ -23,7 +24,6 @@ export default function CuentaConductor() {
                     {/* Cabecera */}
                     <CabeceraConductor
                         titulo="Mi cuenta"
-                        subtitulo="Gestiona tu información y preferencias"
                         mostrarMarca
                     >
                         <TarjetaPerfilConductor
@@ -80,10 +80,10 @@ export default function CuentaConductor() {
     );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: paletaColores.fondoClaro,
+        backgroundColor: c.fondo,
     },
 
     scrollContent: {
@@ -94,9 +94,9 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 16,
         borderWidth: 1,
-        borderColor: paletaColores.bordeClaro,
+        borderColor: c.borde,
         borderRadius: 18,
-        backgroundColor: paletaColores.superficieClara,
+        backgroundColor: c.superficie,
         overflow: "hidden",
     },
 });

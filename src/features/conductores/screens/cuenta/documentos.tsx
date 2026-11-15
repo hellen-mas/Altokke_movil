@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { AvisoInformativo } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 type EstadoDoc = "VERIFICADO" | "EN_REVISION" | "PENDIENTE";
 
@@ -16,13 +16,15 @@ const DOCS_CONFIG = [
   { clave: "antecedentesPenales", icono: "shield-checkmark-outline" as const, titulo: "Antecedentes penales", desc: "Certificado policial y judicial" },
 ];
 
-const ESTILOS_ESTADO: Record<EstadoDoc, { texto: string; icono: keyof typeof Ionicons.glyphMap; color: string; fondo: string }> = {
-  VERIFICADO: { texto: "Verificado", icono: "checkmark-circle", color: paletaColores.verde, fondo: "#E5F6ED" },
-  EN_REVISION: { texto: "En revisión", icono: "time-outline", color: "#C88A20", fondo: "#FFF3DB" },
-  PENDIENTE: { texto: "Pendiente", icono: "alert-circle-outline", color: "#D65353", fondo: "#FDE8E8" },
-};
+const crearEstilosEstado = (c: ColoresConductor): Record<EstadoDoc, { texto: string; icono: keyof typeof Ionicons.glyphMap; color: string; fondo: string }> => ({
+  VERIFICADO: { texto: "Verificado", icono: "checkmark-circle", color: c.primario, fondo: c.primarioSuave },
+  EN_REVISION: { texto: "En revisión", icono: "time-outline", color: c.ambar, fondo: c.ambarSuave },
+  PENDIENTE: { texto: "Pendiente", icono: "alert-circle-outline", color: c.error, fondo: c.errorSuave },
+});
 
 export default function DocumentosConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const ESTILOS_ESTADO = crearEstilosEstado(c);
   const { perfil } = usePerfilConductor();
   const docs = perfil.documentos || {};
 
@@ -34,7 +36,7 @@ export default function DocumentosConductor() {
 
   return (
     <View style={styles.container}>
-      <CabeceraConductor titulo="Documentos" subtitulo="Documentación oficial de tu mototaxi" mostrarAtras compacta />
+      <CabeceraConductor titulo="Documentos" mostrarAtras compacta />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.resumenCard}>
@@ -60,7 +62,7 @@ export default function DocumentosConductor() {
             return (
               <Pressable key={d.clave} style={styles.item} onPress={() => verDocumento(d.titulo)}>
                 <View style={styles.iconoBox}>
-                  <Ionicons name={d.icono} size={22} color={paletaColores.verde} />
+                  <Ionicons name={d.icono} size={22} color={c.primario} />
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.itemTitulo}>{d.titulo}</Text>
@@ -70,7 +72,7 @@ export default function DocumentosConductor() {
                   <Ionicons name={estadoVisual.icono} size={14} color={estadoVisual.color} />
                   <Text style={[styles.badgeText, { color: estadoVisual.color }]}>{estadoVisual.texto}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={paletaColores.textoSecundarioClaro} />
+                <Ionicons name="chevron-forward" size={18} color={c.textoSec} />
               </Pressable>
             );
           })}
@@ -86,10 +88,10 @@ export default function DocumentosConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
   scroll: {
     padding: 18,
@@ -99,40 +101,40 @@ const styles = StyleSheet.create({
   resumenCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     borderRadius: 16,
     padding: 16,
     gap: 14,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
   },
   progresoBox: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: "#E8F4ED",
+    backgroundColor: c.primarioSuave,
     alignItems: "center",
     justifyContent: "center",
   },
   progresoNum: {
     fontSize: 16,
     fontWeight: "800",
-    color: paletaColores.verde,
+    color: c.primario,
   },
   progresoSub: {
     fontSize: 11,
     fontWeight: "600",
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
   resumenTitulo: {
     fontSize: 16,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
   resumenDesc: {
     fontSize: 13,
     lineHeight: 18,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
   lista: {
     gap: 10,
@@ -141,30 +143,30 @@ const styles = StyleSheet.create({
     minHeight: 64,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 12,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
   },
   iconoBox: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#E8F4ED",
+    backgroundColor: c.primarioSuave,
     alignItems: "center",
     justifyContent: "center",
   },
   itemTitulo: {
     fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
   itemDesc: {
     fontSize: 13,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
   badge: {
     flexDirection: "row",

@@ -42,7 +42,6 @@ export default function CambiarContrasena() {
     <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <CabeceraConductor
         titulo="Cambiar contraseña"
-        subtitulo="Actualiza tu contraseña de acceso"
         mostrarAtras
         compacta
       />

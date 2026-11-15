@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { AvisoInformativo } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 type TipoIncidente =
   | "SEGURIDAD"
@@ -21,6 +21,7 @@ type TipoIncidente =
   | "OTRO";
 
 export default function ReportarIncidenteConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const [tipo, setTipo] =
     useState<TipoIncidente | null>(null);
 
@@ -88,7 +89,6 @@ export default function ReportarIncidenteConductor() {
     <View style={styles.container}>
       <CabeceraConductor
           titulo="Reportar incidente"
-          subtitulo="Cuéntanos qué ocurrió"
           mostrarAtras
           compacta
         />
@@ -125,8 +125,8 @@ export default function ReportarIncidenteConductor() {
                     size={20}
                     color={
                       seleccionado
-                        ? paletaColores.verde
-                        : paletaColores.textoSecundarioClaro
+                        ? c.primario
+                        : c.textoSec
                     }
                   />
 
@@ -144,7 +144,7 @@ export default function ReportarIncidenteConductor() {
                     <Ionicons
                       name="checkmark-circle"
                       size={18}
-                      color={paletaColores.verde}
+                      color={c.primario}
                     />
                   )}
                 </Pressable>
@@ -161,7 +161,7 @@ export default function ReportarIncidenteConductor() {
             onChangeText={setDescripcion}
             placeholder="Explícanos brevemente qué sucedió..."
             placeholderTextColor={
-              paletaColores.textoSecundarioClaro
+              c.textoSec
             }
             multiline
             maxLength={600}
@@ -189,7 +189,7 @@ export default function ReportarIncidenteConductor() {
             <Ionicons
               name="send-outline"
               size={18}
-              color={paletaColores.textoOscuro}
+              color={"#FFFFFF"}
             />
 
             <Text style={styles.botonTexto}>
@@ -202,10 +202,10 @@ export default function ReportarIncidenteConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   scrollContent: {
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
 
   tituloSeccion: {
     marginBottom: 9,
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 15,
     fontWeight: "800",
   },
@@ -236,31 +236,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
+    borderColor: c.borde,
+    backgroundColor: c.superficie,
   },
 
   opcionSeleccionada: {
-    borderColor: paletaColores.verde,
-    backgroundColor: "#E8F4ED",
+    borderColor: c.primario,
+    backgroundColor: c.primarioSuave,
   },
 
   opcionTexto: {
     flex: 1,
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 14,
     fontWeight: "600",
   },
 
   opcionTextoSeleccionado: {
-    color: paletaColores.verde,
+    color: c.primario,
     fontWeight: "700",
   },
 
   tituloDescripcion: {
     marginTop: 20,
     marginBottom: 9,
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 15,
     fontWeight: "800",
   },
@@ -270,9 +270,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
-    backgroundColor: paletaColores.superficieClara,
-    color: paletaColores.textoClaro,
+    borderColor: c.borde,
+    backgroundColor: c.superficie,
+    color: c.texto,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   contador: {
     marginTop: 5,
     textAlign: "right",
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
     fontSize: 10,
   },
 
@@ -292,15 +292,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: paletaColores.boton,
+    backgroundColor: c.primario,
   },
 
   botonPresionado: {
-    backgroundColor: paletaColores.botonPresionado,
+    backgroundColor: c.primarioPresionado,
   },
 
   botonTexto: {
-    color: paletaColores.textoOscuro,
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
   },
