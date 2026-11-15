@@ -1,53 +1,54 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Pressable,
-  ScrollView,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { PASAJERO_DEMO } from "@/features/pasajeros/constants/cuenta";
-import {
-  CENTRO_BAGUA,
-  LUGARES_BAGUA,
-  ORIGEN_EJEMPLO,
-} from "@/features/viajes/constants/pasajero";
-import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
-import { router } from "expo-router";
-import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
+import {
+  useTemaConductor,
+  type ColoresConductor,
+} from "@/features/conductores/theme/temaConductor";
+import { TarjetaSolicitudViaje } from "@/features/viajes/components/TarjetaSolicitudViaje";
+import { useSolicitudesConductor } from "@/features/viajes/hooks/use-solicitudes-conductor";
 
-type EstadoSolicitud = "NUEVA" | "ACEPTADA" | "RECHAZADA";
-
-const DESTINO_EJEMPLO =
-  LUGARES_BAGUA.find((lugar) => lugar.id === "plaza-heroes-cenepa") ??
-  LUGARES_BAGUA[0];
-
-const TARIFA_EJEMPLO = 4.94;
-const DISTANCIA_EJEMPLO = "1.3 km";
-const TIEMPO_EJEMPLO = "3 min";
-
+/** Lista en vivo de solicitudes cercanas para el conductor */
 export default function SolicitudesConductor() {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
-  const [estadoSolicitud, setEstadoSolicitud] =
-    useState<EstadoSolicitud>("NUEVA");
+  const {
+    solicitudes,
+    cargando,
+    error,
+    aceptandoId,
+    recargar,
+    aceptarSolicitud,
+    rechazarSolicitud,
+  } = useSolicitudesConductor();
 
-  const aceptarSolicitud = () => {
-    router.push("/viaje-activo")
-  }
+  // Estado propio del "jalar para refrescar" (no confundir con la carga inicial)
+  const [refrescando, setRefrescando] = useState(false);
 
-  const rechazarSolicitud = () => {
-    setEstadoSolicitud("RECHAZADA");
+  const alRefrescar = async () => {
+    setRefrescando(true);
+    await recargar();
+    setRefrescando(false);
   };
 
-  const mostrarOtraSolicitud = () => {
-    setEstadoSolicitud("NUEVA");
+  const alAceptar = async (viajeId: string) => {
+    const ok = await aceptarSolicitud(viajeId);
+    // Si otro conductor la ganó, el hook ya dejó el mensaje en "error"
+    if (ok) {
+      router.push({ pathname: "/viaje-activo", params: { viajeId } });
+    }
   };
 
   return (
-    <View style={styles.safeArea}>
-
+    <View style={styles.pantalla}>
       <CabeceraConductor
         titulo="Solicitudes"
         subtitulo="Cerca de ti"
@@ -56,834 +57,98 @@ export default function SolicitudesConductor() {
         compacta
       />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-
-        {estadoSolicitud === "NUEVA" && (
-          <>
-            {/* AVISO */}
-            <View style={styles.nuevaSolicitudCard}>
-              <View style={styles.nuevaSolicitudIcono}>
-                <Ionicons
-                  name="notifications"
-                  size={20}
-                  color={c.superficie}
-                />
+      {/* Aviso de error: carga fallida o carrera tomada por otro conductor */}
+      {error && (
+        <View style={styles.aviso}>
+          <Ionicons name="alert-circle" size={18} color={c.error} />
+          <Text style={styles.avisoTexto}>{error}</Text>
+        </View>
+      )}
+  
+      {cargando ? (
+        // ESTADO 1: cargando por primera vez
+        <View style={styles.centro}>
+          <ActivityIndicator size="large" color={c.primario} />
+          <Text style={styles.centroTexto}>Buscando solicitudes cercanas...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={solicitudes}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TarjetaSolicitudViaje
+              solicitud={item}
+              onAceptar={alAceptar}
+              onRechazar={rechazarSolicitud}
+              aceptando={aceptandoId === item.id}
+            />
+          )}
+          contentContainerStyle={[
+            styles.lista,
+            solicitudes.length === 0 && styles.listaVacia,
+          ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refrescando}
+              onRefresh={alRefrescar}
+              colors={[c.primario]}
+              tintColor={c.primario}
+            />
+          }
+          // ESTADO 2: no hay solicitudes
+          ListEmptyComponent={
+            <View style={styles.centro}>
+              <View style={styles.iconoVacio}>
+                <Ionicons name="time-outline" size={40} color={c.primario} />
               </View>
-
-              <View style={styles.nuevaSolicitudContenido}>
-                <Text style={styles.nuevaSolicitudTitulo}>
-                  ¡Nueva solicitud de viaje!
-                </Text>
-
-                <Text style={styles.nuevaSolicitudDescripcion}>
-                  Tienes una solicitud disponible cerca de tu ubicación.
-                </Text>
-              </View>
-
-              <View style={styles.tiempoCard}>
-                <Ionicons
-                  name="time-outline"
-                  size={15}
-                  color={c.primario}
-                />
-                <Text style={styles.tiempoCardTexto}>00:15</Text>
-              </View>
-            </View>
-
-            {/* MAPA */}
-            <View style={styles.mapaContainer}>
-              <MapaBase
-                centro={CENTRO_BAGUA}
-                origen={ORIGEN_EJEMPLO.coordenadas}
-                destino={DESTINO_EJEMPLO.coordenadas}
-                interactivo={false}
-                style={styles.mapa}
-              />
-            </View>
-
-            {/* DETALLES */}
-            <Text style={styles.seccionTitulo}>Detalles del viaje</Text>
-
-            <View style={styles.detalleCard}>
-              {/* PASAJERO */}
-              <View style={styles.pasajeroHeader}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarTexto}>
-                    {PASAJERO_DEMO.iniciales}
-                  </Text>
-                </View>
-
-                <View style={styles.pasajeroInfo}>
-                  <Text style={styles.pasajeroNombre}>
-                    {PASAJERO_DEMO.nombre}
-                  </Text>
-
-                  <View style={styles.calificacionFila}>
-                    <Ionicons
-                      name="star"
-                      size={14}
-                      color={c.ambar}
-                    />
-
-                    <Text style={styles.calificacionTexto}>
-                      {PASAJERO_DEMO.calificacion} · {PASAJERO_DEMO.viajes} viajes
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.servicioBadge}>
-                  <Text style={styles.servicioTexto}>Normal</Text>
-                  <Text style={styles.servicioSubtexto}>Económico</Text>
-                </View>
-              </View>
-
-              <View style={styles.divisor} />
-
-              {/* RECOGIDA */}
-              <View style={styles.ubicacionFila}>
-                <View style={styles.iconoUbicacionVerde}>
-                  <Ionicons
-                    name="radio-button-on"
-                    size={17}
-                    color={c.primario}
-                  />
-                </View>
-
-                <View style={styles.ubicacionContenido}>
-                  <Text style={styles.ubicacionEtiqueta}>Recogida</Text>
-                  <Text style={styles.ubicacionValor}>
-                    {ORIGEN_EJEMPLO.nombre}
-                  </Text>
-                </View>
-
-                <View style={styles.badgeDistancia}>
-                  <Text style={styles.badgeDistanciaTexto}>
-                    A 2 min
-                  </Text>
-                </View>
-              </View>
-
-              {/* DESTINO */}
-              <View style={styles.ubicacionFila}>
-                <View style={styles.iconoUbicacionRojo}>
-                  <Ionicons
-                    name="location"
-                    size={17}
-                    color={c.error}
-                  />
-                </View>
-
-                <View style={styles.ubicacionContenido}>
-                  <Text style={styles.ubicacionEtiqueta}>Destino</Text>
-                  <Text style={styles.ubicacionValor}>
-                    {DESTINO_EJEMPLO.nombre}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divisor} />
-
-              {/* DATOS */}
-              <View style={styles.datosGrid}>
-                <View style={styles.datoCard}>
-                  <View style={styles.datoIcono}>
-                    <Ionicons
-                      name="cash-outline"
-                      size={19}
-                      color={c.primario}
-                    />
-                  </View>
-
-                  <Text style={styles.datoEtiqueta}>
-                    Tarifa estimada
-                  </Text>
-
-                  <Text style={styles.datoValor}>
-                    S/ {TARIFA_EJEMPLO.toFixed(2)}
-                  </Text>
-
-                  <Text style={styles.datoDetalle}>
-                    Pago en efectivo
-                  </Text>
-                </View>
-
-                <View style={styles.datoCard}>
-                  <View style={styles.datoIcono}>
-                    <Ionicons
-                      name="navigate-outline"
-                      size={19}
-                      color={c.primario}
-                    />
-                  </View>
-
-                  <Text style={styles.datoEtiqueta}>
-                    Distancia
-                  </Text>
-
-                  <Text style={styles.datoValor}>
-                    {DISTANCIA_EJEMPLO}
-                  </Text>
-
-                  <Text style={styles.datoDetalle}>
-                    Desde tu ubicación
-                  </Text>
-                </View>
-
-                <View style={styles.datoCard}>
-                  <View style={styles.datoIcono}>
-                    <Ionicons
-                      name="time-outline"
-                      size={19}
-                      color={c.primario}
-                    />
-                  </View>
-
-                  <Text style={styles.datoEtiqueta}>
-                    Tiempo estimado
-                  </Text>
-
-                  <Text style={styles.datoValor}>
-                    {TIEMPO_EJEMPLO}
-                  </Text>
-
-                  <Text style={styles.datoDetalle}>
-                    Hasta recoger
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* BOTONES */}
-            <View style={styles.botonesContainer}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.botonRechazar,
-                  pressed && styles.botonRechazarPresionado,
-                ]}
-                onPress={rechazarSolicitud}
-              >
-                <Ionicons
-                  name="close"
-                  size={19}
-                  color={c.texto}
-                />
-
-                <Text style={styles.botonRechazarTexto}>
-                  Rechazar
-                </Text>
-              </Pressable>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.botonAceptar,
-                  pressed && styles.botonAceptarPresionado,
-                ]}
-                onPress={aceptarSolicitud}
-              >
-                <Text style={styles.botonAceptarTexto}>
-                  Aceptar viaje
-                </Text>
-
-                <Ionicons
-                  name="arrow-forward"
-                  size={19}
-                  color="#FFFFFF"
-                />
-              </Pressable>
-            </View>
-          </>
-        )}
-
-        {estadoSolicitud === "ACEPTADA" && (
-          <View style={styles.estadoResultadoContainer}>
-            <View style={styles.iconoResultadoAceptado}>
-              <Ionicons
-                name="checkmark-circle"
-                size={54}
-                color={c.primario}
-              />
-            </View>
-
-            <Text style={styles.resultadoTitulo}>
-              Viaje aceptado
-            </Text>
-
-            <Text style={styles.resultadoDescripcion}>
-              Dirígete al punto de recogida del pasajero.
-            </Text>
-
-            <View style={styles.resumenAceptado}>
-              <View style={styles.resumenFila}>
-                <Ionicons
-                  name="person-outline"
-                  size={20}
-                  color={c.primario}
-                />
-
-                <View style={styles.resumenTextoContainer}>
-                  <Text style={styles.resumenEtiqueta}>
-                    Pasajero
-                  </Text>
-
-                  <Text style={styles.resumenValor}>
-                    {PASAJERO_DEMO.nombre}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.resumenFila}>
-                <Ionicons
-                  name="location-outline"
-                  size={20}
-                  color={c.primario}
-                />
-
-                <View style={styles.resumenTextoContainer}>
-                  <Text style={styles.resumenEtiqueta}>
-                    Punto de recogida
-                  </Text>
-
-                  <Text style={styles.resumenValor}>
-                    {ORIGEN_EJEMPLO.nombre}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.resumenFila}>
-                <Ionicons
-                  name="flag-outline"
-                  size={20}
-                  color={c.error}
-                />
-
-                <View style={styles.resumenTextoContainer}>
-                  <Text style={styles.resumenEtiqueta}>
-                    Destino
-                  </Text>
-
-                  <Text style={styles.resumenValor}>
-                    {DESTINO_EJEMPLO.nombre}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.avisoAceptado}>
-              <Ionicons
-                name="information-circle-outline"
-                size={20}
-                color={c.primario}
-              />
-
-              <Text style={styles.avisoAceptadoTexto}>
-                La pantalla de viaje activo se conectará en el siguiente paso.
+              <Text style={styles.vacioTitulo}>Sin solicitudes por ahora</Text>
+              <Text style={styles.centroTexto}>
+                Te avisaremos cuando un pasajero cercano pida un viaje.
               </Text>
             </View>
-          </View>
-        )}
-
-        {estadoSolicitud === "RECHAZADA" && (
-          <View style={styles.estadoResultadoContainer}>
-            <View style={styles.iconoResultadoRechazado}>
-              <Ionicons
-                name="close-circle"
-                size={54}
-                color={c.error}
-              />
-            </View>
-
-            <Text style={styles.resultadoTitulo}>
-              Solicitud rechazada
-            </Text>
-
-            <Text style={styles.resultadoDescripcion}>
-              La solicitud fue descartada. Puedes esperar una nueva.
-            </Text>
-
-            <Pressable
-              style={styles.botonNuevaSolicitud}
-              onPress={mostrarOtraSolicitud}
-            >
-              <Ionicons
-                name="refresh"
-                size={18}
-                color="#FFFFFF"
-              />
-
-              <Text style={styles.botonNuevaSolicitudTexto}>
-                Simular nueva solicitud
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </ScrollView>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
 
-const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: c.fondo,
-  },
+const crearEstilos = (c: ColoresConductor) =>
+  StyleSheet.create({
+    pantalla: { flex: 1, backgroundColor: c.fondo },
+    lista: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 30 },
+    listaVacia: { flexGrow: 1, justifyContent: "center" },
+    aviso: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginHorizontal: 18,
+      marginTop: 14,
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: c.errorSuave,
+    },
+    avisoTexto: { flex: 1, fontSize: 12, fontWeight: "600", color: c.error },
+    centro: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+    centroTexto: {
+      marginTop: 10,
+      maxWidth: 280,
+      fontSize: 13,
+      lineHeight: 19,
+      textAlign: "center",
+      color: c.textoSec,
+    },
+    
+    iconoVacio: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: c.primarioSuave,
+      marginBottom: 14,
+    },
+    vacioTitulo: { fontSize: 18, fontWeight: "800", color: c.texto },
+  });
 
-  container: {
-    flex: 1,
-    backgroundColor: c.fondo,
-  },
-
-  scrollContent: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 30,
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-
-  tituloPagina: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: c.texto,
-  },
-
-  subtituloPagina: {
-    marginTop: 4,
-    fontSize: 13,
-    color: c.textoSec,
-  },
-
-  estadoOnline: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: c.primarioSuave,
-  },
-
-  puntoOnline: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: c.primario,
-  },
-
-  estadoOnlineTexto: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: c.primario,
-  },
-
-  nuevaSolicitudCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: c.primarioSuave,
-    borderWidth: 1,
-    borderColor: c.borde,
-    marginBottom: 16,
-  },
-
-  nuevaSolicitudIcono: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.primario,
-    marginRight: 11,
-  },
-
-  nuevaSolicitudContenido: {
-    flex: 1,
-  },
-
-  nuevaSolicitudTitulo: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: c.texto,
-  },
-
-  nuevaSolicitudDescripcion: {
-    marginTop: 2,
-    fontSize: 11,
-    lineHeight: 15,
-    color: c.textoSec,
-  },
-
-  tiempoCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: c.superficie,
-  },
-
-  tiempoCardTexto: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: c.primario,
-  },
-
-  mapaContainer: {
-    height: 220,
-    borderRadius: 18,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: c.borde,
-    backgroundColor: c.superficieSuave,
-    marginBottom: 20,
-  },
-
-  mapa: {
-    width: "100%",
-    height: "100%",
-  },
-
-  seccionTitulo: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: c.texto,
-    marginBottom: 10,
-  },
-
-  detalleCard: {
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-    backgroundColor: "transparent",
-  },
-
-  pasajeroHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.primarioSuave,
-    marginRight: 11,
-  },
-
-  avatarTexto: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: c.primario,
-  },
-
-  pasajeroInfo: {
-    flex: 1,
-  },
-
-  pasajeroNombre: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: c.texto,
-  },
-
-  calificacionFila: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 3,
-  },
-
-  calificacionTexto: {
-    fontSize: 11,
-    color: c.textoSec,
-  },
-
-  servicioBadge: {
-    alignItems: "flex-end",
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: c.primarioSuave,
-  },
-
-  servicioTexto: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: c.primario,
-  },
-
-  servicioSubtexto: {
-    marginTop: 1,
-    fontSize: 9,
-    color: c.textoSec,
-  },
-
-  divisor: {
-    height: 1,
-    backgroundColor: c.borde,
-    marginVertical: 14,
-  },
-
-  ubicacionFila: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 13,
-  },
-
-  iconoUbicacionVerde: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.primarioSuave,
-    marginRight: 10,
-  },
-
-  iconoUbicacionRojo: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.errorSuave,
-    marginRight: 10,
-  },
-
-  ubicacionContenido: {
-    flex: 1,
-  },
-
-  ubicacionEtiqueta: {
-    fontSize: 10,
-    color: c.textoSec,
-    marginBottom: 2,
-  },
-
-  ubicacionValor: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: c.texto,
-  },
-
-  badgeDistancia: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: c.primarioSuave,
-  },
-
-  badgeDistanciaTexto: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: c.primario,
-  },
-
-  datosGrid: {
-    flexDirection: "row",
-    gap: 8,
-  },
-
-  datoCard: {
-    flex: 1,
-    padding: 11,
-    borderRadius: 12,
-    backgroundColor: c.fondo,
-    borderWidth: 1,
-    borderColor: c.borde,
-  },
-
-  datoIcono: {
-    marginBottom: 6,
-  },
-
-  datoEtiqueta: {
-    fontSize: 9,
-    color: c.textoSec,
-  },
-
-  datoValor: {
-    marginTop: 2,
-    fontSize: 14,
-    fontWeight: "800",
-    color: c.texto,
-  },
-
-  datoDetalle: {
-    marginTop: 2,
-    fontSize: 8,
-    lineHeight: 11,
-    color: c.textoSec,
-  },
-
-  botonesContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 16,
-  },
-
-  botonRechazar: {
-    flex: 1,
-    height: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: c.borde,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    backgroundColor: c.superficie,
-  },
-
-  botonRechazarPresionado: {
-    backgroundColor: c.superficieSuave,
-  },
-
-  botonRechazarTexto: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: c.texto,
-  },
-
-  botonAceptar: {
-    flex: 1.45,
-    height: 52,
-    borderRadius: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    backgroundColor: c.primario,
-  },
-
-  botonAceptarPresionado: {
-    backgroundColor: c.primarioPresionado,
-  },
-
-  botonAceptarTexto: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-
-  estadoResultadoContainer: {
-    marginTop: 60,
-    alignItems: "center",
-  },
-
-  iconoResultadoAceptado: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.primarioSuave,
-    marginBottom: 18,
-  },
-
-  iconoResultadoRechazado: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: c.errorSuave,
-    marginBottom: 18,
-  },
-
-  resultadoTitulo: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: c.texto,
-    textAlign: "center",
-  },
-
-  resultadoDescripcion: {
-    maxWidth: 300,
-    marginTop: 7,
-    fontSize: 13,
-    lineHeight: 19,
-    textAlign: "center",
-    color: c.textoSec,
-  },
-
-  resumenAceptado: {
-    width: "100%",
-    marginTop: 26,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: c.superficie,
-    borderWidth: 1,
-    borderColor: c.borde,
-    gap: 16,
-  },
-
-  resumenFila: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 11,
-  },
-
-  resumenTextoContainer: {
-    flex: 1,
-  },
-
-  resumenEtiqueta: {
-    fontSize: 10,
-    color: c.textoSec,
-  },
-
-  resumenValor: {
-    marginTop: 2,
-    fontSize: 13,
-    fontWeight: "700",
-    color: c.texto,
-  },
-
-  avisoAceptado: {
-    width: "100%",
-    marginTop: 14,
-    padding: 14,
-    borderRadius: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    backgroundColor: c.primarioSuave,
-  },
-
-  avisoAceptadoTexto: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
-    color: c.textoSec,
-  },
-
-  botonNuevaSolicitud: {
-    marginTop: 24,
-    height: 50,
-    paddingHorizontal: 18,
-    borderRadius: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: c.primario,
-  },
-
-  botonNuevaSolicitudTexto: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-});
