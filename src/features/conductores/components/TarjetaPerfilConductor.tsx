@@ -5,7 +5,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 interface TarjetaPerfilConductorProps {
     nombre: string;
@@ -24,6 +24,7 @@ export function TarjetaPerfilConductor({
     foto = null,
     compacta = false,
 } : TarjetaPerfilConductorProps) {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
     return (
         <View
             style={[
@@ -46,7 +47,7 @@ export function TarjetaPerfilConductor({
                     <Ionicons
                         name="person"
                         size={compacta ? 31 : 38}
-                        color={paletaColores.textoSecundarioClaro}
+                        color={c.textoSec}
                     />
                 )}
 
@@ -65,7 +66,7 @@ export function TarjetaPerfilConductor({
                     <Ionicons
                         name="star"
                         size={13}
-                        color="#E6A91D"
+                        color={c.ambar}
                     />
 
                     <Text style={styles.resumenTexto}>{calificacion}</Text>
@@ -78,7 +79,7 @@ export function TarjetaPerfilConductor({
                     <Ionicons
                         name="car-outline"
                         size={12}
-                        color={paletaColores.verde}
+                        color={c.primario}
                     />
 
                     <Text style={styles.estadoTexto}>{estado}</Text>
@@ -88,7 +89,7 @@ export function TarjetaPerfilConductor({
     );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     card: {
         minHeight: 102,
         flexDirection: "row",
@@ -97,8 +98,8 @@ const styles = StyleSheet.create({
         gap: 13,
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: paletaColores.bordeClaro,
-        backgroundColor: paletaColores.superficieClara,
+        borderColor: c.borde,
+        backgroundColor: c.superficie,
         elevation: 4,
         shadowColor: "#000000",
         shadowOffset: {
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
         borderRadius: 34,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#EEF3F0",
+        backgroundColor: c.superficieSuave,
     },
 
     avatarCompacto: {
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
         width: 11,
         height: 11,
         borderRadius: 6,
-        backgroundColor: paletaColores.verde,
+        backgroundColor: c.primario,
         borderWidth: 2,
         borderColor: "#FFFFFF",
     },
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     },
 
     nombre: {
-        color: paletaColores.textoClaro,
+        color: c.texto,
         fontSize: 17,
         fontWeight: "700",
     },
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
     },
 
     resumenTexto: {
-        color: paletaColores.textoSecundarioClaro,
+        color: c.textoSec,
         fontSize: 11,
     },
 
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
         height: 3,
         borderRadius: 2,
         backgroundColor:
-        paletaColores.textoSecundarioClaro,
+        c.textoSec,
     },
 
     estado: {
@@ -190,11 +191,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 9,
         paddingVertical: 4,
         borderRadius: 14,
-        backgroundColor: "#E8F4ED",
+        backgroundColor: c.primarioSuave,
     },
 
     estadoTexto: {
-        color: paletaColores.verde,
+        color: c.primario,
         fontSize: 10,
         fontWeight: "600",
     },

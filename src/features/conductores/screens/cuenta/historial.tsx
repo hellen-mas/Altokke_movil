@@ -223,7 +223,6 @@ export default function HistorialConductor() {
     <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <CabeceraConductor
         titulo="Historial"
-        subtitulo="Tus viajes y carreras completadas"
         mostrarAtras
         compacta
       />

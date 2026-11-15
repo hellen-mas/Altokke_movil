@@ -9,14 +9,15 @@ import {
   Text,
   View,
 } from "react-native";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { useCallback, useEffect, useState } from "react";
 import { conductorService } from "@/features/conductores/services/conductorService";
 import { supabase } from "@/shared/api/supabase";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function InicioConductorScreen() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const { perfil, actualizarPerfil } = usePerfilConductor();
 
   const [resumen, setResumen] = useState({
@@ -229,7 +230,7 @@ export default function InicioConductorScreen() {
                   estadoDisponibilidad === "disponible" ||
                   estadoDisponibilidad === "en_viaje"
                     ? "#FFFFFF"
-                    : "#6E776F"
+                    : c.textoSec
                 }
               />
             </View>
@@ -302,7 +303,7 @@ export default function InicioConductorScreen() {
               {actualizandoEstado ? (
                 <ActivityIndicator
                   size="small"
-                  color={perfil.enLinea ? "#A52B2B" : "#FFFFFF"}
+                  color={perfil.enLinea ? c.error : "#FFFFFF"}
                 />
               ) : (
                 <>
@@ -313,7 +314,7 @@ export default function InicioConductorScreen() {
                         : "radio-outline"
                     }
                     size={19}
-                    color={perfil.enLinea ? "#A52B2B" : "#FFFFFF"}
+                    color={perfil.enLinea ? c.error : "#FFFFFF"}
                   />
 
                   <Text
@@ -343,7 +344,7 @@ export default function InicioConductorScreen() {
         <View style={styles.metricas}>
           <View style={[styles.metrica, styles.metricaViajes]}>
             <View style={styles.metricaIcono}>
-              <Ionicons name="car-outline" size={19} color="#267B53" />
+              <Ionicons name="car-outline" size={19} color={c.primario} />
             </View>
             <Text style={styles.metricaValor}>
               {resumen.viajesCompletadosHoy}
@@ -353,7 +354,7 @@ export default function InicioConductorScreen() {
 
           <View style={[styles.metrica, styles.metricaGanancias]}>
             <View style={styles.metricaIcono}>
-              <Ionicons name="wallet-outline" size={19} color="#8B7138" />
+              <Ionicons name="wallet-outline" size={19} color={c.ambar} />
             </View>
             <Text style={styles.metricaValor}>
               S/ {resumen.totalHoy.toFixed(2)}
@@ -363,7 +364,7 @@ export default function InicioConductorScreen() {
 
           <View style={[styles.metrica, styles.metricaCalificacion]}>
             <View style={styles.metricaIcono}>
-              <Ionicons name="star-outline" size={19} color="#477B65" />
+              <Ionicons name="star-outline" size={19} color={c.textoSec} />
             </View>
             <Text style={styles.metricaValor}>
               {perfil.calificacion.toFixed(1)}
@@ -381,28 +382,28 @@ export default function InicioConductorScreen() {
           <AccesoRapido
             icono="wallet-outline"
             texto="Ganancias"
-            colorFondo="#E1F3E8"
+            colorFondo={c.primarioSuave}
             onPress={() => router.push("/ganancias")}
           />
 
           <AccesoRapido
             icono="receipt-outline"
             texto="Solicitudes"
-            colorFondo="#EAF0E8"
+            colorFondo={c.superficieSuave}
             onPress={() => router.push("/solicitudes")}
           />
 
           <AccesoRapido
             icono="car-sport-outline"
             texto="Vehículo"
-            colorFondo="#F2F0E4"
+            colorFondo={c.ambarSuave}
             onPress={() => router.push("/cuenta/vehiculo")}
           />
 
           <AccesoRapido
             icono="person-outline"
             texto="Cuenta"
-            colorFondo="#E8F1EC"
+            colorFondo={c.primarioSuave}
             onPress={() => router.push("/cuenta")}
           />
         </View>
@@ -413,7 +414,7 @@ export default function InicioConductorScreen() {
             <Ionicons
               name="shield-checkmark-outline"
               size={23}
-              color="#DDF5E7"
+              color={c.textoSec}
             />
           </View>
 
@@ -435,7 +436,7 @@ export default function InicioConductorScreen() {
             <Ionicons
               name="notifications-outline"
               size={23}
-              color="#267B53"
+              color={c.primario}
             />
           </View>
 
@@ -446,7 +447,7 @@ export default function InicioConductorScreen() {
             </Text>
           </View>
 
-          <Ionicons name="chevron-forward" size={21} color="#438466" />
+          <Ionicons name="chevron-forward" size={21} color={c.primario} />
         </Pressable>
       </ScrollView>
     </View>
@@ -464,6 +465,7 @@ function AccesoRapido({
   colorFondo: string;
   onPress: () => void;
 }) {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   return (
     <Pressable
       style={styles.accesoItem}
@@ -471,22 +473,22 @@ function AccesoRapido({
       accessibilityRole="button"
     >
       <View style={[styles.accesoIcono, { backgroundColor: colorFondo }]}>
-        <Ionicons name={icono} size={23} color="#267B53" />
+        <Ionicons name={icono} size={23} color={c.primario} />
       </View>
       <Text style={styles.accesoTexto}>{texto}</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   scrollContent: {
@@ -506,14 +508,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.2,
-    color: "#63927A",
+    color: c.textoSec,
     marginBottom: 4,
   },
 
   tituloPantalla: {
     fontSize: 23,
     fontWeight: "800",
-    color: "#183D2D",
+    color: c.texto,
   },
 
   estadoMini: {
@@ -526,11 +528,11 @@ const styles = StyleSheet.create({
   },
 
   estadoMiniActivo: {
-    backgroundColor: "#DDF3E6",
+    backgroundColor: c.primarioSuave,
   },
 
   estadoMiniPausa: {
-    backgroundColor: "#EFEFE9",
+    backgroundColor: c.superficieSuave,
   },
 
   estadoMiniPunto: {
@@ -540,11 +542,11 @@ const styles = StyleSheet.create({
   },
 
   estadoMiniPuntoActivo: {
-    backgroundColor: "#258B58",
+    backgroundColor: c.botonOscuro,
   },
 
   estadoMiniPuntoPausa: {
-    backgroundColor: "#858B83",
+    backgroundColor: c.primario,
   },
 
   estadoMiniTexto: {
@@ -554,11 +556,11 @@ const styles = StyleSheet.create({
   },
 
   estadoMiniTextoActivo: {
-    color: "#267B53",
+    color: c.primario,
   },
 
   estadoMiniTextoPausa: {
-    color: "#6D756E",
+    color: c.textoSec,
   },
 
   disponibilidad: {
@@ -568,11 +570,11 @@ const styles = StyleSheet.create({
   },
 
   disponibilidadActiva: {
-    backgroundColor: "#DDF3E7",
+    backgroundColor: c.primarioSuave,
   },
 
   disponibilidadPausa: {
-    backgroundColor: "#ECEFE9",
+    backgroundColor: c.superficieSuave,
   },
 
   disponibilidadCabecera: {
@@ -591,11 +593,11 @@ const styles = StyleSheet.create({
   },
 
   disponibilidadIconoActivo: {
-    backgroundColor: "#33875F",
+    backgroundColor: c.primario,
   },
 
   disponibilidadIconoPausa: {
-    backgroundColor: "#D9DED7",
+    backgroundColor: c.superficieSuave,
   },
 
   disponibilidadEstado: {
@@ -615,11 +617,11 @@ const styles = StyleSheet.create({
   },
 
   puntoActivo: {
-    backgroundColor: "#258B58",
+    backgroundColor: c.botonOscuro,
   },
 
   puntoPausa: {
-    backgroundColor: "#858B83",
+    backgroundColor: c.primario,
   },
 
   disponibilidadEstadoTexto: {
@@ -629,25 +631,25 @@ const styles = StyleSheet.create({
   },
 
   textoEstadoActivo: {
-    color: "#267B53",
+    color: c.primario,
   },
 
   textoEstadoPausa: {
-    color: "#68736A",
+    color: c.textoSec,
   },
 
   disponibilidadTitulo: {
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
-    color: "#174A32",
+    color: c.texto,
   },
 
   disponibilidadDescripcion: {
     marginTop: 5,
     fontSize: 13,
     lineHeight: 19,
-    color: "#527461",
+    color: c.textoSec,
   },
 
   disponibilidadBoton: {
@@ -662,11 +664,11 @@ const styles = StyleSheet.create({
   },
 
   botonPausar: {
-    backgroundColor: "#FBE9E7",
+    backgroundColor: c.errorSuave,
   },
 
   botonConectarse: {
-    backgroundColor: "#33875F",
+    backgroundColor: c.primario,
   },
 
   botonDeshabilitado: {
@@ -679,7 +681,7 @@ const styles = StyleSheet.create({
   },
 
   textoBotonPausar: {
-    color: "#A52B2B",
+    color: c.error,
   },
 
   textoBotonConectarse: {
@@ -696,14 +698,14 @@ const styles = StyleSheet.create({
   seccionTitulo: {
     fontSize: 17,
     fontWeight: "800",
-    color: "#183D2D",
+    color: c.texto,
   },
 
   seccionComplemento: {
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1,
-    color: "#7A9585",
+    color: c.textoSec,
   },
 
   metricas: {
@@ -722,15 +724,15 @@ const styles = StyleSheet.create({
   },
 
   metricaViajes: {
-    backgroundColor: "#E2F3E8",
+    backgroundColor: c.primarioSuave,
   },
 
   metricaGanancias: {
-    backgroundColor: "#F2F0E5",
+    backgroundColor: c.ambarSuave,
   },
 
   metricaCalificacion: {
-    backgroundColor: "#E8F0EB",
+    backgroundColor: c.superficieSuave,
   },
 
   metricaIcono: {
@@ -746,14 +748,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 18,
     fontWeight: "800",
-    color: "#183D2D",
+    color: c.texto,
   },
 
   metricaEtiqueta: {
     marginTop: 2,
     fontSize: 10,
     fontWeight: "600",
-    color: "#648071",
+    color: c.textoSec,
   },
 
   accesos: {
@@ -779,7 +781,7 @@ const styles = StyleSheet.create({
   accesoTexto: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#587264",
+    color: c.textoSec,
     textAlign: "center",
   },
 
@@ -789,7 +791,7 @@ const styles = StyleSheet.create({
     gap: 13,
     padding: 16,
     borderRadius: 21,
-    backgroundColor: "#286D4C",
+    backgroundColor: c.botonOscuro,
     marginBottom: 13,
   },
 
@@ -816,7 +818,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
     fontSize: 11,
     lineHeight: 16,
-    color: "#D8EDE0",
+    color: c.textoSec,
   },
 
   solicitudes: {
@@ -826,14 +828,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 15,
     borderRadius: 20,
-    backgroundColor: "#E4F4EA",
+    backgroundColor: c.primarioSuave,
   },
 
   solicitudesIcono: {
     width: 43,
     height: 43,
     borderRadius: 15,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -845,17 +847,17 @@ const styles = StyleSheet.create({
   solicitudesTitulo: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#214D37",
+    color: c.texto,
   },
 
   solicitudesDescripcion: {
     marginTop: 3,
     fontSize: 11,
     lineHeight: 16,
-    color: "#63816F",
+    color: c.textoSec,
   },
 
   disponibilidadViaje: {
-    backgroundColor: "#E7F0EB",
+    backgroundColor: c.superficieSuave,
   },
 });

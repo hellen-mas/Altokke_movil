@@ -6,9 +6,10 @@ import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { AvisoInformativo } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function InformacionPersonalConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const { perfil } = usePerfilConductor();
   const [modoEdicion, setModoEdicion] = useState(false);
 
@@ -35,7 +36,7 @@ export default function InformacionPersonalConductor() {
 
   return (
     <View style={styles.container}>
-      <CabeceraConductor titulo="Información personal" subtitulo="Tus datos registrados en Altokke" mostrarAtras compacta />
+      <CabeceraConductor titulo="Información personal" mostrarAtras compacta />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <TarjetaPerfilConductor
@@ -80,10 +81,10 @@ export default function InformacionPersonalConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
   scroll: {
     padding: 18,
@@ -91,10 +92,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   cardDatos: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     overflow: "hidden",
   },
   botonEditar: {
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.verde,
+    backgroundColor: c.primario,
     borderRadius: 14,
     gap: 8,
   },
