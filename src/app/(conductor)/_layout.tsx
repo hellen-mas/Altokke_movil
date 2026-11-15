@@ -7,10 +7,15 @@ import { supabase } from "@/shared/api/supabase";
 import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
 
 import { paletaColores } from "@/shared/theme/paletaColores";
+import { useAlertaConductor } from "@/features/notificaciones/hooks/useAlertaConductor";
 
 export default function ConductorLayout() {
   const [verificando, setVerificando] = useState(true);
   const [autorizado, setAutorizado] = useState(false);
+  useAlertaConductor({
+    habilitado: autorizado && !verificando,
+    radioKm: 3,
+  });
 
   useFocusEffect(
     useCallback(() => {

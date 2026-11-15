@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaciones";
-import { supabase } from "@/shared/api/supabase";
 
 export const ESTADOS_CANCELABLES = [
   "buscando",
@@ -24,148 +23,94 @@ export function useCancelarViaje(estadoActual?: string) {
   const { viajeActivoId, setViajeActivoId, setDestino } = useViaje();
   const { procesarEstadoViaje } = useNotificaciones();
   const [cancelando, setCancelando] = useState(false);
-  const cancelacionNotificadaRef = useRef(false);
+  const [modalVisible, setModalVisible] = useState(false)
 
-  // Manejador cuando el conductor cancela el viaje
-  const manejarCancelacionConductor = useCallback(() => {
-    if (cancelacionNotificadaRef.current) return;
-    cancelacionNotificadaRef.current = true;
+  // Abrir el modal de cancelación
+  const solicitarCancelacion = useCallback(() => {
+    if (cancelando) return;
 
-    Alert.alert(
-      "Viaje cancelado por el conductor",
-      "El conductor no pudo continuar con tu solicitud. ¿Deseas buscar otro mototaxi de inmediato?",
-      [
-        {
-          text: "Volver al mapa",
-          style: "cancel",
-          onPress: () => {
-            setViajeActivoId(null);
-            setDestino(null);
-            router.replace("/mapa");
-          },
-        },
-        {
-          text: "Buscar otro",
-          onPress: () => {
-            setViajeActivoId(null);
-            // Conserva el destino para no tener que ingresarlo de nuevo
-            router.replace("/confirmar-viaje");
-          },
-        },
-      ]
-    );
-  }, [setViajeActivoId, setDestino]);
+    setModalVisible(true);
+  }, [cancelando]);
 
-  // Ejecución directa de la llamada al backend RPC cancelar_viaje_pasajero
-  const ejecutarCancelacion = useCallback(async (): Promise<boolean> => {
+  // Cerrar el modal
+  const cerrarModal = useCallback(() => {
+    if (cancelando) return;
+    setModalVisible(false);
+  }, [cancelando]);
+
+  // Ejecutar la cancelación enviando el motivo a Supabase
+  const ejecutarCancelacion = useCallback(async (motivo: string): Promise<boolean> => {
+    const motivoValidado = motivo.trim();
+
+    if (!motivoValidado) {
+      Alert.alert(
+        "Motivo requerido",
+        "Debes seleccionar un motivo para cancelar el viaje."
+      );
+      return false;
+    }
+
+    if (!viajeActivoId) {
+      Alert.alert(
+        "Viaje no encontrado",
+        "No se pudo identificar el viaje que deseas cancelar."
+      );
+      return false;
+    }
+
+    if (cancelando) return false;
     setCancelando(true);
-    try {
-      if (!viajeActivoId) {
-        // En caso de que no exista en backend (ej. modo offline o prueba local)
-        setViajeActivoId(null);
-        setDestino(null);
-        Alert.alert(
-          "Viaje cancelado",
-          "Tu solicitud ha sido cancelada.",
-          [{ text: "OK", onPress: () => router.replace("/mapa") }]
-        );
-        return true;
-      }
 
-      const resultado = await viajeService.cancelarViaje(viajeActivoId);
+    try {
+      const resultado = await viajeService.cancelarViaje(viajeActivoId, motivoValidado);
 
       if (!resultado) {
         Alert.alert(
-          "Error al cancelar",
-          "No se pudo cancelar el viaje. Es posible que el viaje ya haya iniciado o no tengas permisos para cancelarlo."
+          "No se pudo cancelar",
+          "El viaje ya pudo haber cambiado de estado o no tienes permisos para cancelarlo."
         );
         return false;
       }
 
-      // Notificar al contexto de notificaciones sobre el evento
+      // Registrar el cambio en el sistema de notificaciones
       await procesarEstadoViaje(viajeActivoId, "cancelado_pasajero");
 
-      // Limpiar estados locales y volver al mapa
+      // Cerrar el modal y limpiar el viaje local
+      setModalVisible(false);
       setViajeActivoId(null);
       setDestino(null);
 
       Alert.alert(
         "Viaje cancelado",
         "Tu solicitud de viaje ha sido cancelada exitosamente.",
-        [{ text: "OK", onPress: () => router.replace("/mapa") }]
+        [{ text: "Aceptar", onPress: () => router.replace("/mapa") }]
       );
       return true;
-    } catch (err) {
-      console.warn("Fallo inesperado al cancelar viaje:", err);
+    } catch (error) {
+      console.error("Error al ejecutar la cancelación del viaje.", error);
       Alert.alert(
-        "Error",
-        "Ocurrió un error inesperado al intentar cancelar el viaje."
+        "Error inesperado",
+        "Ocurrió un problema al cancelar el viaje. Inténtalo nuevamente."
       );
       return false;
     } finally {
       setCancelando(false);
     }
-  }, [viajeActivoId, setViajeActivoId, setDestino, procesarEstadoViaje]);
+  }, [viajeActivoId, cancelando, setViajeActivoId, setDestino, procesarEstadoViaje]);
 
-  // Alerta de confirmación antes de cancelar
-  const solicitarCancelacion = useCallback(() => {
-    if (cancelando) return;
-
-    Alert.alert(
-      "Cancelar viaje",
-      "¿Estás seguro de que deseas cancelar este viaje?",
-      [
-        {
-          text: "No, mantener viaje",
-          style: "cancel",
-        },
-        {
-          text: "Sí, cancelar",
-          style: "destructive",
-          onPress: () => {
-            void ejecutarCancelacion();
-          },
-        },
-      ]
-    );
-  }, [cancelando, ejecutarCancelacion]);
-
-  // Monitorear en tiempo real si el conductor cancela el viaje
-  useEffect(() => {
-    if (!viajeActivoId) return;
-
-    const canal = supabase
-      .channel(`monitoreo_cancelacion_${viajeActivoId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "viajes",
-          filter: `id=eq.${viajeActivoId}`,
-        },
-        (payload) => {
-          const viaje = payload.new as any;
-          if (viaje?.estado === "cancelado_conductor") {
-            void procesarEstadoViaje(viajeActivoId, "cancelado_conductor");
-            manejarCancelacionConductor();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [viajeActivoId, procesarEstadoViaje, manejarCancelacionConductor]);
+  const confirmarCancelación = useCallback(async(motivo: string): Promise<void> => {
+    await ejecutarCancelacion(motivo);
+  }, [ejecutarCancelacion]);
 
   const esCancelable = puedeCancelarViaje(estadoActual || "buscando");
 
   return {
     cancelando,
     esCancelable,
+    modalVisible,
     solicitarCancelacion,
+    cerrarModal,
     ejecutarCancelacion,
-    manejarCancelacionConductor,
+    confirmarCancelación,
   };
 }

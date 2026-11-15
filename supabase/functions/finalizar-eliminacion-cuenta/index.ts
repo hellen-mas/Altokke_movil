@@ -106,6 +106,38 @@ Deno.serve(async (req) => {
     const correoInterno =
       `eliminado-${usuarioId.replace(/-/g, "")}@example.invalid`;
 
+    // Asegurar que public.usuarios también tenga
+    // el correo anonimizado.
+    const {
+      data: perfilActualizado,
+      error: errorPerfil,
+    } = await admin
+      .from("usuarios")
+      .update({
+        email: correoInterno,
+      })
+      .eq("id", usuarioId)
+      .eq("estado_cuenta", "eliminada")
+      .select("id")
+      .maybeSingle();
+
+    if (errorPerfil) {
+      console.error(
+        "Error liberando el correo en public.usuarios:",
+        errorPerfil.message
+      );
+
+      throw new Error(
+        "No se pudo anonimizar el correo del perfil."
+      );
+    }
+
+    if (!perfilActualizado) {
+      throw new Error(
+        "No se encontró el perfil eliminado."
+      );
+    }
+
     const { error: errorCorreo } =
       await admin.auth.admin.updateUserById(usuarioId, {
         email: correoInterno,

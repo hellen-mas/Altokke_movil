@@ -288,17 +288,26 @@ export default function VehiculoConductor() {
               titulo={
                 enviando
                   ? "Enviando solicitud..."
-                  : "Enviar solicitud"
+                  : !confirmacionVeracidad
+                    ? "Confirma tus datos para continuar"
+                    : !terminosCondiciones
+                      ? "Acepta los términos para continuar"
+                      : "Enviar solicitud"
               }
-              mostrarIcono={!enviando}
+              mostrarIcono={!enviando && confirmacionVeracidad && terminosCondiciones}
               icono="arrow-forward"
               cargando={enviando}
-              disabled={enviando}
+              disabled={
+                enviando ||
+                !confirmacionVeracidad ||
+                !terminosCondiciones
+              }
               onPress={enviarSolicitud}
             />
 
             <BotonVolverPaso />
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

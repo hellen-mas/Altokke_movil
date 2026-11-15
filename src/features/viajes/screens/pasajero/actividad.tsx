@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -37,21 +38,21 @@ export default function PantallaActividad() {
   const { colores, esOscuro } = useAltokkeTheme();
   const insets = useSafeAreaInsets();
 
-  const { historial, setDestino, recargarHistorial } = useViaje();
+  const {
+    historial,
+    setDestino,
+    recargarHistorial,
+    cargandoHistorial,
+    errorHistorial,
+  } = useViaje();
   const [filtro, setFiltro] = useState<Filtro>("todos");
-  const [refrescando, setRefrescando] = useState(false);
 
   useEffect(() => {
     void recargarHistorial();
   }, [recargarHistorial]);
 
-  const alRefrescar = useCallback(async () => {
-    setRefrescando(true);
-    try {
-      await recargarHistorial();
-    } finally {
-      setRefrescando(false);
-    }
+  const alRefrescar = useCallback(() => {
+    void recargarHistorial();
   }, [recargarHistorial]);
 
   const viajes = useMemo(() => {
@@ -163,8 +164,66 @@ export default function PantallaActividad() {
     [colores, filtro, viajes.length]
   );
 
-  const renderEmpty = useMemo(
-    () => (
+  const renderEmpty = useMemo(() => {
+    if (cargandoHistorial) {
+      return (
+        <View style={styles.estadoConsulta}>
+          <ActivityIndicator
+            size="large"
+            color={colores.exitoTexto}
+          />
+          <Text style={[styles.vacioTitulo, { color: colores.texto }]}>
+            Cargando tus viajes
+          </Text>
+          <Text style={[styles.vacioDescripcion, { color: colores.secundario }]}>
+            Estamos consultando tu historial.
+          </Text>
+        </View>
+      );
+    }
+
+    if (errorHistorial) {
+      return (
+        <View style={styles.estadoConsulta}>
+          <Ionicons
+            name="cloud-offline-outline"
+            size={42}
+            color={colores.secundario}
+          />
+
+          <Text style={[styles.vacioTitulo, { color: colores.texto }]}>
+            No pudimos cargar tu actividad
+          </Text>
+
+          <Text style={[styles.vacioDescripcion, { color: colores.secundario }]}>
+            Comprueba tu conexión e inténtalo nuevamente.
+          </Text>
+
+          <Pressable
+            onPress={alRefrescar}
+            style={({ pressed }) => [
+              styles.botonVacio,
+              {
+                backgroundColor: pressed
+                  ? colores.primarioPresionado
+                  : colores.primario,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.textoBotonVacio,
+                { color: colores.textoBoton },
+              ]}
+            >
+              Reintentar
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    return (
       <View
         style={[
           styles.vacio,
@@ -218,9 +277,14 @@ export default function PantallaActividad() {
           </Pressable>
         )}
       </View>
-    ),
-    [colores, filtro]
-  );
+    );
+  }, [
+    cargandoHistorial,
+    errorHistorial,
+    colores,
+    filtro,
+    alRefrescar,
+  ]);
 
   const renderFooter = useMemo(() => {
     if (viajes.length === 0) return null;
@@ -249,7 +313,7 @@ export default function PantallaActividad() {
         ListFooterComponent={renderFooter}
         refreshControl={
           <RefreshControl
-            refreshing={refrescando}
+            refreshing={cargandoHistorial}
             onRefresh={alRefrescar}
             tintColor={colores.primario}
             colors={[colores.exitoTexto]}
@@ -368,5 +432,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 10,
     fontSize: 11,
+  },
+  estadoConsulta: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 25,
+    paddingVertical: 45,
+    marginHorizontal: 20,
+    gap: 12,
   },
 });

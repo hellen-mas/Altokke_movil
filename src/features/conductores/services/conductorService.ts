@@ -359,8 +359,16 @@ export const conductorService = {
   },
 
   async obtenerViajeActivoConductor(conductorId: string) {
-    if (!conductorId) return null;
-    const estadosActivos = ["aceptado", "en_camino_origen", "esperando_pasajero", "en_viaje"] as const;
+    if (!conductorId) {
+      throw new Error("Se requiere el ID del conductor");
+    };
+
+    const estadosActivos = [
+      "aceptado", 
+      "en_camino_origen", 
+      "esperando_pasajero", 
+      "en_viaje"
+    ] as const;
 
     const { data, error } = await supabase
       .from("viajes")
@@ -372,9 +380,11 @@ export const conductorService = {
       .maybeSingle();
 
     if (error) {
-      console.warn("Aviso al consultar viaje activo de conductor:", error.message);
-      return null;
+      throw new Error(
+        `No se pudo verificar el viaje activo: ${error.message}`
+      );
     }
+    
     return data;
   },
 

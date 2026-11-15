@@ -17,6 +17,13 @@ import {
   Text,
   View,
 } from "react-native";
+import {
+  useEffect,
+  useState,
+} from "react";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
+import { conductorService } from "@/features/conductores/services/conductorService";
+import { ModalCancelarViaje } from "@/features/viajes/components/ModalCancelarViaje";
 
 const DESTINO_EJEMPLO =
   LUGARES_BAGUA.find(
@@ -28,6 +35,120 @@ const DISTANCIA = "1.3 km";
 const TIEMPO = "3 min";
 
 export default function ViajeActivoConductor() {
+  const { userId } = useAuth();
+  const [viajeActivoId, setViajeActivoId] = useState<string | null>(null);
+  const [cargandoViajeActivo, setCargandoViajeActivo] = useState(true);
+  const [modalCancelarVisible, setModalCancelarVisible] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+  const [estadoViajeActivo, setEstadoViajeActivo] = useState<string | null>(null);
+
+  useEffect(() => {
+    let componenteActivo = true;
+
+    const cargarViajeActivo = async () => {
+      if (!userId) {
+        setViajeActivoId(null);
+        setEstadoViajeActivo(null);
+        setCargandoViajeActivo(false);
+        return;
+      }
+
+      try {
+        setCargandoViajeActivo(true);
+
+        const viaje =
+          await conductorService.obtenerViajeActivoConductor(userId);
+
+        if (componenteActivo) {
+          setViajeActivoId(viaje?.id ?? null);
+          setEstadoViajeActivo(viaje?.estado ?? null);
+        }
+      } catch (error) {
+        console.error(
+          "Error al recuperar el viaje del conductor:",
+          error
+        );
+
+        if (componenteActivo) {
+          setViajeActivoId(null);
+          setEstadoViajeActivo(null);
+        }
+      } finally {
+        if (componenteActivo) {
+          setCargandoViajeActivo(false);
+        }
+      }
+    };
+
+    void cargarViajeActivo();
+
+    return () => {
+      componenteActivo = false;
+    };
+  }, [userId]);
+  
+  const puedeCancelarViaje =
+    Boolean(viajeActivoId) &&
+    [
+      "aceptado",
+      "en_camino_origen",
+      "esperando_pasajero",
+    ].includes(estadoViajeActivo ?? "");
+
+  const confirmarCancelacionConductor = async (motivo: string) => {
+    if (!viajeActivoId || cancelando) {
+      return;
+    }
+
+    if (!motivo.trim()) {
+      Alert.alert(
+        "Motivo requerido",
+        "Debes seleccionar un motivo de cancelación."
+      );
+      return;
+    }
+
+    setCancelando(true);
+
+    try {
+      const resultado =
+        await conductorService.cancelarViajeConductor(
+          viajeActivoId,
+          motivo.trim()
+        );
+
+      setModalCancelarVisible(false);
+      setViajeActivoId(null);
+
+      Alert.alert(
+        "Viaje cancelado",
+        resultado.reabierto
+          ? "La solicitud volvió a estar disponible para otros conductores."
+          : "El viaje fue cancelado correctamente.",
+        [
+          {
+            text: "Aceptar",
+            onPress: () => router.replace("/solicitudes"),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error(
+        "Error al cancelar el viaje del conductor:",
+        error
+      );
+
+      Alert.alert(
+        "No se pudo cancelar",
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un problema al cancelar el viaje."
+      );
+    } finally {
+      setCancelando(false);
+    }
+  };
+
   const mostrarRuta = () => {
     Alert.alert(
       "Ruta del viaje",
@@ -332,8 +453,51 @@ export default function ViajeActivoConductor() {
               Finalizar viaje
             </Text>
           </Pressable>
+
+          <Pressable
+            style={[
+              styles.botonCancelar,
+              (!puedeCancelarViaje || cargandoViajeActivo || cancelando) && {
+                opacity: 0.5,
+              },
+            ]}
+            disabled={
+              !puedeCancelarViaje ||
+              cargandoViajeActivo ||
+              cancelando
+            }
+            onPress={() => setModalCancelarVisible(true)}
+          >
+            <Ionicons
+              name="close-circle-outline"
+              size={19}
+              color="#B3262D"
+            />
+
+            <Text style={styles.botonCancelarTexto}>
+              {cargandoViajeActivo
+                ? "Verificando viaje..."
+                : estadoViajeActivo === "en_viaje"
+                  ? "Viaje en curso"
+                  : puedeCancelarViaje
+                    ? "Cancelar viaje"
+                    : "No hay un viaje cancelable"}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
+
+      <ModalCancelarViaje
+        visible={modalCancelarVisible}
+        rol="conductor"
+        onConfirmar={confirmarCancelacionConductor}
+        onCerrar={() => {
+          if (!cancelando) {
+            setModalCancelarVisible(false);
+          }
+        }}
+        cargando={cancelando}
+      />
     </View>
   );
 }
@@ -627,5 +791,24 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "800",
+  },
+
+  botonCancelar: {
+    marginTop: 10,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E8B7B7",
+    backgroundColor: "#FFF1F0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+
+  botonCancelarTexto: {
+    color: "#B3262D",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

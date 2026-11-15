@@ -26,6 +26,8 @@ export type ViajeContextType = {
   destino: Lugar | null;
   setDestino: (valor: Lugar | null | ((prev: Lugar | null) => Lugar | null)) => void;
   historial: ViajeHistorial[];
+  cargandoHistorial: boolean;
+  errorHistorial: string | null;
   viajeActivoId: string | null;
   setViajeActivoId: (valor: string | null | ((prev: string | null) => string | null)) => void;
   verificandoViajeActivo: boolean;
@@ -140,10 +142,12 @@ export function useViaje(): ViajeContextType {
     destino: store.destino,
     setDestino: store.setDestino,
     historial: store.historial,
+    cargandoHistorial: store.cargandoHistorial,
+    errorHistorial: store.errorHistorial,
     viajeActivoId: store.viajeActivoId,
     setViajeActivoId: store.setViajeActivoId,
     verificandoViajeActivo: store.verificandoViajeActivo,
     registrarViaje: store.registrarViaje,
-    recargarHistorial: () => store.recargarHistorial(),
+    recargarHistorial: store.recargarHistorial,
   };
 }
