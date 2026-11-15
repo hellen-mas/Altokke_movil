@@ -18,6 +18,9 @@ function resolverValor<T>(valor: ValOrFn<T>, anterior: T): T {
   return typeof valor === "function" ? (valor as (prev: T) => T)(anterior) : valor;
 }
 
+// Evita que una consulta anterior sobrescriba una más reciente.
+let solicitudHistorialActual = 0;
+
 export interface ViajeStore {
   tipoServicio: TipoServicio;
   metodoPago: MetodoPago;
@@ -29,6 +32,8 @@ export interface ViajeStore {
   viajeActivoId: string | null;
   verificandoViajeActivo: boolean;
   historial: ViajeHistorial[];
+  cargandoHistorial: boolean;
+  errorHistorial: string | null;
 
   // Acciones con soporte para valor directo o función de actualización
   setTipoServicio: (valor: ValOrFn<TipoServicio>) => void;
@@ -60,6 +65,8 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
   viajeActivoId: null,
   verificandoViajeActivo: true,
   historial: HISTORIAL_EJEMPLO,
+  cargandoHistorial: false,
+  errorHistorial: null,
 
   setTipoServicio: (valor) =>
     set((state) => ({ tipoServicio: resolverValor(valor, state.tipoServicio) })),
@@ -115,19 +122,80 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
   },
 
   recargarHistorial: async (userId) => {
-    let finalUserId = userId;
-    if (!finalUserId) {
-      const sesion = await supabase.auth.getUser();
-      finalUserId = sesion.data.user?.id;
-    }
-    if (!finalUserId) return;
+    const solicitudActual = ++solicitudHistorialActual;
+
+    set({
+      cargandoHistorial: true,
+      errorHistorial: null,
+    });
+
     try {
-      const datos = await viajeService.obtenerHistorialPasajero(finalUserId);
-      if (datos && datos.length > 0) {
-        set({ historial: datos });
+      let finalUserId = userId;
+
+      // Recuperar el usuario autenticado si no se recibió un ID.
+      if (!finalUserId) {
+        const { data, error } = await supabase.auth.getUser();
+
+        if (error) {
+          throw error;
+        }
+
+        finalUserId = data.user?.id;
       }
-    } catch (err) {
-      console.warn("Aviso al recargar historial de viajes en store:", err);
+
+      // Si no existe una sesión, limpiar el historial anterior.
+      if (!finalUserId) {
+        if (solicitudActual === solicitudHistorialActual) {
+          set({
+            historial: [],
+            errorHistorial: null,
+          });
+        }
+
+        return;
+      }
+
+      // Consultar el historial real de Supabase.
+      const datos =
+        await viajeService.obtenerHistorialPasajero(finalUserId);
+
+      // Ignorar resultados de consultas anteriores.
+      if (solicitudActual !== solicitudHistorialActual) {
+        return;
+      }
+
+      // Actualizar incluso cuando Supabase devuelve cero registros.
+      set({
+        historial: datos,
+        errorHistorial: null,
+      });
+
+    } catch (error) {
+      if (solicitudActual !== solicitudHistorialActual) {
+        return;
+      }
+
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : "No se pudo cargar el historial de viajes.";
+
+      console.warn(
+        "Error al recargar el historial de viajes:",
+        error
+      );
+
+      // Conservamos los últimos datos válidos si falla la conexión.
+      set({
+        errorHistorial: mensaje,
+      });
+
+    } finally {
+      if (solicitudActual === solicitudHistorialActual) {
+        set({
+          cargandoHistorial: false,
+        });
+      }
     }
   },
 

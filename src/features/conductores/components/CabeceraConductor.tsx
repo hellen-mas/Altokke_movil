@@ -2,270 +2,206 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import {
-    Image, 
-    Pressable, 
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ReactNode } from "react";
+import {
+  useTemaConductor,
+  type ColoresConductor,
+} from "@/features/conductores/theme/temaConductor";
 
 interface CabeceraConductorProps {
-    titulo: string;
-    subtitulo?: string;
-    mostrarAtras?: boolean;
-    mostrarMarca?: boolean;
-    compacta?: boolean;
-    children?: ReactNode;
+  titulo: string;
+  subtitulo?: string;
+  mostrarAtras?: boolean;
+  mostrarMarca?: boolean;
+  compacta?: boolean;
+  children?: ReactNode;
 }
 
 export function CabeceraConductor({
-    titulo,
-    subtitulo,
-    mostrarAtras = false, 
-    mostrarMarca = false,
-    compacta = false,
-    children,
+  titulo,
+  subtitulo,
+  mostrarAtras = false,
+  mostrarMarca = false,
+  compacta = false,
+  children,
 }: CabeceraConductorProps) {
-    return (
-        <>
-            <StatusBar style="light"/>
+  const { c, estilos } = useTemaConductor(crearEstilos);
 
-            <LinearGradient
-                colors={["#063D2A", "#07543A", "#087048"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1}}
-                style={[
-                    styles.header,
-                    compacta && styles.headerCompacto,
-                ]}
-            >
-                {/* Formas decorativas */}
-                <View style={styles.circuloGrande}/>
-                <View style={styles.circuloPequeno}/>
+  return (
+    <>
+      <StatusBar style="light" />
 
-                <SafeAreaView edges={["top"]} style={styles.safeArea}>
-                    {/* Marca Altokke */}
-                    {mostrarMarca && (
-                        <View style={styles.marcaFila}>
-                            <View style={styles.marca}>
-                                <Image
-                                    source={require("@/assets/images/logo-altokke-v2.png")}
-                                    style={styles.logo}
-                                    resizeMode="contain"
-                                />
+      <LinearGradient
+        colors={[c.headerA, c.headerB, c.headerC]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[estilos.header, compacta && estilos.headerCompacto]}
+      >
+        {/* Firma visual: aro y ruta punteada de mototaxi */}
+        <View style={estilos.aro} />
+        <View style={estilos.ruta}>
+          <View style={estilos.punto} />
+          <View style={estilos.punto} />
+          <View style={estilos.punto} />
+          <View style={[estilos.punto, estilos.puntoMeta]} />
+        </View>
 
-                                <Text style={styles.logoTexto}>Altokke</Text>
-                            </View>
+        <SafeAreaView edges={["top"]} style={estilos.safeArea}>
+          {mostrarMarca && (
+            <View style={estilos.marcaFila}>
+              <View style={estilos.marca}>
+                <Image
+                  source={require("@/assets/images/logo-altokke-v2.png")}
+                  style={estilos.logo}
+                  resizeMode="contain"
+                />
+                <Text style={estilos.logoTexto}>Altokke</Text>
+              </View>
 
-                            <View style={styles.avatarSuperior}>
-                                <Ionicons
-                                    name="person"
-                                    size={18}
-                                    color="#FFFFFF"
-                                />
-                                <View style={styles.online}/>
-                            </View>
-                        </View>
-                    )}
+              <View style={estilos.avatar}>
+                <Ionicons name="person" size={17} color={c.sobreHeader} />
+                <View style={estilos.online} />
+              </View>
+            </View>
+          )}
 
-                    {/* Header con botón de atrás */}
-                    {mostrarAtras ? (
-                        <View style={styles.filaSecundaria}>
-                            <Pressable
-                                style={styles.botonAtras}
-                                onPress={() => router.back()}
-                            >
-                                <Ionicons
-                                    name="arrow-back"
-                                    size={21}
-                                    color="#FFFFFF"
-                                />
-                            </Pressable>
+          <View style={estilos.fila}>
+            {mostrarAtras && (
+              <Pressable
+                style={estilos.botonAtras}
+                onPress={() => router.back()}
+                accessibilityRole="button"
+                accessibilityLabel="Volver"
+              >
+                <Ionicons name="arrow-back" size={20} color={c.sobreHeader} />
+              </Pressable>
+            )}
 
-                            <View style={styles.textoCentrado}>
-                                <Text
-                                    style={[
-                                        styles.titulo,
-                                        compacta && styles.tituloCompacto,
-                                    ]}
-                                >{titulo}</Text>
+            <View style={estilos.textos}>
+              <Text
+                style={[estilos.titulo, compacta && estilos.tituloCompacto]}
+                numberOfLines={1}
+              >
+                {titulo}
+              </Text>
+              {subtitulo ? (
+                <Text style={estilos.subtitulo} numberOfLines={2}>
+                  {subtitulo}
+                </Text>
+              ) : null}
+            </View>
+          </View>
 
-                                {subtitulo && (
-                                    <Text style={styles.subtituloCentrado}>{subtitulo}</Text>
-                                )}
-                            </View>
-
-                            <View style={styles.espacioDerecho}/>
-                        </View>
-                    ): (
-                        <View style={styles.tituloContainer}>
-                            <Text style={[
-                                styles.titulo,
-                                compacta && styles.tituloCompacto,
-                            ]}>{titulo}</Text>
-
-                            {subtitulo && (
-                                <Text style={styles.subtitulo}>{subtitulo}</Text>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Contenido adicional */}
-                    {children && (
-                        <View style={styles.contenidoExtra}>{children}</View>
-                    )}
-                </SafeAreaView>
-            </LinearGradient>
-        </>
-    );
+          {children ? <View style={estilos.extra}>{children}</View> : null}
+        </SafeAreaView>
+      </LinearGradient>
+    </>
+  );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) =>
+  StyleSheet.create({
     header: {
-        width: "100%",
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        borderBottomLeftRadius: 28,
-        borderBottomRightRadius: 28,
-        overflow: "hidden",
+      width: "100%",
+      paddingHorizontal: 20,
+      paddingBottom: 22,
+      borderBottomLeftRadius: 30,
+      borderBottomRightRadius: 8,
+      overflow: "hidden",
     },
+    headerCompacto: { paddingBottom: 18 },
+    safeArea: { width: "100%" },
 
-    headerCompacto: {
-        paddingHorizontal: 20,
-        paddingBottom: 16,
+    aro: {
+      position: "absolute",
+      width: 210,
+      height: 210,
+      borderRadius: 105,
+      right: -70,
+      top: -80,
+      borderWidth: 26,
+      borderColor: "rgba(255,255,255,0.045)",
     },
-
-    safeArea: {
-        width: "100%",
+    ruta: {
+      position: "absolute",
+      right: 22,
+      bottom: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
     },
-
-    circuloGrande: {
-        position: "absolute",
-        width: 190,
-        height: 190,
-        borderRadius: 95,
-        right: -65,
-        bottom: -95,
-        backgroundColor: "rgba(255,255,255,0.055)",
+    punto: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: "rgba(255,255,255,0.28)",
     },
-
-    circuloPequeno: {
-        position: "absolute",
-        width: 110,
-        height: 110,
-        borderRadius: 55,
-        right: 40,
-        top: 18,
-        backgroundColor: "rgba(255,255,255,0.035)",
+    puntoMeta: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: c.primario,
     },
 
     marcaFila: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginTop: 4,
-        marginBottom: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 4,
+      marginBottom: 14,
     },
-
-    marca: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-
-    logo: {
-        width: 34,
-        height: 34,
-    },
-
+    marca: { flexDirection: "row", alignItems: "center", gap: 8 },
+    logo: { width: 30, height: 30 },
     logoTexto: {
-        color: "#FFFFFF",
-        fontSize: 19,
-        fontWeight: "800",
+      color: c.sobreHeader,
+      fontSize: 18,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
-
-    avatarSuperior: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(255,255,255,0.14)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.28)",
+    avatar: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,255,255,0.12)",
     },
-
     online: {
-        position: "absolute",
-        right: 0,
-        bottom: 0,
-        width: 11,
-        height: 11,
-        borderRadius: 6,
-        backgroundColor: "#35E982",
-        borderWidth: 2,
-        borderColor: "#07543A",
+      position: "absolute",
+      right: 0,
+      bottom: 0,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: "#35E982",
+      borderWidth: 2,
+      borderColor: c.headerB,
     },
 
-    tituloContainer: {
-        marginBottom: 2,
-    },
-
-    titulo: {
-        color: "#FFFFFF",
-        fontSize: 30,
-        fontWeight: "800",
-    },
-
-    tituloCompacto: {
-        fontSize: 25,
-    },
-
-    subtitulo: {
-        marginTop: 4,
-        color: "rgba(255,255,255,0.78)",
-        fontSize: 15,
-        lineHeight: 18,
-    },
-
-    filaSecundaria: {
-        minHeight: 58,
-        flexDirection: "row",
-        alignItems: "center",
-    },
-
+    fila: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 },
     botonAtras: {
-        width: 39,
-        height: 39,
-        borderRadius: 20,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(255,255,255,0.14)",
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,255,255,0.12)",
     },
-
-    textoCentrado: {
-        flex: 1,
-        alignItems: "center",
-        paddingHorizontal: 8,
+    textos: { flex: 1 },
+    titulo: {
+      color: c.sobreHeader,
+      fontSize: 28,
+      fontWeight: "800",
+      letterSpacing: -0.3,
     },
-
-    subtituloCentrado: {
-        maxWidth: 270,
-        marginTop: 3,
-        color: "rgba(255,255,255,0.76)",
-        fontSize: 12,
-        lineHeight: 14,
-        textAlign: "center",
+    tituloCompacto: { fontSize: 24 },
+    subtitulo: {
+      marginTop: 3,
+      color: "rgba(255,255,255,0.72)",
+      fontSize: 14,
+      lineHeight: 18,
     },
-
-    espacioDerecho: {
-        width: 39,
-    },
-
-    contenidoExtra: {
-        marginTop: 15,
-    },
-})
+    extra: { marginTop: 16 },
+  });

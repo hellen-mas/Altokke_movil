@@ -1,5 +1,5 @@
 import { supabase } from "@/shared/api/supabase";
-import { ViajeHistorial } from "@/features/viajes/constants/pasajero";
+import type { ViajeHistorial } from "@/features/viajes/constants/pasajero";
 
 export interface CrearViajeInput {
   pasajeroId: string;
@@ -124,20 +124,26 @@ export const viajeService = {
   },
 
   /** Cancela el viaje mediante una transición validada en PostgreSQL con soporte para motivo. */
-  async cancelarViaje(viajeId: string, motivo?: string) {
-    if (!viajeId) return null;
-    try {
-      const { error } = await supabase.rpc("cancelar_viaje_pasajero", {
-        p_viaje_id: viajeId,
-        p_motivo: motivo ? motivo.trim() : null,
+  async cancelarViaje(viajeId: string, motivo?: string): Promise<boolean> {
+    if (!viajeId) return false;
+
+    const { error } = await supabase.rpc("cancelar_viaje_pasajero", {
+      p_viaje_id: viajeId,
+      p_motivo: motivo?.trim() || null,
+    });
+    
+    if (error) {
+      console.error("Error RPC cancelar_viaje_pasajero:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
       });
-      if (error) throw error;
-      const { data } = await supabase.from("viajes").select().eq("id", viajeId).maybeSingle();
-      return data;
-    } catch (err) {
-      console.warn("No se pudo cancelar el viaje:", err);
-      return null;
+
+      throw error;
     }
+
+    return true;
   },
 
   /**
@@ -215,39 +221,58 @@ export const viajeService = {
   },
 
   /**
-   * Obtiene el historial de viajes de un pasajero desde Supabase
+   * Obtiene únicamente los viajes finalizados o cancelados
+   * del pasajero desde Supabase.
    */
-  async obtenerHistorialPasajero(userId: string, limite = 50): Promise<ViajeHistorial[]> {
-    if (!userId) return [];
-
-    try {
-      const { data, error } = await supabase
-        .from("viajes")
-        .select("id, origen_texto, destino_texto, tarifa_estimada, tarifa_final, estado, creado_en")
-        .eq("pasajero_id", userId)
-        .order("creado_en", { ascending: false })
-        .limit(limite);
-
-      if (error || !data) {
-        return [];
-      }
-
-      return data.map((v) => ({
-        id: v.id,
-        fecha: new Date(v.creado_en),
-        origen: v.origen_texto,
-        destino: v.destino_texto,
-        tarifa: Number(v.tarifa_final || v.tarifa_estimada),
-        estado:
-          v.estado === "finalizado"
-            ? "completado"
-            : v.estado && v.estado.includes("cancelado")
-              ? "cancelado"
-              : "completado",
-      }));
-    } catch (err) {
-      console.warn("Aviso al consultar historial de viajes de Supabase:", err);
-      return [];
+  async obtenerHistorialPasajero(
+    userId: string,
+    limite = 50
+  ): Promise<ViajeHistorial[]> {
+    if (!userId) {
+      throw new Error(
+        "Se requiere una sesión de pasajero para consultar el historial."
+      );
     }
+
+    const estadosHistorial = [
+      "finalizado",
+      "cancelado_pasajero",
+      "cancelado_conductor",
+    ] as const;
+
+    const { data, error } = await supabase
+      .from("viajes")
+      .select(
+        "id, origen_texto, destino_texto, tarifa_estimada, tarifa_final, estado, creado_en"
+      )
+      .eq("pasajero_id", userId)
+      .in("estado", estadosHistorial)
+      .order("creado_en", { ascending: false })
+      .limit(limite);
+
+    if (error) {
+      console.error(
+        "Error al consultar el historial de viajes:",
+        error
+      );
+
+      throw new Error(
+        `No se pudo cargar el historial: ${error.message}`
+      );
+    }
+
+    return (data ?? []).map((viaje) => ({
+      id: viaje.id,
+      fecha: new Date(viaje.creado_en),
+      origen: viaje.origen_texto,
+      destino: viaje.destino_texto,
+      tarifa: Number(
+        viaje.tarifa_final ?? viaje.tarifa_estimada ?? 0
+      ),
+      estado:
+        viaje.estado === "finalizado"
+          ? "completado"
+          : "cancelado",
+    }));
   },
 };

@@ -14,21 +14,36 @@ export function TerminosConductor({ aceptado, onCambiar }: TerminosConductorProp
   const handleTerms = () => {
     Alert.alert(
       "Términos y condiciones del conductor",
-      "1. Licencia de Conducir Clase B-IIc vigente y SOAT urbano obligatorio.\n" +
-        "2. Cumplimiento estricto de normas de tránsito y ordenanzas municipales de Bagua.\n" +
-        "3. Respeto de tarifas oficiales del servicio y prohibición de cobros indebidos.\n" +
-        "4. Cero tolerancia al consumo de alcohol o sustancias durante la jornada.\n" +
-        "5. El incumplimiento causará la baja inmediata e irrevocable de la plataforma.",
+      "1. LICENCIA DE CONDUCIR\n\n" +
+        "El conductor debe contar con una licencia de conducir Clase B, categoría II-C (B-IIc), vigente y correspondiente al vehículo menor utilizado para prestar el servicio de mototaxi.\n\n" +
+
+        "2. DOCUMENTACIÓN Y SEGURO\n\n" +
+        "El conductor debe mantener vigente el SOAT o, cuando corresponda conforme a la normativa aplicable, el CAT emitido por una AFOCAT autorizada. También debe conservar los documentos y autorizaciones exigibles para la circulación y prestación del servicio.\n\n" +
+
+        "3. SEGURIDAD Y TRATO AL PASAJERO\n\n" +
+        "El conductor debe respetar las normas de tránsito, los límites de capacidad del vehículo y las condiciones de seguridad. Asimismo, debe brindar un trato digno, respetuoso y sin discriminación a todos los pasajeros. Está prohibido conducir bajo los efectos del alcohol o sustancias que afecten sus capacidades.\n\n" +
+
+        "4. RESPETO DE TARIFAS\n\n" +
+        "El conductor debe respetar la tarifa informada y aceptada para el servicio, así como las disposiciones tarifarias municipales vigentes que resulten aplicables en Bagua. No debe exigir cobros adicionales que no hayan sido informados y aceptados.\n\n" +
+
+        "5. CUMPLIMIENTO DE LAS CONDICIONES DEL SERVICIO\n\n" +
+        "El conductor debe proporcionar información veraz, mantener actualizados sus documentos y utilizar la plataforma de acuerdo con las condiciones del servicio. Los incumplimientos podrán dar lugar a una revisión y a las medidas correspondientes según su gravedad y las políticas aplicables.",
       [{ text: "Entendido" }]
     );
   };
 
   const handlePrivacy = () => {
     Alert.alert(
-      "Política de privacidad (Ley 29733)",
-      "Altokke recopila tus datos personales, ubicación satelital y documentos oficiales " +
-        "conforme a la Ley N° 29733 para validar tu idoneidad como conductor " +
-        "y garantizar la seguridad integral de los pasajeros.",
+      "Protección de datos personales",
+      "ALTOKKE realiza el tratamiento de datos personales conforme a la Ley N.º 29733, Ley de Protección de Datos Personales, y su Reglamento vigente.\n\n" +
+
+        "Durante el registro y utilización de la aplicación se pueden tratar datos de identificación, contacto, fotografías, documentos del conductor, información del vehículo, ubicación y datos relacionados con los viajes.\n\n" +
+
+        "Esta información se utiliza para gestionar el registro, verificar los requisitos del conductor, facilitar la prestación del servicio, contribuir a la seguridad de los usuarios y atender incidencias.\n\n" +
+
+        "Los datos necesarios para realizar un viaje pueden compartirse con el pasajero correspondiente. También podrán comunicarse a las autoridades competentes cuando exista una obligación legal.\n\n" +
+
+        "El titular puede ejercer los derechos que le reconoce la normativa de protección de datos personales, conforme al procedimiento establecido en la Política de Privacidad de ALTOKKE.",
       [{ text: "Entendido" }]
     );
   };
@@ -87,18 +102,21 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 16,
   },
+
   fila: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
     minHeight: 44,
   },
+
   textoCheckbox: {
     flex: 1,
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "500",
   },
+
   enlaces: {
     marginLeft: 36,
     flexDirection: "row",
@@ -106,10 +124,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+
   separador: {
     fontSize: 14,
     fontWeight: "600",
   },
+
   enlace: {
     fontSize: 12,
     fontWeight: "700",

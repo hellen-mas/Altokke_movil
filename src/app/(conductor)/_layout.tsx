@@ -2,15 +2,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { supabase } from "@/shared/api/supabase";
 import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
 
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useColoresConductor } from "@/features/conductores/theme/temaConductor";
+import { useAlertaConductor } from "@/features/notificaciones/hooks/useAlertaConductor";
 
 export default function ConductorLayout() {
+  const { c } = useColoresConductor();
   const [verificando, setVerificando] = useState(true);
   const [autorizado, setAutorizado] = useState(false);
+  useAlertaConductor({
+    habilitado: autorizado && !verificando,
+    radioKm: 3,
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -58,11 +64,12 @@ export default function ConductorLayout() {
       <View style={{
         flex: 1,
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        backgroundColor: c.fondo,
       }}>
         <ActivityIndicator
           size="large"
-          color={paletaColores.verde}
+          color={c.primario}
         />
       </View>
     );
@@ -77,13 +84,13 @@ export default function ConductorLayout() {
       screenOptions={{
         headerShown: false,
 
-        tabBarActiveTintColor: paletaColores.verde,
-        tabBarInactiveTintColor: paletaColores.textoSecundarioClaro,
+        tabBarActiveTintColor: c.primario,
+        tabBarInactiveTintColor: c.textoSec,
 
         tabBarStyle: {
-            backgroundColor: paletaColores.superficieClara,
-            borderTopColor: paletaColores.bordeClaro,
-            borderTopWidth: 1,
+            backgroundColor: c.barra,
+            borderTopColor: c.borde,
+            borderTopWidth: StyleSheet.hairlineWidth,
             height: 70,
             paddingTop: 7,
             paddingBottom: 8,
@@ -110,8 +117,8 @@ export default function ConductorLayout() {
                 typeof color === "string"
                   ? color
                   : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
+                    ? c.primario
+                    : c.textoSec
               }
             />
           ),
@@ -135,8 +142,8 @@ export default function ConductorLayout() {
                 typeof color === "string"
                   ? color
                   : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
+                    ? c.primario
+                    : c.textoSec
               }
             />
           ),
@@ -156,8 +163,8 @@ export default function ConductorLayout() {
                 typeof color === "string"
                   ? color
                   : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
+                    ? c.primario
+                    : c.textoSec
               }
             />
           ),
@@ -177,8 +184,8 @@ export default function ConductorLayout() {
                 typeof color === "string"
                   ? color
                   : focused
-                    ? paletaColores.verde
-                    : paletaColores.textoSecundarioClaro
+                    ? c.primario
+                    : c.textoSec
               }
             />
           ),

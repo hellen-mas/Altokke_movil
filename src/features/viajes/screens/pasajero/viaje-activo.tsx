@@ -30,6 +30,7 @@ import {
   interpolarRuta,
 } from "@/features/viajes/utils/viaje";
 import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
+import { ModalCancelarViaje } from "../../components/ModalCancelarViaje";
 
 // Estados reales del viaje, en el orden en que avanza la barra de progreso
 const ESTADOS_PROGRESO = [
@@ -73,8 +74,14 @@ export default function PantallaViajeActivo() {
   const etapa = Math.max(0, ESTADOS_PROGRESO.indexOf(estadoViaje));
   const terminado = estadoViaje === "finalizado";
 
-  const { solicitarCancelacion, cancelando, esCancelable } =
-    useCancelarViaje(estadoViaje);
+  const {
+    solicitarCancelacion,
+    cancelando,
+    esCancelable,
+    modalVisible,
+    cerrarModal,
+    confirmarCancelación,
+  } = useCancelarViaje(estadoViaje);
 
   // Si se entra sin haber armado un viaje, se vuelve a pedir el destino
   if (!resumen) {
@@ -228,6 +235,19 @@ export default function PantallaViajeActivo() {
           />
         </PanelDeslizableViaje>
       </View>
+
+      {/* MODAL DE CANCELACIÓN */}
+      <ModalCancelarViaje
+        visible={modalVisible}
+        rol="pasajero"
+        advertenciaLlegada={
+          estadoViaje === "esperando_pasajero"
+        }
+        onConfirmar={confirmarCancelación}
+        onCerrar={cerrarModal}
+        cargando={cancelando}
+      />
+      
     </GestureHandlerRootView>
   );
 }

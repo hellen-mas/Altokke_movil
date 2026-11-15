@@ -2,17 +2,18 @@ import { AvisoInformativo } from "@/shared/components/ui";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { authService } from "@/features/autenticacion/services/authService";
 import { useState } from "react";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 const mostrarProximamente = () => {
   Alert.alert("Próximamente", "Esta opción todavía no está disponible.");
 };
 
 export default function ConfiguracionConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const { logout } = useAuth();
 
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
@@ -74,7 +75,6 @@ export default function ConfiguracionConductor() {
     <View style={styles.container}>
       <CabeceraConductor
         titulo="Configuración"
-        subtitulo="Personaliza tu experiencia en Altokke"
         mostrarAtras
         compacta
       />
@@ -152,10 +152,10 @@ export default function ConfiguracionConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   scrollContent: {
@@ -172,9 +172,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     borderRadius: 18,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
     overflow: "hidden",
   },
 });

@@ -4,8 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-nat
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { AvisoInformativo } from "@/shared/components/ui";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { router } from "expo-router";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 interface FilaProps {
   icono: keyof typeof Ionicons.glyphMap;
@@ -17,10 +17,11 @@ interface FilaProps {
 }
 
 function FilaSeguridad({ icono, titulo, descripcion, estado, onPress, controlDerecho }: FilaProps) {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const contenido = (
     <View style={styles.fila}>
       <View style={styles.iconoBox}>
-        <Ionicons name={icono} size={20} color={paletaColores.verde} />
+        <Ionicons name={icono} size={20} color={c.primario} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.filaTitulo}>{titulo}</Text>
@@ -32,7 +33,7 @@ function FilaSeguridad({ icono, titulo, descripcion, estado, onPress, controlDer
         </View>
       )}
       {controlDerecho}
-      {onPress && <Ionicons name="chevron-forward" size={18} color={paletaColores.textoSecundarioClaro} />}
+      {onPress && <Ionicons name="chevron-forward" size={18} color={c.textoSec} />}
     </View>
   );
 
@@ -46,17 +47,18 @@ function FilaSeguridad({ icono, titulo, descripcion, estado, onPress, controlDer
 }
 
 export default function SeguridadConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const { perfil } = usePerfilConductor();
   const seguridad = perfil.seguridad;
   const [compartirViaje, setCompartirViaje] = useState(seguridad.compartirViaje);
 
   return (
     <View style={styles.container}>
-      <CabeceraConductor titulo="Seguridad" subtitulo="Tu seguridad es nuestra prioridad" mostrarAtras compacta />
+      <CabeceraConductor titulo="Seguridad" mostrarAtras compacta />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.cardHeader}>
-          <Ionicons name="shield-checkmark" size={26} color={paletaColores.verde} />
+          <Ionicons name="shield-checkmark" size={26} color={c.primario} />
           <View style={{ flex: 1 }}>
             <Text style={styles.cardHeaderTitulo}>Conduce con confianza</Text>
             <Text style={styles.cardHeaderSubtitulo}>Herramientas de seguridad activas para protegerte mientras conduces.</Text>
@@ -86,8 +88,8 @@ export default function SeguridadConductor() {
                 <Switch
                   value={compartirViaje}
                   onValueChange={setCompartirViaje}
-                  trackColor={{ false: "#CBD5D0", true: "#A7DFC1" }}
-                  thumbColor={compartirViaje ? paletaColores.verde : "#FFFFFF"}
+                  trackColor={{ false: c.superficieSuave, true: c.primarioSuave }}
+                  thumbColor={compartirViaje ? c.primario : "#FFFFFF"}
                 />
               }
             />
@@ -134,10 +136,10 @@ export default function SeguridadConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
   scrollContent: {
     padding: 20,
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     padding: 16,
     borderRadius: 16,
     gap: 12,
@@ -154,11 +156,11 @@ const styles = StyleSheet.create({
   cardHeaderTitulo: {
     fontSize: 16,
     fontWeight: "700",
-    color: paletaColores.textPrimary,
+    color: c.texto,
   },
   cardHeaderSubtitulo: {
     fontSize: 13,
-    color: paletaColores.textSecondary,
+    color: c.textoSec,
     marginTop: 2,
   },
   seccion: {
@@ -167,12 +169,12 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textSecondary,
+    color: c.textoSec,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 4,
@@ -187,22 +189,22 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#EAF5EF",
+    backgroundColor: c.primarioSuave,
     alignItems: "center",
     justifyContent: "center",
   },
   filaTitulo: {
     fontSize: 15,
     fontWeight: "600",
-    color: paletaColores.textPrimary,
+    color: c.texto,
   },
   filaSubtitulo: {
     fontSize: 12,
-    color: paletaColores.textSecondary,
+    color: c.textoSec,
     marginTop: 1,
   },
   badge: {
-    backgroundColor: "#EAF5EF",
+    backgroundColor: c.primarioSuave,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -210,6 +212,6 @@ const styles = StyleSheet.create({
   badgeTexto: {
     fontSize: 12,
     fontWeight: "600",
-    color: paletaColores.verde,
+    color: c.primario,
   },
 });

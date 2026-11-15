@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { AvisoInformativo } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 interface PreguntaProps {
   pregunta: string;
@@ -21,6 +21,7 @@ function PreguntaFrecuente({
   pregunta,
   respuesta,
 }: PreguntaProps) {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const [abierta, setAbierta] = useState(false);
 
   return (
@@ -40,7 +41,7 @@ function PreguntaFrecuente({
               : "chevron-down"
           }
           size={18}
-          color={paletaColores.textoSecundarioClaro}
+          color={c.textoSec}
         />
       </View>
 
@@ -54,6 +55,7 @@ function PreguntaFrecuente({
 }
 
 export default function CentroAyudaConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const contactarSoporte = () => {
     Alert.alert(
       "Soporte Altokke",
@@ -66,7 +68,6 @@ export default function CentroAyudaConductor() {
 
       <CabeceraConductor
           titulo="Centro de ayuda"
-          subtitulo="Encuentra respuestas y recibe asistencia"
           mostrarAtras
           compacta
         />
@@ -81,7 +82,7 @@ export default function CentroAyudaConductor() {
             <Ionicons
               name="help-circle-outline"
               size={28}
-              color={paletaColores.verde}
+              color={c.primario}
             />
           </View>
 
@@ -108,7 +109,7 @@ export default function CentroAyudaConductor() {
                 <Ionicons
                   name="person-outline"
                   size={19}
-                  color={paletaColores.verde}
+                  color={c.primario}
                 />
               </View>
 
@@ -127,7 +128,7 @@ export default function CentroAyudaConductor() {
                 <Ionicons
                   name="car-outline"
                   size={19}
-                  color={paletaColores.verde}
+                  color={c.primario}
                 />
               </View>
 
@@ -146,7 +147,7 @@ export default function CentroAyudaConductor() {
                 <Ionicons
                   name="document-text-outline"
                   size={19}
-                  color={paletaColores.verde}
+                  color={c.primario}
                 />
               </View>
 
@@ -200,7 +201,7 @@ export default function CentroAyudaConductor() {
           <Ionicons
             name="chatbubble-ellipses-outline"
             size={18}
-            color={paletaColores.textoOscuro}
+            color={"#FFFFFF"}
           />
 
           <Text style={styles.botonTexto}>
@@ -220,10 +221,10 @@ export default function CentroAyudaConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   scrollContent: {
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     padding: 15,
     gap: 12,
     borderRadius: 17,
-    backgroundColor: "#E8F4ED",
+    backgroundColor: c.primarioSuave,
   },
 
   introIcono: {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
   },
 
   introInformacion: {
@@ -255,14 +256,14 @@ const styles = StyleSheet.create({
   },
 
   introTitulo: {
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 15,
     fontWeight: "800",
   },
 
   introDescripcion: {
     marginTop: 3,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
     fontSize: 11,
     lineHeight: 15,
   },
@@ -274,16 +275,16 @@ const styles = StyleSheet.create({
 
   tituloSeccion: {
     marginBottom: 8,
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 15,
     fontWeight: "800",
   },
 
   temasCard: {
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     borderRadius: 17,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
     overflow: "hidden",
   },
 
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     gap: 11,
     paddingHorizontal: 13,
     borderBottomWidth: 1,
-    borderBottomColor: "#EDF1EF",
+    borderBottomColor: c.textoSec,
   },
 
   ultimo: {
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8F4ED",
+    backgroundColor: c.primarioSuave,
   },
 
   temaInfo: {
@@ -315,22 +316,22 @@ const styles = StyleSheet.create({
   },
 
   temaTitulo: {
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 14,
     fontWeight: "700",
   },
 
   temaDescripcion: {
     marginTop: 2,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
     fontSize: 10,
   },
 
   preguntasCard: {
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     borderRadius: 17,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
     overflow: "hidden",
   },
 
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#EDF1EF",
+    borderBottomColor: c.textoSec,
   },
 
   preguntaSuperior: {
@@ -349,7 +350,7 @@ const styles = StyleSheet.create({
 
   preguntaTitulo: {
     flex: 1,
-    color: paletaColores.textoClaro,
+    color: c.texto,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -357,7 +358,7 @@ const styles = StyleSheet.create({
   respuesta: {
     marginTop: 8,
     paddingRight: 24,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
     fontSize: 12,
     lineHeight: 15,
   },
@@ -371,15 +372,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: paletaColores.boton,
+    backgroundColor: c.primario,
   },
 
   botonPresionado: {
-    backgroundColor: paletaColores.botonPresionado,
+    backgroundColor: c.primarioPresionado,
   },
 
   botonTexto: {
-    color: paletaColores.textoOscuro,
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
   },

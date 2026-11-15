@@ -1,10 +1,10 @@
 
 import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { RESUMEN_GANANCIAS, VIAJES_EJEMPLO } from "@/features/conductores/constants/conductor";
-import { paletaColores } from "@/shared/theme/paletaColores";
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 const ALTURA_MAXIMA_BARRA = 90;
 
@@ -16,6 +16,7 @@ const mostrarRetiroProximamente = () => {
 };
 
 export default function GananciasConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const montoMaximo = Math.max(
     ...RESUMEN_GANANCIAS.porDia.map((dia) => dia.monto),
     1,
@@ -47,7 +48,7 @@ export default function GananciasConductor() {
             </Text>
 
             <View style={styles.variacion}>
-              <Ionicons name="arrow-up" size={13} color={paletaColores.boton} />
+              <Ionicons name="arrow-up" size={13} color={c.primario} />
               <Text style={styles.variacionTexto}>
                 +{RESUMEN_GANANCIAS.variacionSemana}%
               </Text>
@@ -103,8 +104,8 @@ export default function GananciasConductor() {
                         height: altura,
                         backgroundColor:
                           dia.monto === montoMaximo
-                            ? paletaColores.boton
-                            : paletaColores.verde,
+                            ? c.primario
+                            : c.primario,
                       },
                     ]}
                   />
@@ -132,7 +133,7 @@ export default function GananciasConductor() {
                 <Ionicons
                   name="navigate"
                   size={16}
-                  color={paletaColores.boton}
+                  color={c.primario}
                 />
               </View>
 
@@ -164,10 +165,10 @@ export default function GananciasConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
 
   scrollContent: {
@@ -180,9 +181,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 18,
     borderRadius: 18,
-    backgroundColor: paletaColores.superficieClara,
+    backgroundColor: c.superficie,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
   },
 
   filaResumen: {
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   montoGrande: {
     fontSize: 26,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   variacion: {
@@ -204,13 +205,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
-    backgroundColor: "#E6F5EC",
+    backgroundColor: c.primarioSuave,
   },
 
   variacionTexto: {
     fontSize: 12,
     fontWeight: "700",
-    color: paletaColores.boton,
+    color: c.primario,
   },
 
   filaDatos: {
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: paletaColores.bordeClaro,
+    borderTopColor: c.borde,
   },
 
   dato: {
@@ -227,26 +228,26 @@ const styles = StyleSheet.create({
 
   datoEtiqueta: {
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   datoValor: {
     marginTop: 4,
     fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   tituloSeccion: {
     fontSize: 15,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   subtituloSeccion: {
     marginTop: 2,
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   grafico: {
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
 
   montoBarra: {
     fontSize: 10,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
     marginBottom: 4,
     height: 12,
   },
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   diaEtiqueta: {
     marginTop: 6,
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   filaViaje: {
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: paletaColores.bordeClaro,
+    borderBottomColor: c.borde,
   },
 
   sinBorde: {
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8F4ED",
+    backgroundColor: c.primarioSuave,
   },
 
   textosViaje: {
@@ -309,19 +310,19 @@ const styles = StyleSheet.create({
   rutaViaje: {
     fontSize: 13,
     fontWeight: "600",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   fechaViaje: {
     marginTop: 2,
     fontSize: 11,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   montoViaje: {
     fontSize: 14,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   bloqueRetiro: {
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
 
   saldoTexto: {
     fontSize: 12,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 
   header: {
@@ -343,12 +344,12 @@ const styles = StyleSheet.create({
   tituloPagina: {
     fontSize: 26,
     fontWeight: "800",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
 
   subtituloPagina: {
     marginTop: 4,
     fontSize: 13,
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
 });

@@ -27,6 +27,7 @@ import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
 import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
+import { ModalCancelarViaje } from "../../components/ModalCancelarViaje";
 
 // Si nadie acepta en este tiempo, se avisa que no hay conductores disponibles
 const TIEMPO_MAXIMO_BUSQUEDA = 2 * 60 * 1000;
@@ -34,7 +35,7 @@ const TIEMPO_MAXIMO_BUSQUEDA = 2 * 60 * 1000;
 export default function PantallaBuscandoConductor() {
   const { colores } = useAltokkeTheme();
   const resumen = useResumenViaje();
-  const { solicitarCancelacion, cancelando } = useCancelarViaje("buscando");
+  const { solicitarCancelacion, cancelando, modalVisible, cerrarModal, confirmarCancelación } = useCancelarViaje("buscando");
 
   const { viajeActivoId } = useViaje();
   const { viaje } = useViajeEnVivo(viajeActivoId);
@@ -367,7 +368,13 @@ export default function PantallaBuscandoConductor() {
         </PanelDeslizableViaje>
       </View>
 
-      
+      <ModalCancelarViaje
+        visible={modalVisible}
+        rol="pasajero"
+        onConfirmar={confirmarCancelación}
+        onCerrar={cerrarModal}
+        cargando={cancelando}
+      />
     </GestureHandlerRootView>
   );
 }
