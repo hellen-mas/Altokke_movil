@@ -5,7 +5,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 interface DatoPersonalProps {
     icono: keyof typeof Ionicons.glyphMap;
@@ -26,6 +26,7 @@ export function DatoPersonal({
     onEditar,
     ultimo = false,
 } : DatoPersonalProps) {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
     return (
         <View
             style={[
@@ -37,7 +38,7 @@ export function DatoPersonal({
                 <Ionicons
                     name={icono}
                     size={18}
-                    color={paletaColores.verde}
+                    color={c.primario}
                 />
             </View>
 
@@ -58,7 +59,7 @@ export function DatoPersonal({
                     <Ionicons
                         name="pencil-outline"
                         size={17}
-                        color={paletaColores.textoSecundarioClaro}
+                        color={c.textoSec}
                     />
                 </Pressable>
             )}
@@ -66,7 +67,7 @@ export function DatoPersonal({
     );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     container: {
         minHeight: 65,
         flexDirection: "row",
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderBottomWidth: 1,
-        borderBottomColor: "#EDF1EF",
+        borderBottomColor: c.textoSec,
     },
 
     ultimo: {
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#E8F4ED",
+        backgroundColor: c.primarioSuave,
     },
 
     informacion: {
@@ -96,20 +97,20 @@ const styles = StyleSheet.create({
     },
 
     titulo: {
-        color: paletaColores.textoClaro,
+        color: c.texto,
         fontSize: 14,
         fontWeight: "700",
     },
 
     valor: {
         marginTop: 2,
-        color: paletaColores.textoSecundarioClaro,
+        color: c.textoSec,
         fontSize: 12,
         lineHeight: 14,
     },
 
     valorSecundario: {
-        color: paletaColores.textoSecundarioClaro,
+        color: c.textoSec,
         fontSize: 10,
         lineHeight: 13,
     },
@@ -120,6 +121,6 @@ const styles = StyleSheet.create({
         borderRadius: 17,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#E8F4ED",
+        backgroundColor: c.primarioSuave,
     },
 });

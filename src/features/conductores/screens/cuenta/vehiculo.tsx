@@ -5,9 +5,10 @@ import { CabeceraConductor } from "@/features/conductores/components/CabeceraCon
 import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { AvisoInformativo } from "@/shared/components/ui";
-import { paletaColores } from "@/shared/theme/paletaColores";
+import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function VehiculoConductor() {
+  const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const { perfil } = usePerfilConductor();
   const [modoEdicion, setModoEdicion] = useState(false);
   const vehiculo = perfil.vehiculo;
@@ -28,18 +29,18 @@ export default function VehiculoConductor() {
 
   return (
     <View style={styles.container}>
-      <CabeceraConductor titulo="Vehículo" subtitulo="Información de tu mototaxi" mostrarAtras compacta />
+      <CabeceraConductor titulo="Vehículo" mostrarAtras compacta />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.vehiculoCard}>
           <View style={styles.iconoBox}>
-            <Ionicons name="car-outline" size={32} color={paletaColores.verde} />
+            <Ionicons name="car-outline" size={32} color={c.primario} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.nombreVehiculo}>{vehiculo.marca} {vehiculo.modelo}</Text>
             <Text style={styles.placaVehiculo}>Placa {vehiculo.placa}</Text>
             <View style={styles.badgeVerificado}>
-              <Ionicons name="checkmark-circle" size={14} color={paletaColores.verde} />
+              <Ionicons name="checkmark-circle" size={14} color={c.primario} />
               <Text style={styles.textoVerificado}>Vehículo verificado</Text>
             </View>
           </View>
@@ -78,10 +79,10 @@ export default function VehiculoConductor() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: paletaColores.fondoClaro,
+    backgroundColor: c.fondo,
   },
   scroll: {
     padding: 18,
@@ -91,30 +92,30 @@ const styles = StyleSheet.create({
   vehiculoCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     borderRadius: 16,
     padding: 16,
     gap: 14,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
   },
   iconoBox: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#E8F4ED",
+    backgroundColor: c.primarioSuave,
     alignItems: "center",
     justifyContent: "center",
   },
   nombreVehiculo: {
     fontSize: 18,
     fontWeight: "700",
-    color: paletaColores.textoClaro,
+    color: c.texto,
   },
   placaVehiculo: {
     fontSize: 14,
     fontWeight: "600",
-    color: paletaColores.textoSecundarioClaro,
+    color: c.textoSec,
   },
   badgeVerificado: {
     flexDirection: "row",
@@ -125,13 +126,13 @@ const styles = StyleSheet.create({
   textoVerificado: {
     fontSize: 12,
     fontWeight: "600",
-    color: paletaColores.verde,
+    color: c.primario,
   },
   cardDatos: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.superficie,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: paletaColores.bordeClaro,
+    borderColor: c.borde,
     overflow: "hidden",
   },
   botonEditar: {
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: paletaColores.verde,
+    backgroundColor: c.primario,
     borderRadius: 14,
     gap: 8,
   },
