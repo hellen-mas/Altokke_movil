@@ -13,7 +13,13 @@ export interface AltokkeAccessibilityState {
  * protegiendo a usuarios con sensibilidad vestibular y optimizando el rendimiento.
  */
 export function useAltokkeAccessibility(): AltokkeAccessibilityState {
-  const [reducirMovimiento, setReducirMovimiento] = useState(false);
+  const [reducirMovimiento, setReducirMovimiento] = useState(() =>
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false
+  );
   const [lectorPantallaActivo, setLectorPantallaActivo] = useState(false);
 
   useEffect(() => {
@@ -23,7 +29,6 @@ export function useAltokkeAccessibility(): AltokkeAccessibilityState {
       try {
         if (typeof window !== "undefined" && window.matchMedia) {
           const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-          setReducirMovimiento(mediaQuery.matches);
           const listener = (e: MediaQueryListEvent) => {
             if (montado) setReducirMovimiento(e.matches);
           };

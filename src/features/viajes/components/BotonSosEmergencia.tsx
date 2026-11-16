@@ -1,16 +1,16 @@
-import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-  Linking,
-  Alert,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useHaptics } from "@/shared/hooks/useHaptics";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useRef, useState } from "react";
+import {
+  Alert,
+  Linking,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export interface BotonSosEmergenciaProps {
   viajeId?: string;
@@ -54,7 +54,10 @@ export function BotonSosEmergencia({
     // Central PNP Bagua
     Linking.openURL("tel:105").catch((err) => {
       console.warn("No se pudo iniciar la llamada:", err);
-      Alert.alert("Emergencia", "Llama directamente al 105 (Policía Nacional del Perú).");
+      Alert.alert(
+        "Emergencia",
+        "Llama directamente al 105 (Policía Nacional del Perú).",
+      );
     });
   };
 
@@ -62,12 +65,15 @@ export function BotonSosEmergencia({
     // SAMU Amazonas
     Linking.openURL("tel:106").catch((err) => {
       console.warn("No se pudo iniciar la llamada:", err);
-      Alert.alert("Emergencia", "Llama directamente al 106 (SAMU Emergencias Médicas).");
+      Alert.alert(
+        "Emergencia",
+        "Llama directamente al 106 (SAMU Emergencias Médicas).",
+      );
     });
   };
 
   const compartirUbicacionWhatsapp = () => {
-    let mensaje = "¡ALERTA DE EMERGENCIA ALTOKKE EN BAGUA! Necesito asistencia urgente.";
+    let mensaje = "¡ALERTA DE EMERGENCIA ALTOKKE! Necesito asistencia urgente.";
     if (viajeId) {
       mensaje += ` Viaje ID: ${viajeId}.`;
     }
@@ -122,8 +128,11 @@ export function BotonSosEmergencia({
               <Text style={[styles.tituloModal, { color: colores.texto }]}>
                 Centro de Emergencia Altokke
               </Text>
-              <Text style={[styles.subtituloModal, { color: colores.secundario }]}>
-                Servicio de asistencia inmediata en Bagua. Tu seguridad es nuestra prioridad.
+              <Text
+                style={[styles.subtituloModal, { color: colores.secundario }]}
+              >
+                Servicio de asistencia inmediata. Tu seguridad es nuestra
+                prioridad.
               </Text>
             </View>
 
@@ -132,14 +141,18 @@ export function BotonSosEmergencia({
                 onPress={llamarPolicia}
                 style={[styles.botonOpcion, { borderColor: colores.linea }]}
               >
-                <View style={[styles.iconoOpcion, { backgroundColor: "#EBF3FB" }]}>
+                <View
+                  style={[styles.iconoOpcion, { backgroundColor: "#EBF3FB" }]}
+                >
                   <Ionicons name="call" size={20} color="#0B57D0" />
                 </View>
                 <View style={styles.textosOpcion}>
                   <Text style={[styles.nombreOpcion, { color: colores.texto }]}>
                     Policía Nacional del Perú (105)
                   </Text>
-                  <Text style={[styles.descOpcion, { color: colores.secundario }]}>
+                  <Text
+                    style={[styles.descOpcion, { color: colores.secundario }]}
+                  >
                     Comisaría Sectorial de Bagua
                   </Text>
                 </View>
@@ -149,14 +162,18 @@ export function BotonSosEmergencia({
                 onPress={llamarSamu}
                 style={[styles.botonOpcion, { borderColor: colores.linea }]}
               >
-                <View style={[styles.iconoOpcion, { backgroundColor: "#FCEBEB" }]}>
+                <View
+                  style={[styles.iconoOpcion, { backgroundColor: "#FCEBEB" }]}
+                >
                   <Ionicons name="medkit" size={20} color="#B42323" />
                 </View>
                 <View style={styles.textosOpcion}>
                   <Text style={[styles.nombreOpcion, { color: colores.texto }]}>
                     SAMU Ambulancia (106)
                   </Text>
-                  <Text style={[styles.descOpcion, { color: colores.secundario }]}>
+                  <Text
+                    style={[styles.descOpcion, { color: colores.secundario }]}
+                  >
                     Atención médica de urgencia
                   </Text>
                 </View>
@@ -166,14 +183,18 @@ export function BotonSosEmergencia({
                 onPress={compartirUbicacionWhatsapp}
                 style={[styles.botonOpcion, { borderColor: colores.linea }]}
               >
-                <View style={[styles.iconoOpcion, { backgroundColor: "#E6F4EA" }]}>
+                <View
+                  style={[styles.iconoOpcion, { backgroundColor: "#E6F4EA" }]}
+                >
                   <Ionicons name="logo-whatsapp" size={20} color="#137333" />
                 </View>
                 <View style={styles.textosOpcion}>
                   <Text style={[styles.nombreOpcion, { color: colores.texto }]}>
                     Compartir auxilio por WhatsApp
                   </Text>
-                  <Text style={[styles.descOpcion, { color: colores.secundario }]}>
+                  <Text
+                    style={[styles.descOpcion, { color: colores.secundario }]}
+                  >
                     Envía enlace GPS en vivo a contactos
                   </Text>
                 </View>

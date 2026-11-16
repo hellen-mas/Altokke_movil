@@ -23,8 +23,8 @@ export function useSolicitudesConductor() {
 
   const cargarSolicitudes = useCallback(async () => {
     try {
-      setError(null);
       const datos = await conductorService.obtenerSolicitudesPendientes();
+      setError(null);
       const mapeadas: SolicitudViajeItem[] = (datos ?? []).map((v) => {
         const item = v as typeof v & {
           paga_con?: number | null;
@@ -55,7 +55,9 @@ export function useSolicitudesConductor() {
   useEffect(() => {
     let activo = true;
 
-    void cargarSolicitudes();
+    queueMicrotask(() => {
+      if (activo) void cargarSolicitudes();
+    });
 
     const canal = supabase
       .channel("solicitudes_conductor_en_vivo")

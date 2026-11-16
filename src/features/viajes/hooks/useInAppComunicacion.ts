@@ -25,7 +25,9 @@ export function useInAppComunicacion({
   const { impactoLigero, alertaNuevaSolicitud } = useHaptics();
 
   const usuarioRef = useRef(usuarioActualId);
-  usuarioRef.current = usuarioActualId;
+  useEffect(() => {
+    usuarioRef.current = usuarioActualId;
+  }, [usuarioActualId]);
 
   const quickRepliesDisponibles: QuickReplyPreset[] =
     rolUsuario === "conductor"
@@ -34,7 +36,6 @@ export function useInAppComunicacion({
 
   const cargarHistorial = useCallback(async () => {
     if (!viajeId) {
-      setMensajes([]);
       return;
     }
 
@@ -55,10 +56,15 @@ export function useInAppComunicacion({
   }, [viajeId]);
 
   useEffect(() => {
-    cargarHistorial();
+    let efectoActivo = true;
+    queueMicrotask(() => {
+      if (efectoActivo) void cargarHistorial();
+    });
 
     if (!viajeId) {
-      return;
+      return () => {
+        efectoActivo = false;
+      };
     }
 
     const desuscribir = comunicacionViajeService.suscribirMensajes(
@@ -95,6 +101,7 @@ export function useInAppComunicacion({
     );
 
     return () => {
+      efectoActivo = false;
       desuscribir();
     };
   }, [viajeId, cargarHistorial, alertaNuevaSolicitud]);
@@ -145,9 +152,9 @@ export function useInAppComunicacion({
   }, [viajeId]);
 
   return {
-    mensajes,
-    cargando,
-    noLeidos,
+    mensajes: viajeId ? mensajes : [],
+    cargando: viajeId ? cargando : false,
+    noLeidos: viajeId ? noLeidos : 0,
     quickRepliesDisponibles,
     enviarTexto,
     enviarQuickReply,

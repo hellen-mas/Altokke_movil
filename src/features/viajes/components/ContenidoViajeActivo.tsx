@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { TarjetaConductor } from "./TarjetaConductor";
 import type { ConductorViaje } from "../hooks/use-conductor-viaje";
 
@@ -31,6 +32,7 @@ export interface ContenidoViajeActivoProps {
   onEscribirConductor: () => void;
   onCompartirViaje: () => void;
   onSolicitarCancelacion: () => void;
+  onReportarProblema?: () => void;
   formatearHora: (fecha: Date) => string;
   formatearSoles: (monto: number) => string;
 }
@@ -52,6 +54,7 @@ export const ContenidoViajeActivo: React.FC<ContenidoViajeActivoProps> = ({
   onEscribirConductor,
   onCompartirViaje,
   onSolicitarCancelacion,
+  onReportarProblema,
   formatearHora,
   formatearSoles,
 }) => {
@@ -194,6 +197,7 @@ export const ContenidoViajeActivo: React.FC<ContenidoViajeActivoProps> = ({
       )}
 
       <Pressable
+        onPress={onReportarProblema ?? (() => router.push("/reportar-viaje"))}
         style={({ pressed }) => [
           styles.reportar,
           { backgroundColor: colores.errorFondo },

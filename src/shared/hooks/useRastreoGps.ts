@@ -40,7 +40,9 @@ export function useRastreoGps({
 
   const subscripcionRef = useRef<Location.LocationSubscription | null>(null);
   const activoRef = useRef(activo);
-  activoRef.current = activo;
+  useEffect(() => {
+    activoRef.current = activo;
+  }, [activo]);
 
   const iniciarRastreo = useCallback(async () => {
     if (!activoRef.current) return;
@@ -111,8 +113,11 @@ export function useRastreoGps({
   }, [intervaloMs, distanciaMinimaMetros, onNuevaPosicion]);
 
   useEffect(() => {
+    let efectoActivo = true;
     if (activo) {
-      void iniciarRastreo();
+      queueMicrotask(() => {
+        if (efectoActivo) void iniciarRastreo();
+      });
     } else {
       if (subscripcionRef.current) {
         subscripcionRef.current.remove();
@@ -121,6 +126,7 @@ export function useRastreoGps({
     }
 
     return () => {
+      efectoActivo = false;
       if (subscripcionRef.current) {
         subscripcionRef.current.remove();
         subscripcionRef.current = null;
