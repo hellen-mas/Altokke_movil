@@ -83,6 +83,24 @@ export default function PantallaViajeActivo() {
     confirmarCancelación,
   } = useCancelarViaje(estadoViaje);
 
+  // Si el conductor cancela el viaje, este regresa a 'buscando' con cancelado_por.
+  // IMPORTANTE: todos los hooks van ANTES del return temprano de abajo. Si este useEffect
+  // quedara después, al cancelar (resumen = null) React lanzaría "Rendered fewer hooks".
+  useEffect(() => {
+    if (viaje?.estado === "buscando" && viaje.cancelado_por) {
+      Alert.alert(
+        "Conductor canceló la carrera",
+        `El conductor no pudo continuar: "${viaje.motivo_cancelacion || "Problemas en ruta"}". Se ha reabierto la búsqueda de otro mototaxi.`,
+        [
+          {
+            text: "Ver búsqueda",
+            onPress: () => router.replace("/buscando-conductor"),
+          },
+        ]
+      );
+    }
+  }, [viaje?.estado, viaje?.cancelado_por, viaje?.motivo_cancelacion]);
+
   // Si se entra sin haber armado un viaje, se vuelve a pedir el destino
   if (!resumen) {
     return <Redirect href="/destino" />;
@@ -107,22 +125,6 @@ export default function PantallaViajeActivo() {
       console.warn("Aviso al compartir viaje:", err);
     });
   };
-
-  // Si el conductor cancela el viaje, este regresa a 'buscando' con cancelado_por
-  useEffect(() => {
-    if (viaje?.estado === "buscando" && viaje.cancelado_por) {
-      Alert.alert(
-        "Conductor canceló la carrera",
-        `El conductor no pudo continuar: "${viaje.motivo_cancelacion || "Problemas en ruta"}". Se ha reabierto la búsqueda de otro mototaxi.`,
-        [
-          {
-            text: "Ver búsqueda",
-            onPress: () => router.replace("/buscando-conductor"),
-          },
-        ]
-      );
-    }
-  }, [viaje?.estado, viaje?.cancelado_por, viaje?.motivo_cancelacion]);
 
   const calificarViaje = () => {
     // La finalización del viaje la realiza exclusivamente el conductor desde su app.
