@@ -35,10 +35,13 @@ export function TarjetaConductor({ conductor }: Props) {
     );
   }
 
-  const calificacion = conductor.calificacion?.toFixed(1) ?? "-";
   const viajes = conductor.viajes ?? 0;
   const vehiculo = conductor.vehiculo ?? "Mototaxi";
   const placa = conductor.placa ?? "Sin placa";
+  
+  //Conductor nuevo, sin viajes o aún sin promedio de calificacion
+  const sinCalificaciones = viajes === 0 || conductor.calificacion == null;
+  const calificacion = conductor.calificacion?.toFixed(1);
 
   return (
     <View style={[styles.tarjeta, { backgroundColor: colores.campo }]}>
@@ -80,7 +83,7 @@ export function TarjetaConductor({ conductor }: Props) {
         <View style={styles.fila}>
           <Ionicons name="star" size={14} color="#F5B301" />
           <Text style={[styles.detalle, { color: colores.secundario }]}>
-            {calificacion} · {viajes} viajes
+            {sinCalificaciones ? "Sin calificaciones" : `${calificacion} · ${viajes} ${viajes === 1 ? "viaje" : "viajes"}`}
           </Text>
         </View>
       </View>

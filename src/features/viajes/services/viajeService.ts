@@ -30,36 +30,47 @@ export const viajeService = {
         p_paga_con: input.pagaCon ?? null,
       });
 
-      if (rpcError) {
+      if (!rpcError) {
+        // El RPC devuelve { viaje_id, ... } (no la fila completa): se lee el viaje recién creado
+        const respuesta = rpcData as { id?: string; viaje_id?: string } | null;
+        const viajeId = respuesta?.viaje_id ?? respuesta?.id;
+        if (!viajeId) return null;
+
+        const { data: viaje, error: errorLectura } = await supabase
+          .from("viajes")
+          .select("*")
+          .eq("id", viajeId)
+          .single();
+        if (errorLectura) throw new Error(errorLectura.message);
+        return viaje;
+      }
+
+      // PGRST202 = la función con esta firma aún no existe en la base (migración sin aplicar).
+      // Mientras tanto se registra el viaje con el insert directo de antes.
+      if (rpcError.code !== "PGRST202") {
         console.warn("Aviso al solicitar viaje vía RPC:", rpcError.message);
         throw new Error(rpcError.message);
       }
+      console.warn("RPC solicitar_viaje no disponible; se usa el registro directo.");
 
-      if (rpcData) {
-        return rpcData as unknown as {
-          id: string;
-          pasajero_id: string;
-          conductor_id: string | null;
-          origen_texto: string;
-          destino_texto: string;
-          origen_lat: number;
-          origen_lng: number;
-          destino_lat: number;
-          destino_lng: number;
-          distancia_km: number | null;
-          tarifa_estimada: number;
-          tarifa_final: number | null;
-          metodo_pago: string | null;
-          paga_con: number | null;
-          vuelto_estimado: number | null;
-          estado: string | null;
-          creado_en: string;
-          aceptado_en: string | null;
-          finalizado_en: string | null;
-        };
-      }
-
-      return null;
+      const { data: viajeDirecto, error: errorInsert } = await supabase
+        .from("viajes")
+        .insert({
+          pasajero_id: input.pasajeroId,
+          origen_texto: input.origenTexto,
+          destino_texto: input.destinoTexto,
+          origen_lat: input.origenLat,
+          origen_lng: input.origenLng,
+          destino_lat: input.destinoLat,
+          destino_lng: input.destinoLng,
+          distancia_km: input.distanciaKm,
+          tarifa_estimada: input.tarifaEstimada,
+          metodo_pago: input.metodoPago,
+        })
+        .select()
+        .single();
+      if (errorInsert) throw new Error(errorInsert.message);
+      return viajeDirecto;
     } catch (err) {
       console.warn("Excepción al crear viaje en Supabase:", err);
       throw err;
