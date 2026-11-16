@@ -168,6 +168,50 @@ export type Database = {
           },
         ]
       }
+      contraofertas_viaje: {
+        Row: {
+          conductor_id: string
+          creado_en: string
+          estado: string
+          expira_en: string
+          id: string
+          tarifa_ofertada: number
+          tiempo_llegada_min: number
+          viaje_id: string
+          actualizado_en: string
+        }
+        Insert: {
+          conductor_id: string
+          creado_en?: string
+          estado?: string
+          expira_en?: string
+          id?: string
+          tarifa_ofertada: number
+          tiempo_llegada_min?: number
+          viaje_id: string
+          actualizado_en?: string
+        }
+        Update: {
+          conductor_id?: string
+          creado_en?: string
+          estado?: string
+          expira_en?: string
+          id?: string
+          tarifa_ofertada?: number
+          tiempo_llegada_min?: number
+          viaje_id?: string
+          actualizado_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contraofertas_viaje_viaje_id_fkey"
+            columns: ["viaje_id"]
+            isOneToOne: false
+            referencedRelation: "viajes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensajes_viaje: {
         Row: {
           contenido: string
@@ -176,6 +220,9 @@ export type Database = {
           leido: boolean | null
           remitente_id: string
           viaje_id: string
+          tipo: "texto" | "audio" | "quick_reply"
+          audio_url: string | null
+          duracion_segundos: number | null
         }
         Insert: {
           contenido: string
@@ -184,6 +231,9 @@ export type Database = {
           leido?: boolean | null
           remitente_id: string
           viaje_id: string
+          tipo?: "texto" | "audio" | "quick_reply"
+          audio_url?: string | null
+          duracion_segundos?: number | null
         }
         Update: {
           contenido?: string
@@ -192,6 +242,9 @@ export type Database = {
           leido?: boolean | null
           remitente_id?: string
           viaje_id?: string
+          tipo?: "texto" | "audio" | "quick_reply"
+          audio_url?: string | null
+          duracion_segundos?: number | null
         }
         Relationships: [
           {
@@ -427,6 +480,8 @@ export type Database = {
           tarifa_final: number | null
           motivo_cancelacion: string | null
           cancelado_por: string | null
+          paga_con: number | null
+          vuelto_estimado: number | null
         }
         Insert: {
           aceptado_en?: string | null
@@ -448,6 +503,8 @@ export type Database = {
           tarifa_final?: number | null
           motivo_cancelacion?: string | null
           cancelado_por?: string | null
+          paga_con?: number | null
+          vuelto_estimado?: number | null
         }
         Update: {
           aceptado_en?: string | null
@@ -469,6 +526,8 @@ export type Database = {
           tarifa_final?: number | null
           motivo_cancelacion?: string | null
           cancelado_por?: string | null
+          paga_con?: number | null
+          vuelto_estimado?: number | null
         }
         Relationships: [
           {
@@ -544,6 +603,45 @@ export type Database = {
           color: string | null
           lat_actual: number | null
           lng_actual: number | null
+        }[]
+      }
+      crear_contraoferta: {
+        Args: {
+          p_viaje_id: string
+          p_tarifa: number
+          p_tiempo_llegada_min?: number
+        }
+        Returns: Json
+      }
+      seleccionar_oferta_viaje: {
+        Args: {
+          p_oferta_id: string
+        }
+        Returns: Json
+      }
+      solicitar_viaje: {
+        Args: {
+          p_origen_texto: string
+          p_destino_texto: string
+          p_origen_lat: number
+          p_origen_lng: number
+          p_destino_lat: number
+          p_destino_lng: number
+          p_metodo_pago?: string | null
+          p_tipo_servicio?: string | null
+          p_paga_con?: number | null
+        }
+        Returns: Json
+      }
+      obtener_pasajero_viaje: {
+        Args: { p_viaje_id: string }
+        Returns: {
+          nombre: string
+          apellidos: string
+          foto_url: string | null
+          telefono: string | null
+          calificacion: number | null
+          viajes_completados: number | null
         }[]
       }
     }

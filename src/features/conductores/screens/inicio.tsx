@@ -59,9 +59,8 @@ export default function InicioConductorScreen() {
   }, [perfil.id]);
 
   useEffect(() => {
-    if (!perfil.id || perfil.id === "conductor-local") return;
-
     let activo = true;
+    if (!perfil.id || perfil.id === "conductor-local") return;
 
     conductorService
       .obtenerResumenGanancias(perfil.id)
@@ -485,12 +484,10 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     flex: 1,
     backgroundColor: c.fondo,
   },
-
   container: {
     flex: 1,
     backgroundColor: c.fondo,
   },
-
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -694,7 +691,6 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
   },
-
   seccionTitulo: {
     fontSize: 17,
     fontWeight: "800",
@@ -763,13 +759,11 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 25,
   },
-
   accesoItem: {
     width: "23%",
     alignItems: "center",
     gap: 8,
   },
-
   accesoIcono: {
     width: 55,
     height: 55,
@@ -777,7 +771,6 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   accesoTexto: {
     fontSize: 11,
     fontWeight: "600",

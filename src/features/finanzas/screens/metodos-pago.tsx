@@ -6,7 +6,7 @@ import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 function LogoMetodo({ id, colorBoton }: { id: IdMetodoPago; colorBoton: string }) {
   if (id === "efectivo") {
@@ -37,10 +37,11 @@ export default function MetodosPago() {
   const metodoActivo = metodoPago || (perfil?.preferencias?.metodo_pago as IdMetodoPago) || "efectivo";
 
   useEffect(() => {
-    if (perfil?.preferencias?.metodo_pago && perfil.preferencias.metodo_pago !== metodoPago) {
-      setMetodoPago(perfil.preferencias.metodo_pago as any);
+    const pref = perfil?.preferencias?.metodo_pago;
+    if (pref && (pref === "efectivo" || pref === "yape" || pref === "plin") && pref !== metodoPago) {
+      setMetodoPago(pref);
     }
-  }, [perfil]);
+  }, [perfil, metodoPago, setMetodoPago]);
 
   const seleccionarMetodo = async (id: IdMetodoPago) => {
     setMetodoPago(id);
@@ -57,16 +58,16 @@ export default function MetodosPago() {
     <View style={[styles.container, { backgroundColor: colores.fondo }]}>
       <EncabezadoPantalla titulo="Métodos de pago" />
 
-      <ScrollView
+      <FlatList
+        data={METODOS_PAGO}
+        keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contenido}
-      >
-        {METODOS_PAGO.map((metodo) => {
+        renderItem={({ item: metodo }) => {
           const esPrincipal = metodo.id === metodoActivo;
 
           return (
             <Pressable
-              key={metodo.id}
               style={({ pressed }) => [
                 styles.fila,
                 { borderBottomColor: colores.linea },
@@ -101,12 +102,13 @@ export default function MetodosPago() {
               />
             </Pressable>
           );
-        })}
-
-        <Text style={[styles.aviso, { color: colores.secundario }]}>
-          El método seleccionado se usará de forma predeterminada al solicitar tus viajes en mototaxi. Puedes cambiarlo en cualquier momento.
-        </Text>
-      </ScrollView>
+        }}
+        ListFooterComponent={
+          <Text style={[styles.aviso, { color: colores.secundario }]}>
+            El método seleccionado se usará de forma predeterminada al solicitar tus viajes en mototaxi. Puedes cambiarlo en cualquier momento.
+          </Text>
+        }
+      />
     </View>
   );
 }

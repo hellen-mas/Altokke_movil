@@ -10,6 +10,8 @@ export interface SolicitudViajeItem {
   tarifaEstimada: number;
   distanciaKm: number | null;
   metodoPago: string | null;
+  pagaCon: number | null;
+  vueltoEstimado: number | null;
   creadoEn: string;
 }
 
@@ -23,16 +25,24 @@ export function useSolicitudesConductor() {
     try {
       setError(null);
       const datos = await conductorService.obtenerSolicitudesPendientes();
-      const mapeadas: SolicitudViajeItem[] = (datos ?? []).map((v) => ({
-        id: v.id,
-        pasajeroId: v.pasajero_id,
-        origenTexto: v.origen_texto,
-        destinoTexto: v.destino_texto,
-        tarifaEstimada: Number(v.tarifa_estimada),
-        distanciaKm: v.distancia_km != null ? Number(v.distancia_km) : null,
-        metodoPago: v.metodo_pago,
-        creadoEn: v.creado_en,
-      }));
+      const mapeadas: SolicitudViajeItem[] = (datos ?? []).map((v) => {
+        const item = v as typeof v & {
+          paga_con?: number | null;
+          vuelto_estimado?: number | null;
+        };
+        return {
+          id: item.id,
+          pasajeroId: item.pasajero_id,
+          origenTexto: item.origen_texto,
+          destinoTexto: item.destino_texto,
+          tarifaEstimada: Number(item.tarifa_estimada),
+          distanciaKm: item.distancia_km != null ? Number(item.distancia_km) : null,
+          metodoPago: item.metodo_pago,
+          pagaCon: item.paga_con != null ? Number(item.paga_con) : null,
+          vueltoEstimado: item.vuelto_estimado != null ? Number(item.vuelto_estimado) : null,
+          creadoEn: item.creado_en,
+        };
+      });
       setSolicitudes(mapeadas);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al cargar solicitudes";
@@ -70,6 +80,8 @@ export function useSolicitudesConductor() {
                 tarifaEstimada: Number(nuevo.tarifa_estimada ?? 0),
                 distanciaKm: nuevo.distancia_km != null ? Number(nuevo.distancia_km) : null,
                 metodoPago: nuevo.metodo_pago != null ? String(nuevo.metodo_pago) : null,
+                pagaCon: nuevo.paga_con != null ? Number(nuevo.paga_con) : null,
+                vueltoEstimado: nuevo.vuelto_estimado != null ? Number(nuevo.vuelto_estimado) : null,
                 creadoEn: String(nuevo.creado_en ?? new Date().toISOString()),
               };
               setSolicitudes((prev) => {
@@ -88,7 +100,12 @@ export function useSolicitudesConductor() {
           }
         }
       )
-      .subscribe();
+      .subscribe((estado) => {
+        if (!activo) return;
+        if (estado === "SUBSCRIBED") {
+          void cargarSolicitudes();
+        }
+      });
 
     return () => {
       activo = false;

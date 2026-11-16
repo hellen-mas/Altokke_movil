@@ -12,36 +12,57 @@ export interface CrearViajeInput {
   distanciaKm: number;
   tarifaEstimada: number;
   metodoPago: string;
+  pagaCon?: number;
 }
 
 export const viajeService = {
   async crearViaje(input: CrearViajeInput) {
     try {
-      const { data, error } = await supabase
-        .from("viajes")
-        .insert({
-          pasajero_id: input.pasajeroId,
-          origen_texto: input.origenTexto,
-          destino_texto: input.destinoTexto,
-          origen_lat: input.origenLat,
-          origen_lng: input.origenLng,
-          destino_lat: input.destinoLat,
-          destino_lng: input.destinoLng,
-          distancia_km: input.distanciaKm,
-          tarifa_estimada: input.tarifaEstimada,
-          metodo_pago: input.metodoPago,
-        })
-        .select()
-        .single();
+      // 1. Intento soberano mediante RPC seguro 'solicitar_viaje' con validación en servidor
+      const { data: rpcData, error: rpcError } = await supabase.rpc("solicitar_viaje", {
+        p_origen_texto: input.origenTexto,
+        p_destino_texto: input.destinoTexto,
+        p_origen_lat: input.origenLat,
+        p_origen_lng: input.origenLng,
+        p_destino_lat: input.destinoLat,
+        p_destino_lng: input.destinoLng,
+        p_metodo_pago: input.metodoPago,
+        p_paga_con: input.pagaCon ?? null,
+      });
 
-      if (error) {
-        console.warn("Aviso al crear viaje en Supabase:", error.message);
-        return null;
+      if (rpcError) {
+        console.warn("Aviso al solicitar viaje vía RPC:", rpcError.message);
+        throw new Error(rpcError.message);
       }
-      return data;
+
+      if (rpcData) {
+        return rpcData as unknown as {
+          id: string;
+          pasajero_id: string;
+          conductor_id: string | null;
+          origen_texto: string;
+          destino_texto: string;
+          origen_lat: number;
+          origen_lng: number;
+          destino_lat: number;
+          destino_lng: number;
+          distancia_km: number | null;
+          tarifa_estimada: number;
+          tarifa_final: number | null;
+          metodo_pago: string | null;
+          paga_con: number | null;
+          vuelto_estimado: number | null;
+          estado: string | null;
+          creado_en: string;
+          aceptado_en: string | null;
+          finalizado_en: string | null;
+        };
+      }
+
+      return null;
     } catch (err) {
       console.warn("Excepción al crear viaje en Supabase:", err);
-      return null;
+      throw err;
     }
   },
 

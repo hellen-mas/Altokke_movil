@@ -22,31 +22,35 @@ export function useConductorViaje(
     }
     let activo = true;
 
-    const cargar = () => {
-      supabase
-        .rpc("obtener_conductor_viaje", { p_viaje_id: viajeId })
-        .then(({ data, error }) => {
-          if (!activo) return;
-          if (error) {
-            console.warn("Aviso al obtener el conductor del viaje:", error.message);
-            return;
-          }
-          const fila = data?.[0];
-          if (!fila) return;
-
-          setConductor({
-            nombre: `${fila.nombre} ${fila.apellidos}`.trim(),
-            calificacion: fila.calificacion ?? undefined,
-            viajes: fila.viajes_completados ?? undefined,
-            vehiculo: [fila.marca, fila.modelo].filter(Boolean).join(" ") || undefined,
-            placa: fila.placa ?? undefined,
-            color: fila.color ?? undefined,
-            foto: fila.foto_url,
-            telefono: fila.telefono,
-            lat: fila.lat_actual,
-            lng: fila.lng_actual,
-          });
+    const cargar = async () => {
+      try {
+        const { data, error } = await supabase.rpc("obtener_conductor_viaje", {
+          p_viaje_id: viajeId,
         });
+        if (!activo) return;
+        if (error) {
+          console.warn("Aviso al obtener el conductor del viaje:", error.message);
+          return;
+        }
+        const fila = data?.[0];
+        if (!fila) return;
+
+        setConductor({
+          nombre: `${fila.nombre} ${fila.apellidos}`.trim(),
+          calificacion: fila.calificacion ?? undefined,
+          viajes: fila.viajes_completados ?? undefined,
+          vehiculo: [fila.marca, fila.modelo].filter(Boolean).join(" ") || undefined,
+          placa: fila.placa ?? undefined,
+          color: fila.color ?? undefined,
+          foto: fila.foto_url,
+          telefono: fila.telefono,
+          lat: fila.lat_actual,
+          lng: fila.lng_actual,
+        });
+      } catch (err: unknown) {
+        if (!activo) return;
+        console.warn("Aviso al obtener el conductor del viaje:", err);
+      }
     };
 
     cargar();

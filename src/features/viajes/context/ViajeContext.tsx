@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import * as Location from "expo-location";
 import { AppState } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 import {
   useViajeStore,
   type TipoServicio,
@@ -11,7 +12,7 @@ import {
 import type { Lugar, ViajeHistorial } from "@/features/viajes/constants/pasajero";
 import type { PuntoMapa } from "../types/tiposMapa";
 
-export type { TipoServicio, MetodoPago };
+export { type TipoServicio, type MetodoPago };
 
 export type ViajeContextType = {
   tipoServicio: TipoServicio;
