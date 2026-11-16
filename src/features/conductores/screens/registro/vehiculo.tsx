@@ -175,7 +175,7 @@ export default function VehiculoConductor() {
             />
             <CampoTexto
               placeholder="Marca"
-              nombreIcono="car-outline"
+              nombreIcono="pricetag-outline"
               value={marca}
               onChangeText={(texto) => actualizarFormulario({ marca: texto })}
               autoCapitalize="words"
