@@ -102,7 +102,7 @@ export const NOTIFICACIONES_EJEMPLO = [
     id: "n-bienvenida",
     icono: "shield-checkmark-outline" as const,
     titulo: "Bienvenido a Altokke",
-    mensaje: "Tu cuenta de pasajero está activa y lista para solicitar mototaxis seguros en Bagua.",
+    mensaje: "Tu cuenta de pasajero está activa y lista para solicitar mototaxis seguros.",
     hora: "Hoy",
     leida: false,
   },

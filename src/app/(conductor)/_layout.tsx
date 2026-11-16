@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "@/shared/api/supabase";
 import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
 
@@ -11,6 +12,7 @@ import { useAlertaConductor } from "@/features/notificaciones/hooks/useAlertaCon
 
 export default function ConductorLayout() {
   const { c } = useColoresConductor();
+  const insets = useSafeAreaInsets();
   const [verificando, setVerificando] = useState(true);
   const [autorizado, setAutorizado] = useState(false);
   useAlertaConductor({
@@ -91,9 +93,9 @@ export default function ConductorLayout() {
             backgroundColor: c.barra,
             borderTopColor: c.borde,
             borderTopWidth: StyleSheet.hairlineWidth,
-            height: 70,
-            paddingTop: 7,
-            paddingBottom: 8,
+            height: 60 + Math.max(insets.bottom, 10),
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom, 10),
         },
 
         tabBarLabelStyle: {

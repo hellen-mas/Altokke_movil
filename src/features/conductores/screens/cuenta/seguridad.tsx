@@ -103,13 +103,13 @@ export default function SeguridadConductor() {
               icono="help-circle-outline"
               titulo="Centro de ayuda"
               descripcion="Preguntas frecuentes y soporte directo."
-              onPress={() => router.push("/cuenta/centro-ayuda")}
+              onPress={() => router.push("/(conductor)/cuenta/centro-ayuda")}
             />
             <FilaSeguridad
               icono="alert-circle-outline"
               titulo="Reportar incidente"
               descripcion="Informa cualquier situación ocurrida."
-              onPress={() => router.push("/cuenta/reportar-indicente")}
+              onPress={() => router.push("/(conductor)/cuenta/reportar-indicente")}
             />
           </View>
         </View>
@@ -121,7 +121,7 @@ export default function SeguridadConductor() {
               icono="lock-closed-outline"
               titulo="Cambiar contraseña"
               descripcion="Actualiza tus credenciales de acceso."
-              onPress={() => router.push("/cuenta/cambiar-contrasena")}
+              onPress={() => router.push("/(conductor)/cuenta/cambiar-contrasena")}
             />
           </View>
         </View>

@@ -146,6 +146,25 @@ CREATE TABLE IF NOT EXISTS public.calificaciones (
   UNIQUE (viaje_id, autor_id)
 );
 
+-- 10. TABLA: reclamaciones
+CREATE TABLE IF NOT EXISTS public.reclamaciones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo_reclamacion TEXT NOT NULL UNIQUE,
+  usuario_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  nombre_completo TEXT NOT NULL,
+  tipo_documento TEXT NOT NULL CHECK (tipo_documento IN ('DNI', 'CE', 'RUC')),
+  numero_documento TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  email TEXT NOT NULL,
+  direccion TEXT,
+  tipo TEXT NOT NULL CHECK (tipo IN ('reclamo', 'queja')),
+  monto_reclamado NUMERIC NOT NULL DEFAULT 0 CHECK (monto_reclamado >= 0),
+  descripcion_bien_contratado TEXT NOT NULL,
+  detalle_reclamacion TEXT NOT NULL,
+  pedido_consumidor TEXT NOT NULL,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
 -- 10. TABLA: transacciones
 CREATE TABLE IF NOT EXISTS public.transacciones (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -374,7 +393,7 @@ BEGIN
   WHERE schemaname='public' AND tablename = ANY(ARRAY[
     'usuarios','pasajeros_perfil','conductores_perfil','vehiculos',
     'documentos','viajes','mensajes_viaje','calificaciones',
-    'transacciones','verificaciones_telefono'])
+    'transacciones','verificaciones_telefono','reclamaciones'])
  LOOP
   EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I',p.policyname,p.schemaname,p.tablename);
  END LOOP;
@@ -389,12 +408,14 @@ ALTER TABLE public.mensajes_viaje ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calificaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transacciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.verificaciones_telefono ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reclamaciones ENABLE ROW LEVEL SECURITY;
 
 -- RLS controla filas; permisos por columna impiden manipular roles,
 -- saldos, aprobaciones, importes, remitentes y otros campos del servidor.
 REVOKE ALL ON public.usuarios,public.pasajeros_perfil,public.conductores_perfil,
 public.vehiculos,public.documentos,public.viajes,public.mensajes_viaje,
-public.calificaciones,public.transacciones,public.verificaciones_telefono
+public.calificaciones,public.transacciones,public.verificaciones_telefono,
+public.reclamaciones
 FROM PUBLIC,anon,authenticated;
 GRANT SELECT ON public.usuarios,public.pasajeros_perfil,public.conductores_perfil,
 public.vehiculos,public.documentos,public.viajes,public.mensajes_viaje,
@@ -414,6 +435,10 @@ GRANT INSERT(pasajero_id,origen_texto,destino_texto,origen_lat,origen_lng,
 GRANT INSERT(viaje_id,remitente_id,contenido) ON public.mensajes_viaje TO authenticated;
 GRANT INSERT(viaje_id,autor_id,receptor_id,puntuacion,comentario)
  ON public.calificaciones TO authenticated;
+GRANT INSERT(codigo_reclamacion,usuario_id,nombre_completo,tipo_documento,
+ numero_documento,telefono,email,direccion,tipo,monto_reclamado,
+ descripcion_bien_contratado,detalle_reclamacion,pedido_consumidor)
+ ON public.reclamaciones TO authenticated;
 
 CREATE POLICY altokke_usuarios_select ON public.usuarios FOR SELECT TO authenticated
  USING (id=(SELECT auth.uid()));
@@ -465,6 +490,9 @@ CREATE POLICY altokke_calificaciones_insert ON public.calificaciones FOR INSERT 
  SELECT 1 FROM public.viajes v WHERE v.id=viaje_id AND v.estado='finalizado'
  AND ((v.pasajero_id=(SELECT auth.uid()) AND v.conductor_id=receptor_id)
  OR (v.conductor_id=(SELECT auth.uid()) AND v.pasajero_id=receptor_id))));
+CREATE POLICY altokke_reclamaciones_insert ON public.reclamaciones
+ FOR INSERT TO authenticated
+ WITH CHECK(usuario_id=(SELECT auth.uid()));
 CREATE POLICY altokke_transacciones_select ON public.transacciones FOR SELECT TO authenticated
  USING(conductor_id=(SELECT auth.uid()));
 -- verificaciones_telefono: acceso reservado a procesos del servidor.

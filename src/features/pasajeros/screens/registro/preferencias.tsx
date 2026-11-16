@@ -27,8 +27,11 @@ export default function PasajeroPreferenciasScreen() {
   const [notificaciones, setNotificaciones] = useState(true);
   const [ubicacion, setUbicacion] = useState(true);
   const [promociones, setPromociones] = useState(false);
-  const [terminos, setTerminos] = useState(false);
+  const [terminosAceptados, setTerminosAceptados] = useState(false);
+  const [privacidadAceptada, setPrivacidadAceptada] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const terminos = terminosAceptados && privacidadAceptada;
 
   const enviando = useRef(false);
   
@@ -158,7 +161,7 @@ export default function PasajeroPreferenciasScreen() {
         clearRegistro();
         router.replace("/mapa");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert("No se pudo crear la cuenta", traducirErrorAuth(error, "No fue posible registrar tu cuenta."));
     } finally {
       enviando.current = false;
@@ -210,49 +213,57 @@ export default function PasajeroPreferenciasScreen() {
             },
           ]}
         >
+          {/* Checkbox 1: Términos y condiciones */}
           <Pressable
             style={styles.filaTerminos}
-            onPress={() => setTerminos((valor) => !valor)}
+            onPress={() => setTerminosAceptados((valor) => !valor)}
             accessibilityRole="checkbox"
-            accessibilityState={{ checked: terminos }}
-            accessibilityLabel="He leído y acepto los términos y la política de privacidad"
+            accessibilityState={{ checked: terminosAceptados }}
+            accessibilityLabel="He leído y acepto los términos y condiciones de Altokke"
           >
             <Ionicons
-              name={terminos ? "checkbox" : "square-outline"}
-              size={26}
+              name={terminosAceptados ? "checkbox" : "square-outline"}
+              size={24}
               color={
-                terminos
+                terminosAceptados
                   ? colores.exitoTexto
                   : colores.secundario
               }
             />
-            <Text style={[styles.checkboxText, { color: colores.texto },]}>
-              He leído y acepto los términos y condiciones
-              y la política de privacidad.
+            <Text style={[styles.checkboxText, { color: colores.texto }]}>
+              He leído y acepto los{" "}
+              <Text onPress={handleTerms} style={[styles.enlaceInline, { color: colores.exitoTexto }]}>
+                términos y condiciones
+              </Text>{" "}
+              del servicio.
             </Text>
           </Pressable>
 
-          <View style={styles.enlacesContainer}>
-            <Pressable
-              onPress={handleTerms}
-              accessibilityRole="link"
-              hitSlop={6}
-            >
-              <Text style={[styles.linkText, { color: colores.exitoTexto },]}>
-                Leer términos y condiciones
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handlePrivacy}
-              accessibilityRole="link"
-              hitSlop={6}
-            >
-              <Text style={[styles.linkText, { color: colores.exitoTexto },]}>
-                Leer política de privacidad
-              </Text>
-            </Pressable>
-          </View>
+          {/* Checkbox 2: Consentimiento LPDP Ley 29733 */}
+          <Pressable
+            style={styles.filaTerminos}
+            onPress={() => setPrivacidadAceptada((valor) => !valor)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: privacidadAceptada }}
+            accessibilityLabel="Autorizo el tratamiento de mis datos personales y geolocalización"
+          >
+            <Ionicons
+              name={privacidadAceptada ? "checkbox" : "square-outline"}
+              size={24}
+              color={
+                privacidadAceptada
+                  ? colores.exitoTexto
+                  : colores.secundario
+              }
+            />
+            <Text style={[styles.checkboxText, { color: colores.texto }]}>
+              Autorizo el tratamiento de mis datos personales y geolocalización según la{" "}
+              <Text onPress={handlePrivacy} style={[styles.enlaceInline, { color: colores.exitoTexto }]}>
+                política de privacidad
+              </Text>{" "}
+              (Ley N° 29733).
+            </Text>
+          </Pressable>
         </View>
 
         <View style={styles.bottomContainer}>
@@ -323,6 +334,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "500",
+  },
+  enlaceInline: {
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
   enlacesContainer: {
     marginLeft: 38,

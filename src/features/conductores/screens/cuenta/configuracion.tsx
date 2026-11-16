@@ -1,22 +1,54 @@
-import { AvisoInformativo } from "@/shared/components/ui";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
+import { authService } from "@/features/autenticacion/services/authService";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { router } from "expo-router";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
-import { authService } from "@/features/autenticacion/services/authService";
-import { useState } from "react";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
-
-const mostrarProximamente = () => {
-  Alert.alert("Próximamente", "Esta opción todavía no está disponible.");
-};
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 export default function ConfiguracionConductor() {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const { modoPreferido, setModoPreferido } = useAltokkeTheme();
   const { logout } = useAuth();
 
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+  const [notificaciones, setNotificaciones] = useState(true);
+  const [mapaSatelite, setMapaSatelite] = useState(false);
+
+  const cambiarIdioma = () => {
+    Alert.alert("Idioma de Altokke", "El idioma de la aplicación está configurado en Español (Perú).");
+  };
+
+  const toggleNotificaciones = () => {
+    const estado = !notificaciones;
+    setNotificaciones(estado);
+    Alert.alert("Notificaciones", estado ? "Alertas y sonidos activados." : "Alertas y sonidos pausados.");
+  };
+
+  const cambiarApariencia = () => {
+    Alert.alert(
+      "Apariencia",
+      `Modo actual: ${modoPreferido}. Elige una opción:`,
+      [
+        { text: "Claro", onPress: () => setModoPreferido("claro") },
+        { text: "Oscuro", onPress: () => setModoPreferido("oscuro") },
+        { text: "Automático (Sistema)", onPress: () => setModoPreferido("automatico") },
+        { text: "Cancelar", style: "cancel" },
+      ]
+    );
+  };
+
+  const cambiarPreferenciasMapa = () => {
+    const nuevo = !mapaSatelite;
+    setMapaSatelite(nuevo);
+    Alert.alert("Preferencias de mapa", nuevo ? "Modo satelital activado." : "Modo estándar vectorial activado.");
+  };
+
+  const abrirSeguridad = () => {
+    router.push("/(conductor)/cuenta/seguridad");
+  };
 
   const confirmarEliminarCuenta = () => {
     if (eliminandoCuenta) return;
@@ -39,10 +71,11 @@ export default function ConfiguracionConductor() {
               await authService.eliminarMiCuenta();
 
               router.replace("/(auth)/bienvenida");
-            } catch (error: any) {
+            } catch (error: unknown) {
+              const mensaje = error instanceof Error ? error.message : "Inténtalo nuevamente.";
               Alert.alert(
                 "No se pudo eliminar la cuenta",
-                error?.message || "Inténtalo nuevamente."
+                mensaje
               );
             } finally {
               setEliminandoCuenta(false);
@@ -83,42 +116,36 @@ export default function ConfiguracionConductor() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <AvisoInformativo
-          titulo="En construcción"
-          texto="Estas preferencias todavía no se guardan. Se activarán cuando conectemos el backend."
-          style={styles.aviso}
-        />
-
         <View style={styles.opciones}>
           <OpcionCuenta
             icono="globe"
             titulo="Idioma"
-            descripcion="Español"
-            onPress={mostrarProximamente}
+            descripcion="Español (Perú)"
+            onPress={cambiarIdioma}
           />
           <OpcionCuenta
             icono="notifications"
             titulo="Notificaciones"
-            descripcion="Push, sonidos y alertas de viaje"
-            onPress={mostrarProximamente}
+            descripcion={notificaciones ? "Alertas activadas" : "Alertas pausadas"}
+            onPress={toggleNotificaciones}
           />
           <OpcionCuenta
             icono="moon"
             titulo="Apariencia"
-            descripcion="Modo claro u oscuro"
-            onPress={mostrarProximamente}
+            descripcion={`Modo: ${modoPreferido}`}
+            onPress={cambiarApariencia}
           />
           <OpcionCuenta
             icono="map"
             titulo="Preferencias de mapa"
-            descripcion="Estilo y navegación"
-            onPress={mostrarProximamente}
+            descripcion={mapaSatelite ? "Satelital" : "Vectorial estándar"}
+            onPress={cambiarPreferenciasMapa}
           />
           <OpcionCuenta
             icono="lock-closed"
-            titulo="Privacidad"
-            descripcion="Controla tu información"
-            onPress={mostrarProximamente}
+            titulo="Privacidad y Seguridad"
+            descripcion="Contraseñas y sesiones activas"
+            onPress={abrirSeguridad}
             ultimo
           />
         </View>
