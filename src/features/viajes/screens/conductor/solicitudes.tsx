@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { useNavigation } from "expo-router";
+import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -20,6 +21,8 @@ import { useSolicitudesConductor } from "@/features/viajes/hooks/use-solicitudes
 /** Lista en vivo de solicitudes cercanas para el conductor */
 export default function SolicitudesConductor() {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  // Navegador de las pestañas del conductor (evita el choque con /viaje-activo del pasajero)
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const {
     solicitudes,
     cargando,
@@ -43,7 +46,7 @@ export default function SolicitudesConductor() {
     const ok = await aceptarSolicitud(viajeId);
     // Si otro conductor la ganó, el hook ya dejó el mensaje en "error"
     if (ok) {
-      router.push({ pathname: "/viaje-activo", params: { viajeId } });
+      navigation.navigate("viaje-activo", { viajeId });
     }
   };
 
@@ -64,7 +67,7 @@ export default function SolicitudesConductor() {
           <Text style={styles.avisoTexto}>{error}</Text>
         </View>
       )}
-  
+
       {cargando ? (
         // ESTADO 1: cargando por primera vez
         <View style={styles.centro}>

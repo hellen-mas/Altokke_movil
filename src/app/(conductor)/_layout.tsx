@@ -195,7 +195,11 @@ export default function ConductorLayout() {
       <Tabs.Screen
         name="viaje-activo"
         options={{
-          href: null,
+          // En Expo Router 58, `href: null` oculta la pestaña Y redirige a Inicio al navegar a ella.
+          // Con tabBarButton nulo solo se oculta el botón y la pantalla sigue siendo accesible.
+          tabBarButton: () => null,
+          // Quita también el hueco que deja el botón, para que los 4 íconos queden centrados como antes
+          tabBarItemStyle: { display: "none" },
           headerShown: false,
           tabBarStyle: {
             display: "none",
