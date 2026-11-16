@@ -2,6 +2,8 @@ import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoVi
 import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
+import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import {
@@ -92,6 +94,10 @@ export default function PantallaCalificacion() {
   const [etiquetas, setEtiquetas] = useState<string[]>([]);
   const [comentario, setComentario] = useState("");
   const [enviado, setEnviado] = useState(false);
+
+  // Datos reales del conductor del viaje (antes la tarjeta no recibía nada y se quedaba "Cargando...")
+  const { viaje } = useViajeEnVivo(viajeActivoId);
+  const conductor = useConductorViaje(viajeActivoId, viaje?.conductor_id);
 
   // Si se entra sin haber hecho un viaje, se vuelve al inicio
   if (!resumen) {
@@ -300,7 +306,7 @@ export default function PantallaCalificacion() {
             <Text style={[styles.seccion, { color: colores.texto }]}>
               Tu conductor
             </Text>
-            <TarjetaConductor />
+            <TarjetaConductor conductor={conductor} />
 
             {/* Calificación */}
             <Text style={[styles.pregunta, { color: colores.texto }]}>
