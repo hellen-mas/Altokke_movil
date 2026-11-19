@@ -62,11 +62,19 @@ const REGLAS_ERRORES: [string[], string][] = [
 ];
 
 export function traducirErrorAuth(
-  error: any,
+  error: unknown,
   mensajePorDefecto = "Ocurrió un error. Por favor, inténtalo nuevamente más tarde."
 ): string {
   if (!error) return mensajePorDefecto;
-  const msg = (typeof error === "string" ? error : error?.message || "").toLowerCase().trim();
+  let rawMsg = "";
+  if (typeof error === "string") {
+    rawMsg = error;
+  } else if (error instanceof Error) {
+    rawMsg = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    rawMsg = String((error as { message: unknown }).message || "");
+  }
+  const msg = rawMsg.toLowerCase().trim();
   const coincidencia = REGLAS_ERRORES.find(([patrones]) => patrones.some((p) => msg.includes(p)));
   return coincidencia ? coincidencia[1] : mensajePorDefecto;
 }

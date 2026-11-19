@@ -12,6 +12,13 @@ export {
   type DatosRegistroConductor,
 } from "./registroConductorService";
 
+export class ConductorServiceError extends Error {
+  constructor(message: string, public readonly originalError?: unknown) {
+    super(message);
+    this.name = "ConductorServiceError";
+  }
+}
+
 export interface PerfilConductor {
   id: string;
   nombre: string;
@@ -80,21 +87,12 @@ export const conductorService = {
     });
   },
 
-  async asegurarSesionConductor(correo: string, contrasena: string, datosPersonales: { nombre: string; apellidos: string; telefono: string; dni: string }): Promise<string> {
-    return registroConductorService.asegurarSesionConductor(correo, contrasena, datosPersonales);
-  },
-
-  async subirArchivosConductor(usuarioId: string, archivos: { foto?: string | null; dniFrente?: string | null; dniReverso?: string | null; selfie?: string | null; licenciaConducir?: DocumentoAdjunto | null; soat?: DocumentoAdjunto | null; antecedentesPenales?: DocumentoAdjunto | null; }): Promise<void> {
-    return registroConductorService.subirArchivosConductor(usuarioId, archivos);
-  },
-
-  async registrarVehiculo(usuarioId: string, vehiculo: DatosVehiculo): Promise<void> {
-    return registroConductorService.registrarVehiculo(usuarioId, vehiculo);
-  },
-
-  async completarRegistroConductor(datos: DatosRegistroConductor): Promise<string> {
-    return registroConductorService.completarRegistroConductor(datos);
-  },
+  asegurarSesionConductor: (correo: string, contrasena: string, datos: { nombre: string; apellidos: string; telefono: string; dni: string }) =>
+    registroConductorService.asegurarSesionConductor(correo, contrasena, datos),
+  subirArchivosConductor: (usuarioId: string, archivos: { foto?: string | null; dniFrente?: string | null; dniReverso?: string | null; selfie?: string | null; licenciaConducir?: DocumentoAdjunto | null; soat?: DocumentoAdjunto | null; antecedentesPenales?: DocumentoAdjunto | null; }) =>
+    registroConductorService.subirArchivosConductor(usuarioId, archivos),
+  registrarVehiculo: (usuarioId: string, vehiculo: DatosVehiculo) => registroConductorService.registrarVehiculo(usuarioId, vehiculo),
+  completarRegistroConductor: (datos: DatosRegistroConductor) => registroConductorService.completarRegistroConductor(datos),
 
   async obtenerPerfilConductor(usuarioId: string): Promise<PerfilConductor | null> {
     if (!usuarioId) return null;
@@ -148,15 +146,9 @@ export const conductorService = {
       const nombreCompleto = `${nombre} ${apellidos}`.trim() || "Conductor Altokke";
 
       const resultado: PerfilConductor = {
-        id: usuario.id,
-        nombre: nombreCompleto,
-        apellidos,
-        nombreCompleto,
-        correo: "",
-        telefono: usuario.telefono || "",
-        dni: "",
-        fechaNacimiento: "No especificada",
-        ciudad: "Bagua, Amazonas",
+        id: usuario.id, nombre: nombreCompleto, apellidos, nombreCompleto,
+        correo: "", telefono: usuario.telefono || "", dni: "",
+        fechaNacimiento: "No especificada", ciudad: "Bagua, Amazonas",
         foto: usuario.avatar_url || usuario.foto_url || null,
         calificacion: Number(pData?.calificacion_promedio ?? 5.0),
         viajes: Number(pData?.viajes_completados ?? 0),
@@ -178,7 +170,8 @@ export const conductorService = {
 
       cachePerfilConductor.set(usuarioId, resultado);
       return resultado;
-    } catch {
+    } catch (err: unknown) {
+      console.warn("Aviso al consultar perfil del conductor:", err);
       return cachePerfilConductor.get(usuarioId) ?? null;
     }
   },
@@ -210,8 +203,7 @@ export const conductorService = {
     if (anterior) {
       cachePerfilConductor.set(usuarioId, {
         ...anterior,
-        nombre: datos.nombre ?? anterior.nombre,
-        apellidos: datos.apellidos ?? anterior.apellidos,
+        nombre: datos.nombre ?? anterior.nombre, apellidos: datos.apellidos ?? anterior.apellidos,
         telefono: datos.telefono ?? anterior.telefono,
         foto: datos.fotoUrl !== undefined ? datos.fotoUrl : anterior.foto,
         enLinea: datos.enLinea !== undefined ? datos.enLinea : anterior.enLinea,
@@ -230,12 +222,8 @@ export const conductorService = {
 
     if (error || !data) return null;
     return {
-      placa: data.placa,
-      marca: data.marca,
-      modelo: data.modelo,
-      anio: data.anio ?? 2026,
-      color: data.color,
-      capacidad: data.capacidad ?? 3,
+      placa: data.placa, marca: data.marca, modelo: data.modelo,
+      anio: data.anio ?? 2026, color: data.color, capacidad: data.capacidad ?? 3,
     };
   },
 
@@ -272,23 +260,15 @@ export const conductorService = {
       }
 
       return {
-        totalSemana,
-        variacionSemana: totalSemana > 0 ? 10 : 0,
-        totalHoy,
-        viajesCompletadosHoy: viajesHoy,
-        promedioPorViaje: viajesHoy > 0 ? totalHoy / viajesHoy : 0,
-        saldoDisponible: totalSemana,
-        porDia: DIAS.map((dia) => ({ dia, monto: mapaDias[dia] || 0 })),
+        totalSemana, variacionSemana: totalSemana > 0 ? 10 : 0, totalHoy,
+        viajesCompletadosHoy: viajesHoy, promedioPorViaje: viajesHoy > 0 ? totalHoy / viajesHoy : 0,
+        saldoDisponible: totalSemana, porDia: DIAS.map((dia) => ({ dia, monto: mapaDias[dia] || 0 })),
       };
-    } catch {
+    } catch (err: unknown) {
+      console.warn("Aviso al calcular resumen de ganancias:", err);
       return {
-        totalSemana: 0,
-        variacionSemana: 0,
-        totalHoy: 0,
-        viajesCompletadosHoy: 0,
-        promedioPorViaje: 0,
-        saldoDisponible: 0,
-        porDia: DIAS.map((dia) => ({ dia, monto: 0 })),
+        totalSemana: 0, variacionSemana: 0, totalHoy: 0, viajesCompletadosHoy: 0,
+        promedioPorViaje: 0, saldoDisponible: 0, porDia: DIAS.map((dia) => ({ dia, monto: 0 })),
       };
     }
   },
@@ -312,22 +292,13 @@ export const conductorService = {
     viajeId: string,
     nuevoEstado: "en_camino_origen" | "esperando_pasajero" | "en_viaje"
   ): Promise<{ ok: boolean; viaje_id: string; estado_anterior: string; estado_nuevo: string }> {
-    const { data, error } = await supabase.rpc("cambiar_estado_viaje", {
-      p_viaje_id: viajeId,
-      p_nuevo_estado: nuevoEstado,
-    });
+    const { data, error } = await supabase.rpc("cambiar_estado_viaje", { p_viaje_id: viajeId, p_nuevo_estado: nuevoEstado });
     if (error) throw error;
     return data;
   },
 
-  async cancelarViajeConductor(
-    viajeId: string,
-    motivo: string
-  ): Promise<{ ok: boolean; viaje_id: string; reabierto: boolean; motivo: string }> {
-    const { data, error } = await supabase.rpc("cancelar_viaje_conductor", {
-      p_viaje_id: viajeId,
-      p_motivo: motivo,
-    });
+  async cancelarViajeConductor(viajeId: string, motivo: string): Promise<{ ok: boolean; viaje_id: string; reabierto: boolean; motivo: string }> {
+    const { data, error } = await supabase.rpc("cancelar_viaje_conductor", { p_viaje_id: viajeId, p_motivo: motivo });
     if (error) throw error;
     return data;
   },
@@ -367,16 +338,40 @@ export const conductorService = {
     if (error) throw error;
   },
 
+  async marcarPantallaAprobacionVista(): Promise<boolean> {
+    const { error } = await supabase.rpc("marcar_pantalla_aprobacion_vista");
+    if (error) console.warn("Aviso marcar aprobacion vista:", error.message);
+    return !error;
+  },
+
+  async actualizarUbicacion(conductorId: string, lat: number, lng: number): Promise<void> {
+    if (!conductorId) return;
+    const { error } = await supabase
+      .from("conductores_perfil")
+      .update({ lat_actual: lat, lng_actual: lng })
+      .eq("usuario_id", conductorId);
+    if (error) throw new ConductorServiceError(`Fallo al actualizar GPS: ${error.message}`, error);
+  },
+
   async obtenerPasajeroViaje(viajeId: string) {
     if (!viajeId) return null;
     try {
-      const { data, error } = await supabase.rpc("obtener_pasajero_viaje", {
-        p_viaje_id: viajeId,
-      });
-      if (error || !data || data.length === 0) {
-        return null;
+      const { data, error } = await supabase.rpc("obtener_datos_viaje_conductor", { p_viaje_id: viajeId });
+      if (!error && data) {
+        const r = data as { pasajero_primer_nombre?: string; pasajero_avatar?: string | null; pasajero_calificacion?: number };
+        return {
+          nombre: r.pasajero_primer_nombre || "Pasajero",
+          apellidos: "",
+          nombreCompleto: r.pasajero_primer_nombre || "Pasajero",
+          fotoUrl: r.pasajero_avatar || null,
+          telefono: "",
+          calificacion: Number(r.pasajero_calificacion ?? 5.0),
+          viajesCompletados: 0,
+        };
       }
-      const p = data[0];
+      const { data: legacy, error: errLeg } = await supabase.rpc("obtener_pasajero_viaje", { p_viaje_id: viajeId });
+      if (errLeg || !legacy || legacy.length === 0) return null;
+      const p = legacy[0];
       return {
         nombre: p.nombre,
         apellidos: p.apellidos,
@@ -386,7 +381,7 @@ export const conductorService = {
         calificacion: Number(p.calificacion ?? 5.0),
         viajesCompletados: Number(p.viajes_completados ?? 0),
       };
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn("Aviso al consultar pasajero del viaje:", err);
       return null;
     }
