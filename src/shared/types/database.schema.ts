@@ -37,6 +37,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      billetera_movimientos: {
+        Row: {
+          conductor_id: string
+          creado_en: string
+          descripcion: string | null
+          estado: "pendiente" | "completado" | "fallido"
+          id: string
+          monto: number
+          referencia_pago: string | null
+          tipo: "recarga" | "comision_viaje" | "retiro" | "ajuste"
+        }
+        Insert: {
+          conductor_id: string
+          creado_en?: string
+          descripcion?: string | null
+          estado?: "pendiente" | "completado" | "fallido"
+          id?: string
+          monto: number
+          referencia_pago?: string | null
+          tipo: "recarga" | "comision_viaje" | "retiro" | "ajuste"
+        }
+        Update: {
+          conductor_id?: string
+          creado_en?: string
+          descripcion?: string | null
+          estado?: "pendiente" | "completado" | "fallido"
+          id?: string
+          monto?: number
+          referencia_pago?: string | null
+          tipo?: "recarga" | "comision_viaje" | "retiro" | "ajuste"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billetera_movimientos_conductor_id_fkey"
+            columns: ["conductor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calificaciones: {
         Row: {
           autor_id: string
@@ -96,6 +137,7 @@ export type Database = {
           estado: Database["public"]["Enums"]["estado_verificacion"] | null
           lat_actual: number | null
           lng_actual: number | null
+          pantalla_aprobacion_vista: boolean | null
           saldo_billetera: number | null
           usuario_id: string
           viajes_completados: number | null
@@ -106,6 +148,7 @@ export type Database = {
           estado?: Database["public"]["Enums"]["estado_verificacion"] | null
           lat_actual?: number | null
           lng_actual?: number | null
+          pantalla_aprobacion_vista?: boolean | null
           saldo_billetera?: number | null
           usuario_id: string
           viajes_completados?: number | null
@@ -116,6 +159,7 @@ export type Database = {
           estado?: Database["public"]["Enums"]["estado_verificacion"] | null
           lat_actual?: number | null
           lng_actual?: number | null
+          pantalla_aprobacion_vista?: boolean | null
           saldo_billetera?: number | null
           usuario_id?: string
           viajes_completados?: number | null
@@ -126,6 +170,44 @@ export type Database = {
             columns: ["usuario_id"]
             isOneToOne: true
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      destinos_frecuentes: {
+        Row: {
+          creado_en: string
+          direccion: string
+          id: string
+          latitud: number
+          longitud: number
+          nombre: string
+          usuario_id: string
+        }
+        Insert: {
+          creado_en?: string
+          direccion: string
+          id?: string
+          latitud: number
+          longitud: number
+          nombre: string
+          usuario_id: string
+        }
+        Update: {
+          creado_en?: string
+          direccion?: string
+          id?: string
+          latitud?: number
+          longitud?: number
+          nombre?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "destinos_frecuentes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -513,6 +595,38 @@ export type Database = {
         }
         Relationships: []
       }
+      push_tokens: {
+        Row: {
+          actualizado_en: string
+          id: string
+          plataforma: "android" | "ios" | "web"
+          token: string
+          usuario_id: string
+        }
+        Insert: {
+          actualizado_en?: string
+          id?: string
+          plataforma?: "android" | "ios" | "web"
+          token: string
+          usuario_id: string
+        }
+        Update: {
+          actualizado_en?: string
+          id?: string
+          plataforma?: "android" | "ios" | "web"
+          token?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       viajes: {
         Row: {
           aceptado_en: string | null
@@ -605,6 +719,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      marcar_pantalla_aprobacion_vista: {
+        Args: Record<PropertyKey, never>;
+        Returns: { ok: boolean; pantalla_aprobacion_vista: boolean };
+      };
+      recargar_billetera_conductor: {
+        Args: {
+          p_conductor_id: string;
+          p_monto: number;
+          p_referencia_pago: string;
+          p_descripcion?: string;
+        };
+        Returns: Json;
+      };
+      verificar_disponibilidad_cuenta: {
+        Args: {
+          p_email?: string | null;
+          p_telefono?: string | null;
+        };
+        Returns: {
+          ok: boolean;
+          email_disponible: boolean;
+          telefono_disponible: boolean;
+        };
+      };
+      obtener_datos_viaje_conductor: {
+        Args: {
+          p_viaje_id: string;
+        };
+        Returns: {
+          ok: boolean;
+          viaje_id: string;
+          pasajero_primer_nombre: string;
+          pasajero_avatar: string | null;
+          pasajero_calificacion: number;
+          origen_texto: string;
+          origen_lat: number;
+          origen_lng: number;
+          destino_texto: string;
+          destino_lat: number;
+          destino_lng: number;
+          tarifa: number;
+          metodo_pago: string;
+          estado: string;
+        };
+      };
       registrar_documento_conductor: {
         Args: {
           p_tipo:

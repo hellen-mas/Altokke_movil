@@ -267,6 +267,77 @@ export const authService = {
     await supabase.auth.signOut();
   },
 
+  /**
+   * Valida si un número telefónico cumple con el estándar móvil de Perú (9 dígitos, inicia en 9).
+   * Soporta tanto formato local (9XXXXXXXX) como internacional E.164 (+51 9XXXXXXXX).
+   */
+  validarTelefonoPeruano(telefono: string): boolean {
+    const digitos = (telefono || "").replace(/\D/g, "");
+    const sinPrefijo =
+      digitos.length === 11 && digitos.startsWith("51")
+        ? digitos.slice(2)
+        : digitos;
+    return /^9\d{8}$/.test(sinPrefijo);
+  },
+
+  /**
+   * Verifica en el servidor si el correo o el teléfono ya están registrados (L-02).
+   */
+  async verificarDisponibilidadCuenta(
+    email?: string | null,
+    telefono?: string | null
+  ): Promise<{ emailDisponible: boolean; telefonoDisponible: boolean }> {
+    try {
+      const emailLimpio = email ? cleanEmail(email) : null;
+      let telefonoLimpio = telefono ? telefono.replace(/\D/g, "") : null;
+      if (telefonoLimpio && telefonoLimpio.length === 11 && telefonoLimpio.startsWith("51")) {
+        telefonoLimpio = telefonoLimpio.slice(2);
+      }
+
+      const { data, error } = await supabase.rpc("verificar_disponibilidad_cuenta", {
+        p_email: emailLimpio,
+        p_telefono: telefonoLimpio,
+      });
+
+      if (error || !data) {
+        console.warn("Aviso al verificar disponibilidad de cuenta en RPC:", error?.message);
+        return { emailDisponible: true, telefonoDisponible: true };
+      }
+
+      const res = data as { ok?: boolean; email_disponible?: boolean; telefono_disponible?: boolean };
+      return {
+        emailDisponible: res.email_disponible ?? true,
+        telefonoDisponible: res.telefono_disponible ?? true,
+      };
+    } catch (err: unknown) {
+      console.warn("Excepción al verificar disponibilidad de cuenta:", err);
+      return { emailDisponible: true, telefonoDisponible: true };
+    }
+  },
+
+  /**
+   * Reenvía el código de confirmación de registro por correo (L-02).
+   */
+  async reenviarCodigoConfirmacion(email: string): Promise<void> {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: cleanEmail(email),
+    });
+    if (error) throw error;
+  },
+
+  /**
+   * Verifica el código de 6 dígitos para confirmar la cuenta nueva de registro (L-02).
+   */
+  async verificarCodigoSignup(email: string, codigo: string): Promise<void> {
+    const { error } = await supabase.auth.verifyOtp({
+      email: cleanEmail(email),
+      token: codigo.trim(),
+      type: "signup",
+    });
+    if (error) throw error;
+  },
+
   // Delegaciones para compatibilidad con módulos dependientes
   existeDni: (dni: string) => identidadService.existeDni(dni),
   validarIdentidadDNI: (dni: string) => identidadService.validarIdentidadDNI(dni),

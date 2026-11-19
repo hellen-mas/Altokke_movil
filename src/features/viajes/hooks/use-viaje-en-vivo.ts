@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export type ViajeEnVivo = Tables<"viajes">;
 
-export function useViajeEnVivo (viajeId: string | null){
+export function useViajeEnVivo(viajeId: string | null) {
   const [viaje, setViaje] = useState<ViajeEnVivo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [conectado, setConectado] = useState(true);
