@@ -1,8 +1,15 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet, Linking, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useHaptics } from "@/shared/hooks/useHaptics";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 const TELEFONO_CENTRAL_BAGUA = "+51941234567";
 const WHATSAPP_CENTRAL_BAGUA = "51941234567";
@@ -34,14 +41,14 @@ export function BotonCentralAsistencia() {
           text: "Pedir por WhatsApp",
           onPress: () => {
             const url = `whatsapp://send?phone=${WHATSAPP_CENTRAL_BAGUA}&text=${encodeURIComponent(
-              "Hola Central Altokke, deseo solicitar una mototaxi en Bagua."
+              "Hola Central Altokke, deseo solicitar una mototaxi.",
             )}`;
             Linking.openURL(url).catch((err) => {
               console.warn("No se pudo abrir WhatsApp:", err);
             });
           },
         },
-      ]
+      ],
     );
   };
 
@@ -60,7 +67,9 @@ export function BotonCentralAsistencia() {
       accessibilityLabel="Asistencia Telefónica: llamar a la Central de Mototaxis de Bagua"
       accessibilityHint="Permite pedir una mototaxi mediante llamada telefónica o WhatsApp"
     >
-      <View style={[styles.iconoCirculo, { backgroundColor: colores.primario }]}>
+      <View
+        style={[styles.iconoCirculo, { backgroundColor: colores.primario }]}
+      >
         <Ionicons name="call" size={24} color="#0C211C" />
       </View>
       <View style={styles.textos}>
@@ -74,14 +83,10 @@ export function BotonCentralAsistencia() {
           maxFontSizeMultiplier={1.35}
           style={[styles.descripcion, { color: colores.secundario }]}
         >
-          Llama o escribe a nuestra Central en Bagua
+          Llama o escribe a nuestra Central
         </Text>
       </View>
-      <Ionicons
-        name="chevron-forward"
-        size={20}
-        color={colores.secundario}
-      />
+      <Ionicons name="chevron-forward" size={20} color={colores.secundario} />
     </Pressable>
   );
 }

@@ -1,18 +1,27 @@
 import { supabase } from "@/shared/api/supabase";
 import type { ViajeHistorial } from "@/features/viajes/constants/pasajero";
 
+export interface DestinoFrecuente {
+  id: string; usuarioId: string; nombre: string; direccion: string;
+  latitud: number; longitud: number; creadoEn: string;
+}
+
+export interface AgregarDestinoFrecuenteInput {
+  usuarioId: string; nombre: string; direccion: string;
+  latitud: number; longitud: number;
+}
+
+export interface DatosOperativosViajeConductor {
+  viajeId: string; pasajeroPrimerNombre: string; pasajeroAvatar: string | null;
+  pasajeroCalificacion: number; origenTexto: string; origenLat: number; origenLng: number;
+  destinoTexto: string; destinoLat: number; destinoLng: number; tarifa: number;
+  metodoPago: string; estado: string;
+}
+
 export interface CrearViajeInput {
-  pasajeroId: string;
-  origenTexto: string;
-  destinoTexto: string;
-  origenLat: number;
-  origenLng: number;
-  destinoLat: number;
-  destinoLng: number;
-  distanciaKm: number;
-  tarifaEstimada: number;
-  metodoPago: string;
-  pagaCon?: number;
+  pasajeroId: string; origenTexto: string; destinoTexto: string;
+  origenLat: number; origenLng: number; destinoLat: number; destinoLng: number;
+  distanciaKm: number; tarifaEstimada: number; metodoPago: string; pagaCon?: number;
 }
 
 export const viajeService = {
@@ -56,55 +65,29 @@ export const viajeService = {
       const { data: viajeDirecto, error: errorInsert } = await supabase
         .from("viajes")
         .insert({
-          pasajero_id: input.pasajeroId,
-          origen_texto: input.origenTexto,
-          destino_texto: input.destinoTexto,
-          origen_lat: input.origenLat,
-          origen_lng: input.origenLng,
-          destino_lat: input.destinoLat,
-          destino_lng: input.destinoLng,
-          distancia_km: input.distanciaKm,
-          tarifa_estimada: input.tarifaEstimada,
+          pasajero_id: input.pasajeroId, origen_texto: input.origenTexto, destino_texto: input.destinoTexto,
+          origen_lat: input.origenLat, origen_lng: input.origenLng, destino_lat: input.destinoLat,
+          destino_lng: input.destinoLng, distancia_km: input.distanciaKm, tarifa_estimada: input.tarifaEstimada,
           metodo_pago: input.metodoPago,
         })
         .select()
         .single();
       if (errorInsert) throw new Error(errorInsert.message);
       return viajeDirecto;
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn("Excepción al crear viaje en Supabase:", err);
       throw err;
     }
   },
 
   async obtenerViajeActivoPasajero(pasajeroId: string) {
-    if (!pasajeroId) {
-      throw new Error("Se requiere el ID del pasajero.");
-    }
+    if (!pasajeroId) throw new Error("Se requiere el ID del pasajero.");
 
-    const estadosActivos = [
-      "buscando",
-      "aceptado",
-      "en_camino_origen",
-      "esperando_pasajero",
-      "en_viaje",
-    ] as const;
+    const estadosActivos = ["buscando", "aceptado", "en_camino_origen", "esperando_pasajero", "en_viaje"] as const;
 
     const { data, error } = await supabase
       .from("viajes")
-      .select(`
-        id,
-        estado,
-        origen_texto,
-        destino_texto,
-        origen_lat,
-        origen_lng,
-        destino_lat,
-        destino_lng,
-        distancia_km,
-        tarifa_estimada,
-        metodo_pago
-      `)
+      .select("id, estado, origen_texto, destino_texto, origen_lat, origen_lng, destino_lat, destino_lng, distancia_km, tarifa_estimada, metodo_pago")
       .eq("pasajero_id", pasajeroId)
       .in("estado", estadosActivos)
       .order("creado_en", { ascending: false })
@@ -113,9 +96,7 @@ export const viajeService = {
 
     if (error) {
       console.error("Error al consultar viaje activo:", error);
-      throw new Error(
-        "No se pudo verificar si tienes un viaje activo."
-      );
+      throw new Error("No se pudo verificar si tienes un viaje activo.");
     }
 
     return data;
@@ -188,15 +169,10 @@ export const viajeService = {
 
       const { data, error } = await supabase
         .from("calificaciones")
-        .insert(
-          {
-            viaje_id: viajeId,
-            autor_id: autorId,
-            receptor_id: finalReceptorId,
-            puntuacion,
-            comentario: comentario || null,
-          },
-        )
+        .insert({
+          viaje_id: viajeId, autor_id: autorId, receptor_id: finalReceptorId,
+          puntuacion, comentario: comentario || null,
+        })
         .select()
         .maybeSingle();
 
@@ -205,16 +181,14 @@ export const viajeService = {
         return null;
       }
       return data;
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn("Excepción al guardar calificación:", err);
       return null;
     }
   },
-  async obtenerViajesParaNotificaciones(pasajeroId: string) {
-    if (!pasajeroId) {
-      throw new Error("Se requiere el ID del pasajero.");
-    }
 
+  async obtenerViajesParaNotificaciones(pasajeroId: string) {
+    if (!pasajeroId) throw new Error("Se requiere el ID del pasajero.");
     const { data, error } = await supabase
       .from("viajes")
       .select("id, estado, creado_en")
@@ -222,12 +196,7 @@ export const viajeService = {
       .order("creado_en", { ascending: false })
       .limit(8);
 
-    if (error) {
-      throw new Error(
-        `No se pudieron consultar las notificaciones: ${error.message}`
-      );
-    }
-
+    if (error) throw new Error(`No se pudieron consultar las notificaciones: ${error.message}`);
     return data ?? [];
   },
 
@@ -285,5 +254,145 @@ export const viajeService = {
           ? "completado"
           : "cancelado",
     }));
+  },
+
+  /**
+   * Consulta los destinos frecuentes registrados por el pasajero (P-03).
+   */
+  async obtenerDestinosFrecuentes(usuarioId: string): Promise<DestinoFrecuente[]> {
+    if (!usuarioId) return [];
+
+    const { data, error } = await supabase
+      .from("destinos_frecuentes")
+      .select("id, usuario_id, nombre, direccion, latitud, longitud, creado_en")
+      .eq("usuario_id", usuarioId)
+      .order("creado_en", { ascending: false });
+
+    if (error) {
+      console.warn("Aviso al consultar destinos frecuentes:", error.message);
+      return [];
+    }
+
+    return (data ?? []).map((d) => ({
+      id: d.id,
+      usuarioId: d.usuario_id,
+      nombre: d.nombre,
+      direccion: d.direccion,
+      latitud: Number(d.latitud),
+      longitud: Number(d.longitud),
+      creadoEn: d.creado_en,
+    }));
+  },
+
+  /**
+   * Registra un nuevo destino frecuente para el pasajero (P-03).
+   */
+  async agregarDestinoFrecuente(
+    input: AgregarDestinoFrecuenteInput
+  ): Promise<DestinoFrecuente> {
+    if (!input.usuarioId || !input.nombre.trim() || !input.direccion.trim()) {
+      throw new Error("Datos incompletos para registrar el destino frecuente.");
+    }
+
+    const { data, error } = await supabase
+      .from("destinos_frecuentes")
+      .insert({
+        usuario_id: input.usuarioId,
+        nombre: input.nombre.trim(),
+        direccion: input.direccion.trim(),
+        latitud: input.latitud,
+        longitud: input.longitud,
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw new Error(`No se pudo guardar el destino: ${error?.message || "Error desconocido"}`);
+    }
+
+    return {
+      id: data.id,
+      usuarioId: data.usuario_id,
+      nombre: data.nombre,
+      direccion: data.direccion,
+      latitud: Number(data.latitud),
+      longitud: Number(data.longitud),
+      creadoEn: data.creado_en,
+    };
+  },
+
+  /**
+   * Elimina un destino frecuente del pasajero (P-03).
+   */
+  async eliminarDestinoFrecuente(id: string, usuarioId: string): Promise<boolean> {
+    if (!id || !usuarioId) return false;
+
+    const { error } = await supabase
+      .from("destinos_frecuentes")
+      .delete()
+      .eq("id", id)
+      .eq("usuario_id", usuarioId);
+
+    if (error) {
+      console.warn("Aviso al eliminar destino frecuente:", error.message);
+      return false;
+    }
+
+    return true;
+  },
+
+  /**
+   * Consulta los datos mínimos del viaje autorizados para el conductor (P-08 / LPDP Ley 29733).
+   */
+  async obtenerDatosViajeParaConductor(
+    viajeId: string
+  ): Promise<DatosOperativosViajeConductor | null> {
+    if (!viajeId) return null;
+
+    try {
+      const { data, error } = await supabase.rpc("obtener_datos_viaje_conductor", {
+        p_viaje_id: viajeId,
+      });
+
+      if (error || !data) {
+        console.warn("Aviso RPC obtener_datos_viaje_conductor:", error?.message);
+        return null;
+      }
+
+      const res = data as {
+        viaje_id: string;
+        pasajero_primer_nombre: string;
+        pasajero_avatar: string | null;
+        pasajero_calificacion: number;
+        origen_texto: string;
+        origen_lat: number;
+        origen_lng: number;
+        destino_texto: string;
+        destino_lat: number;
+        destino_lng: number;
+        tarifa: number;
+        metodo_pago: string;
+        estado: string;
+      };
+
+      return {
+        viajeId: res.viaje_id,
+        pasajeroPrimerNombre: res.pasajero_primer_nombre || "Pasajero",
+        pasajeroAvatar: res.pasajero_avatar,
+        pasajeroCalificacion: Number(res.pasajero_calificacion ?? 5.0),
+        origenTexto: res.origen_texto,
+        origenLat: Number(res.origen_lat),
+        origenLng: Number(res.origen_lng),
+        destinoTexto: res.destino_texto,
+        destinoLat: Number(res.destino_lat),
+        destinoLng: Number(res.destino_lng),
+        tarifa: Number(res.tarifa ?? 0),
+        metodoPago: res.metodo_pago,
+        estado: res.estado,
+      };
+    } catch (err: unknown) {
+      console.warn("Excepción al consultar datos operativos del viaje:", err);
+      return null;
+    }
   },
 };

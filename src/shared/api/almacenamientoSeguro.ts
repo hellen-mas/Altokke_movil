@@ -1,32 +1,22 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as aesjs from "aes-js";
-import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 
 const memory = new Map<string, string>();
 const isSSR = typeof window === "undefined";
 const isWeb = Platform.OS === "web";
 
-// JWT: Manejador cifrado con AES-256 en hardware (SecureStore) para custodiar tokens de sesion JWT
+function normalizarClave(clave: string): string {
+  // SecureStore en Android e iOS restringe claves a caracteres alfanuméricos, '.', '-' y '_'
+  return clave.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+/**
+ * Almacenamiento seguro de tokens y credenciales de sesión.
+ * Utiliza Keychain en iOS y Android Keystore mediante expo-secure-store en dispositivos móviles,
+ * con fallback a AsyncStorage para entornos Web de desarrollo.
+ */
 class AlmacenamientoSeguro {
-  private async cifrar(clave: string, valor: string): Promise<string> {
-    const llave = Crypto.getRandomBytes(32);
-    const cifrador = new aesjs.ModeOfOperation.ctr(llave, new aesjs.Counter(1));
-    await SecureStore.setItemAsync(clave, aesjs.utils.hex.fromBytes(llave));
-    return aesjs.utils.hex.fromBytes(cifrador.encrypt(aesjs.utils.utf8.toBytes(valor)));
-  }
-
-  private async descifrar(clave: string, valorCifrado: string): Promise<string | null> {
-    const llaveHex = await SecureStore.getItemAsync(clave);
-    if (!llaveHex) return null;
-    const cifrador = new aesjs.ModeOfOperation.ctr(
-      aesjs.utils.hex.toBytes(llaveHex),
-      new aesjs.Counter(1)
-    );
-    return aesjs.utils.utf8.fromBytes(cifrador.decrypt(aesjs.utils.hex.toBytes(valorCifrado)));
-  }
-
   async getItem(clave: string): Promise<string | null> {
     if (isSSR) {
       return memory.get(clave) ?? null;
@@ -34,11 +24,17 @@ class AlmacenamientoSeguro {
     if (isWeb) {
       return await AsyncStorage.getItem(clave);
     }
-    const cifrado = await AsyncStorage.getItem(clave);
-    if (!cifrado) {
-      return null;
+    try {
+      const claveSegura = normalizarClave(clave);
+      const valor = await SecureStore.getItemAsync(claveSegura);
+      if (valor !== null) {
+        return valor;
+      }
+      return await AsyncStorage.getItem(clave);
+    } catch (error: unknown) {
+      console.warn("Aviso al leer almacenamiento seguro:", error);
+      return await AsyncStorage.getItem(clave);
     }
-    return await this.descifrar(clave, cifrado);
   }
 
   async setItem(clave: string, valor: string): Promise<void> {
@@ -50,8 +46,15 @@ class AlmacenamientoSeguro {
       await AsyncStorage.setItem(clave, valor);
       return;
     }
-    const cifrado = await this.cifrar(clave, valor);
-    await AsyncStorage.setItem(clave, cifrado);
+    try {
+      const claveSegura = normalizarClave(clave);
+      await SecureStore.setItemAsync(claveSegura, valor, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED,
+      });
+    } catch (error: unknown) {
+      console.warn("Aviso al guardar en almacenamiento seguro:", error);
+      await AsyncStorage.setItem(clave, valor);
+    }
   }
 
   async removeItem(clave: string): Promise<void> {
@@ -59,10 +62,17 @@ class AlmacenamientoSeguro {
       memory.delete(clave);
       return;
     }
-    await AsyncStorage.removeItem(clave);
-    if (!isWeb) {
-      await SecureStore.deleteItemAsync(clave);
+    if (isWeb) {
+      await AsyncStorage.removeItem(clave);
+      return;
     }
+    try {
+      const claveSegura = normalizarClave(clave);
+      await SecureStore.deleteItemAsync(claveSegura);
+    } catch (error: unknown) {
+      console.warn("Aviso al remover de almacenamiento seguro:", error);
+    }
+    await AsyncStorage.removeItem(clave);
   }
 }
 

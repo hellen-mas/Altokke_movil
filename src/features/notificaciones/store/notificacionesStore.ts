@@ -1,12 +1,12 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import {
   NotificacionItem,
   PREFERENCIAS_POR_DEFECTO,
   PreferenciasNotificaciones,
 } from "../types/notificaciones";
-import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
 
 function formatearHora(fecha: Date): string {
   const horas = fecha.getHours().toString().padStart(2, "0");
@@ -21,7 +21,7 @@ export function crearNotificacionBienvenida(): NotificacionItem {
     icono: "shield-checkmark-outline",
     titulo: "Bienvenido a Altokke",
     mensaje:
-      "Tu cuenta de pasajero está lista para solicitar mototaxis seguros en Bagua.",
+      "Tu cuenta de pasajero está lista para solicitar mototaxis seguros.",
     hora: formatearHora(ahora),
     fechaIso: ahora.toISOString(),
     leida: false,

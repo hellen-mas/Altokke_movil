@@ -79,9 +79,11 @@ export function useAlertaConductor({
 
   useEffect(() => {
     if (!habilitado || !userId || !enLinea) {
-      setEscuchando(false);
-      setUbicacionDisponible(false);
       ubicacionRef.current = null;
+      queueMicrotask(() => {
+        setEscuchando(false);
+        setUbicacionDisponible(false);
+      });
       return;
     }
 
@@ -343,8 +345,8 @@ export function useAlertaConductor({
     }, [userId, enLinea, radioKm, habilitado]);
 
     return {
-        escuchando,
-        ubicacionDisponible,
+        escuchando: habilitado && Boolean(userId) && enLinea && escuchando,
+        ubicacionDisponible: habilitado && Boolean(userId) && enLinea && ubicacionDisponible,
         error,
         ultimaSolicitudId,
     };
