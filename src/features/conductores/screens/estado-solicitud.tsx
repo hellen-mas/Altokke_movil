@@ -2,12 +2,13 @@ import { authService } from "@/features/autenticacion/services/authService";
 import {
   EstadoConductor,
   obtenerEstadoConductor,
+  conductorService,
 } from "@/features/conductores/services/conductorService";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -62,6 +63,7 @@ const ESTADOS: Record<
 
 export default function EstadoSolicitudScreen() {
   const { colores } = useAltokkeTheme();
+  const [marcandoAprobacion, setMarcandoAprobacion] = useState(false);
 
   const {
     data: estado,
@@ -98,6 +100,41 @@ export default function EstadoSolicitudScreen() {
       router.replace("/login");
     } catch {
       Alert.alert("Error", "No se pudo cerrar la sesión.");
+    }
+  };
+
+  const continuarComoConductor = async () => {
+    if (marcandoAprobacion) return;
+
+    setMarcandoAprobacion(true);
+
+    try {
+      const resultado =
+        await conductorService.marcarPantallaAprobacionVista();
+
+      if (!resultado) {
+        Alert.alert(
+          "No se pudo completar la operación",
+          "No pudimos registrar que ya viste tu aprobación. Comprueba tu conexión e inténtalo nuevamente."
+        );
+
+        setMarcandoAprobacion(false);
+        return;
+      }
+
+      router.replace("/inicio");
+    } catch (error) {
+      console.error(
+        "Error al registrar la aprobación visualizada:",
+        error
+      );
+
+      Alert.alert(
+        "Error",
+        "Ocurrió un problema al activar tu acceso. Inténtalo nuevamente."
+      );
+
+      setMarcandoAprobacion(false);
     }
   };
 
@@ -248,17 +285,22 @@ export default function EstadoSolicitudScreen() {
 
         <View style={styles.acciones}>
           <Pressable
-            disabled={cargando}
+            disabled={cargando || marcandoAprobacion}
             onPress={
               esAprobado
-                ? () => router.replace("/inicio")
+                ? () => void continuarComoConductor()
                 : () => void refetch()
             }
             style={({ pressed }) => [
               styles.botonPrincipal,
               {
                 backgroundColor: colores.primario,
-                opacity: cargando ? 0.55 : pressed ? 0.8 : 1,
+                opacity: 
+                  cargando || marcandoAprobacion
+                    ? 0.55
+                    : pressed 
+                      ? 0.8
+                      : 1,
               },
             ]}
           >
@@ -268,9 +310,11 @@ export default function EstadoSolicitudScreen() {
                 { color: colores.textoBoton },
               ]}
             >
-              {esAprobado
-                ? "Empezar a conducir"
-                : "Actualizar estado"}
+              {marcandoAprobacion
+                ? "Activando tu cuenta..."
+                : esAprobado 
+                  ? "Empezar a conducir"
+                  : "Actualizar estado"}
             </Text>
 
             <Ionicons
