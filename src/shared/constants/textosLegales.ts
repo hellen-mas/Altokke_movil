@@ -13,7 +13,7 @@ export const TERMINOS_SERVICIO: TextoLegal = {
   titulo: "Términos de servicio",
   secciones: [
     {
-      subtitulo: "Términos y condiciones",
+      subtitulo: "Términos y condiciones generales",
       contenido:
         "1. Mayoría de edad (+18 años).\n" +
         "2. Uso responsable del servicio de mototaxi.\n" +
@@ -21,7 +21,7 @@ export const TERMINOS_SERVICIO: TextoLegal = {
         "4. El uso indebido puede ocasionar la suspensión de la cuenta.",
     },
     {
-      subtitulo: "Términos y condiciones",
+      subtitulo: "Términos y condiciones del conductor",
       contenido:
         "1. LICENCIA DE CONDUCIR\n\n" +
         "El conductor debe contar con una licencia de conducir Clase B, categoría II-C (B-IIc), vigente y correspondiente al vehículo menor utilizado para prestar el servicio de mototaxi.\n\n" +
