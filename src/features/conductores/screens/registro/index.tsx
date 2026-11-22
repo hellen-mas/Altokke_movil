@@ -107,7 +107,8 @@ export default function DatosPersonalesConductor() {
       <StatusBar style={esOscuro ? "light" : "dark"}/>
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colores.fondo }]}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        // en Android con borde a borde el teclado ya no redimensiona la ventana
+        behavior="padding"
       >
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
