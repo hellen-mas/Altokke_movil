@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "683467652938",
+    "project_id": "altokke-movil",
+    "storage_bucket": "altokke-movil.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683467652938:android:cb2a6a8ff4e1800f60cbb3",
+        "android_client_info": {
+          "package_name": "pe.altokke.movil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmHAZ8ahEsHHi4xVl4mUMerM0go0RpWkk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

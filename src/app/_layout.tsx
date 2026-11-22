@@ -13,8 +13,9 @@ import { useEffect } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppState, Platform, StatusBar } from "react-native";
-import { useNotificacionAprobacionConductor } from "@/features/notificaciones/hooks/useNotificacionAprobacionConductor";
 import "@/features/notificaciones/services/configuracionNotificaciones";
+import { useSincronizarTokenPush } from "@/features/notificaciones/hooks/useSincronizarTokenPush";
+import { useNotificacionesPush } from "@/features/notificaciones/hooks/useNotificacionesPush";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +39,9 @@ onlineManager.setEventListener((setOnline) =>
 SplashScreen.preventAutoHideAsync();
 
 function NotificacionesGlobales() {
-  useNotificacionAprobacionConductor();
+  useNotificacionesPush();
+  useSincronizarTokenPush();
+
   return null;
 }
 

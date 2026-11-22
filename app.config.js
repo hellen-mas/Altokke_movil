@@ -3,6 +3,10 @@ module.exports = ({ config }) => {
     ...config,
     android: {
       ...config.android,
+
+      // Configuración de Firebase para Android 
+      googleServicesFile: "./google-services.json",
+      
       config: {
         ...config.android?.config,
         googleMaps: {

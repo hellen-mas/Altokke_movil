@@ -1,6 +1,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+import {
+  enviarPushExpo,
+  type ExpoPushMessage,
+} from "../_shared/expoPush.ts";
+
 interface RegistroConductor {
   usuario_id: string;
   estado: string;
@@ -11,7 +16,7 @@ interface EventoWebhook {
   table: string;
   schema: string;
   record: RegistroConductor;
-  old_record: RegistroConductor;
+  old_record?: RegistroConductor | null;
 }
 
 interface TokenPush {
@@ -19,24 +24,56 @@ interface TokenPush {
   token: string;
 }
 
-interface TicketExpo {
-  status: "ok" | "error";
-  message?: string;
-  details?: {
-    error?: string;
-  };
-}
+type EstadoEvento = "procesando" | "completado" | "fallido";
 
 const responder = (data: unknown, status = 200) =>
   Response.json(data, { status });
+
+// Serialización estable para identificar eventos repetidos.
+function serializarCanonico(valor: unknown): string {
+  if (valor === null || typeof valor !== "object") {
+    return JSON.stringify(valor) ?? "null";
+  }
+
+  if (Array.isArray(valor)) {
+    return `[${valor.map(serializarCanonico).join(",")}]`;
+  }
+
+  const objeto = valor as Record<string, unknown>;
+
+  return `{${Object.keys(objeto)
+    .sort()
+    .map(
+      (clave) =>
+        `${JSON.stringify(clave)}:${serializarCanonico(objeto[clave])}`
+    )
+    .join(",")}}`;
+}
+
+async function generarHashEvento(evento: EventoWebhook): Promise<string> {
+  const contenido = serializarCanonico(evento);
+
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(contenido)
+  );
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return responder({ error: "Método no permitido" }, 405);
   }
 
+  let finalizarEvento:
+    | ((estado: EstadoEvento, detalle?: string) => Promise<void>)
+    | null = null;
+
   try {
-    // 1. Validar que la petición provenga del webhook autorizado.
+    // 1. Validar el webhook.
     const secretoEsperado = Deno.env.get("APPROVAL_WEBHOOK_SECRET");
     const secretoRecibido = req.headers.get("x-webhook-secret");
 
@@ -49,7 +86,7 @@ Deno.serve(async (req: Request) => {
       return responder({ error: "No autorizado" }, 401);
     }
 
-    // 2. Leer el evento de Supabase.
+    // 2. Validar el evento.
     const evento = await req.json() as EventoWebhook;
 
     if (
@@ -57,17 +94,22 @@ Deno.serve(async (req: Request) => {
       evento.table !== "conductores_perfil" ||
       evento.schema !== "public"
     ) {
-      return responder({ ignorado: true, motivo: "Evento no compatible" });
+      return responder({
+        ignorado: true,
+        motivo: "Evento no compatible",
+      });
     }
 
     const nuevo = evento.record;
     const anterior = evento.old_record;
 
     if (!nuevo?.usuario_id || !nuevo.estado) {
-      return responder({ error: "Datos del conductor incompletos" }, 400);
+      return responder({
+        error: "Datos del conductor incompletos",
+      }, 400);
     }
 
-    // 3. Solo notificar una transición hacia aprobado.
+    // 3. Solo procesar una transición hacia aprobado.
     if (
       nuevo.estado !== "aprobado" ||
       anterior?.estado === "aprobado"
@@ -79,9 +121,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 4. Crear cliente administrativo exclusivamente en servidor.
+    // 4. Crear cliente administrativo.
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const serviceRoleKey = Deno.env.get(
+      "SUPABASE_SERVICE_ROLE_KEY"
+    );
 
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error("Faltan las credenciales de Supabase.");
@@ -92,19 +136,78 @@ Deno.serve(async (req: Request) => {
       serviceRoleKey
     );
 
-    // 5. Obtener los dispositivos del conductor.
-    const { data: tokens, error: errorTokens } = await supabaseAdmin
-      .from("push_tokens")
-      .select("id, token")
-      .eq("usuario_id", nuevo.usuario_id);
+    // 5. Reclamar el evento antes de enviar.
+    const eventHash = await generarHashEvento(evento);
 
-    if (errorTokens) {
+    const { data: reclamos, error: errorReclamo } =
+      await supabaseAdmin.rpc("claim_push_webhook_event", {
+        p_event_hash: eventHash,
+        p_usuario_id: nuevo.usuario_id,
+        p_tipo: "solicitud_aprobada",
+      });
+
+    if (errorReclamo) {
       throw new Error(
-        `Error consultando tokens: ${errorTokens.message}`
+        `No se pudo registrar el evento: ${errorReclamo.message}`
       );
     }
 
-    if (!tokens?.length) {
+    const reclamo = reclamos?.[0] as
+      | { event_id: string; claimed: boolean }
+      | undefined;
+
+    if (!reclamo?.event_id) {
+      throw new Error("No se pudo obtener el registro del evento.");
+    }
+
+    // Si ya se procesó o está siendo procesado, no reenviar.
+    if (!reclamo.claimed) {
+      return responder({
+        ok: true,
+        duplicado: true,
+        mensaje: "Este evento ya fue procesado o está en ejecución.",
+      });
+    }
+
+    const eventId = reclamo.event_id;
+
+    // Permite registrar el resultado del procesamiento.
+    finalizarEvento = async (estado, detalle) => {
+      const { error } = await supabaseAdmin
+        .from("push_webhook_events")
+        .update({
+          estado,
+          ultimo_error: detalle ?? null,
+          actualizado_en: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+
+      if (error) {
+        throw new Error(
+          `No se pudo actualizar el evento: ${error.message}`
+        );
+      }
+    };
+
+    // 6. Obtener dispositivos del conductor.
+    const { data: tokens, error: errorTokens } =
+      await supabaseAdmin
+        .from("push_tokens")
+        .select("id, token")
+        .eq("usuario_id", nuevo.usuario_id);
+
+    if (errorTokens) {
+      throw new Error(
+        `Error consultando dispositivos: ${errorTokens.message}`
+      );
+    }
+
+    const dispositivos = (tokens ?? []) as TokenPush[];
+
+    if (dispositivos.length === 0) {
+      await finalizarEvento("completado");
+      finalizarEvento = null;
+
       return responder({
         ok: true,
         enviados: 0,
@@ -112,105 +215,141 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 6. Preparar los mensajes para Expo Push API.
-    const mensajes = (tokens as TokenPush[]).map((dispositivo) => ({
-      to: dispositivo.token,
-      title: "¡Tu solicitud fue aprobada!",
-      body: "Tu cuenta de conductor ya está habilitada. Ya puedes comenzar a recibir viajes.",
-      sound: "default",
-      priority: "high",
-      channelId: "default",
-      data: {
-        tipo: "solicitud_aprobada",
-        ruta: "/(auth)/estado-solicitud",
-      },
-    }));
+    // 7. Preparar notificaciones.
+    const mensajes: ExpoPushMessage[] = dispositivos.map(
+      (dispositivo) => ({
+        to: dispositivo.token,
+        title: "¡Tu solicitud fue aprobada!",
+        body: "Tu cuenta de conductor ya está habilitada. Ya puedes comenzar a recibir viajes.",
+        sound: "altokke_aprobacion.wav",
+        priority: "high",
+        channelId: "aprobaciones_v2",
+        data: {
+          categoria: "cuenta",
+          tipo: "solicitud_aprobada",
+          ruta: "/(auth)/estado-solicitud",
+        },
+      })
+    );
 
+    // 8. Enviar mediante Expo.
     const expoAccessToken = Deno.env.get("EXPO_ACCESS_TOKEN");
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
+    const resultadoPush = await enviarPushExpo(
+      mensajes,
+      expoAccessToken
+    );
 
-    if (expoAccessToken) {
-      headers.Authorization = `Bearer ${expoAccessToken}`;
-    }
+    // El envío ya se realizó. No repetirlo si falla un paso posterior.
+    await finalizarEvento("completado");
+    finalizarEvento = null;
 
-    let enviados = 0;
-    let fallidos = 0;
-    const tokensInvalidos: string[] = [];
-
-    // 7. Enviar en grupos de máximo 100 mensajes.
-    for (let i = 0; i < mensajes.length; i += 100) {
-      const lote = mensajes.slice(i, i + 100);
-      const respuestaExpo = await fetch(
-        "https://exp.host/--/api/v2/push/send",
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify(lote),
-        }
-      );
-
-      if (!respuestaExpo.ok) {
-        const detalle = await respuestaExpo.text();
-
-        console.error("Error de Expo Push:", detalle);
-
-        throw new Error("Expo no pudo procesar el envío.");
-      }
-
-      const resultado = await respuestaExpo.json() as {
-        data?: TicketExpo[];
-      };
-
-      const tickets = resultado.data ?? [];
-
-      tickets.forEach((ticket, index) => {
-        if (ticket.status === "ok") {
-          enviados++;
-          return;
-        }
-
-        fallidos++;
-
-        if (ticket.details?.error === "DeviceNotRegistered") {
-          tokensInvalidos.push(lote[index].to);
-        }
-
-        console.warn("Error en ticket Expo:", ticket.message);
-      });
-    }
-
-    // 8. Limpiar tokens que ya no pertenecen a dispositivos activos.
-    for (const token of tokensInvalidos) {
-      await supabaseAdmin
+    // 9. Eliminar dispositivos inválidos.
+    for (const tokenInvalido of resultadoPush.tokensInvalidos) {
+      const { error } = await supabaseAdmin
         .from("push_tokens")
         .delete()
         .eq("usuario_id", nuevo.usuario_id)
-        .eq("token", token);
+        .eq("token", tokenInvalido);
+
+      if (error) {
+        console.warn(
+          "No se pudo eliminar un dispositivo inválido:",
+          error.message
+        );
+      }
     }
 
+    // 10. Preparar recibos.
+    const dispositivosPorToken = new Map(
+      dispositivos.map((dispositivo) => [
+        dispositivo.token,
+        dispositivo,
+      ])
+    );
+
+    const recibosPendientes = resultadoPush.tickets.flatMap(
+      (ticket) => {
+        if (ticket.status !== "ok" || !ticket.ticketId) {
+          return [];
+        }
+
+        const dispositivo = dispositivosPorToken.get(ticket.token);
+
+        if (!dispositivo) return [];
+
+        return [{
+          ticket_id: ticket.ticketId,
+          usuario_id: nuevo.usuario_id,
+          push_token_id: dispositivo.id,
+          categoria: "cuenta",
+          tipo: "solicitud_aprobada",
+          estado: "pendiente",
+        }];
+      }
+    );
+
+    // 11. Guardar recibos sin duplicar tickets.
+    let recibosRegistrados = 0;
+    let errorRegistroRecibos: string | null = null;
+
+    if (recibosPendientes.length > 0) {
+      const { data: insertados, error } = await supabaseAdmin
+        .from("push_receipts")
+        .upsert(recibosPendientes, {
+          onConflict: "ticket_id",
+          ignoreDuplicates: true,
+        })
+        .select("id");
+
+      if (error) {
+        errorRegistroRecibos = error.message;
+
+        console.error(
+          "Error guardando recibos:",
+          error.message
+        );
+      } else {
+        recibosRegistrados = insertados?.length ?? 0;
+      }
+    }
+
+    // 12. Responder.
     return responder({
       ok: true,
       conductor_id: nuevo.usuario_id,
-      dispositivos: tokens.length,
-      enviados,
-      fallidos,
-      tokens_eliminados: tokensInvalidos.length,
+      dispositivos: dispositivos.length,
+      aceptados_por_expo: resultadoPush.aceptadosPorExpo,
+      fallidos: resultadoPush.fallidos,
+      tickets_generados: resultadoPush.ticketIds.length,
+      recibos_registrados: recibosRegistrados,
+      tokens_eliminados: resultadoPush.tokensInvalidos.length,
+      error_registro_recibos: errorRegistroRecibos,
     });
-  } catch (error: unknown) {
-    console.error("Error en notificar-aprobacion-conductor:", error);
 
-    return responder(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Error interno del servidor",
-      },
-      500
+  } catch (error: unknown) {
+    const mensaje = error instanceof Error
+      ? error.message
+      : "Error interno del servidor";
+
+    console.error(
+      "Error en notificar-aprobacion-conductor:",
+      error
     );
+
+    // Registrar el fallo para permitir un reintento controlado.
+    if (finalizarEvento) {
+      try {
+        await finalizarEvento("fallido", mensaje);
+      } catch (errorFinalizacion) {
+        console.error(
+          "No se pudo actualizar el estado del evento:",
+          errorFinalizacion
+        );
+      }
+    }
+
+    return responder({ error: mensaje }, 500);
   }
 });
+
