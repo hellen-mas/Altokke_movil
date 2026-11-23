@@ -33,9 +33,23 @@ export async function seleccionarFotoGaleria(): Promise<InfoFotoSeleccionada | n
     return null;
   }
 
+  const foto = resultado.assets[0];
+  // Algunos dispositivos ignoran el aspect: se recorta al centro para no estirar la foto
+  const lado = Math.min(foto.width, foto.height);
+
   const optimizada = await manipulateAsync(
-    resultado.assets[0].uri,
-    [{ resize: { width: 400, height: 400 } }],
+    foto.uri,
+    [
+      {
+        crop: {
+          originX: (foto.width - lado) / 2,
+          originY: (foto.height - lado) / 2,
+          width: lado,
+          height: lado,
+        },
+      },
+      { resize: { width: 400, height: 400 } },
+    ],
     { compress: 0.7, format: SaveFormat.JPEG, base64: true }
   );
 
