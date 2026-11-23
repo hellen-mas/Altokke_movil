@@ -3,7 +3,7 @@ import { Alert, Keyboard } from "react-native";
 import { router } from "expo-router";
 import { useAuth, type RolUsuario } from "@/features/autenticacion/hooks/useAuth";
 import { authService } from "@/features/autenticacion/services/authService";
-import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
+import { obtenerDestinoInicialConductor } from "@/features/conductores/services/estadoSolicitudService";
 import { traducirErrorAuth } from "@/features/autenticacion/utils/erroresAuth";
 import { TipoDatosLogin } from "@/features/autenticacion/utils/validacionesAuth";
 
@@ -26,8 +26,9 @@ export function useLoginSession() {
     login(rol);
 
     if (rol === "conductor") {
-      await obtenerEstadoConductor(user.id);
-      router.replace("/(auth)/estado-solicitud");
+      const destino = await obtenerDestinoInicialConductor(user.id);
+      
+      router.replace(destino);
       return;
     }
 

@@ -15,7 +15,10 @@
     },
     "ios": {
       "bundleIdentifier": "pe.altokke.movil",
-      "jsEngine": "hermes"
+      "jsEngine": "hermes",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "pe.altokke.movil",
@@ -45,7 +48,20 @@
       "expo-image",
       "expo-splash-screen",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/altokke-notification-icon.png",
+          "color": "#16A34A",
+          "defaultChannel": "default",
+          "sounds": [
+            "./assets/sounds/altokke_aprobacion.wav",
+            "./assets/sounds/altokke_viajes.wav",
+            "./assets/sounds/altokke_pagos.wav"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

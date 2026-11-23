@@ -12,10 +12,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useCallback } from "react";
 
 export default function VerificacionCodigoScreen() {
   const { colores, esOscuro } = useAltokkeTheme();
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, origen } = useLocalSearchParams<{ email: string; origen?:string; }>();
+
+  const esRecuperacionConductor = origen === "conductor";
+  const continuarNuevaContrasena = useCallback(() => {
+    if (esRecuperacionConductor) {
+      router.push("/recuperar-cuenta/nueva-contrasena?origen=conductor");
+      return;
+    }
+    router.push("/recuperar-cuenta/nueva-contrasena");
+  }, [esRecuperacionConductor]);
 
   const {
     codigo,
@@ -27,7 +38,7 @@ export default function VerificacionCodigoScreen() {
     activo,
     verificarCodigo,
     reenviarCodigo,
-  } = useVerificarOtp({ email });
+  } = useVerificarOtp({ email, onExito: continuarNuevaContrasena, });
 
   const gradienteFondo = esOscuro
     ? (["#0f281e", colores.fondo] as const)
@@ -115,9 +126,21 @@ export default function VerificacionCodigoScreen() {
 
         <View style={styles.bottomContainer}>
           <PiePaginaAutenticacion
-            textoPregunta="¿No es tu correo?"
-            textoEnlace="Cambiar"
-            ruta="/recuperar-cuenta"
+            textoPregunta={
+              esRecuperacionConductor
+                ? "¿Necesitas volver?"
+                : "¿No es tu correo?"
+            }
+            textoEnlace={
+              esRecuperacionConductor
+                ? "Volver"
+                : "Cambiar"
+            }
+            ruta={
+              esRecuperacionConductor
+                ? "/(conductor)/cuenta/recuperar-contrasena"
+                : "/recuperar-cuenta"
+            }
           />
         </View>
       </ContenedorPantalla>

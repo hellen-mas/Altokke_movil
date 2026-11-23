@@ -1,6 +1,24 @@
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/shared/api/supabase";
+import { eliminarTokenPush } from "@/features/notificaciones/services/pushTokenService";
+
+// Retira el token del dispositivo antes de cerrar la sesión.
+// Si falla, el cierre de sesión continúa normalmente.
+async function retirarTokenAntesDeCerrarSesion(
+  usuarioId: string | null
+): Promise<void> {
+  if (!usuarioId) return;
+
+  try {
+    await eliminarTokenPush(usuarioId);
+  } catch (error) {
+    console.warn(
+      "No se pudo retirar el token push del dispositivo:",
+      error
+    );
+  }
+}
 
 type RolUsuario = "pasajero" | "conductor" | null;
 export { type RolUsuario };
@@ -50,19 +68,33 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
   },
 
   logout: async () => {
+    // Conservamos el ID antes de limpiar el estado
+    const usuarioId = get().userId;
+
+    // 1. Retirar únicamente el token de este dispositivo
+    await retirarTokenAntesDeCerrarSesion(usuarioId);
+
     try {
-      await supabase.auth.signOut();
-    } catch (err: unknown) {
-      console.warn("Aviso al cerrar sesion en Supabase:", err);
+      // 2. Cerrar solamente la sesión de este dispositivo
+      const { error } = await supabase.auth.signOut({scope: "local",});
+
+      if (error) {
+        console.warn("Aviso al cerrar sesión en Supabase", error.message);
+      }
+    } catch (error: unknown) {
+      console.warn("Error al cerrar sesión en Supabase", error);
+    } finally {
+      // 3. Limpiar el estado local independientemente del resultado.
+      set({
+        session: null,
+        user: null,
+        userId: null,
+        userRole: null,
+        overrideRole: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     }
-    set({
-      session: null,
-      user: null,
-      userId: null,
-      userRole: null,
-      overrideRole: null,
-      isAuthenticated: false,
-    });
   },
 
   init: () => {
@@ -122,6 +154,9 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
             }
 
             if (usuario.estado_cuenta !== "activo") {
+              // Retirar el token antes de cerrar la sesión
+              await retirarTokenAntesDeCerrarSesion(ses.user.id);
+              
               get().setSession(null);
 
               await supabase.auth.signOut({

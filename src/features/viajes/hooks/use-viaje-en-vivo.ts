@@ -2,6 +2,8 @@ import { supabase } from "@/shared/api/supabase";
 import { Tables } from "@/shared/types/database.types";
 import { useEffect, useState } from "react";
 
+let secuenciaCanalesViaje = 0;
+
 export type ViajeEnVivo = Tables<"viajes">;
 
 export function useViajeEnVivo(viajeId: string | null) {
@@ -44,9 +46,13 @@ export function useViajeEnVivo(viajeId: string | null) {
 
     cargar();
 
+    // Identificador único para cada instancia de suscripción
+    const identificadorCanal =
+      `${Date.now()}_${++secuenciaCanalesViaje}`;
+
     // Suscripción: cada cambio del viaje llega a esta parte
     const canal = supabase
-      .channel(`viaje_en_vivo_${viajeId}`)
+      .channel(`viaje_en_vivo_${viajeId}_${identificadorCanal}`)
       .on(
         "postgres_changes",
         {

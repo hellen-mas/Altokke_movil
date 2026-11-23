@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
@@ -93,6 +100,24 @@ export default function CambiarContrasena() {
             onChangeText={setContrasenaActual}
             esPassword
           />
+          <Pressable
+            style={styles.enlaceRecuperacion}
+            onPress={() => router.push("/(conductor)/cuenta/recuperar-contrasena")}
+            hitSlop={8}
+          >
+            <Ionicons
+              name="help-circle-outline"
+              size={18}
+              color={colores.exitoTexto}
+            />
+            <Text
+              style={[
+                styles.textoEnlaceRecuperacion,
+                { color: colores.exitoTexto },
+              ]}
+            > ¿Olvidaste tu contraseña actual? </Text>
+          </Pressable>
+
           <CampoTexto
             etiqueta="Nueva contraseña"
             placeholder="Mínimo 8 caracteres (mayús, min, núm, símb)"
@@ -145,5 +170,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     gap: 14,
+  },
+  enlaceRecuperacion: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    gap: 6,
+    paddingVertical: 4,
+  },
+
+  textoEnlaceRecuperacion: {
+    fontSize: 13,
+    fontWeight: "600",
   },
 });

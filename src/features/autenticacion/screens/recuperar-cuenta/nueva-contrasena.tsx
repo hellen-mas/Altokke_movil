@@ -11,12 +11,17 @@ import { useCambiarPassword } from "@/features/autenticacion/hooks/useCambiarPas
 import { esquemaNuevaContrasena } from "@/features/autenticacion/utils/validacionesAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Alert, StyleSheet, View } from "react-native";
 
 export default function NuevoPasswordScreen() {
+  const { origen } = useLocalSearchParams<{
+    origen?: string;
+  }>();
+  const esRecuperacionConductor = origen === "conductor";
+
   const { colores, esOscuro } = useAltokkeTheme();
   const { cargando, cambiarPassword } = useCambiarPassword({
     onExito: () => {
@@ -94,9 +99,21 @@ export default function NuevoPasswordScreen() {
 
         <View style={styles.bottomContainer}>
           <PiePaginaAutenticacion
-            textoPregunta="¿Deseas cancelar?"
-            textoEnlace="Iniciar sesión"
-            ruta="/login"
+            textoPregunta={
+              esRecuperacionConductor
+                ? "¿Deseas cancelar la recuperación?"
+                : "¿Deseas cancelar?"
+            }
+            textoEnlace={
+              esRecuperacionConductor
+                ? "Volver a mi cuenta"
+                : "Iniciar sesión"
+            }
+            ruta={
+              esRecuperacionConductor
+                ? "/(conductor)/cuenta"
+                : "/login"
+            }
           />
         </View>
       </ContenedorPantalla>
