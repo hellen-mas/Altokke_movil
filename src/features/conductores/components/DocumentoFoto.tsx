@@ -1,7 +1,7 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import {
-    Image, 
     Pressable,
     StyleSheet,
     Text,
@@ -48,7 +48,9 @@ export function DocumentoFoto({
                     <Image
                     source={{ uri: foto }}
                     style={styles.preview}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    cachePolicy="disk"
+                    transition={200}
                     />
                 ) : (
                     <Ionicons

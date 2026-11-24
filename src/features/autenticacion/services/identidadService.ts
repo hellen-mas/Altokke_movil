@@ -1,5 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
 import { invocarEdgeFunction } from "@/shared/api/supabase";
+import { esDNIValido } from "@/shared/utils/validaciones";
 import {
   CODIGOS_ERROR_DNI,
   ErrorConsultaDni,
@@ -7,8 +8,6 @@ import {
   type DatosIdentidadDni,
   type CodigoErrorDni,
 } from "./identidad.dto";
-
-const cacheDni = new Map<string, DatosIdentidadDni>();
 
 const MENSAJE_SIN_CONEXION = "No tienes conexión a internet. Revisa tu conexión e inténtalo nuevamente.";
 
@@ -63,7 +62,7 @@ export const identidadService = {
   async existeDni(dni: string): Promise<boolean> {
     const limpio = dni.trim();
 
-    if (!/^\d{8}$/.test(limpio)) {
+    if (!esDNIValido(limpio)) {
       throw new ErrorConsultaDni(
         CODIGOS_ERROR_DNI.INVALIDO,
         "El DNI debe contener exactamente 8 dígitos."
@@ -85,7 +84,7 @@ export const identidadService = {
   async validarIdentidadDNI(dni: string): Promise<DatosIdentidadDni> {
     const limpio = dni.trim();
 
-    if (!/^\d{8}$/.test(limpio)) {
+    if (!esDNIValido(limpio)) {
       throw new ErrorConsultaDni(
         CODIGOS_ERROR_DNI.INVALIDO,
         "El DNI debe contener exactamente 8 dígitos."

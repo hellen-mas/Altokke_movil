@@ -13,7 +13,7 @@ export interface ResultadoRutaMototaxi {
 
 /**
  * Servicio de trazado de rutas viales reales para mototaxis en Bagua.
- * Emplea OSRM público sin costo ni requerimiento de tarjeta de crédito.
+ * Emplea OSRM público con reintento automático y fallback euclidiano resiliente.
  */
 export async function calcularRutaMototaxi(
   origen: CoordenadaPunto,
@@ -21,18 +21,33 @@ export async function calcularRutaMototaxi(
 ): Promise<ResultadoRutaMototaxi> {
   const url = `https://router.project-osrm.org/route/v1/driving/${origen.longitude},${origen.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson&steps=false`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const intentarPeticion = async (timeoutMs: number): Promise<any> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const respuesta = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!respuesta.ok) {
+        throw new Error(`Servidor OSRM HTTP ${respuesta.status}`);
+      }
+      return await respuesta.json();
+    } catch (e) {
+      clearTimeout(timeoutId);
+      throw e;
+    }
+  };
 
   try {
-    const respuesta = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (!respuesta.ok) {
-      throw new Error(`Servidor OSRM respondió con estado HTTP ${respuesta.status}`);
+    let data: any = null;
+    try {
+      data = await intentarPeticion(5000);
+    } catch (primerError) {
+      console.warn("Reintentando consulta a OSRM tras fallo inicial:", primerError);
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      data = await intentarPeticion(4000);
     }
 
-    const data = await respuesta.json();
-    if (!data.routes || data.routes.length === 0) {
+    if (!data?.routes || data.routes.length === 0) {
       throw new Error("No se encontró una ruta vial conectada.");
     }
 
@@ -63,8 +78,7 @@ export async function calcularRutaMototaxi(
       tarifaSugeridaPen,
     };
   } catch (err) {
-    clearTimeout(timeoutId);
-    console.warn("Fallo al consultar OSRM, generando ruta en línea recta de respaldo:", err);
+    console.warn("Fallo persistente al consultar OSRM, generando ruta de respaldo:", err);
 
     // Fallback euclidiano seguro si el servidor público tiene micro-corte
     const distAproxKm = Number(

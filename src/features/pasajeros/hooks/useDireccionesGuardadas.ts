@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import MapView from "react-native-maps";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import {
@@ -30,7 +29,7 @@ export function useDireccionesGuardadas() {
   const { userId } = useAuth();
   const { perfil, recargar } = usePerfilPasajero();
   const { setDestino } = useViaje();
-  const mapaRef = useRef<MapView | null>(null);
+  const mapaRef = useRef<any>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [nombre, setNombre] = useState("");

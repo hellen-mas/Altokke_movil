@@ -1,6 +1,8 @@
 import { identidadService } from "@/features/autenticacion/services/identidadService";
 import { supabase } from "@/shared/api/supabase";
 import { subirFotoAvatar } from "@/shared/utils/avatar";
+import { esTelefonoValido, sanitizarTelefono } from "@/shared/utils/validaciones";
+import * as AppleAuthentication from "expo-apple-authentication";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
@@ -36,16 +38,23 @@ const extraerMetadata = (d: PerfilOAuthInput) => ({
 });
 
 
-const comprobarEstadoCuenta = async (usuarioId: string) => {
+export type EstadoCuentaResultado = "activo" | "perfil_incompleto";
+
+const comprobarEstadoCuenta = async (usuarioId: string): Promise<EstadoCuentaResultado> => {
   const { data: perfil, error } = await supabase
     .from("usuarios")
     .select("estado_cuenta")
     .eq("id", usuarioId)
-    .single();
+    .maybeSingle();
 
-  if (error || !perfil) {
-    await supabase.auth.signOut({ scope: "local" });
-    throw new Error("No fue posible verificar el estado de tu cuenta.");
+  if (error) {
+    console.warn("Aviso al consultar estado de cuenta en BD:", error.message);
+  }
+
+  // Si el usuario autenticado por OAuth todavía no tiene fila en public.usuarios,
+  // NO se ejecuta signOut(): se retorna 'perfil_incompleto' para permitir completar onboarding
+  if (!perfil) {
+    return "perfil_incompleto";
   }
 
   if (perfil.estado_cuenta !== "activo") {
@@ -69,6 +78,8 @@ const comprobarEstadoCuenta = async (usuarioId: string) => {
         throw new Error("Tu cuenta no está disponible.");
     }
   }
+
+  return "activo";
 };
 
 export const authService = {
@@ -127,6 +138,31 @@ export const authService = {
     await comprobarEstadoCuenta(usuarioGoogle.id);
 
     return usuarioGoogle;
+  },
+
+  async loginConApple() {
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    if (!credential.identityToken) {
+      throw new Error("No se obtuvo el token de identidad de Apple.");
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: credential.identityToken,
+    });
+
+    if (error) throw error;
+    if (!data.user) throw new Error("No se pudo obtener el usuario de Apple.");
+
+    await comprobarEstadoCuenta(data.user.id);
+
+    return data.user;
   },
 
   async registrarPasajero(datos: RegistroPasajeroInput) {
@@ -272,12 +308,7 @@ export const authService = {
    * Soporta tanto formato local (9XXXXXXXX) como internacional E.164 (+51 9XXXXXXXX).
    */
   validarTelefonoPeruano(telefono: string): boolean {
-    const digitos = (telefono || "").replace(/\D/g, "");
-    const sinPrefijo =
-      digitos.length === 11 && digitos.startsWith("51")
-        ? digitos.slice(2)
-        : digitos;
-    return /^9\d{8}$/.test(sinPrefijo);
+    return esTelefonoValido(sanitizarTelefono(telefono));
   },
 
   /**
@@ -289,10 +320,7 @@ export const authService = {
   ): Promise<{ emailDisponible: boolean; telefonoDisponible: boolean }> {
     try {
       const emailLimpio = email ? cleanEmail(email) : null;
-      let telefonoLimpio = telefono ? telefono.replace(/\D/g, "") : null;
-      if (telefonoLimpio && telefonoLimpio.length === 11 && telefonoLimpio.startsWith("51")) {
-        telefonoLimpio = telefonoLimpio.slice(2);
-      }
+      const telefonoLimpio = telefono ? sanitizarTelefono(telefono) : null;
 
       const { data, error } = await supabase.rpc("verificar_disponibilidad_cuenta", {
         p_email: emailLimpio,

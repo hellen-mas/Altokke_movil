@@ -1,7 +1,13 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { StyleProp, StyleSheet, ViewStyle } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface PropsContenedorPantalla {
   children: React.ReactNode;
@@ -27,29 +33,30 @@ export function ContenedorPantalla({
         },
         estilo,
       ]}>
-      {conScroll ? (
-        <KeyboardAwareScrollView
-          style={[
-            estilos.vistaTeclado,
-            { backgroundColor: colores.fondo },
-          ]}
-          contentContainerStyle={[
-            estilos.contenidoScroll,
-            { backgroundColor: colores.fondo },
-            estiloContenedorContenido,
-          ]}
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          extraHeight={150}
-          extraScrollHeight={150}
-        >
-          {children}
-        </KeyboardAwareScrollView>
-      ) : (
-        children
-      )}
+      <KeyboardAvoidingView
+        style={estilos.vistaTeclado}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        {conScroll ? (
+          <ScrollView
+            style={[
+              estilos.vistaTeclado,
+              { backgroundColor: colores.fondo },
+            ]}
+            contentContainerStyle={[
+              estilos.contenidoScroll,
+              { backgroundColor: colores.fondo },
+              estiloContenedorContenido,
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          children
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -11,9 +11,9 @@ interface CulqiChargePayload {
   token_id: string;
   amount: number;
   email: string;
-  conductor_id: string;
   currency_code?: string;
   description?: string;
+  idempotency_key?: string;
 }
 
 interface CulqiErrorResponse {
@@ -28,11 +28,6 @@ interface CulqiSuccessResponse {
   id: string;
   amount: number;
   currency_code: string;
-  outcome?: {
-    type?: string;
-    merchant_message?: string;
-    user_message?: string;
-  };
 }
 
 function responder(datos: Record<string, unknown>, status = 200): Response {
@@ -40,6 +35,13 @@ function responder(datos: Record<string, unknown>, status = 200): Response {
     status,
     headers: corsHeaders,
   });
+}
+
+async function calcularSha256(texto: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(texto);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -51,6 +53,46 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return responder({ ok: false, error: "Método no permitido." }, 405);
   }
 
+  // 1. Exigir cabecera de autenticación obligatoria
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return responder({ ok: false, error: "No autorizado. Se requiere token de sesión activo." }, 401);
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("[CULQI ERROR] Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno.");
+    return responder({ ok: false, error: "Error de configuración de Supabase en el servidor." }, 500);
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+  // 2. Validar sesión real con getUser(token) y forzar conductor_id = user.id
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+  if (userError || !user) {
+    return responder({ ok: false, error: "Sesión inválida o expirada." }, 401);
+  }
+
+  const conductorId = user.id;
+
+  // Validar que el usuario sea un conductor registrado y aprobado
+  const { data: conductorPerfil, error: conductorError } = await supabaseAdmin
+    .from("conductores_perfil")
+    .select("estado")
+    .eq("usuario_id", conductorId)
+    .maybeSingle();
+
+  if (conductorError || !conductorPerfil || conductorPerfil.estado !== "aprobado") {
+    return responder(
+      { ok: false, error: "Solo conductores verificados y aprobados pueden recargar saldo en su billetera." },
+      403
+    );
+  }
+
   let payload: CulqiChargePayload;
   try {
     payload = await req.json();
@@ -59,7 +101,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return responder({ ok: false, error: `Cuerpo de solicitud inválido: ${msg}` }, 400);
   }
 
-  const { token_id, amount, email, conductor_id } = payload;
+  const { token_id, amount, email } = payload;
 
   if (!token_id || typeof token_id !== "string" || !token_id.startsWith("tkn_")) {
     return responder({ ok: false, error: "Token de tarjeta Culqi inválido." }, 400);
@@ -73,10 +115,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return responder({ ok: false, error: "Correo electrónico inválido para facturación Culqi." }, 400);
   }
 
-  if (!conductor_id || typeof conductor_id !== "string") {
-    return responder({ ok: false, error: "ID de conductor requerido." }, 400);
-  }
-
   const culqiSecretKey = Deno.env.get("CULQI_SECRET_KEY");
   if (!culqiSecretKey) {
     console.error("[CULQI ERROR] Variable CULQI_SECRET_KEY ausente en el entorno del servidor.");
@@ -88,13 +126,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const montoCentimos = Math.round(amount * 100);
 
+  // 3. Clave de idempotencia determinista por intento de cobro (evita doble cobro en reintentos)
+  const clientKey = payload.idempotency_key && typeof payload.idempotency_key === "string"
+    ? payload.idempotency_key.trim()
+    : "";
+  const idempotencyKey = clientKey || await calcularSha256(`altokke_culqi_${conductorId}_${token_id}_${montoCentimos}`);
+
   try {
     const culqiResponse = await fetch("https://api.culqi.com/v2/charges", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${culqiSecretKey}`,
         "Content-Type": "application/json",
+        "X-Idempotency-Key": idempotencyKey,
       },
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         amount: montoCentimos,
         currency_code: payload.currency_code || "PEN",
@@ -120,38 +166,33 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const chargeSuccess = culqiData as CulqiSuccessResponse;
     const chargeId = chargeSuccess.id;
 
-    // Inicializar cliente Supabase con service_role para registrar movimiento en la billetera
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("[SUPABASE CONFIG ERROR] Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.");
-      return responder({
-        ok: true,
-        charge_id: chargeId,
-        warning: "Cargo efectuado en Culqi pero no se pudo sincronizar automáticamente con la billetera.",
-      });
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
+    // 4. Acreditar saldo atómicamente en Supabase
     const { data: recargaData, error: recargaError } = await supabaseAdmin.rpc(
       "recargar_billetera_conductor",
       {
-        p_conductor_id: conductor_id,
+        p_conductor_id: conductorId,
         p_monto: amount,
         p_referencia_pago: chargeId,
         p_descripcion: payload.description || "Recarga con tarjeta (Culqi)",
       }
     );
 
+    // 5. Devolver error 500 si falla la acreditación en base de datos
     if (recargaError) {
-      console.error("[ERROR LEDGER BILLETERA]", recargaError);
-      return responder({
-        ok: true,
+      console.error("[CULQI ERROR CRÍTICO RECONCILIACIÓN]", {
+        evento: "CARGO_CULQI_SIN_ACREDITAR_EN_DB",
         charge_id: chargeId,
-        warning: `Cargo exitoso (${chargeId}) pero falló la actualización del saldo: ${recargaError.message}`,
+        conductor_id: conductorId,
+        monto: amount,
+        idempotency_key: idempotencyKey,
+        error_db: recargaError.message,
+        timestamp: new Date().toISOString(),
       });
+      return responder({
+        ok: false,
+        error: `El cobro bancario fue procesado (${chargeId}), pero ocurrió un fallo al acreditar el saldo en la billetera. Ha sido registrado para conciliación de soporte.`,
+        charge_id: chargeId,
+      }, 500);
     }
 
     return responder({

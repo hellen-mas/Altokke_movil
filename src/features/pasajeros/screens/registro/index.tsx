@@ -41,18 +41,6 @@ export default function PasajeroDatosPersonalesScreen() {
 
   const contrasenaActual = useWatch({ control, name: "contrasena" }) || "";
 
-  const confirmarActual =
-    useWatch({
-      control,
-      name: "confirmarContrasena",
-    }) || "";
-
-  const coinciden =
-    contrasenaActual.length > 0 &&
-    confirmarActual.length > 0 &&
-    contrasenaActual === confirmarActual;
-
-
   const onSubmit = (data: any) => {
     Keyboard.dismiss();
     setDatosPersonales({ ...datosPersonales, ...data });

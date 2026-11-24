@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -14,11 +16,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { PulsoBusqueda } from "@/features/viajes/components/PulsoBusqueda";
 import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
-import {
-  CENTRO_BAGUA,
-  CONDUCTORES_CERCANOS,
-} from "@/features/viajes/constants/pasajero";
+import { BotonPrincipal } from "@/shared/components/ui";
+import { CENTRO_BAGUA } from "@/features/viajes/constants/pasajero";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
 import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
@@ -26,8 +25,15 @@ import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
 import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
-import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
+import { escribirConductor } from "@/features/viajes/utils/contacto";
 import { ModalCancelarViaje } from "../../components/ModalCancelarViaje";
+import { supabase } from "@/shared/api/supabase";
+import {
+  contraofertaService,
+  type ContraofertaViaje,
+} from "@/features/viajes/services/contraofertaService";
+import type { PuntoMapa } from "@/features/viajes/types/tiposMapa";
+import { emitirNotificacionPush } from "@/features/notificaciones/services/notificacionesService";
 
 // Si nadie acepta en este tiempo, se avisa que no hay conductores disponibles
 const TIEMPO_MAXIMO_BUSQUEDA = 2 * 60 * 1000;
@@ -44,6 +50,94 @@ export default function PantallaBuscandoConductor() {
 
   const [sinConductor, setSinConductor] = useState(false);
   const [intento, setIntento] = useState(0);
+  const [conductoresEnLinea, setConductoresEnLinea] = useState<PuntoMapa[]>([]);
+  const [ofertas, setOfertas] = useState<ContraofertaViaje[]>([]);
+  const [aceptandoOfertaId, setAceptandoOfertaId] = useState<string | null>(null);
+
+  // Emitir notificación push a conductores cercanos al solicitar el viaje
+  useEffect(() => {
+    if (viajeActivoId) {
+      void emitirNotificacionPush({
+        evento: "solicitud_viaje",
+        viajeId: viajeActivoId,
+      });
+    }
+  }, [viajeActivoId]);
+
+  // Consulta en tiempo real de conductores en línea reales desde Supabase
+  useEffect(() => {
+    let activo = true;
+
+    const cargarConductores = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("conductores_perfil")
+          .select("usuario_id, lat_actual, lng_actual")
+          .eq("en_linea", true)
+          .eq("estado", "aprobado");
+
+        if (!error && data && activo) {
+          const mapeados: PuntoMapa[] = data
+            .filter((c) => c.lat_actual != null && c.lng_actual != null)
+            .map((c) => ({
+              latitude: Number(c.lat_actual),
+              longitude: Number(c.lng_actual),
+            }));
+          setConductoresEnLinea(mapeados);
+        }
+      } catch (err) {
+        console.warn("Aviso consultando conductores en línea:", err);
+      }
+    };
+
+    cargarConductores();
+    const interval = setInterval(cargarConductores, 12000);
+
+    return () => {
+      activo = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Suscripción Realtime a contraofertas de conductores para este viaje
+  useEffect(() => {
+    if (!viajeActivoId) return;
+
+    let activo = true;
+
+    const refrescarOfertas = async () => {
+      const lista = await contraofertaService.obtenerOfertasViaje(viajeActivoId);
+      if (activo) setOfertas(lista);
+    };
+
+    refrescarOfertas();
+    const desuscribir = contraofertaService.suscribirOfertas(viajeActivoId, refrescarOfertas);
+
+    return () => {
+      activo = false;
+      desuscribir();
+    };
+  }, [viajeActivoId]);
+
+  const aceptarContraoferta = async (ofertaId: string) => {
+    try {
+      setAceptandoOfertaId(ofertaId);
+      const res = await contraofertaService.seleccionarOferta(ofertaId);
+      if (res?.success) {
+        router.replace("/viaje-activo");
+      } else {
+        Alert.alert(
+          "Oferta no disponible",
+          "La contraoferta ha expirado o ya no está disponible."
+        );
+      }
+    } catch (err: unknown) {
+      const mensaje = err instanceof Error ? err.message : "No se pudo aceptar la contraoferta.";
+      Alert.alert("Error", mensaje);
+    } finally {
+      setAceptandoOfertaId(null);
+    }
+  };
 
   useEffect(() => {
     if (conductorEncontrado) return;
@@ -100,7 +194,9 @@ export default function PantallaBuscandoConductor() {
           destino={destino.coordenadas}
           ruta={ruta}
           conductores={
-            conductorEncontrado ? [CONDUCTORES_CERCANOS[0]] : CONDUCTORES_CERCANOS
+            conductorEncontrado && conductor?.lat != null && conductor?.lng != null
+              ? [{ latitude: conductor.lat, longitude: conductor.lng }]
+              : conductoresEnLinea
           }
           margenInferior={0}
           style={styles.mapaCompleto}
@@ -188,7 +284,13 @@ export default function PantallaBuscandoConductor() {
 
                 <View style={styles.acciones}>
                   <Pressable
-                    onPress={() => llamarConductor(conductor?.telefono)}
+                    onPress={() => {
+                      Alert.alert(
+                        "Comunicación segura",
+                        "Por tu seguridad y privacidad (Ley 29733), comunícate con tu conductor a través del chat de la app.",
+                        [{ text: "Entendido" }]
+                      );
+                    }}
                     style={({ pressed }) => [
                       styles.accion,
                       { backgroundColor: colores.exitoFondo },
@@ -277,6 +379,66 @@ export default function PantallaBuscandoConductor() {
                 >
                   Esto puede tardar unos segundos. No cierres la aplicación.
                 </Text>
+              </View>
+            )}
+
+            {/* Contraofertas entrantes en tiempo real */}
+            {ofertas.length > 0 && !conductorEncontrado && (
+              <View style={styles.seccionOfertas}>
+                <Text style={[styles.tituloOfertas, { color: colores.texto }]}>
+                  Contraofertas recibidas ({ofertas.length})
+                </Text>
+                {ofertas.map((of) => (
+                  <View
+                    key={of.id}
+                    style={[
+                      styles.tarjetaOferta,
+                      {
+                        backgroundColor: colores.superficie,
+                        borderColor: colores.primario,
+                      },
+                    ]}
+                  >
+                    <View style={styles.ofertaInfo}>
+                      <Text style={[styles.ofertaMonto, { color: colores.primario }]}>
+                        S/ {of.tarifa_ofertada.toFixed(2)}
+                      </Text>
+                      <Text style={[styles.ofertaTiempo, { color: colores.secundario }]}>
+                        Llega en ~{of.tiempo_llegada_min} min
+                      </Text>
+                    </View>
+                    <View style={styles.ofertaBotones}>
+                      <Pressable
+                        style={[
+                          styles.botonRechazarOferta,
+                          { borderColor: colores.linea },
+                        ]}
+                        onPress={() =>
+                          setOfertas((prev) => prev.filter((item) => item.id !== of.id))
+                        }
+                      >
+                        <Text style={[styles.botonRechazarOfertaTexto, { color: colores.secundario }]}>
+                          Ignorar
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          styles.botonAceptarOferta,
+                          { backgroundColor: colores.primario },
+                          aceptandoOfertaId === of.id && { opacity: 0.7 },
+                        ]}
+                        onPress={() => aceptarContraoferta(of.id)}
+                        disabled={aceptandoOfertaId === of.id}
+                      >
+                        {aceptandoOfertaId === of.id ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <Text style={styles.botonAceptarOfertaTexto}>Aceptar oferta</Text>
+                        )}
+                      </Pressable>
+                    </View>
+                  </View>
+                ))}
               </View>
             )}
 
@@ -542,5 +704,73 @@ const styles = StyleSheet.create({
   botonSeguir: {
     alignSelf: "stretch",
     marginTop: 16,
+  },
+
+  seccionOfertas: {
+    marginTop: 16,
+    gap: 10,
+  },
+
+  tituloOfertas: {
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+
+  tarjetaOferta: {
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  ofertaInfo: {
+    flex: 1,
+  },
+
+  ofertaMonto: {
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  ofertaTiempo: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  ofertaBotones: {
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  botonRechazarOferta: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  botonRechazarOfertaTexto: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  botonAceptarOferta: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  botonAceptarOfertaTexto: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
   },
 });

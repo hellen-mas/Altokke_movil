@@ -55,9 +55,39 @@ export function useSolicitudesConductor() {
   useEffect(() => {
     let activo = true;
 
-    queueMicrotask(() => {
-      if (activo) void cargarSolicitudes();
-    });
+    conductorService
+      .obtenerSolicitudesPendientes()
+      .then((datos) => {
+        if (!activo) return;
+        setError(null);
+        const mapeadas: SolicitudViajeItem[] = (datos ?? []).map((v) => {
+          const item = v as typeof v & {
+            paga_con?: number | null;
+            vuelto_estimado?: number | null;
+          };
+          return {
+            id: item.id,
+            pasajeroId: item.pasajero_id,
+            origenTexto: item.origen_texto,
+            destinoTexto: item.destino_texto,
+            tarifaEstimada: Number(item.tarifa_estimada),
+            distanciaKm: item.distancia_km != null ? Number(item.distancia_km) : null,
+            metodoPago: item.metodo_pago,
+            pagaCon: item.paga_con != null ? Number(item.paga_con) : null,
+            vueltoEstimado: item.vuelto_estimado != null ? Number(item.vuelto_estimado) : null,
+            creadoEn: item.creado_en,
+          };
+        });
+        setSolicitudes(mapeadas);
+      })
+      .catch((err) => {
+        if (!activo) return;
+        const msg = err instanceof Error ? err.message : "Error al cargar solicitudes";
+        setError(msg);
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
 
     const canal = supabase
       .channel("solicitudes_conductor_en_vivo")

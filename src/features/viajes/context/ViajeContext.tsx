@@ -7,7 +7,6 @@ import {
   useViajeStore,
   type TipoServicio,
   type MetodoPago,
-  type ViajeStore,
 } from "../store/viajeStore";
 import type { Lugar, ViajeHistorial } from "@/features/viajes/constants/pasajero";
 import type { PuntoMapa } from "../types/tiposMapa";
@@ -86,7 +85,7 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        seguimiento = await Location.watchPositionAsync(
+        const sub = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.Balanced,
             timeInterval: 5000,
@@ -103,10 +102,11 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
         );
 
         if (!activo) {
-          seguimiento.remove();
+          sub.remove();
           return;
         }
 
+        seguimiento = sub;
         setSiguiendoUbicacion(true);
       } catch (error) {
         if (!activo) return;
@@ -120,6 +120,7 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
     return () => {
       activo = false;
       seguimiento?.remove();
+      seguimiento = null;
       setSiguiendoUbicacion(false);
     };
   }, [viajeActivoId, userId, appActiva, setUbicacionActual, setSiguiendoUbicacion, setErrorUbicacion]);
@@ -128,27 +129,27 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useViaje(): ViajeContextType {
-  const store = useViajeStore();
-
-  return {
-    tipoServicio: store.tipoServicio,
-    setTipoServicio: store.setTipoServicio,
-    metodoPago: store.metodoPago,
-    setMetodoPago: store.setMetodoPago,
-    origen: store.origen,
-    setOrigen: store.setOrigen,
-    ubicacionActual: store.ubicacionActual,
-    siguiendoUbicacion: store.siguiendoUbicacion,
-    errorUbicacion: store.errorUbicacion,
-    destino: store.destino,
-    setDestino: store.setDestino,
-    historial: store.historial,
-    cargandoHistorial: store.cargandoHistorial,
-    errorHistorial: store.errorHistorial,
-    viajeActivoId: store.viajeActivoId,
-    setViajeActivoId: store.setViajeActivoId,
-    verificandoViajeActivo: store.verificandoViajeActivo,
-    registrarViaje: store.registrarViaje,
-    recargarHistorial: store.recargarHistorial,
-  };
+  return useViajeStore(
+    useShallow((s) => ({
+      tipoServicio: s.tipoServicio,
+      setTipoServicio: s.setTipoServicio,
+      metodoPago: s.metodoPago,
+      setMetodoPago: s.setMetodoPago,
+      origen: s.origen,
+      setOrigen: s.setOrigen,
+      ubicacionActual: s.ubicacionActual,
+      siguiendoUbicacion: s.siguiendoUbicacion,
+      errorUbicacion: s.errorUbicacion,
+      destino: s.destino,
+      setDestino: s.setDestino,
+      historial: s.historial,
+      cargandoHistorial: s.cargandoHistorial,
+      errorHistorial: s.errorHistorial,
+      viajeActivoId: s.viajeActivoId,
+      setViajeActivoId: s.setViajeActivoId,
+      verificandoViajeActivo: s.verificandoViajeActivo,
+      registrarViaje: s.registrarViaje,
+      recargarHistorial: s.recargarHistorial,
+    }))
+  );
 }

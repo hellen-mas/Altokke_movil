@@ -7,7 +7,7 @@ import { obtenerDestinoInicialConductor } from "@/features/conductores/services/
 
 type DestinoConductor = 
   | "/(auth)/estado-solicitud"
-  | "/inicio";
+  | "/conductor/inicio";
 
 export default function Index() {
   const {
@@ -21,19 +21,16 @@ export default function Index() {
   
   useEffect(() => {
     if (isLoading || !isAuthenticated || userRole !== "conductor") {
-      setDestinoConductor(null);
       return;
     }
 
     let activo = true;
 
-    const resolverDestino = async() => {
+    const resolverDestino = async () => {
       if (!userId) {
-        setDestinoConductor("/(auth)/estado-solicitud");
+        if (activo) setDestinoConductor("/(auth)/estado-solicitud");
         return;
       }
-
-      setDestinoConductor(null);
 
       try {
         const destino =
@@ -48,7 +45,6 @@ export default function Index() {
           error
         );
 
-        // Ante un error no permitimos entrar directamente al módulo.
         if (activo) {
           setDestinoConductor("/(auth)/estado-solicitud");
         }
@@ -80,7 +76,7 @@ export default function Index() {
             alignItems: "center",
           }}
         >
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color="#1A8A56" />
         </View>
       );
     }

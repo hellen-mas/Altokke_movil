@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
     const token = authorization.slice(7);
 
-    // Verificar al usuario autenticado.
+    // Verificar al usuario autenticado
     const { data: autenticacion, error: errorAuth } =
       await admin.auth.getUser(token);
 
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
     const usuarioId = autenticacion.user.id;
 
-    // Consultar el estado de la cuenta.
+    // Consultar el estado de la cuenta
     const { data: usuario, error: errorUsuario } =
       await admin
         .from("usuarios")
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       throw new Error("No se encontró tu cuenta.");
     }
 
-    // Primero realizar la eliminación lógica.
+    // Primero realizar la eliminación lógica con RPC
     if (usuario.estado_cuenta === "activo") {
       const { error } = await cliente.rpc(
         "eliminar_mi_cuenta"
@@ -102,52 +102,49 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Liberar el correo sin borrar la identidad histórica.
-    const correoInterno =
-      `eliminado-${usuarioId.replace(/-/g, "")}@example.invalid`;
-
-    // Asegurar que public.usuarios también tenga
-    // el correo anonimizado.
-    const {
-      data: perfilActualizado,
-      error: errorPerfil,
-    } = await admin
+    // Anonimizar información personal en public.usuarios (sin referenciar columna inexistente email ni actualizado_en)
+    const { error: errorPerfil } = await admin
       .from("usuarios")
       .update({
-        email: correoInterno,
+        nombre: "Usuario",
+        apellidos: "Eliminado",
+        telefono: `eliminado-${usuarioId}`,
+        dni: null,
+        fecha_nacimiento: null,
+        avatar_url: null,
+        foto_url: null,
+        expo_push_token: null,
       })
-      .eq("id", usuarioId)
-      .eq("estado_cuenta", "eliminada")
-      .select("id")
-      .maybeSingle();
+      .eq("id", usuarioId);
+
+    // Limpiar tokens de push para evitar notificaciones residuales
+    await admin.from("push_tokens").delete().eq("usuario_id", usuarioId);
 
     if (errorPerfil) {
       console.error(
-        "Error liberando el correo en public.usuarios:",
+        "Error anonimizando datos en public.usuarios:",
         errorPerfil.message
       );
-
       throw new Error(
-        "No se pudo anonimizar el correo del perfil."
+        "No se pudieron anonimizar los datos del perfil."
       );
     }
 
-    if (!perfilActualizado) {
-      throw new Error(
-        "No se encontró el perfil eliminado."
-      );
-    }
+    // Liberar el correo en auth.users mediante admin.auth.admin.updateUserById()
+    const correoInterno =
+      `eliminado-${usuarioId.replace(/-/g, "")}@example.invalid`;
 
     const { error: errorCorreo } =
       await admin.auth.admin.updateUserById(usuarioId, {
         email: correoInterno,
         email_confirm: true,
-        user_metadata: {},
+        user_metadata: { eliminado: true },
+        ban_duration: "876000h",
       });
 
     if (errorCorreo) {
       console.error(
-        "Error liberando el correo:",
+        "Error liberando el correo en auth.users:",
         errorCorreo.message
       );
 
@@ -156,20 +153,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Revocar sesiones activas del usuario
+    try {
+      await admin.auth.admin.signOut(token);
+    } catch (_e) {
+      // Continuar si la revocación no es soportada directamente
+    }
+
     return respuestaJson({
       ok: true,
-      mensaje: "Cuenta procesada correctamente.",
+      mensaje: "Cuenta eliminada y datos anonimizados correctamente.",
     });
   } catch (error) {
-    console.error("Error eliminando cuenta:", error);
+    const mensaje =
+      error instanceof Error ? error.message : "Error inesperado al eliminar tu cuenta.";
+
+    console.error("Error en finalizar-eliminacion-cuenta:", mensaje);
 
     return respuestaJson(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error inesperado.",
-      },
+      { error: mensaje },
       400
     );
   }

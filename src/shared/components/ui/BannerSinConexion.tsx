@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNetworkStatus } from "@/shared/hooks/useNetworkStatus";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 /**
  * Banner flotante de aviso de pérdida de señal para Altokke Móvil.
@@ -10,7 +10,7 @@ import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
  */
 export function BannerSinConexion() {
   const { sinConexion, reverificar } = useNetworkStatus();
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { esOscuro } = useAltokkeTheme();
   const [verificando, setVerificando] = useState(false);
 
   if (!sinConexion) return null;

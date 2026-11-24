@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
@@ -20,10 +20,24 @@ export function MapaGoogle({
   interactivo = true,
   margenInferior = 0,
   style,
+  onError,
 }: MapaBaseProps) {
   const { colores } = useAltokkeTheme();
   const mapaRef = useRef<MapView>(null);
+  const [mapaCargado, setMapaCargado] = useState(false);
   const posicionPasajero = ubicacionActual ?? origen ?? centro;
+
+  // Timeout para detectar fallo de carga de Google Maps
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!mapaCargado && onError) {
+        console.warn("Tiempo de espera agotado cargando MapaGoogle.");
+        onError();
+      }
+    }, 12000);
+
+    return () => clearTimeout(timeout);
+  }, [mapaCargado, onError]);
 
   // Cuando hay origen y destino, se encuadra la ruta completa
   useEffect(() => {
@@ -51,6 +65,11 @@ export function MapaGoogle({
       <MapView
         ref={mapaRef}
         style={styles.mapa}
+        onPress={(evento) => {
+          if (!interactivo) return;
+
+          onSeleccionarPunto?.(evento.nativeEvent.coordinate);
+        }}
         onLongPress={(evento) => {
           if (!interactivo) return;
 
@@ -69,6 +88,10 @@ export function MapaGoogle({
         pitchEnabled={false}
         toolbarEnabled={false}
         showsCompass={false}
+        loadingEnabled={true}
+        loadingIndicatorColor={colores.primario}
+        loadingBackgroundColor={colores.fondo}
+        onMapLoaded={() => setMapaCargado(true)}
       >
         {ruta && ruta.length > 1 && (
           <Polyline

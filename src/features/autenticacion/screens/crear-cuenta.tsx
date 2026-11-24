@@ -20,7 +20,7 @@ export default function CrearCuentaScreen() {
     const sesionActiva = await authService.tieneSesionActiva();
     const ruta = selectedRole === "pasajero"
       ? (sesionActiva ? "/registro-pasajero/verificacion" : "/registro-pasajero")
-      : (sesionActiva ? "/registro-conductor/identidad-oficial" : "/registro-conductor");
+      : "/registro-conductor";
     router.push(ruta);
   };
 

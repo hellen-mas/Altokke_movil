@@ -9,11 +9,9 @@ import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useVerificarOtp } from "@/features/autenticacion/hooks/useVerificarOtp";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams } from "expo-router";
-import React from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
-import { useCallback } from "react";
 
 export default function VerificacionCodigoScreen() {
   const { colores, esOscuro } = useAltokkeTheme();

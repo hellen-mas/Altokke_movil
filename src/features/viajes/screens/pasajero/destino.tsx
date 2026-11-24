@@ -2,6 +2,7 @@
 import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { BotonPrincipal } from "@/shared/components/ui/BotonPrincipal";
+import { ModalDivulgacionUbicacion } from "@/shared/components/ui/ModalDivulgacionUbicacion";
 import {
   Lugar,
   LUGARES_BAGUA,
@@ -10,10 +11,12 @@ import {
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { buscarLugares } from "@/features/viajes/services/geocodingService";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Keyboard,
   Pressable,
@@ -54,93 +57,123 @@ export default function PantallaDestino() {
   const [busqueda, setBusqueda] = useState(destino?.nombre ?? "");
   const [editandoOrigen, setEditandoOrigen] = useState(false);
   const [busquedaOrigen, setBusquedaOrigen] = useState("");
+  const [lugaresRemotos, setLugaresRemotos] = useState<Lugar[]>([]);
+  const [buscandoRemoto, setBuscandoRemoto] = useState(false);
+  const [mostrarDivulgacionUbicacion, setMostrarDivulgacionUbicacion] = useState(false);
   const panelRef = useRef<BottomSheet>(null);
   const expandirPanel = () => {
     panelRef.current?.snapToIndex(2);
   };
 
-  // Obtener la ubicación real del pasajero
-  useEffect(() => {
-    if (origenInicialRef.current !== ORIGEN_EJEMPLO.id) return;
+  // lógica reutilizable de obtención de ubicación tras permiso concedido
+  const ejecutarObtencionUbicacion = async (activo: { current: boolean }) => {
+    try {
+      const ubicacion = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
 
-    let activo = true;
+      if (!activo.current) return;
 
-    const obtenerUbicacion = async () => {
+      const coordenadas = {
+        latitude: ubicacion.coords.latitude,
+        longitude: ubicacion.coords.longitude,
+      };
+
+      setOrigen((anterior) => 
+        anterior.id === ORIGEN_EJEMPLO.id
+          ? {
+              id: "ubicacion-actual",
+              nombre: "Ubicación actual",
+              detalle: "Obteniendo dirección...",
+              coordenadas,
+            }
+          : anterior
+      );
+
       try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted" || !activo) return;
+        const direcciones = await Location.reverseGeocodeAsync(coordenadas);
+        if (!activo.current) return;
 
-        const ubicacion = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        const direccion = direcciones[0];
 
-        if (!activo) return;
+        const calle = direccion?.street?.trim();
+        const numero = direccion?.streetNumber?.trim();
+        const ciudad = direccion?.city || direccion?.subregion || "Bagua";
+        const region = direccion?.region || "Amazonas";
 
-        const coordenadas = {
-          latitude: ubicacion.coords.latitude,
-          longitude: ubicacion.coords.longitude,
-        };
+        const nombreDireccion = calle 
+          ? `${calle}${numero ? ` ${numero}` : ""}`
+          : direccion?.name || "Ubicación actual";
 
-        setOrigen((anterior) => 
-          anterior.id === ORIGEN_EJEMPLO.id
+        setOrigen((anterior) =>
+          anterior.id === "ubicacion-actual" &&
+          anterior.coordenadas.latitude === coordenadas.latitude &&
+          anterior.coordenadas.longitude === coordenadas.longitude
             ? {
-                id: "ubicacion-actual",
-                nombre: "Ubicación actual",
-                detalle: "Obteniendo dirección...",
-                coordenadas,
+                ...anterior,
+                nombre: nombreDireccion,
+                detalle: `${ciudad}, ${region}`,
               }
             : anterior
         );
+      } catch (error) {
+        console.warn("Error de geocodificación:", error);
+        if (!activo.current) return;
 
-        try {
-          const direcciones = await Location.reverseGeocodeAsync(coordenadas);
-          if (!activo) return;
+        setOrigen((anterior) =>
+          anterior.id === "ubicacion-actual"
+            ? {
+                ...anterior,
+                detalle: "Coordenadas GPS obtenidas",
+              }
+            : anterior
+        );
+      }
+    } catch (error) {
+      console.warn("No se pudo obtener la ubicación GPS:", error);
+    }
+  };
 
-          const direccion = direcciones[0];
+  // callback que se ejecuta al aceptar la divulgación prominente
+  const handleAceptarDivulgacion = async () => {
+    setMostrarDivulgacionUbicacion(false);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        await ejecutarObtencionUbicacion({ current: true });
+      }
+    } catch (e) {
+      console.warn("Error tras divulgación de ubicación:", e);
+    }
+  };
 
-          const calle = direccion?.street?.trim();
-          const numero = direccion?.streetNumber?.trim();
-          const ciudad = direccion?.city || direccion?.subregion || "Bagua";
-          const region = direccion?.region || "Amazonas";
+  // verifica permisos previos; si ya están concedidos, obtiene ubicación directamente;
+  // si no, muestra Prominent Disclosure antes del diálogo nativo del SO
+  useEffect(() => {
+    if (origenInicialRef.current !== ORIGEN_EJEMPLO.id) return;
 
-          const nombreDireccion = calle 
-            ? `${calle}${numero ? `${numero}` : ""}`
-            : direccion?.name || "Ubicación actual";
+    const activo = { current: true };
 
-          setOrigen((anterior) =>
-            anterior.id === "ubicacion-actual" &&
-            anterior.coordenadas.latitude === coordenadas.latitude &&
-            anterior.coordenadas.longitude === coordenadas.longitude
-              ? {
-                  ...anterior,
-                  nombre: nombreDireccion,
-                  detalle: `${ciudad}, ${region}`,
-                }
-              : anterior
-          );
-        } catch (error) {
-          console.warn("Error de geocodificación:", error);
-          if (!activo) return;
-
-          setOrigen((anterior) =>
-            anterior.id === "ubicacion-actual"
-              ? {
-                  ...anterior,
-                  detalle: "Coordenadas GPS obtenidas",
-                }
-              : anterior
-          );
+    const verificarYObtener = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (!activo.current) return;
+        if (status === "granted") {
+          await ejecutarObtencionUbicacion(activo);
+        } else {
+          setMostrarDivulgacionUbicacion(true);
         }
       } catch (error) {
-        console.warn("No se pudo obtener la ubicación GPS:", error);
+        console.warn("Error al comprobar permisos de ubicación:", error);
       }
     };
 
-    void obtenerUbicacion();
+    void verificarYObtener();
 
     return () => {
-      activo = false;
+      activo.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ejecutarObtencionUbicacion usa setOrigen que ya está en deps
   }, [setOrigen]);
 
   const listaLugares = useMemo(() => {
@@ -168,12 +201,61 @@ export default function PantallaDestino() {
     return [...guardadas, ...unicos];
   }, [perfil]);
 
-  // Si ya hay un destino elegido, se muestra la lista completa para poder cambiarlo
-  const resultados = editandoOrigen
-    ? filtrarLugares(busquedaOrigen, listaLugares)
-    : destino && destino.nombre === busqueda
-      ? listaLugares
-      : filtrarLugares(busqueda, listaLugares);
+  const textoABuscar = editandoOrigen ? busquedaOrigen : busqueda;
+  const esTextoDestinoElegido = !editandoOrigen && destino !== null && destino.nombre === busqueda;
+  const busquedaValida = textoABuscar.trim().length >= 2 && !esTextoDestinoElegido;
+  const buscandoRemotoVisible = busquedaValida && buscandoRemoto;
+
+  // Búsqueda remota con debounce (Photon / OSM Nominatim)
+  useEffect(() => {
+    const termino = textoABuscar.trim();
+    if (termino.length < 2 || esTextoDestinoElegido) {
+      return;
+    }
+
+    let activo = true;
+
+    const temporizador = setTimeout(async () => {
+      setBuscandoRemoto(true);
+      try {
+        const encontrados = await buscarLugares(termino);
+        if (activo) {
+          setLugaresRemotos(encontrados);
+        }
+      } catch {
+        if (activo) {
+          setLugaresRemotos([]);
+        }
+      } finally {
+        if (activo) {
+          setBuscandoRemoto(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      activo = false;
+      clearTimeout(temporizador);
+    };
+  }, [textoABuscar, esTextoDestinoElegido]);
+
+  // Si ya hay un destino elegido, se muestra la lista completa para poder cambiarlo.
+  // Si hay término de búsqueda, combina coincidencias locales con resultados geocodificados.
+  const resultados = useMemo(() => {
+    const termino = textoABuscar.trim();
+    if (!termino || esTextoDestinoElegido) {
+      return listaLugares;
+    }
+
+    const locales = filtrarLugares(termino, listaLugares);
+    const nombresLocales = new Set(locales.map((l) => normalizar(l.nombre)));
+    const remotos = busquedaValida ? lugaresRemotos : [];
+    const remotosUnicos = remotos.filter(
+      (r) => !nombresLocales.has(normalizar(r.nombre))
+    );
+
+    return [...locales, ...remotosUnicos];
+  }, [textoABuscar, esTextoDestinoElegido, listaLugares, busquedaValida, lugaresRemotos]);
 
   const cambiarBusqueda = (texto: string) => {
     setBusqueda(texto);
@@ -524,25 +606,30 @@ export default function PantallaDestino() {
                   </Pressable>
                 )}
               </View>
-              <Text
-                style={[
-                  styles.etiqueta,
-                  {
-                    color: colores.secundario,
-                    marginTop: 18,
-                    marginBottom: 4,
-                    fontWeight: "800",
-                  },
-                ]}
-              >
-                {editandoOrigen
-                  ? "Lugares para recogerme"
-                  : "Lugares sugeridos"}
-              </Text>
+              <View style={styles.encabezadoSugerencias}>
+                <Text
+                  style={[
+                    styles.etiqueta,
+                    {
+                      color: colores.secundario,
+                      fontWeight: "800",
+                    },
+                  ]}
+                >
+                  {editandoOrigen
+                    ? "Lugares para recogerme"
+                    : textoABuscar.trim().length >= 2
+                      ? "Resultados de búsqueda"
+                      : "Lugares sugeridos"}
+                </Text>
+                {buscandoRemotoVisible && (
+                  <ActivityIndicator size="small" color={colores.primario} />
+                )}
+              </View>
 
               {/* Sugerencias */}
               <View style={styles.lista}>
-                {resultados.length === 0 && (
+                {resultados.length === 0 && !buscandoRemoto && (
                   <Text style={[styles.sinResultados, { color: colores.secundario }]}>
                     No encontramos lugares con “{editandoOrigen ? busquedaOrigen : busqueda}”.
                   </Text>
@@ -596,6 +683,12 @@ export default function PantallaDestino() {
           </BottomSheetScrollView>
         </PanelDeslizableViaje>
       </View>
+
+      <ModalDivulgacionUbicacion
+        visible={mostrarDivulgacionUbicacion}
+        onAceptar={handleAceptarDivulgacion}
+        onRechazar={() => setMostrarDivulgacionUbicacion(false)}
+      />
     </GestureHandlerRootView>
   );
 }
@@ -689,6 +782,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     borderTopWidth: 1,
+  },
+
+  encabezadoSugerencias: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 18,
+    marginBottom: 4,
   },
 
   lista: {

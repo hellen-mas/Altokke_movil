@@ -1,6 +1,5 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { IndicadorPasos, TarjetaDatosVerificados } from "@/shared/components/ui";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonPrincipal, IndicadorPasos, TarjetaDatosVerificados } from "@/shared/components/ui";
 import { CampoFechaNacimiento } from "@/shared/components/ui/CampoFechaNacimiento";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
@@ -10,7 +9,6 @@ import { useRegistroConductor } from "@/features/conductores/store/registroCondu
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useConsultaDniQuery as useConsultaDni } from "@/features/autenticacion/hooks/useConsultaDniQuery";
 import { calcularEdad, sanitizarDNI } from "@/shared/utils/validaciones";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
@@ -22,7 +20,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

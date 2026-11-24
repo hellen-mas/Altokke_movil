@@ -1,17 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
 import type { SolicitudViajeItem } from "../hooks/use-solicitudes-conductor";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import {type ColoresConductor, useTemaConductor } from "@/features/conductores/theme/temaConductor";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { type ColoresConductor, useTemaConductor } from "@/features/conductores/theme/temaConductor";
 import { formatearSoles } from "@/shared/utils/formato";
+import { contraofertaService } from "@/features/viajes/services/contraofertaService";
+import { emitirNotificacionPush } from "@/features/notificaciones/services/notificacionesService";
 
 //Se reexporta para que quien use la tarjeta pueda usar el tipo de dato de la solicitud de viaje desde aqui
-export type { SolicitudViajeItem}
+export type { SolicitudViajeItem }
 
 export interface TarjetaSolicitudViajeProps {
-    solicitud: SolicitudViajeItem;
-    onAceptar: (viajeId: string) => Promise<void> | void;
-    onRechazar: (viajeId: string) => void;
-    aceptando? : boolean;
+  solicitud: SolicitudViajeItem;
+  onAceptar: (viajeId: string) => Promise<void> | void;
+  onRechazar: (viajeId: string) => void;
+  aceptando?: boolean;
 }
 
 //Hace cuanto se creó la solicitud de viaje "ahora", "hace ... minutos", etc.
@@ -37,6 +40,51 @@ export function TarjetaSolicitudViaje({
   aceptando = false,
 }: TarjetaSolicitudViajeProps) {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
+
+  const [mostrarContraoferta, setMostrarContraoferta] = useState(false);
+  const [tarifaOfertada, setTarifaOfertada] = useState<number>(() =>
+    Math.round(solicitud.tarifaEstimada + 1)
+  );
+  const [enviandoOferta, setEnviandoOferta] = useState(false);
+
+  const enviarContraoferta = async () => {
+    const validacion = contraofertaService.validarLimitesContraoferta(
+      tarifaOfertada,
+      solicitud.tarifaEstimada
+    );
+
+    if (!validacion.valido) {
+      Alert.alert("Límite regulado", validacion.razon || "Tarifa no permitida");
+      return;
+    }
+
+    try {
+      setEnviandoOferta(true);
+      const res = await contraofertaService.crearContraoferta({
+        viajeId: solicitud.id,
+        tarifaOfertada,
+      });
+
+      if (res.success) {
+        void emitirNotificacionPush({
+          evento: "contraoferta",
+          viajeId: solicitud.id,
+          mensaje: `Un conductor te propuso S/ ${tarifaOfertada.toFixed(2)}`,
+        });
+        Alert.alert(
+          "Contraoferta enviada",
+          `Ofreciste S/ ${tarifaOfertada.toFixed(2)}. El pasajero decidirá si acepta.`
+        );
+        setMostrarContraoferta(false);
+      } else {
+        Alert.alert("Aviso", res.mensaje || "No se pudo registrar la contraoferta.");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "No se pudo enviar la contraoferta.");
+    } finally {
+      setEnviandoOferta(false);
+    }
+  };
 
   const distancia =
     solicitud.distanciaKm != null ? `${solicitud.distanciaKm.toFixed(1)} km` : "—";
@@ -95,6 +143,39 @@ export function TarjetaSolicitudViaje({
         </View>
       </View>
 
+      {/* CONTRAOFERTA EXPANDIBLE */}
+      {mostrarContraoferta && (
+        <View style={styles.seccionContraoferta}>
+          <Text style={styles.etiquetaContraoferta}>Proponer tarifa al pasajero:</Text>
+          <View style={styles.stepperFila}>
+            <Pressable
+              style={styles.botonPaso}
+              onPress={() => setTarifaOfertada((t) => Math.max(2.5, t - 0.5))}
+            >
+              <Ionicons name="remove" size={18} color={c.texto} />
+            </Pressable>
+            <Text style={styles.textoTarifaOfertada}>S/ {tarifaOfertada.toFixed(2)}</Text>
+            <Pressable
+              style={styles.botonPaso}
+              onPress={() => setTarifaOfertada((t) => t + 0.5)}
+            >
+              <Ionicons name="add" size={18} color={c.texto} />
+            </Pressable>
+            <Pressable
+              style={[styles.botonEnviarOferta, enviandoOferta && { opacity: 0.6 }]}
+              onPress={enviarContraoferta}
+              disabled={enviandoOferta}
+            >
+              {enviandoOferta ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.botonEnviarOfertaTexto}>Enviar</Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       {/* BOTONES */}
       <View style={styles.botones}>
         <Pressable
@@ -103,10 +184,34 @@ export function TarjetaSolicitudViaje({
             pressed && { backgroundColor: c.superficieSuave },
           ]}
           onPress={() => onRechazar(solicitud.id)}
-          disabled={aceptando}
+          disabled={aceptando || enviandoOferta}
         >
           <Ionicons name="close" size={18} color={c.texto} />
           <Text style={styles.botonRechazarTexto}>Rechazar</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.botonContraoferta,
+            mostrarContraoferta && styles.botonContraofertaActivo,
+            pressed && { opacity: 0.8 },
+          ]}
+          onPress={() => setMostrarContraoferta((v) => !v)}
+          disabled={aceptando || enviandoOferta}
+        >
+          <Ionicons
+            name="pricetag-outline"
+            size={16}
+            color={mostrarContraoferta ? "#FFFFFF" : c.primario}
+          />
+          <Text
+            style={[
+              styles.botonContraofertaTexto,
+              mostrarContraoferta && { color: "#FFFFFF" },
+            ]}
+          >
+            Contraofertar
+          </Text>
         </Pressable>
 
         <Pressable
@@ -116,14 +221,14 @@ export function TarjetaSolicitudViaje({
             aceptando && { opacity: 0.7 },
           ]}
           onPress={() => onAceptar(solicitud.id)}
-          disabled={aceptando}
+          disabled={aceptando || enviandoOferta}
         >
           {aceptando ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Text style={styles.botonAceptarTexto}>Aceptar viaje</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              <Text style={styles.botonAceptarTexto}>Aceptar</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
             </>
           )}
         </Pressable>
@@ -182,29 +287,99 @@ const crearEstilos = (c: ColoresConductor) =>
       borderColor: c.borde,
     },
     datoTexto: { fontSize: 12, fontWeight: "700", color: c.texto },
-    botones: { flexDirection: "row", gap: 12, marginTop: 16 },
+    botones: { flexDirection: "row", gap: 8, marginTop: 16 },
     botonRechazar: {
       flex: 1,
-      height: 50,
-      borderRadius: 14,
+      height: 48,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: c.borde,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 7,
+      gap: 5,
       backgroundColor: c.fondo,
     },
-    botonRechazarTexto: { fontSize: 14, fontWeight: "700", color: c.texto },
-    botonAceptar: {
-      flex: 1.45,
-      height: 50,
-      borderRadius: 14,
+    botonRechazarTexto: { fontSize: 13, fontWeight: "700", color: c.texto },
+    botonContraoferta: {
+      flex: 1.3,
+      height: 48,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.primario,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: 7,
+      gap: 5,
+      backgroundColor: c.superficie,
+    },
+    botonContraofertaActivo: {
       backgroundColor: c.primario,
     },
-    botonAceptarTexto: { fontSize: 14, fontWeight: "800", color: "#FFFFFF" },
+    botonContraofertaTexto: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: c.primario,
+    },
+    botonAceptar: {
+      flex: 1.2,
+      height: 48,
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 5,
+      backgroundColor: c.primario,
+    },
+    botonAceptarTexto: { fontSize: 13, fontWeight: "800", color: "#FFFFFF" },
+    seccionContraoferta: {
+      marginTop: 12,
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: c.fondo,
+      borderWidth: 1,
+      borderColor: c.borde,
+      gap: 8,
+    },
+    etiquetaContraoferta: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: c.textoSec,
+    },
+    stepperFila: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    botonPaso: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.superficie,
+      borderWidth: 1,
+      borderColor: c.borde,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    textoTarifaOfertada: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: c.primario,
+      minWidth: 70,
+      textAlign: "center",
+    },
+    botonEnviarOferta: {
+      flex: 1,
+      height: 36,
+      borderRadius: 10,
+      backgroundColor: c.primario,
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: 4,
+    },
+    botonEnviarOfertaTexto: {
+      color: "#FFFFFF",
+      fontSize: 13,
+      fontWeight: "700",
+    },
   });

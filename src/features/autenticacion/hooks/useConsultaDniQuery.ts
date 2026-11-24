@@ -5,6 +5,7 @@ import {
 } from "@/features/autenticacion/services/identidad.dto";
 import { identidadService } from "@/features/autenticacion/services/identidadService";
 import { obtenerMensajeErrorDni } from "@/shared/utils/mensajesErrorDni";
+import { esDNIValido } from "@/shared/utils/validaciones";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
@@ -26,7 +27,7 @@ export function useConsultaDniQuery(
   onEncontrado?: (nombres: string, apellidos: string) => void
 ) {
   const limpio = (dni || "").trim();
-  const dniCompleto = /^\d{8}$/.test(limpio);
+  const dniCompleto = esDNIValido(limpio);
 
   const { data, error, isFetching, isSuccess, fetchStatus } = useQuery({
     queryKey: claveIdentidadDni(limpio),

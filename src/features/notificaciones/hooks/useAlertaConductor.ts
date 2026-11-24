@@ -72,18 +72,18 @@ export function useAlertaConductor({
   const viajeActivoRef = useRef(false);
   const eventosProcesadosRef = useRef<Set<string>>(new Set());
 
-  const [escuchando, setEscuchando] = useState(false);
-  const [ubicacionDisponible, setUbicacionDisponible] = useState(false);
+  const [escuchandoInterno, setEscuchandoInterno] = useState(false);
+  const [ubicacionDisponibleInterno, setUbicacionDisponibleInterno] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ultimaSolicitudId, setUltimaSolicitudId] = useState<string | null>(null);
+
+  const activo = Boolean(habilitado && userId && enLinea);
+  const escuchando = activo && escuchandoInterno;
+  const ubicacionDisponible = activo && ubicacionDisponibleInterno;
 
   useEffect(() => {
     if (!habilitado || !userId || !enLinea) {
       ubicacionRef.current = null;
-      queueMicrotask(() => {
-        setEscuchando(false);
-        setUbicacionDisponible(false);
-      });
       return;
     }
 
@@ -102,7 +102,7 @@ export function useAlertaConductor({
       seguimiento?.remove();
       seguimiento = null;
       ubicacionRef.current = null;
-      setUbicacionDisponible(false);
+      setUbicacionDisponibleInterno(false);
     };
 
     const iniciarSeguimiento = async () => {
@@ -125,7 +125,7 @@ export function useAlertaConductor({
             if (!efectoActivo) return;
 
             if (permiso.status !== "granted") {
-                setUbicacionDisponible(false);
+                setUbicacionDisponibleInterno(false);
                 setError(
                     "Activa el permiso de ubicación para recibir alertas de solicitudes cercanas."
                 );
@@ -142,7 +142,7 @@ export function useAlertaConductor({
                 latitude: posicionInicial.coords.latitude,
                 longitude: posicionInicial.coords.longitude,
             };
-            setUbicacionDisponible(true);
+            setUbicacionDisponibleInterno(true);
             setError(null);
             procesarPendientes();
 
@@ -159,7 +159,7 @@ export function useAlertaConductor({
                     latitude: posicion.coords.latitude,
                     longitude: posicion.coords.longitude,
                     };
-                    setUbicacionDisponible(true);
+                    setUbicacionDisponibleInterno(true);
                     procesarPendientes();
                 }
             );
@@ -173,7 +173,7 @@ export function useAlertaConductor({
         } catch (errorUbicacion) {
             if (!efectoActivo) return;
             console.warn("No se pudo iniciar la ubicación para alertas.", errorUbicacion);
-            setUbicacionDisponible(false);
+            setUbicacionDisponibleInterno(false);
             setError("No fue posible obtener tu ubicación. Comprueba el GPS e inténtalo otra vez.");
         } finally {
             iniciandoSeguimiento = false;
@@ -313,9 +313,9 @@ export function useAlertaConductor({
         .subscribe((estado) => {
             if (!efectoActivo) return;
             if (estado === "SUBSCRIBED") {
-                setEscuchando(true);
+                setEscuchandoInterno(true);
             } else if (estado === "CHANNEL_ERROR" || estado === "TIMED_OUT") {
-                setEscuchando(false);
+                setEscuchandoInterno(false);
                 setError("No se pudo establecer la conexión en tiempo real para las alertas.")
             }
         });
@@ -345,8 +345,8 @@ export function useAlertaConductor({
     }, [userId, enLinea, radioKm, habilitado]);
 
     return {
-        escuchando: habilitado && Boolean(userId) && enLinea && escuchando,
-        ubicacionDisponible: habilitado && Boolean(userId) && enLinea && ubicacionDisponible,
+        escuchando,
+        ubicacionDisponible,
         error,
         ultimaSolicitudId,
     };

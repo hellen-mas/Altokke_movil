@@ -25,6 +25,7 @@ export function useInAppComunicacion({
   const { impactoLigero, alertaNuevaSolicitud } = useHaptics();
 
   const usuarioRef = useRef(usuarioActualId);
+
   useEffect(() => {
     usuarioRef.current = usuarioActualId;
   }, [usuarioActualId]);
@@ -36,10 +37,10 @@ export function useInAppComunicacion({
 
   const cargarHistorial = useCallback(async () => {
     if (!viajeId) {
+      setMensajes([]);
       return;
     }
 
-    setCargando(true);
     try {
       const historial = await comunicacionViajeService.obtenerMensajesViaje(viajeId);
       setMensajes(historial);
@@ -56,15 +57,32 @@ export function useInAppComunicacion({
   }, [viajeId]);
 
   useEffect(() => {
-    let efectoActivo = true;
-    queueMicrotask(() => {
-      if (efectoActivo) void cargarHistorial();
-    });
+    let activo = true;
+
+    if (viajeId) {
+      comunicacionViajeService
+        .obtenerMensajesViaje(viajeId)
+        .then((historial) => {
+          if (!activo) return;
+          setMensajes(historial);
+
+          if (usuarioRef.current) {
+            const pendientes = historial.filter(
+              (m) => !m.leido && m.remitente_id !== usuarioRef.current
+            ).length;
+            setNoLeidos(pendientes);
+          }
+        })
+        .catch((err) => {
+          console.warn("Aviso al cargar historial in-app:", err);
+        })
+        .finally(() => {
+          if (activo) setCargando(false);
+        });
+    }
 
     if (!viajeId) {
-      return () => {
-        efectoActivo = false;
-      };
+      return;
     }
 
     const desuscribir = comunicacionViajeService.suscribirMensajes(
@@ -101,7 +119,6 @@ export function useInAppComunicacion({
     );
 
     return () => {
-      efectoActivo = false;
       desuscribir();
     };
   }, [viajeId, cargarHistorial, alertaNuevaSolicitud]);
@@ -152,9 +169,9 @@ export function useInAppComunicacion({
   }, [viajeId]);
 
   return {
-    mensajes: viajeId ? mensajes : [],
-    cargando: viajeId ? cargando : false,
-    noLeidos: viajeId ? noLeidos : 0,
+    mensajes,
+    cargando,
+    noLeidos,
     quickRepliesDisponibles,
     enviarTexto,
     enviarQuickReply,

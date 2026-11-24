@@ -21,17 +21,6 @@ import {
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useCambiarPassword } from "@/features/autenticacion/hooks/useCambiarPassword";
 
-type NombreIcono = keyof typeof Ionicons.glyphMap;
-
-const OPCIONES_FUTURAS: {
-  titulo: string;
-  icono: NombreIcono;
-}[] = [
-  { titulo: "Acceso biométrico", icono: "finger-print-outline" },
-  { titulo: "Dispositivos activos", icono: "phone-portrait-outline" },
-  { titulo: "Actividad de la cuenta", icono: "time-outline" },
-];
-
 export default function Seguridad() {
   const { colores } = useAltokkeTheme();
   const [modalVisible, setModalVisible] = useState(false);
@@ -106,33 +95,6 @@ export default function Seguridad() {
             onPress={() => setModalVisible(true)}
             ultimo
           />
-        </ContenedorGrupoAjustes>
-
-        <ContenedorGrupoAjustes titulo="SEGURIDAD AVANZADA">
-          {OPCIONES_FUTURAS.map((opcion, index) => (
-            <FilaOpcionMenu
-              key={opcion.titulo}
-              icono={opcion.icono}
-              titulo={opcion.titulo}
-              onPress={() =>
-                Alert.alert(
-                  opcion.titulo,
-                  "Esta función estará disponible en las próximas versiones de Altokke."
-                )
-              }
-              derecha={
-                <Text
-                  style={[
-                    styles.proximamente,
-                    { color: colores.secundario },
-                  ]}
-                >
-                  Próximamente
-                </Text>
-              }
-              ultimo={index === OPCIONES_FUTURAS.length - 1}
-            />
-          ))}
         </ContenedorGrupoAjustes>
       </ScrollView>
 

@@ -6,49 +6,22 @@
     "orientation": "portrait",
     "scheme": "altokkemovil",
     "userInterfaceStyle": "automatic",
-    "jsEngine": "hermes",
     "icon": "./assets/images/icon.png",
-    "splash": {
-      "image": "./assets/images/mototaxi-splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0A130E"
-    },
-    "ios": {
-      "bundleIdentifier": "pe.altokke.movil",
-      "jsEngine": "hermes",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
-    },
-    "android": {
-      "package": "pe.altokke.movil",
-      "versionCode": 1,
-      "allowBackup": false,
-      "usesCleartextTraffic": false,
-      "jsEngine": "hermes",
-      "predictiveBackGestureEnabled": false,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png",
-        "backgroundColor": "#0A130E"
-      },
-      "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "VIBRATE"
-      ]
-    },
-    "web": {
-      "output": "static"
-    },
     "plugins": [
       "expo-router",
       "@react-native-community/datetimepicker",
       "expo-image",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/mototaxi-splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0A130E"
+        }
+      ],
       "expo-secure-store",
       "expo-font",
+      "expo-apple-authentication",
       [
         "expo-notifications",
         {
@@ -61,8 +34,48 @@
             "./assets/sounds/altokke_pagos.wav"
           ]
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
     ],
+    "ios": {
+      "bundleIdentifier": "pe.altokke.movil",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "location"
+        ],
+        "NSLocationWhenInUseUsageDescription": "Altokke necesita acceso a tu ubicación mientras usas la app para mostrar conductores cercanos, calcular tarifas y guiar la ruta de tu viaje.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Altokke necesita acceso a tu ubicación en segundo plano para rastrear el progreso del viaje y garantizar tu seguridad durante el recorrido.",
+        "NSCameraUsageDescription": "Altokke necesita acceso a la cámara para tomar fotos de tus documentos de identidad, brevete y SOAT para la verificación de conductor.",
+        "NSPhotoLibraryUsageDescription": "Altokke necesita acceso a tu galería de fotos para subir imágenes de tus documentos y foto de perfil."
+      }
+    },
+    "android": {
+      "package": "pe.altokke.movil",
+      "versionCode": 1,
+      "allowBackup": false,
+      "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
+        "backgroundColor": "#0A130E"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
+    "web": {
+      "output": "static"
+    },
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true

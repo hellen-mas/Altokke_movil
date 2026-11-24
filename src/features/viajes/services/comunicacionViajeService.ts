@@ -1,4 +1,5 @@
 import { supabase } from "@/shared/api/supabase";
+import { notificarEventoPush } from "./pushNotificacionHelper";
 
 export interface MensajeInApp {
   id: string;
@@ -65,6 +66,14 @@ export const comunicacionViajeService = {
         return null;
       }
 
+      // Notificación push no bloqueante a la contraparte del viaje
+      notificarEventoPush({
+        evento: "chat_mensaje",
+        viajeId,
+        titulo: "Nuevo mensaje de viaje",
+        mensaje: textoLimpio,
+      });
+
       return data as unknown as MensajeInApp;
     } catch (err) {
       console.warn("Excepción al enviar mensaje de texto:", err);
@@ -97,6 +106,14 @@ export const comunicacionViajeService = {
         console.warn("Aviso al enviar respuesta rápida:", error.message);
         return null;
       }
+
+      // Notificación push no bloqueante a la contraparte del viaje
+      notificarEventoPush({
+        evento: "chat_mensaje",
+        viajeId,
+        titulo: "Nuevo mensaje de viaje",
+        mensaje: textoPreset,
+      });
 
       return data as unknown as MensajeInApp;
     } catch (err) {

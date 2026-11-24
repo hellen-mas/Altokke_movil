@@ -11,7 +11,7 @@ import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-cond
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function CuentaConductor() {
-  const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const { estilos: styles } = useTemaConductor(crearEstilos);
     const { perfil } = usePerfilConductor();
 
     return (
@@ -41,37 +41,37 @@ export default function CuentaConductor() {
                             icono="person"
                             titulo="Información personal"
                             descripcion="Tus datos, contacto y perfil"
-                            onPress={() => router.push("/cuenta/informacion-personal")}
+                            onPress={() => router.push("/conductor/cuenta/informacion-personal")}
                         />
                         <OpcionCuenta
                             icono="car"
                             titulo="Vehículo"
                             descripcion="Información de tu mototaxi"
-                            onPress={() => router.push("/cuenta/vehiculo")}
+                            onPress={() => router.push("/conductor/cuenta/vehiculo")}
                         />
                         <OpcionCuenta
                             icono="document-text"
                             titulo="Documentos"
                             descripcion="Licencia, SOAT y otros documentos"
-                            onPress={() => router.push("/cuenta/documentos")}
+                            onPress={() => router.push("/conductor/cuenta/documentos")}
                         />
                         <OpcionCuenta
                             icono="time"
                             titulo="Historial"
                             descripcion="Tus viajes y actividades"
-                            onPress={() => router.push("/cuenta/historial")}
+                            onPress={() => router.push("/conductor/cuenta/historial")}
                         />
                         <OpcionCuenta
                             icono="shield-checkmark"
                             titulo="Seguridad"
                             descripcion="Tu cuenta segura en todo momento"
-                            onPress={() => router.push("/cuenta/seguridad")}
+                            onPress={() => router.push("/conductor/cuenta/seguridad")}
                         />
                         <OpcionCuenta
                             icono="settings"
                             titulo="Configuración"
                             descripcion="Preferencias de la app"
-                            onPress={() => router.push("/cuenta/configuracion")}
+                            onPress={() => router.push("/conductor/cuenta/configuracion")}
                             ultimo
                         />
                     </View>

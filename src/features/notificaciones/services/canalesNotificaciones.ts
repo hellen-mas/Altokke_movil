@@ -1,6 +1,6 @@
-
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
+import { AndroidImportance } from "expo-notifications";
 
 export const CANALES_NOTIFICACIONES = {
   DEFAULT: "default",
@@ -19,7 +19,7 @@ export async function configurarCanalesNotificacion(): Promise<void> {
       CANALES_NOTIFICACIONES.DEFAULT,
       {
         name: "Notificaciones ALTOKKE",
-        importance: Notifications.AndroidImportance.MAX,
+        importance: AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#16A34A",
         enableVibrate: true,
@@ -34,7 +34,7 @@ export async function configurarCanalesNotificacion(): Promise<void> {
       {
         name: "Aprobaciones",
         description: "Avisos sobre la aprobación de tu cuenta.",
-        importance: Notifications.AndroidImportance.HIGH,
+        importance: AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 150, 250],
         lightColor: "#16A34A",
         sound: "altokke_aprobacion.wav",
@@ -48,10 +48,10 @@ export async function configurarCanalesNotificacion(): Promise<void> {
     Notifications.setNotificationChannelAsync(
       CANALES_NOTIFICACIONES.VIAJES,
       {
-        name: "Solicitudes de viaje",
-        description: "Nuevas solicitudes y actualizaciones de tus viajes.",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 300, 200, 300],
+        name: "Viajes y solicitudes",
+        description: "Alertas prioritarias de viajes solicitados o en curso.",
+        importance: AndroidImportance.MAX,
+        vibrationPattern: [0, 350, 150, 350],
         lightColor: "#16A34A",
         sound: "altokke_viajes.wav",
         enableVibrate: true,
@@ -60,14 +60,14 @@ export async function configurarCanalesNotificacion(): Promise<void> {
       }
     ),
 
-    // Movimientos económicos.
+    // Pagos, comisiones y recargas.
     Notifications.setNotificationChannelAsync(
       CANALES_NOTIFICACIONES.PAGOS,
       {
-        name: "Pagos y billetera",
-        description: "Recargas, pagos y movimientos de tu billetera.",
-        importance: Notifications.AndroidImportance.DEFAULT,
-        vibrationPattern: [0, 150, 100, 150],
+        name: "Pagos y comisiones",
+        description: "Confirmación de pagos en efectivo o saldo acreditado.",
+        importance: AndroidImportance.HIGH,
+        vibrationPattern: [0, 200, 100, 200],
         lightColor: "#16A34A",
         sound: "altokke_pagos.wav",
         enableVibrate: true,
@@ -76,38 +76,19 @@ export async function configurarCanalesNotificacion(): Promise<void> {
       }
     ),
 
-    // Seguridad y cambios de cuenta.
+    // Avisos de seguridad y cuenta.
     Notifications.setNotificationChannelAsync(
       CANALES_NOTIFICACIONES.CUENTA,
       {
         name: "Cuenta y seguridad",
-        description: "Avisos importantes sobre tu cuenta.",
-        importance: Notifications.AndroidImportance.DEFAULT,
-        vibrationPattern: [0, 200, 100, 200],
+        description: "Alertas de soporte, seguridad y cambios en tu perfil.",
+        importance: AndroidImportance.DEFAULT,
+        vibrationPattern: [0, 150, 100, 150],
         lightColor: "#16A34A",
-        sound: "altokke_aprobacion.wav",
         enableVibrate: true,
-        enableLights: true,
+        enableLights: false,
         showBadge: true,
       }
     ),
   ]);
-
-    // Diagnóstico temporal de sonidos registrados en Android.
-  const ids = new Set<string>(
-    Object.values(CANALES_NOTIFICACIONES)
-  );
-
-  const canales = await Notifications.getNotificationChannelsAsync();
-
-  console.log(
-    "[ALTOKKE] DIAGNÓSTICO DE SONIDOS:",
-    (canales ?? [])
-      .filter((canal) => ids.has(canal.id))
-      .map((canal) => ({
-        id: canal.id,
-        nombre: canal.name,
-        sonido: canal.sound,
-      }))
-  );
 }

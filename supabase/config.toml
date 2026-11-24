@@ -418,9 +418,44 @@ enabled = true
 enabled = true
 verify_jwt = false
 import_map = "./functions/upload-avatar/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/upload-avatar/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/upload-avatar/*.html" ]
+
+[functions.consultar-dni]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/consultar-dni/index.ts"
+
+[functions.registrar-reclamacion]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/registrar-reclamacion/index.ts"
+
+[functions.enviar-notificacion-push]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/enviar-notificacion-push/index.ts"
+
+[functions.notificar-aprobacion-conductor]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/notificar-aprobacion-conductor/index.ts"
+
+[functions.notificar-evento-viaje]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/notificar-evento-viaje/index.ts"
+
+[functions.procesar-push-receipts]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/procesar-push-receipts/index.ts"
+
+[functions.culqi-charge]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/culqi-charge/index.ts"
+
+[functions.finalizar-eliminacion-cuenta]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/finalizar-eliminacion-cuenta/index.ts"

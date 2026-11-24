@@ -1,16 +1,21 @@
 import { CabeceraFlujoViaje } from "@/features/viajes/components/CabeceraFlujoViaje";
-import { TarjetaConductor, type InfoConductor } from "@/features/viajes/components/TarjetaConductor";
+import { TarjetaConductor } from "@/features/viajes/components/TarjetaConductor";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useResumenViaje } from "@/features/viajes/hooks/use-resumen-viaje";
+import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
+import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { viajeService } from "@/features/viajes/services/viajeService";
-import { supabase } from "@/shared/api/supabase";
-import { formatearHora, formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import {
+  formatearHora,
+  formatearSoles,
+  NOMBRE_METODO_PAGO,
+} from "@/features/viajes/utils/viaje";
+import { BotonPrincipal } from "@/shared/components/ui";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -26,17 +31,28 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const MAX_COMENTARIO = 500;
 const COLOR_ESTRELLA = "#F5B301";
 
-const ETIQUETAS: { id: string; texto: string; icono: keyof typeof Ionicons.glyphMap }[] = [
-  { id: "puntual", texto: "Puntual", icono: "time-outline" },
-  { id: "amable", texto: "Amable", icono: "happy-outline" },
-  { id: "seguro", texto: "Conducción segura", icono: "shield-checkmark-outline" },
-  { id: "limpio", texto: "Vehículo limpio", icono: "sparkles-outline" },
-  { id: "ruta", texto: "Buena ruta", icono: "map-outline" },
+const ETIQUETAS: {
+  id: string;
+  texto: string;
+  icono: keyof typeof Ionicons.glyphMap;
+}[] = [
+    { id: "puntual", texto: "Puntual", icono: "time-outline" },
+    { id: "amable", texto: "Amable", icono: "happy-outline" },
+    { id: "seguro", texto: "Conducción segura", icono: "shield-checkmark-outline" },
+    { id: "limpio", texto: "Vehículo limpio", icono: "sparkles-outline" },
+    { id: "ruta", texto: "Buena ruta", icono: "map-outline" },
+  ];
+
+const TEXTO_CALIFICACION = [
+  "",
+  "Muy malo",
+  "Malo",
+  "Regular",
+  "Bueno",
+  "¡Excelente!",
 ];
 
-const TEXTO_CALIFICACION = ["", "Muy malo", "Malo", "Regular", "Bueno", "¡Excelente!"];
-
-function EstrellasCalificacion({
+function Estrellas({
   valor,
   tamano,
   colorInactivo = "#D1D5DB",
@@ -49,21 +65,20 @@ function EstrellasCalificacion({
 }) {
   return (
     <View style={styles.estrellas}>
-      <Pressable disabled={!onCambiar} onPress={() => onCambiar?.(1)} hitSlop={6}>
-        <Ionicons name={1 <= valor ? "star" : "star-outline"} size={tamano} color={1 <= valor ? COLOR_ESTRELLA : colorInactivo} />
-      </Pressable>
-      <Pressable disabled={!onCambiar} onPress={() => onCambiar?.(2)} hitSlop={6}>
-        <Ionicons name={2 <= valor ? "star" : "star-outline"} size={tamano} color={2 <= valor ? COLOR_ESTRELLA : colorInactivo} />
-      </Pressable>
-      <Pressable disabled={!onCambiar} onPress={() => onCambiar?.(3)} hitSlop={6}>
-        <Ionicons name={3 <= valor ? "star" : "star-outline"} size={tamano} color={3 <= valor ? COLOR_ESTRELLA : colorInactivo} />
-      </Pressable>
-      <Pressable disabled={!onCambiar} onPress={() => onCambiar?.(4)} hitSlop={6}>
-        <Ionicons name={4 <= valor ? "star" : "star-outline"} size={tamano} color={4 <= valor ? COLOR_ESTRELLA : colorInactivo} />
-      </Pressable>
-      <Pressable disabled={!onCambiar} onPress={() => onCambiar?.(5)} hitSlop={6}>
-        <Ionicons name={5 <= valor ? "star" : "star-outline"} size={tamano} color={5 <= valor ? COLOR_ESTRELLA : colorInactivo} />
-      </Pressable>
+      {[1, 2, 3, 4, 5].map((numero) => (
+        <Pressable
+          key={numero}
+          disabled={!onCambiar}
+          onPress={() => onCambiar?.(numero)}
+          hitSlop={6}
+        >
+          <Ionicons
+            name={numero <= valor ? "star" : "star-outline"}
+            size={tamano}
+            color={numero <= valor ? COLOR_ESTRELLA : colorInactivo}
+          />
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -79,53 +94,24 @@ export default function PantallaCalificacion() {
   const [etiquetas, setEtiquetas] = useState<string[]>([]);
   const [comentario, setComentario] = useState("");
   const [enviado, setEnviado] = useState(false);
-  const [conductorInfo, setConductorInfo] = useState<InfoConductor | null>(null);
 
-  useEffect(() => {
-    if (!viajeActivoId) return;
-    let activo = true;
-    supabase
-      .from("viajes")
-      .select("conductor_id")
-      .eq("id", viajeActivoId)
-      .maybeSingle()
-      .then(async ({ data: viaje }) => {
-        if (!activo || !viaje?.conductor_id) return;
-        const { data: usuario } = await supabase
-          .from("usuarios")
-          .select("nombre, apellidos, foto_url")
-          .eq("id", viaje.conductor_id)
-          .maybeSingle();
-        const { data: vehiculo } = await supabase
-          .from("vehiculos")
-          .select("marca, modelo, placa, color")
-          .eq("conductor_id", viaje.conductor_id)
-          .maybeSingle();
-        const { data: perfilC } = await supabase
-          .from("conductores_perfil")
-          .select("calificacion_promedio")
-          .eq("usuario_id", viaje.conductor_id)
-          .maybeSingle();
-        if (activo && usuario) {
-          setConductorInfo({
-            nombre: `${usuario.nombre || ""} ${usuario.apellidos || ""}`.trim() || "Conductor Altokke",
-            calificacion: perfilC?.calificacion_promedio ?? 5.0,
-            viajes: 1,
-            vehiculo: vehiculo ? `${vehiculo.marca || ""} ${vehiculo.modelo || ""}`.trim() : "Mototaxi",
-            placa: vehiculo?.placa || "En trámite",
-            color: vehiculo?.color || undefined,
-            foto: usuario.foto_url,
-          });
-        }
-      });
-    return () => { activo = false; };
-  }, [viajeActivoId]);
+  // Datos reales del conductor del viaje (antes la tarjeta no recibía nada y se quedaba "Cargando...")
+  const { viaje } = useViajeEnVivo(viajeActivoId);
+  const conductor = useConductorViaje(viajeActivoId, viaje?.conductor_id);
 
-  if (!resumen) return <Redirect href="/mapa" />;
+  // Si se entra sin haber hecho un viaje, se vuelve al inicio
+  if (!resumen) {
+    return <Redirect href="/mapa" />;
+  }
+
   const { origenLugar, destino, tarifa, metodoPago } = resumen;
 
   const alternarEtiqueta = (id: string) => {
-    setEtiquetas((act) => act.includes(id) ? act.filter((e) => e !== id) : [...act, id]);
+    setEtiquetas((actuales) =>
+      actuales.includes(id)
+        ? actuales.filter((etiqueta) => etiqueta !== id)
+        : [...actuales, id],
+    );
   };
 
   const guardarViaje = (calificacion?: number) => {
@@ -149,7 +135,14 @@ export default function PantallaCalificacion() {
     guardarViaje(estrellas);
     if (viajeActivoId && userId) {
       try {
-        await viajeService.registrarCalificacion(viajeActivoId, userId, null, estrellas, comentario);
+        await viajeService.registrarCalificacion(
+          viajeActivoId,
+          userId,
+          null,
+          estrellas,
+          comentario,
+          etiquetas
+        );
       } catch (err) {
         console.warn("Aviso al registrar calificación:", err);
       }
@@ -162,102 +155,244 @@ export default function PantallaCalificacion() {
     irAlInicio();
   };
 
-  const fallbackConductor: InfoConductor = {
-    nombre: "Conductor Altokke",
-    calificacion: 5.0,
-    viajes: 1,
-    vehiculo: "Mototaxi",
-    placa: "Bagua",
-  };
-
-  const elementosEtiquetas = ETIQUETAS.map((etiqueta) => {
-    const activa = etiquetas.includes(etiqueta.id);
-    return (
-      <Pressable
-        key={etiqueta.id}
-        onPress={() => alternarEtiqueta(etiqueta.id)}
-        style={[
-          styles.etiqueta,
-          { backgroundColor: activa ? colores.primario : colores.campo, borderColor: activa ? colores.primario : colores.linea },
-        ]}
-      >
-        <Ionicons name={etiqueta.icono} size={16} color={activa ? colores.textoBoton : colores.secundario} />
-        <Text style={[styles.etiquetaTexto, { color: activa ? colores.textoBoton : colores.texto }]}>
-          {etiqueta.texto}
-        </Text>
-      </Pressable>
-    );
-  });
-
   return (
     <KeyboardAvoidingView
       style={[styles.pantalla, { backgroundColor: colores.fondo }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.contenido}>
-        <CabeceraFlujoViaje titulo="Califica tu viaje" subtitulo="Cuéntanos cómo fue tu experiencia" mostrarRegreso={false} />
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.contenido}
+      >
+        <CabeceraFlujoViaje
+          titulo="Califica tu viaje"
+          subtitulo="Cuéntanos cómo fue tu experiencia"
+          mostrarRegreso={false}
+        />
 
-        <View style={[styles.finalizado, { backgroundColor: colores.superficie, borderColor: colores.linea }]}>
-          <Ionicons name="checkmark-circle" size={34} color={colores.exitoTexto} />
+        {/* Viaje finalizado */}
+        <View
+          style={[
+            styles.finalizado,
+            {
+              backgroundColor: colores.superficie,
+              borderColor: colores.linea,
+            },
+          ]}
+        >
+          <Ionicons
+            name="checkmark-circle"
+            size={34}
+            color={colores.exitoTexto}
+          />
           <View style={styles.finalizadoTextos}>
-            <Text style={[styles.finalizadoTitulo, { color: colores.texto }]}>Viaje finalizado</Text>
-            <Text style={[styles.detalle, { color: colores.secundario }]}>Gracias por viajar con Altokke</Text>
+            <Text
+              style={[styles.finalizadoTitulo, { color: colores.texto }]}
+            >
+              Viaje finalizado
+            </Text>
+            <Text style={[styles.detalle, { color: colores.secundario }]}>
+              Gracias por viajar con Altokke
+            </Text>
           </View>
           <View style={styles.finalizadoFecha}>
-            <Text style={[styles.insignia, { backgroundColor: colores.exitoFondo, color: colores.exitoTexto }]}>Completado</Text>
-            <Text style={[styles.detalle, { color: colores.secundario }]}>Hoy, {formatearHora(fecha)}</Text>
+            <Text
+              style={[
+                styles.insignia,
+                {
+                  backgroundColor: colores.exitoFondo,
+                  color: colores.exitoTexto,
+                },
+              ]}
+            >
+              Completado
+            </Text>
+            <Text style={[styles.detalle, { color: colores.secundario }]}>
+              Hoy, {formatearHora(fecha)}
+            </Text>
           </View>
         </View>
 
         {enviado ? (
           <View style={styles.gracias}>
-            <View style={[styles.graciasIcono, { backgroundColor: colores.exitoFondo }]}>
+            <View
+              style={[
+                styles.graciasIcono,
+                { backgroundColor: colores.exitoFondo },
+              ]}
+            >
               <Ionicons name="heart" size={40} color={colores.exitoTexto} />
             </View>
-            <Text style={[styles.graciasTitulo, { color: colores.texto }]}>¡Gracias por calificar!</Text>
-            <Text style={[styles.graciasTexto, { color: colores.secundario }]}>Tu opinión ayuda a mejorar Altokke.</Text>
-            <EstrellasCalificacion valor={estrellas} tamano={30} colorInactivo={colores.linea} />
+            <Text style={[styles.graciasTitulo, { color: colores.texto }]}>
+              ¡Gracias por calificar!
+            </Text>
+            <Text style={[styles.graciasTexto, { color: colores.secundario }]}>
+              Tu opinión ayuda a mejorar Altokke.
+            </Text>
+            <Estrellas
+              valor={estrellas}
+              tamano={30}
+              colorInactivo={colores.linea}
+            />
           </View>
         ) : (
           <>
-            <Text style={[styles.seccion, { color: colores.texto }]}>Resumen del viaje</Text>
-            <View style={[styles.tarjetaResumen, { backgroundColor: colores.campo, borderColor: colores.linea }]}>
+            {/* Resumen del viaje */}
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Resumen del viaje
+            </Text>
+            <View
+              style={[
+                styles.tarjetaResumen,
+                {
+                  backgroundColor: colores.campo,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
               <View style={styles.recorrido}>
                 <View style={styles.filaLugar}>
-                  <Ionicons name="radio-button-on" size={14} color={colores.primario} />
-                  <Text style={[styles.lugar, { color: colores.texto }]} numberOfLines={1}>{origenLugar.nombre}</Text>
+                  <Ionicons
+                    name="radio-button-on"
+                    size={18}
+                    color={colores.exitoTexto}
+                  />
+                  <Text
+                    style={[styles.lugar, { color: colores.texto }]}
+                    numberOfLines={1}
+                  >
+                    {origenLugar.nombre}
+                  </Text>
                 </View>
                 <View style={styles.filaLugar}>
-                  <Ionicons name="location" size={14} color={colores.error} />
-                  <Text style={[styles.lugar, { color: colores.texto }]} numberOfLines={1}>{destino.nombre}</Text>
+                  <Ionicons
+                    name="location-sharp"
+                    size={18}
+                    color={colores.error}
+                  />
+                  <Text
+                    style={[styles.lugar, { color: colores.texto }]}
+                    numberOfLines={1}
+                  >
+                    {destino.nombre}
+                  </Text>
                 </View>
               </View>
-              <View style={[styles.tarifaFinal, { borderLeftColor: colores.linea }]}>
-                <Ionicons name="cash-outline" size={20} color={colores.exitoTexto} />
-                <Text style={[styles.tarifaValor, { color: colores.texto }]}>{formatearSoles(tarifa)}</Text>
+
+              <View
+                style={[
+                  styles.tarifaFinal,
+                  { borderLeftColor: colores.linea },
+                ]}
+              >
+                <Ionicons
+                  name="cash-outline"
+                  size={20}
+                  color={colores.exitoTexto}
+                />
+                <Text
+                  style={[styles.tarifaValor, { color: colores.texto }]}
+                >
+                  {formatearSoles(tarifa)}
+                </Text>
                 <Text style={[styles.detalle, { color: colores.secundario }]}>
-                  {metodoPago === "efectivo" ? "Pago en efectivo" : `Pago con ${NOMBRE_METODO_PAGO[metodoPago]}`}
+                  {metodoPago === "efectivo"
+                    ? "Pago en efectivo"
+                    : `Pago con ${NOMBRE_METODO_PAGO[metodoPago]}`}
                 </Text>
               </View>
             </View>
 
-            <Text style={[styles.seccion, { color: colores.texto }]}>Tu conductor</Text>
-            <TarjetaConductor conductor={conductorInfo || fallbackConductor} />
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Tu conductor
+            </Text>
+            <TarjetaConductor conductor={conductor} />
 
-            <Text style={[styles.pregunta, { color: colores.texto }]}>¿Cómo fue tu viaje?</Text>
-            <Text style={[styles.detalle, { color: colores.secundario, marginHorizontal: 16 }]}>Tu opinión ayuda a mejorar Altokke</Text>
+            {/* Calificación */}
+            <Text style={[styles.pregunta, { color: colores.texto }]}>
+              ¿Cómo fue tu viaje?
+            </Text>
+            <Text style={[styles.detalle, { color: colores.secundario }]}>
+              Tu opinión ayuda a mejorar Altokke
+            </Text>
 
             <View style={styles.calificar}>
-              <EstrellasCalificacion valor={estrellas} tamano={40} colorInactivo={colores.progresoInactivo} onCambiar={setEstrellas} />
-              <Text style={[styles.textoCalificacion, { color: colores.secundario }]}>
+              <Estrellas
+                valor={estrellas}
+                tamano={40}
+                colorInactivo={colores.progresoInactivo}
+                onCambiar={setEstrellas}
+              />
+              <Text
+                style={[
+                  styles.textoCalificacion,
+                  { color: colores.secundario },
+                ]}
+              >
                 {TEXTO_CALIFICACION[estrellas] || "Toca una estrella"}
               </Text>
             </View>
 
-            <View style={styles.etiquetas}>{elementosEtiquetas}</View>
+            <View style={styles.etiquetas}>
+              {ETIQUETAS.map((etiqueta) => {
+                const activa = etiquetas.includes(etiqueta.id);
 
-            <Text style={[styles.seccion, { color: colores.texto }]}>Deja un comentario (opcional)</Text>
-            <View style={[styles.comentario, { backgroundColor: colores.campo, borderColor: colores.linea }]}>
+                return (
+                  <Pressable
+                    key={etiqueta.id}
+                    onPress={() => alternarEtiqueta(etiqueta.id)}
+                    style={[
+                      styles.etiqueta,
+                      {
+                        backgroundColor: activa
+                          ? colores.primario
+                          : colores.campo,
+                        borderColor: activa
+                          ? colores.primario
+                          : colores.linea,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={etiqueta.icono}
+                      size={16}
+                      color={
+                        activa
+                          ? colores.textoBoton
+                          : colores.secundario
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.etiquetaTexto,
+                        {
+                          color: activa
+                            ? colores.textoBoton
+                            : colores.texto,
+                        },
+                      ]}
+                    >
+                      {etiqueta.texto}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Comentario */}
+            <Text style={[styles.seccion, { color: colores.texto }]}>
+              Deja un comentario (opcional)
+            </Text>
+            <View
+              style={[
+                styles.comentario,
+                {
+                  backgroundColor: colores.campo,
+                  borderColor: colores.linea,
+                },
+              ]}
+            >
               <TextInput
                 value={comentario}
                 onChangeText={setComentario}
@@ -267,13 +402,24 @@ export default function PantallaCalificacion() {
                 maxLength={MAX_COMENTARIO}
                 style={[styles.comentarioInput, { color: colores.texto }]}
               />
-              <Text style={[styles.contador, { color: colores.secundario }]}>{comentario.length}/{MAX_COMENTARIO}</Text>
+              <Text style={[styles.contador, { color: colores.secundario }]}>
+                {comentario.length}/{MAX_COMENTARIO}
+              </Text>
             </View>
           </>
         )}
       </ScrollView>
 
-      <View style={[styles.pie, { borderTopColor: colores.linea, backgroundColor: colores.superficie, paddingBottom: Math.max(insets.bottom, 14) }]}>
+      <View
+        style={[
+          styles.pie,
+          {
+            borderTopColor: colores.linea,
+            backgroundColor: colores.superficie,
+            paddingBottom: Math.max(insets.bottom, 14),
+          },
+        ]}
+      >
         {enviado ? (
           <BotonPrincipal titulo="Volver al inicio" onPress={irAlInicio} />
         ) : (
@@ -283,15 +429,34 @@ export default function PantallaCalificacion() {
               disabled={estrellas === 0}
               style={({ pressed }) => [
                 styles.botonEnviar,
-                { backgroundColor: estrellas === 0 ? colores.progresoInactivo : colores.primario },
+                {
+                  backgroundColor:
+                    estrellas === 0
+                      ? colores.progresoInactivo
+                      : colores.primario,
+                },
                 pressed && { backgroundColor: colores.primarioPresionado },
               ]}
             >
-              <Ionicons name="paper-plane" size={20} color={colores.textoBoton} />
-              <Text style={[styles.botonEnviarTexto, { color: colores.textoBoton }]}>Enviar calificación</Text>
+              <Ionicons
+                name="paper-plane"
+                size={20}
+                color={colores.textoBoton}
+              />
+              <Text
+                style={[
+                  styles.botonEnviarTexto,
+                  { color: colores.textoBoton },
+                ]}
+              >
+                Enviar calificación
+              </Text>
             </Pressable>
+
             <Pressable onPress={omitir} hitSlop={8}>
-              <Text style={[styles.omitir, { color: colores.secundario }]}>Omitir</Text>
+              <Text style={[styles.omitir, { color: colores.secundario }]}>
+                Omitir
+              </Text>
             </Pressable>
           </>
         )}
@@ -301,37 +466,219 @@ export default function PantallaCalificacion() {
 }
 
 const styles = StyleSheet.create({
-  pantalla: { flex: 1 },
-  contenido: { paddingBottom: 20 },
-  finalizado: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16, marginHorizontal: 16, padding: 16, borderRadius: 22, borderWidth: 1 },
-  finalizadoTextos: { flex: 1 },
-  finalizadoTitulo: { fontSize: 16, fontWeight: "700", letterSpacing: -0.3 },
-  finalizadoFecha: { alignItems: "flex-end", gap: 2 },
-  insignia: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, fontSize: 11, fontWeight: "700", overflow: "hidden" },
-  detalle: { fontSize: 12 },
-  seccion: { marginTop: 18, marginBottom: 8, marginHorizontal: 16, fontSize: 14, fontWeight: "800" },
-  tarjetaResumen: { flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 16, padding: 16, borderRadius: 22, borderWidth: 1 },
-  recorrido: { flex: 1, gap: 16 },
-  filaLugar: { flexDirection: "row", alignItems: "center", gap: 8 },
-  lugar: { flex: 1, fontSize: 13, fontWeight: "700" },
-  tarifaFinal: { alignItems: "center", gap: 2, paddingLeft: 12, borderLeftWidth: 1 },
-  tarifaValor: { fontSize: 22, fontWeight: "800", letterSpacing: -0.5, fontVariant: ["tabular-nums"] },
-  pregunta: { marginTop: 20, marginHorizontal: 16, fontSize: 18, fontWeight: "800" },
-  calificar: { alignItems: "center", gap: 12, marginTop: 22, marginBottom: 8 },
-  estrellas: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
-  textoCalificacion: { fontSize: 14, fontWeight: "700" },
-  etiquetas: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 10, marginTop: 18, marginHorizontal: 16 },
-  etiqueta: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 14, height: 40, borderRadius: 999, borderWidth: 1 },
-  etiquetaTexto: { fontSize: 13, fontWeight: "600" },
-  comentario: { marginHorizontal: 16, padding: 16, borderRadius: 20, borderWidth: 1 },
-  comentarioInput: { minHeight: 90, fontSize: 14, lineHeight: 21, textAlignVertical: "top" },
-  contador: { alignSelf: "flex-end", fontSize: 11 },
-  gracias: { alignItems: "center", gap: 8, marginTop: 40, marginHorizontal: 24 },
-  graciasIcono: { width: 84, height: 84, borderRadius: 42, alignItems: "center", justifyContent: "center" },
-  graciasTitulo: { fontSize: 24, fontWeight: "800" },
-  graciasTexto: { marginBottom: 6, fontSize: 14 },
-  pie: { gap: 12, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
-  botonEnviar: { height: 54, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 999 },
-  botonEnviarTexto: { fontSize: 16, fontWeight: "700" },
-  omitir: { textAlign: "center", fontSize: 14, fontWeight: "600" },
+  pantalla: {
+    flex: 1,
+  },
+
+  contenido: {
+    paddingBottom: 20,
+  },
+
+  finalizado: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+
+  finalizadoTextos: {
+    flex: 1,
+  },
+
+  finalizadoTitulo: {
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+
+  finalizadoFecha: {
+    alignItems: "flex-end",
+    gap: 2,
+  },
+
+  insignia: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: "700",
+    overflow: "hidden",
+  },
+
+  detalle: {
+    fontSize: 12,
+  },
+
+  seccion: {
+    marginTop: 18,
+    marginBottom: 8,
+    marginHorizontal: 16,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  tarjetaResumen: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+
+  recorrido: {
+    flex: 1,
+    gap: 16,
+  },
+
+  filaLugar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  lugar: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  tarifaFinal: {
+    alignItems: "center",
+    gap: 2,
+    paddingLeft: 12,
+    borderLeftWidth: 1,
+  },
+
+  tarifaValor: {
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+
+  pregunta: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  calificar: {
+    alignItems: "center",
+    gap: 12,
+    marginTop: 22,
+    marginBottom: 8,
+  },
+
+  estrellas: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+
+  textoCalificacion: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  etiquetas: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 10,
+    marginTop: 18,
+    marginHorizontal: 16,
+  },
+
+  etiqueta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 14,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+
+  etiquetaTexto: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  comentario: {
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+
+  comentarioInput: {
+    minHeight: 90,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlignVertical: "top",
+  },
+
+  contador: {
+    alignSelf: "flex-end",
+    fontSize: 11,
+  },
+
+  gracias: {
+    alignItems: "center",
+    gap: 8,
+    marginTop: 40,
+    marginHorizontal: 24,
+  },
+
+  graciasIcono: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  graciasTitulo: {
+    fontSize: 24,
+    fontWeight: "800",
+  },
+
+  graciasTexto: {
+    marginBottom: 6,
+    fontSize: 14,
+  },
+
+  pie: {
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+
+  botonEnviar: {
+    height: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderRadius: 999,
+  },
+
+  botonEnviarTexto: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  omitir: {
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });

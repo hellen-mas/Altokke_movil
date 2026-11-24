@@ -13,14 +13,12 @@ export function useConductorViaje(
   conductorId: string | null | undefined,
   refrescarCadaMs?: number
 ) {
-  const [resultado, setResultado] = useState<{
-    viajeId: string;
-    conductorId: string;
-    conductor: ConductorViaje;
-  } | null>(null);
+  const [conductor, setConductor] = useState<ConductorViaje | null>(null);
 
   useEffect(() => {
-    if (!viajeId || !conductorId) return;
+    if (!viajeId || !conductorId) {
+      return;
+    }
     let activo = true;
 
     const cargar = async () => {
@@ -36,21 +34,17 @@ export function useConductorViaje(
         const fila = data?.[0];
         if (!fila) return;
 
-        setResultado({
-          viajeId,
-          conductorId,
-          conductor: {
-            nombre: `${fila.nombre} ${fila.apellidos}`.trim(),
-            calificacion: fila.calificacion ?? undefined,
-            viajes: fila.viajes_completados ?? undefined,
-            vehiculo: [fila.marca, fila.modelo].filter(Boolean).join(" ") || undefined,
-            placa: fila.placa ?? undefined,
-            color: fila.color ?? undefined,
-            foto: fila.foto_url,
-            telefono: fila.telefono,
-            lat: fila.lat_actual,
-            lng: fila.lng_actual,
-          },
+        setConductor({
+          nombre: `${fila.nombre} ${fila.apellidos}`.trim(),
+          calificacion: fila.calificacion ?? undefined,
+          viajes: fila.viajes_completados ?? undefined,
+          vehiculo: [fila.marca, fila.modelo].filter(Boolean).join(" ") || undefined,
+          placa: fila.placa ?? undefined,
+          color: fila.color ?? undefined,
+          foto: fila.foto_url,
+          telefono: fila.telefono,
+          lat: fila.lat_actual,
+          lng: fila.lng_actual,
         });
       } catch (err: unknown) {
         if (!activo) return;
@@ -67,8 +61,6 @@ export function useConductorViaje(
     };
   }, [viajeId, conductorId, refrescarCadaMs]);
 
-  return resultado?.viajeId === viajeId &&
-    resultado.conductorId === conductorId
-    ? resultado.conductor
-    : null;
+  const conductorActivo = (!viajeId || !conductorId) ? null : conductor;
+  return conductorActivo;
 }

@@ -1,7 +1,6 @@
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { supabase } from "@/shared/api/supabase";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonPrincipal } from "@/shared/components/ui";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -25,7 +24,6 @@ type TipoReclamacion = "reclamo" | "queja";
 export default function PantallaLibroReclamaciones() {
   const insets = useSafeAreaInsets();
   const { colores } = useAltokkeTheme();
-  const { userId } = useAuth();
   const { perfil } = usePerfilPasajero();
 
   const [nombreCompleto, setNombreCompleto] = useState(
@@ -44,13 +42,6 @@ export default function PantallaLibroReclamaciones() {
   const [codigoGenerado, setCodigoGenerado] = useState<string | null>(null);
 
   const validar = (): boolean => {
-    if (!userId) {
-      Alert.alert(
-        "Sesión requerida",
-        "Inicia sesión para registrar una reclamación.",
-      );
-      return false;
-    }
     if (!nombreCompleto.trim()) {
       Alert.alert("Campo requerido", "Por favor ingresa tu nombre completo.");
       return false;
@@ -94,39 +85,34 @@ export default function PantallaLibroReclamaciones() {
   };
 
   const enviarReclamacion = async () => {
-    const usuarioId = userId;
-    if (!validar() || enviando || !usuarioId) return;
+    if (!validar() || enviando) return;
     setEnviando(true);
-    const fechaHoy = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const sufijoAleatorio = Math.floor(1000 + Math.random() * 9000);
-    const codigo = `REC-${fechaHoy}-${sufijoAleatorio}`;
     try {
       const montoNumero = Number.parseFloat(montoReclamado) || 0;
-      const { error } = await supabase.from("reclamaciones").insert({
-        codigo_reclamacion: codigo,
-        usuario_id: usuarioId,
-        nombre_completo: nombreCompleto.trim(),
-        tipo_documento: tipoDocumento,
-        numero_documento: numeroDocumento.trim(),
-        telefono: telefono.trim(),
-        email: email.trim().toLowerCase(),
-        direccion: direccion.trim() || null,
-        tipo,
-        monto_reclamado: montoNumero,
-        descripcion_bien_contratado:
-          "Servicio de transporte urbano en mototaxi - Altokke",
-        detalle_reclamacion: detalle.trim(),
-        pedido_consumidor: pedido.trim(),
+      const { data, error } = await supabase.functions.invoke("registrar-reclamacion", {
+        body: {
+          tipoReclamo: tipo,
+          nombreCompleto: nombreCompleto.trim(),
+          tipoDoc: tipoDocumento,
+          numDoc: numeroDocumento.trim(),
+          email: email.trim().toLowerCase(),
+          telefono: telefono.trim(),
+          direccion: direccion.trim() || "No especificada",
+          montoReclamado: montoNumero,
+          descripcionHechos: detalle.trim(),
+          pedidoConcreto: pedido.trim(),
+        },
       });
-      if (error) {
-        console.error("Error al guardar reclamación en BD:", error);
-        Alert.alert(
-          "No se pudo registrar",
-          "Inténtalo nuevamente. Si el problema continúa, comunícate con soporte.",
-        );
+
+      if (error || !data || !data.ok) {
+        const errorMsg = data?.error || error?.message || "No se pudo registrar la reclamación.";
+        console.error("Error al registrar reclamación:", errorMsg);
+        Alert.alert("No se pudo registrar", errorMsg);
         return;
       }
-      setCodigoGenerado(codigo);
+
+      // Código correlativo atómico oficial generado por PostgreSQL (e.g. REC-2026-00001)
+      setCodigoGenerado(data.codigo);
     } catch (err: unknown) {
       console.error("Error de conectividad en reclamaciones:", err);
       Alert.alert(

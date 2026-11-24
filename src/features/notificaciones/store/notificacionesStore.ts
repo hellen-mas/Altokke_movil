@@ -1,12 +1,12 @@
-import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { almacenamientoSeguro } from "@/shared/api/almacenamientoSeguro";
 import {
   NotificacionItem,
   PREFERENCIAS_POR_DEFECTO,
   PreferenciasNotificaciones,
 } from "../types/notificaciones";
+import { pasajeroService } from "@/features/pasajeros/services/pasajeroService";
 
 function formatearHora(fecha: Date): string {
   const horas = fecha.getHours().toString().padStart(2, "0");
@@ -21,7 +21,7 @@ export function crearNotificacionBienvenida(): NotificacionItem {
     icono: "shield-checkmark-outline",
     titulo: "Bienvenido a Altokke",
     mensaje:
-      "Tu cuenta de pasajero está lista para solicitar mototaxis seguros.",
+      "Tu cuenta de pasajero está lista para solicitar mototaxis seguros en Bagua.",
     hora: formatearHora(ahora),
     fechaIso: ahora.toISOString(),
     leida: false,
@@ -161,6 +161,7 @@ export interface NotificacionesStore {
   ) => void;
   agregarNotificacion: (notificacion: NotificacionItem) => void;
   inicializarHistorialNotificaciones: (viajes: { id: string; estado: string | null; creado_en?: string | null }[]) => void;
+  limpiarNotificaciones: () => void;
 }
 
 export const useNotificacionesStore = create<NotificacionesStore>()(
@@ -169,6 +170,12 @@ export const useNotificacionesStore = create<NotificacionesStore>()(
       notificaciones: [crearNotificacionBienvenida()],
       preferencias: PREFERENCIAS_POR_DEFECTO,
       cargando: false,
+
+      limpiarNotificaciones: () =>
+        set({
+          notificaciones: [crearNotificacionBienvenida()],
+          cargando: false,
+        }),
 
       setCargando: (cargando) => set({ cargando }),
 
@@ -277,7 +284,7 @@ export const useNotificacionesStore = create<NotificacionesStore>()(
     }),
     {
       name: "altokke-notificaciones-almacenadas",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => almacenamientoSeguro),
       partialize: (state) => ({
         notificaciones: state.notificaciones,
         preferencias: state.preferencias,

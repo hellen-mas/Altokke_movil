@@ -1,7 +1,10 @@
 import { Alert, Linking } from "react-native";
 
-// Acepta números como "987654321" o "+51987654321"
-const TELEFONO_VALIDO = /^\+?\d{6,15}$/;
+export const NUMEROS_EMERGENCIA = {
+  POLICIA: "105",
+  SAMU: "106",
+  BOMBEROS: "116",
+} as const;
 
 function abrirEnlace(enlace: string, mensajeError: string) {
   Linking.openURL(enlace).catch((err) => {
@@ -10,20 +13,39 @@ function abrirEnlace(enlace: string, mensajeError: string) {
   });
 }
 
-/** Abre la app de teléfono con el número del conductor */
-export function llamarConductor(telefono: string | undefined) {
-  if (!telefono || !TELEFONO_VALIDO.test(telefono)) {
-    Alert.alert("Sin número", "Tu conductor no tiene un número de teléfono disponible.");
-    return;
-  }
-  abrirEnlace(`tel:${telefono}`, "Tu celular no permite hacer llamadas desde la app.");
+/** Abre la app de teléfono únicamente para números de emergencia autorizados */
+export function llamarEmergencia(numero: string = NUMEROS_EMERGENCIA.POLICIA) {
+  abrirEnlace(`tel:${numero}`, "Tu celular no permite realizar llamadas de emergencia.");
 }
 
-/** Abre la app de mensajes con el número del conductor */
-export function escribirConductor(telefono: string | undefined) {
-  if (!telefono || !TELEFONO_VALIDO.test(telefono)) {
-    Alert.alert("Sin número", "Tu conductor no tiene un número de teléfono disponible.");
+/**
+ * Por privacidad y cumplimiento de la Ley 29733 (LPDP) y CP Art. 151-A,
+ * no se exponen ni llaman números telefónicos personales directamente.
+ * Toda la comunicación entre pasajero y conductor se canaliza por el chat in-app.
+ */
+export function llamarConductor(_telefono?: string | undefined, onAbrirChat?: () => void) {
+  if (onAbrirChat) {
+    onAbrirChat();
     return;
   }
-  abrirEnlace(`sms:${telefono}`, "Tu celular no permite enviar mensajes desde la app.");
+  Alert.alert(
+    "Llamadas protegidas",
+    "Por seguridad y privacidad (Ley 29733), comunícate con tu conductor exclusivamente a través del chat dentro de la app.",
+    [{ text: "Entendido" }]
+  );
+}
+
+/** Abre el chat in-app seguro protegiendo la privacidad según LPDP Ley 29733 */
+export function escribirConductor(
+  _telefono?: string | undefined,
+  onAbrirChat?: () => void
+) {
+  if (onAbrirChat) {
+    onAbrirChat();
+    return;
+  }
+  Alert.alert(
+    "Mensajería privada",
+    "La comunicación se realiza de forma segura mediante el chat dentro de la app para proteger tu número privado."
+  );
 }

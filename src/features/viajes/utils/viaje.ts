@@ -103,3 +103,148 @@ export function interpolarRuta(ruta: PuntoMapa[], avance: number): PuntoMapa {
 
   return ruta[ruta.length - 1];
 }
+
+export const ESTADOS_VALIDOS_VIAJE = [
+  "buscando",
+  "aceptado",
+  "conductor_en_camino",
+  "esperando_pasajero",
+  "en_curso",
+  "finalizado",
+  "cancelado",
+] as const;
+
+export type EstadoViajeFlujo = (typeof ESTADOS_VALIDOS_VIAJE)[number];
+
+const TRANSICIONES_PERMITIDAS: Record<string, string[]> = {
+  buscando: ["aceptado", "conductor_en_camino", "cancelado"],
+  aceptado: ["conductor_en_camino", "esperando_pasajero", "cancelado"],
+  conductor_en_camino: ["esperando_pasajero", "en_curso", "cancelado"],
+  esperando_pasajero: ["en_curso", "cancelado"],
+  en_curso: ["finalizado", "cancelado"],
+  finalizado: [],
+  cancelado: [],
+};
+
+export function esTransicionValida(estadoActual: string, nuevoEstado: string): boolean {
+  if (estadoActual === nuevoEstado) return true;
+  const permitidos = TRANSICIONES_PERMITIDAS[estadoActual];
+  return Boolean(permitidos && permitidos.includes(nuevoEstado));
+}
+
+export interface ResultadoCalculoVuelto {
+  pagaCon: number;
+  montoTarifa: number;
+  vuelto: number;
+  esExacto: boolean;
+  denominacionValida: boolean;
+}
+
+export function validarYCalcularVuelto(pagaCon: number, montoTarifa: number): ResultadoCalculoVuelto {
+  if (typeof pagaCon !== "number" || typeof montoTarifa !== "number") {
+    throw new TypeError("Los montos deben ser numéricos");
+  }
+  if (isNaN(pagaCon) || isNaN(montoTarifa)) {
+    throw new Error("Montos no pueden ser NaN");
+  }
+  if (montoTarifa <= 0) {
+    throw new Error("La tarifa del viaje debe ser mayor a 0");
+  }
+  if (pagaCon < montoTarifa) {
+    throw new Error("El monto de pago no puede ser menor a la tarifa");
+  }
+
+  const vuelto = Math.round((pagaCon - montoTarifa) * 100) / 100;
+  const esExacto = vuelto === 0;
+
+  return {
+    pagaCon,
+    montoTarifa,
+    vuelto,
+    esExacto,
+    denominacionValida: [10, 20, 50, 100].includes(pagaCon) || esExacto,
+  };
+}
+
+export const TARIFA_MINIMA_BAGUA = 1.5;
+export const TARIFA_MAXIMA_BAGUA = 15.0;
+
+export interface ResultadoValidacionContraoferta {
+  valido: boolean;
+  razon?: string;
+  montoFinal?: number;
+}
+
+export function validarContraoferta(
+  montoContraoferta: number,
+  tarifaBase: number
+): ResultadoValidacionContraoferta {
+  if (typeof montoContraoferta !== "number" || typeof tarifaBase !== "number") {
+    return { valido: false, razon: "Valores no numéricos" };
+  }
+  if (isNaN(montoContraoferta) || isNaN(tarifaBase)) {
+    return { valido: false, razon: "Valores no válidos (NaN)" };
+  }
+  if (montoContraoferta < TARIFA_MINIMA_BAGUA) {
+    return {
+      valido: false,
+      razon: `Monto por debajo del piso de Bagua (S/ ${TARIFA_MINIMA_BAGUA.toFixed(2)})`,
+    };
+  }
+  if (montoContraoferta > TARIFA_MAXIMA_BAGUA) {
+    return {
+      valido: false,
+      razon: `Monto supera el techo máximo permitido (S/ ${TARIFA_MAXIMA_BAGUA.toFixed(2)})`,
+    };
+  }
+
+  const pisoPermitido = Math.round(tarifaBase * 0.5 * 10) / 10;
+  const techoPermitido = Math.round(tarifaBase * 2.0 * 10) / 10;
+
+  if (montoContraoferta < pisoPermitido) {
+    return {
+      valido: false,
+      razon: "La contraoferta no puede ser inferior al 50% de la tarifa propuesta",
+    };
+  }
+  if (montoContraoferta > techoPermitido) {
+    return {
+      valido: false,
+      razon: "La contraoferta no puede superar el 200% de la tarifa propuesta",
+    };
+  }
+
+  const montoRedondeado = Math.round(montoContraoferta * 10) / 10;
+  return { valido: true, montoFinal: montoRedondeado };
+}
+
+const REGEX_NUMERO_PERU = /\b9\d{8}\b|\b9\d{2}[-.\s]\d{3}[-.\s]\d{3}\b/;
+
+export interface ResultadoSanitizacionMensaje {
+  permitido: boolean;
+  texto?: string;
+  razon?: string;
+}
+
+export function procesarMensajeRapido(texto: unknown): ResultadoSanitizacionMensaje {
+  if (typeof texto !== "string") {
+    return { permitido: false, razon: "Mensaje inválido" };
+  }
+  const limpio = texto.trim();
+  if (limpio.length === 0 || limpio.length > 120) {
+    return {
+      permitido: false,
+      razon: "Longitud no autorizada (1 a 120 caracteres)",
+    };
+  }
+
+  if (REGEX_NUMERO_PERU.test(limpio)) {
+    return {
+      permitido: false,
+      razon: "Violación de privacidad: Prohibido compartir números telefónicos directos en el chat.",
+    };
+  }
+
+  const sanitizado = limpio.replace(/<[^>]*>?/gm, "");
+  return { permitido: true, texto: sanitizado };
+}

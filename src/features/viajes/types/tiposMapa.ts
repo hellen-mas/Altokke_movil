@@ -16,4 +16,5 @@ export interface MapaBaseProps {
   interactivo?: boolean;
   margenInferior?: number;
   style?: StyleProp<ViewStyle>;
+  onError?: () => void;
 }

@@ -16,7 +16,7 @@ export function AccesosRapidosConductor() {
       <View style={styles.accesos}>
         <Pressable
           style={styles.accesoItem}
-          onPress={() => router.push("/(conductor)/ganancias")}
+          onPress={() => router.push("/conductor/ganancias")}
           accessibilityRole="button"
         >
           <View
@@ -32,7 +32,7 @@ export function AccesosRapidosConductor() {
 
         <Pressable
           style={styles.accesoItem}
-          onPress={() => router.push("/(conductor)/solicitudes")}
+          onPress={() => router.push("/conductor/solicitudes")}
           accessibilityRole="button"
         >
           <View
@@ -48,7 +48,7 @@ export function AccesosRapidosConductor() {
 
         <Pressable
           style={styles.accesoItem}
-          onPress={() => router.push("/(conductor)/cuenta/vehiculo")}
+          onPress={() => router.push("/conductor/cuenta/vehiculo")}
           accessibilityRole="button"
         >
           <View
@@ -61,7 +61,7 @@ export function AccesosRapidosConductor() {
 
         <Pressable
           style={styles.accesoItem}
-          onPress={() => router.push("/(conductor)/cuenta")}
+          onPress={() => router.push("/conductor/cuenta")}
           accessibilityRole="button"
         >
           <View

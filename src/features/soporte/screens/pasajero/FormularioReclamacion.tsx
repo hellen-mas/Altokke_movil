@@ -1,4 +1,4 @@
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonPrincipal } from "@/shared/components/ui";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, TextInput, View } from "react-native";

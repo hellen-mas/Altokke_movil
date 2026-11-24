@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 export default function ConfiguracionConductor() {
-  const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const { estilos: styles } = useTemaConductor(crearEstilos);
   const { modoPreferido, setModoPreferido } = useAltokkeTheme();
   const { logout } = useAuth();
 
@@ -47,7 +47,7 @@ export default function ConfiguracionConductor() {
   };
 
   const abrirSeguridad = () => {
-    router.push("/(conductor)/cuenta/seguridad");
+    router.push("/conductor/cuenta/seguridad");
   };
 
   const confirmarEliminarCuenta = () => {
@@ -150,30 +150,22 @@ export default function ConfiguracionConductor() {
           />
         </View>
 
-        <View style={styles.opciones}>
+        <View style={styles.opcionesPeligro}>
           <OpcionCuenta
             icono="log-out"
             titulo="Cerrar sesión"
-            descripcion="Salir de tu cuenta"
+            descripcion="Salir de tu cuenta en este dispositivo"
             onPress={cerrarSesion}
-            ultimo
           />
-        </View>
-
-        <View style={styles.opciones}>
           <OpcionCuenta
-            icono="trash-outline"
+            icono="trash"
             titulo="Eliminar cuenta"
-            descripcion={
-              eliminandoCuenta
-                ? "Procesando solicitud..."
-                : "Solicitar la eliminación de tu cuenta"
-            }
-            onPress={confirmarEliminarCuenta}
+            descripcion="Borrar definitivamente tus datos"
+            peligro
             ultimo
+            onPress={confirmarEliminarCuenta}
           />
         </View>
-
       </ScrollView>
     </View>
   );
@@ -184,24 +176,18 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     flex: 1,
     backgroundColor: c.fondo,
   },
-
   scrollContent: {
-    paddingBottom: 30,
+    padding: 20,
+    gap: 16,
   },
-
-  aviso: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 0,
-  },
-
   opciones: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: c.borde,
-    borderRadius: 18,
     backgroundColor: c.superficie,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  opcionesPeligro: {
+    backgroundColor: c.superficie,
+    borderRadius: 16,
     overflow: "hidden",
   },
 });

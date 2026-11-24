@@ -2,9 +2,11 @@ import { CabeceraConductor } from "@/features/conductores/components/CabeceraCon
 import { AccesosRapidosConductor } from "@/features/conductores/components/AccesosRapidosConductor";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
+import { detenerRastreoSegundoPlano } from "@/features/conductores/services/rastreoGpsConductor";
 import { useTemaConductor } from "@/features/conductores/theme/temaConductor";
 import { crearEstilos } from "./inicio.styles";
 import { supabase } from "@/shared/api/supabase";
+import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -99,6 +101,56 @@ export default function InicioConductorScreen() {
     };
   }, [perfil.id, verificarViajeActivo]);
 
+  // Telemetría GPS continua mientras el conductor está en línea (para que los pasajeros vean mototaxis reales en el mapa)
+  useEffect(() => {
+    if (!perfil.id || perfil.id === "conductor-local" || !perfil.enLinea || tieneViajeActivo) {
+      return;
+    }
+
+    let activo = true;
+    let subscripcion: Location.LocationSubscription | null = null;
+
+    const iniciarTransmisionGps = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (!activo || status !== Location.PermissionStatus.GRANTED) return;
+
+        const sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: 8000,
+            distanceInterval: 10,
+          },
+          (loc) => {
+            if (!activo) return;
+            void conductorService.actualizarUbicacion(
+              perfil.id,
+              loc.coords.latitude,
+              loc.coords.longitude
+            );
+          }
+        );
+
+        if (activo) {
+          subscripcion = sub;
+        } else {
+          sub.remove();
+        }
+      } catch (err) {
+        console.warn("Aviso en el GPS del conductor:", err);
+      }
+    };
+
+    void iniciarTransmisionGps();
+
+    return () => {
+      activo = false;
+      if (subscripcion) {
+        subscripcion.remove();
+      }
+    };
+  }, [perfil.id, perfil.enLinea, tieneViajeActivo]);
+
   const cambiarDisponibilidad = async () => {
     if (actualizandoEstado) return;
     if (!perfil.id || perfil.id === "conductor-local") {
@@ -126,6 +178,9 @@ export default function InicioConductorScreen() {
     setActualizandoEstado(true);
     try {
       await actualizarPerfil({ enLinea: nuevoEstado });
+      if (!nuevoEstado) {
+        await detenerRastreoSegundoPlano();
+      }
     } catch (error) {
       console.error("Error actualizando disponibilidad:", error);
       Alert.alert(
@@ -147,7 +202,7 @@ export default function InicioConductorScreen() {
           ? "disponible"
           : "desconectado";
 
-  const primerNombre = perfil.nombre.split(" ")[0];
+  const primerNombre = perfil.nombre ? perfil.nombre.split(" ")[0] : "Conductor";
 
   return (
     <View style={styles.safeArea}>
@@ -167,10 +222,10 @@ export default function InicioConductorScreen() {
         <View
           style={[
             styles.disponibilidad,
-            estadoDisponibilidad === "disponible"
-              ? styles.disponibilidadActiva
-              : estadoDisponibilidad === "en_viaje"
-                ? styles.disponibilidadViaje
+            estadoDisponibilidad === "en_viaje"
+              ? styles.disponibilidadViaje
+              : estadoDisponibilidad === "disponible"
+                ? styles.disponibilidadActiva
                 : styles.disponibilidadPausa,
           ]}
         >
@@ -186,17 +241,13 @@ export default function InicioConductorScreen() {
             >
               <Ionicons
                 name={
-                  estadoDisponibilidad === "disponible"
-                    ? "navigate"
-                    : estadoDisponibilidad === "en_viaje"
-                      ? "car-sport-outline"
-                      : estadoDisponibilidad === "error"
-                        ? "alert-circle-outline"
-                        : estadoDisponibilidad === "verificando"
-                          ? "sync-outline"
-                          : "power-outline"
+                  estadoDisponibilidad === "en_viaje"
+                    ? "car-outline"
+                    : estadoDisponibilidad === "disponible"
+                      ? "radio"
+                      : "moon-outline"
                 }
-                size={25}
+                size={23}
                 color={
                   estadoDisponibilidad === "disponible" ||
                   estadoDisponibilidad === "en_viaje"
@@ -205,37 +256,35 @@ export default function InicioConductorScreen() {
                 }
               />
             </View>
+
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.disponibilidadTitulo}>
+                {estadoDisponibilidad === "verificando"
+                  ? "Comprobando..."
+                  : estadoDisponibilidad === "en_viaje"
+                    ? "En carrera activa"
+                    : estadoDisponibilidad === "disponible"
+                      ? "Estás disponible"
+                      : estadoDisponibilidad === "error"
+                        ? "Sin conexión"
+                        : "Estás en pausa"}
+              </Text>
+              <Text style={styles.disponibilidadDescripcion}>
+                {estadoDisponibilidad === "en_viaje"
+                  ? "Tienes un viaje en curso con un pasajero."
+                  : estadoDisponibilidad === "disponible"
+                    ? "Recibirás solicitudes de pasajeros cercanos."
+                    : estadoDisponibilidad === "error"
+                      ? "Revisa tu conexión a internet para continuar."
+                      : "Conéctate para empezar a recibir viajes."}
+              </Text>
+            </View>
           </View>
-
-          <Text style={styles.disponibilidadTitulo}>
-            {estadoDisponibilidad === "disponible"
-              ? "Estás disponible"
-              : estadoDisponibilidad === "en_viaje"
-                ? "Estás atendiendo un viaje"
-                : estadoDisponibilidad === "verificando"
-                  ? "Comprobando disponibilidad"
-                  : estadoDisponibilidad === "error"
-                    ? "No pudimos verificar tu estado"
-                    : "No estás disponible"}
-          </Text>
-
-          <Text style={styles.disponibilidadDescripcion}>
-            {estadoDisponibilidad === "disponible"
-              ? "Puedes recibir solicitudes de pasajeros cercanos."
-              : estadoDisponibilidad === "en_viaje"
-                ? "Estás atendiendo una carrera activa."
-                : estadoDisponibilidad === "verificando"
-                  ? "Estamos comprobando si tienes una carrera activa."
-                  : estadoDisponibilidad === "error"
-                    ? "Comprueba tu conexión para verificar tu disponibilidad."
-                    : "No recibirás nuevas solicitudes de viaje."}
-          </Text>
 
           {estadoDisponibilidad === "en_viaje" ? (
             <Pressable
               style={[styles.disponibilidadBoton, styles.botonConectarse]}
-              onPress={() => router.push("/(conductor)/viaje-activo")}
-              accessibilityRole="button"
+              onPress={() => router.push("/conductor/viaje-activo")}
             >
               <Ionicons name="navigate-outline" size={19} color="#FFFFFF" />
               <Text
@@ -357,7 +406,7 @@ export default function InicioConductorScreen() {
 
         <Pressable
           style={styles.solicitudes}
-          onPress={() => router.push("/(conductor)/solicitudes")}
+          onPress={() => router.push("/conductor/solicitudes")}
           accessibilityRole="button"
         >
           <View style={styles.solicitudesIcono}>

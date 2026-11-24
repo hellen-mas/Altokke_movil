@@ -1,9 +1,8 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { DocumentoFoto } from "@/features/conductores/components/DocumentoFoto";
-import { BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
+import { BotonPrincipal, BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { paletaColores } from "@/shared/theme/paletaColores";

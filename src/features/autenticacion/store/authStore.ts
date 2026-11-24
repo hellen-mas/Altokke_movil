@@ -2,6 +2,12 @@ import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/shared/api/supabase";
 import { eliminarTokenPush } from "@/features/notificaciones/services/pushTokenService";
+import { useViajeStore } from "@/features/viajes/store/viajeStore";
+import { useNotificacionesStore } from "@/features/notificaciones/store/notificacionesStore";
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
+import { useRegistroPasajero } from "@/features/pasajeros/store/registroPasajeroStore";
+import { detenerRastreoSegundoPlano } from "@/features/conductores/services/rastreoGpsConductor";
+import { queryClient } from "@/shared/api/queryClient";
 
 // Retira el token del dispositivo antes de cerrar la sesión.
 // Si falla, el cierre de sesión continúa normalmente.
@@ -74,9 +80,16 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
     // 1. Retirar únicamente el token de este dispositivo
     await retirarTokenAntesDeCerrarSesion(usuarioId);
 
+    // 2. Detener cualquier rastreo GPS activo en segundo plano
     try {
-      // 2. Cerrar solamente la sesión de este dispositivo
-      const { error } = await supabase.auth.signOut({scope: "local",});
+      await detenerRastreoSegundoPlano();
+    } catch (e) {
+      console.warn("Aviso al detener rastreo GPS en logout:", e);
+    }
+
+    try {
+      // 3. Cerrar solamente la sesión de este dispositivo
+      const { error } = await supabase.auth.signOut({ scope: "local" });
 
       if (error) {
         console.warn("Aviso al cerrar sesión en Supabase", error.message);
@@ -84,7 +97,24 @@ export const useAuthStore = create<EstadoAutenticacion>((set, get) => ({
     } catch (error: unknown) {
       console.warn("Error al cerrar sesión en Supabase", error);
     } finally {
-      // 3. Limpiar el estado local independientemente del resultado.
+      // 4. Limpiar stores Zustand de viajes, notificaciones, conductor y pasajero
+      try {
+        useViajeStore.getState().limpiarViaje();
+        useNotificacionesStore.getState().limpiarNotificaciones();
+        useRegistroConductor.getState().limpiarFormulario();
+        useRegistroPasajero.getState().clearRegistro();
+      } catch (e) {
+        console.warn("Aviso limpiando stores en logout:", e);
+      }
+
+      // 5. Limpiar la caché de React Query
+      try {
+        queryClient.clear();
+      } catch (e) {
+        console.warn("Aviso limpiando queryClient en logout:", e);
+      }
+
+      // 6. Limpiar el estado local de auth independientemente del resultado
       set({
         session: null,
         user: null,

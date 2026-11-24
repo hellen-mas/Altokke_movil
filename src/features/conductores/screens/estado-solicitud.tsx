@@ -2,8 +2,8 @@ import { authService } from "@/features/autenticacion/services/authService";
 import {
   EstadoConductor,
   obtenerEstadoConductor,
-  conductorService,
 } from "@/features/conductores/services/conductorService";
+import { supabase } from "@/shared/api/supabase";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ const ESTADOS: Record<
   { 
     titulo: string; 
     descripcion: string; 
-    etiqueta: string;
+    etiqueta: string; 
     icono: Icono;
   }
 > = {
@@ -94,47 +94,31 @@ export default function EstadoSolicitudScreen() {
     }
   }, [error]);
 
+  const continuarComoConductor = async () => {
+    try {
+      setMarcandoAprobacion(true);
+      const user = await authService.obtenerUsuarioActual();
+      if (user) {
+        await supabase
+          .from("conductores_perfil")
+          .update({ pantalla_aprobacion_vista: true })
+          .eq("usuario_id", user.id);
+      }
+      router.replace("/conductor/inicio");
+    } catch (err) {
+      console.error("Error al actualizar la solicitud:", err);
+      router.replace("/conductor/inicio");
+    } finally {
+      setMarcandoAprobacion(false);
+    }
+  };
+
   const cerrarSesion = async () => {
     try {
       await authService.cerrarSesion();
       router.replace("/login");
     } catch {
       Alert.alert("Error", "No se pudo cerrar la sesión.");
-    }
-  };
-
-  const continuarComoConductor = async () => {
-    if (marcandoAprobacion) return;
-
-    setMarcandoAprobacion(true);
-
-    try {
-      const resultado =
-        await conductorService.marcarPantallaAprobacionVista();
-
-      if (!resultado) {
-        Alert.alert(
-          "No se pudo completar la operación",
-          "No pudimos registrar que ya viste tu aprobación. Comprueba tu conexión e inténtalo nuevamente."
-        );
-
-        setMarcandoAprobacion(false);
-        return;
-      }
-
-      router.replace("/inicio");
-    } catch (error) {
-      console.error(
-        "Error al registrar la aprobación visualizada:",
-        error
-      );
-
-      Alert.alert(
-        "Error",
-        "Ocurrió un problema al activar tu acceso. Inténtalo nuevamente."
-      );
-
-      setMarcandoAprobacion(false);
     }
   };
 
@@ -231,8 +215,8 @@ export default function EstadoSolicitudScreen() {
 
                 <View style={styles.filaEstado}>
                   <Ionicons
-                    name="ellipse"
-                    size={11}
+                    name={configuracion.icono}
+                    size={20}
                     color={colorEstado}
                   />
 
@@ -357,11 +341,6 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     paddingBottom: 30,
   },
-  marca: {
-    fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: 2.5,
-  },
   contenido: {
     flex: 1,
     justifyContent: "center",
@@ -443,4 +422,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
