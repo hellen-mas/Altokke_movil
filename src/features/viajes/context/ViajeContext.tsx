@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import * as Location from "expo-location";
 import { AppState } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 import {
   useViajeStore,
   type TipoServicio,
@@ -128,27 +129,27 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useViaje(): ViajeContextType {
-  const store = useViajeStore();
-
-  return {
-    tipoServicio: store.tipoServicio,
-    setTipoServicio: store.setTipoServicio,
-    metodoPago: store.metodoPago,
-    setMetodoPago: store.setMetodoPago,
-    origen: store.origen,
-    setOrigen: store.setOrigen,
-    ubicacionActual: store.ubicacionActual,
-    siguiendoUbicacion: store.siguiendoUbicacion,
-    errorUbicacion: store.errorUbicacion,
-    destino: store.destino,
-    setDestino: store.setDestino,
-    historial: store.historial,
-    cargandoHistorial: store.cargandoHistorial,
-    errorHistorial: store.errorHistorial,
-    viajeActivoId: store.viajeActivoId,
-    setViajeActivoId: store.setViajeActivoId,
-    verificandoViajeActivo: store.verificandoViajeActivo,
-    registrarViaje: store.registrarViaje,
-    recargarHistorial: store.recargarHistorial,
-  };
+  return useViajeStore(
+    useShallow((s) => ({
+      tipoServicio: s.tipoServicio,
+      setTipoServicio: s.setTipoServicio,
+      metodoPago: s.metodoPago,
+      setMetodoPago: s.setMetodoPago,
+      origen: s.origen,
+      setOrigen: s.setOrigen,
+      ubicacionActual: s.ubicacionActual,
+      siguiendoUbicacion: s.siguiendoUbicacion,
+      errorUbicacion: s.errorUbicacion,
+      destino: s.destino,
+      setDestino: s.setDestino,
+      historial: s.historial,
+      cargandoHistorial: s.cargandoHistorial,
+      errorHistorial: s.errorHistorial,
+      viajeActivoId: s.viajeActivoId,
+      setViajeActivoId: s.setViajeActivoId,
+      verificandoViajeActivo: s.verificandoViajeActivo,
+      registrarViaje: s.registrarViaje,
+      recargarHistorial: s.recargarHistorial,
+    }))
+  );
 }

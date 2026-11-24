@@ -1,4 +1,5 @@
 import { supabase } from "@/shared/api/supabase";
+import { notificarEventoPush } from "./pushNotificacionHelper";
 
 export interface ContraofertaViaje {
   id: string;
@@ -74,6 +75,16 @@ export const contraofertaService = {
       }
 
       const res = data as unknown as { success: boolean; oferta_id: string };
+
+      // Notificación push no bloqueante al pasajero informando la propuesta
+      notificarEventoPush({
+        evento: "contraoferta",
+        viajeId: input.viajeId,
+        titulo: "¡Nueva contraoferta recibida!",
+        mensaje: `Un conductor te ha propuesto S/ ${Number(input.tarifaOfertada).toFixed(2)} por tu viaje.`,
+        datosExtra: { tarifa: input.tarifaOfertada },
+      });
+
       return { success: res?.success ?? true, oferta_id: res?.oferta_id };
     } catch (err) {
       console.warn("Excepción al crear contraoferta:", err);

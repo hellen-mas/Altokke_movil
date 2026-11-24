@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Alert, Keyboard } from "react-native";
 import { router } from "expo-router";
+import { supabase } from "@/shared/api/supabase";
 import { useAuth, type RolUsuario } from "@/features/autenticacion/hooks/useAuth";
 import { authService } from "@/features/autenticacion/services/authService";
 import { obtenerDestinoInicialConductor } from "@/features/conductores/services/estadoSolicitudService";
@@ -13,8 +14,15 @@ export function useLoginSession() {
   const bloqueoEnvioRef = useRef(false);
 
   const procesarSesionUsuario = useCallback(async (user: { id: string; user_metadata?: Record<string, unknown> }) => {
-    const rol = user.user_metadata?.rol as RolUsuario | undefined;
-    const dni = user.user_metadata?.dni as string | undefined;
+    // Si el usuario ya tiene fila en public.usuarios, priorizar su rol y dni registrados
+    const { data: perfil } = await supabase
+      .from("usuarios")
+      .select("rol, dni")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const rol = (perfil?.rol || user.user_metadata?.rol) as RolUsuario | undefined;
+    const dni = (perfil?.dni || user.user_metadata?.dni) as string | undefined;
 
     if (!rol || !dni) {
       Alert.alert("¡Bienvenido!", "Completa tu registro seleccionando tu rol.", [

@@ -34,14 +34,18 @@ export default function MetodosPago() {
   const { metodoPago, setMetodoPago } = useViaje();
   const { perfil, guardarPreferencias } = usePerfilPasajero();
 
-  const metodoActivo = metodoPago || (perfil?.preferencias?.metodo_pago as IdMetodoPago) || "efectivo";
+  const metodoPagoPref = perfil?.preferencias?.metodo_pago;
+  const metodoActivo = metodoPago || (metodoPagoPref as IdMetodoPago) || "efectivo";
 
   useEffect(() => {
-    const pref = perfil?.preferencias?.metodo_pago;
-    if (pref && (pref === "efectivo" || pref === "yape" || pref === "plin") && pref !== metodoPago) {
-      setMetodoPago(pref);
+    if (
+      metodoPagoPref &&
+      (metodoPagoPref === "efectivo" || metodoPagoPref === "yape" || metodoPagoPref === "plin") &&
+      metodoPagoPref !== metodoPago
+    ) {
+      setMetodoPago(metodoPagoPref);
     }
-  }, [perfil, metodoPago, setMetodoPago]);
+  }, [metodoPagoPref, metodoPago, setMetodoPago]);
 
   const seleccionarMetodo = async (id: IdMetodoPago) => {
     setMetodoPago(id);

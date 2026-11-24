@@ -59,6 +59,17 @@ export default function LoginScreen() {
       </View>
       <View style={styles.bottom}>
         <PiePaginaAutenticacion textoPregunta="¿No tienes una cuenta?" textoEnlace="Crear cuenta" ruta="/crear-cuenta" />
+        <Pressable
+          onPress={() => router.push("/reclamaciones")}
+          hitSlop={8}
+          accessibilityRole="link"
+          accessibilityLabel="Libro de Reclamaciones"
+          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 0.85, marginTop: 4 }]}
+        >
+          <Text style={{ fontSize: 13, color: colores.secundario, textDecorationLine: "underline" }}>
+            Libro de Reclamaciones
+          </Text>
+        </Pressable>
         <AvisoLegalTerminos />
       </View>
     </ContenedorPantalla>

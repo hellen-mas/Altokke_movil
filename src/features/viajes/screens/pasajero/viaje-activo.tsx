@@ -31,7 +31,6 @@ import {
   formatearSoles,
   interpolarRuta,
 } from "@/features/viajes/utils/viaje";
-import { llamarConductor } from "@/features/viajes/utils/contacto";
 import { ModalCancelarViaje } from "../../components/ModalCancelarViaje";
 
 // Estados reales del viaje, en el orden en que avanza la barra de progreso
@@ -255,7 +254,16 @@ export default function PantallaViajeActivo() {
             esCancelable={esCancelable}
             cancelando={cancelando}
             colores={colores}
-            onLlamarConductor={() => llamarConductor(conductor?.telefono)}
+            onLlamarConductor={() => {
+              Alert.alert(
+                "Comunicación segura",
+                "Por tu seguridad y privacidad (Ley 29733), comunícate con tu conductor a través del chat de la app.",
+                [
+                  { text: "Abrir chat", onPress: () => setChatVisible(true) },
+                  { text: "Cancelar", style: "cancel" },
+                ]
+              );
+            }}
             onEscribirConductor={() => setChatVisible(true)}
             onCompartirViaje={compartirViaje}
             onSolicitarCancelacion={solicitarCancelacion}

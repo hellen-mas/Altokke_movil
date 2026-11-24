@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Anonimizar información personal en public.usuarios (sin referenciar columna inexistente email)
+    // Anonimizar información personal en public.usuarios (sin referenciar columna inexistente email ni actualizado_en)
     const { error: errorPerfil } = await admin
       .from("usuarios")
       .update({
@@ -114,9 +114,11 @@ Deno.serve(async (req) => {
         avatar_url: null,
         foto_url: null,
         expo_push_token: null,
-        actualizado_en: new Date().toISOString(),
       })
       .eq("id", usuarioId);
+
+    // Limpiar tokens de push para evitar notificaciones residuales
+    await admin.from("push_tokens").delete().eq("usuario_id", usuarioId);
 
     if (errorPerfil) {
       console.error(

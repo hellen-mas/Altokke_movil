@@ -11,24 +11,12 @@ import { DarkTheme, DefaultTheme, Slot, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import NetInfo from "@react-native-community/netinfo";
-import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/shared/api/queryClient";
 import { AppState, Platform, StatusBar } from "react-native";
 import "@/features/notificaciones/services/configuracionNotificaciones";
 import { useSincronizarTokenPush } from "@/features/notificaciones/hooks/useSincronizarTokenPush";
 import { useNotificacionesPush } from "@/features/notificaciones/hooks/useNotificacionesPush";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: 2,
-    },
-    mutations: {
-      // Registro, cuentas y documentos no se reintentan solos: podrían duplicarse.
-      retry: 0,
-    },
-  },
-});
 
 onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((estado) => {

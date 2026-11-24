@@ -7,7 +7,7 @@ import {
 import { extraerDatosUsuario } from "@/shared/utils/usuario";
 import type { User } from "@supabase/supabase-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 type DatosPersonales = Parameters<typeof pasajeroService.actualizarDatosPersonales>[1];
 
@@ -50,9 +50,12 @@ export function usePerfilPasajero() {
     retry: 1,
   });
 
-  const perfil: PerfilPasajero | null = userId
-    ? data ?? crearPerfilInicial(userId, user)
-    : null;
+  const perfilInicial = useMemo(() => {
+    if (!userId) return null;
+    return crearPerfilInicial(userId, user);
+  }, [userId, user]);
+
+  const perfil: PerfilPasajero | null = data ?? perfilInicial;
 
   const cargando = !!userId && isPending && isFetching;
 

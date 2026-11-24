@@ -19,6 +19,7 @@ export * from "./FilaOpcionMenu";
 export * from "./IndicadorPasos";
 export * from "./InsigniaEstado";
 export * from "./MedidorPasswordSeguro";
+export * from "./ModalDivulgacionUbicacion";
 export * from "./ModalEdicionTexto";
 export * from "./PiePaginaAutenticacion";
 export * from "./SelectorFotoPerfil";

@@ -25,7 +25,8 @@ export interface AltokkeRastreoGpsState {
 
 /**
  * Hook de telemetría y rastreo satelital GPS para Altokke Móvil.
- * Conducción y seguimiento en tiempo real con throttling de consumo de batería.
+ * Conducción y seguimiento en tiempo real con throttling de consumo de batería
+ * y protección estricta contra watchers huérfanos o fugas de memoria.
  */
 export function useRastreoGps({
   activo,
@@ -39,94 +40,100 @@ export function useRastreoGps({
   const [cargando, setCargando] = useState(false);
 
   const subscripcionRef = useRef<Location.LocationSubscription | null>(null);
-  const activoRef = useRef(activo);
+  const recargarTriggerRef = useRef(0);
+  const [, setTrigger] = useState(0);
+
+  const reintentar = useCallback(async () => {
+    recargarTriggerRef.current += 1;
+    setTrigger((t) => t + 1);
+  }, []);
 
   useEffect(() => {
-    activoRef.current = activo;
-  }, [activo]);
-
-  const iniciarRastreo = useCallback(async () => {
-    if (!activoRef.current) return;
-    setCargando(true);
-    setPermisoDenegado(false);
-    setServicioGpsDesactivado(false);
-
-    try {
-      const habilitado = await Location.hasServicesEnabledAsync();
-      if (!habilitado) {
-        setServicioGpsDesactivado(true);
-        setCargando(false);
-        return;
-      }
-
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== Location.PermissionStatus.GRANTED) {
-        setPermisoDenegado(true);
-        setCargando(false);
-        return;
-      }
-
-      // Obtener posición inicial balanceada
-      const inicial = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const posInicial: CoordenadasGps = {
-        lat: inicial.coords.latitude,
-        lng: inicial.coords.longitude,
-        rumbo: inicial.coords.heading,
-        velocidad: inicial.coords.speed,
-      };
-
-      setCoordenadas(posInicial);
-      onNuevaPosicion?.(posInicial);
-
-      // Limpiar suscripción previa si existía
-      if (subscripcionRef.current) {
-        subscripcionRef.current.remove();
-        subscripcionRef.current = null;
-      }
-
-      // Iniciar suscripción continua
-      const sub = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: intervaloMs,
-          distanceInterval: distanciaMinimaMetros,
-        },
-        (loc) => {
-          const nuevaPos: CoordenadasGps = {
-            lat: loc.coords.latitude,
-            lng: loc.coords.longitude,
-            rumbo: loc.coords.heading,
-            velocidad: loc.coords.speed,
-          };
-          setCoordenadas(nuevaPos);
-          onNuevaPosicion?.(nuevaPos);
-        }
-      );
-
-      if (!activoRef.current) {
-        sub.remove();
-        return;
-      }
-
-      subscripcionRef.current = sub;
-    } catch (err: unknown) {
-      console.warn("Aviso en el subsistema de rastreo GPS:", err);
-      setServicioGpsDesactivado(true);
-    } finally {
-      setCargando(false);
-    }
-  }, [intervaloMs, distanciaMinimaMetros, onNuevaPosicion]);
-
-  useEffect(() => {
-    let cancelado = false;
+    let desmontado = false;
 
     if (activo) {
       void (async () => {
-        if (cancelado) return;
-        await iniciarRastreo();
+        try {
+          setCargando(true);
+          setPermisoDenegado(false);
+          setServicioGpsDesactivado(false);
+
+          const habilitado = await Location.hasServicesEnabledAsync();
+          if (desmontado) return;
+          if (!habilitado) {
+            setServicioGpsDesactivado(true);
+            setCargando(false);
+            return;
+          }
+
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (desmontado) return;
+          if (status !== Location.PermissionStatus.GRANTED) {
+            setPermisoDenegado(true);
+            setCargando(false);
+            return;
+          }
+
+          // Obtener posición inicial balanceada
+          const inicial = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          if (desmontado) return;
+
+          const posInicial: CoordenadasGps = {
+            lat: inicial.coords.latitude,
+            lng: inicial.coords.longitude,
+            rumbo: inicial.coords.heading,
+            velocidad: inicial.coords.speed,
+          };
+
+          setCoordenadas(posInicial);
+          onNuevaPosicion?.(posInicial);
+
+          // Limpiar suscripción previa si existía
+          if (subscripcionRef.current) {
+            subscripcionRef.current.remove();
+            subscripcionRef.current = null;
+          }
+
+          // Iniciar suscripción continua
+          const sub = await Location.watchPositionAsync(
+            {
+              accuracy: Location.Accuracy.High,
+              timeInterval: intervaloMs,
+              distanceInterval: distanciaMinimaMetros,
+            },
+            (loc) => {
+              if (desmontado) return;
+              const nuevaPos: CoordenadasGps = {
+                lat: loc.coords.latitude,
+                lng: loc.coords.longitude,
+                rumbo: loc.coords.heading,
+                velocidad: loc.coords.speed,
+              };
+              setCoordenadas(nuevaPos);
+              onNuevaPosicion?.(nuevaPos);
+            }
+          );
+
+          // Si el componente se desmontó mientras watchPositionAsync resolvía,
+          // destruir inmediatamente la suscripción para no dejar watchers huérfanos
+          if (desmontado) {
+            sub.remove();
+            return;
+          }
+
+          subscripcionRef.current = sub;
+        } catch (err: unknown) {
+          if (!desmontado) {
+            console.warn("Aviso en el subsistema de rastreo GPS:", err);
+            setServicioGpsDesactivado(true);
+          }
+        } finally {
+          if (!desmontado) {
+            setCargando(false);
+          }
+        }
       })();
     } else {
       if (subscripcionRef.current) {
@@ -136,19 +143,19 @@ export function useRastreoGps({
     }
 
     return () => {
-      cancelado = true;
+      desmontado = true;
       if (subscripcionRef.current) {
         subscripcionRef.current.remove();
         subscripcionRef.current = null;
       }
     };
-  }, [activo, iniciarRastreo]);
+  }, [activo, intervaloMs, distanciaMinimaMetros, onNuevaPosicion]);
 
   return {
     coordenadas,
     permisoDenegado,
     servicioGpsDesactivado,
     cargando,
-    reintentar: iniciarRastreo,
+    reintentar,
   };
 }

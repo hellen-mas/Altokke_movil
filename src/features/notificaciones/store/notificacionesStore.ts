@@ -161,6 +161,7 @@ export interface NotificacionesStore {
   ) => void;
   agregarNotificacion: (notificacion: NotificacionItem) => void;
   inicializarHistorialNotificaciones: (viajes: { id: string; estado: string | null; creado_en?: string | null }[]) => void;
+  limpiarNotificaciones: () => void;
 }
 
 export const useNotificacionesStore = create<NotificacionesStore>()(
@@ -169,6 +170,12 @@ export const useNotificacionesStore = create<NotificacionesStore>()(
       notificaciones: [crearNotificacionBienvenida()],
       preferencias: PREFERENCIAS_POR_DEFECTO,
       cargando: false,
+
+      limpiarNotificaciones: () =>
+        set({
+          notificaciones: [crearNotificacionBienvenida()],
+          cargando: false,
+        }),
 
       setCargando: (cargando) => set({ cargando }),
 

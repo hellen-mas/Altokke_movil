@@ -67,9 +67,50 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // 2. Hash anonimizado para rate limiting (LPDP Ley 29733)
   const ipHashHex = await calcularSha256(rawIp + "altokke_reclamaciones_salt");
 
-  // 3. Validación Cloudflare Turnstile opcional en servidor
-  const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY");
-  if (turnstileSecret && payload.turnstileToken) {
+  // 3. Inicializar cliente con service_role en el entorno de Edge Functions
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("[CONFIG ERROR] Faltan variables de Supabase en Edge Function.");
+    return responder({ ok: false, error: "Error de configuración interna en servidor." }, 500);
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+  // 4. Rate Limiting persistente en PostgreSQL (máximo 3 reclamos por IP cada hora)
+  try {
+    const { data: rlData, error: rlError } = await supabaseAdmin.rpc("verificar_rate_limit", {
+      p_ip_hash: ipHashHex,
+      p_endpoint: "registrar-reclamacion",
+      p_max_intentos: 3,
+      p_ventana_segundos: 3600,
+    });
+
+    if (!rlError && rlData && rlData.permitido === false) {
+      return responder(
+        { ok: false, error: "Has alcanzado el límite de 3 reclamaciones por hora desde esta dirección de red. Por favor intenta más tarde." },
+        429
+      );
+    }
+  } catch (errRateLimit) {
+    console.warn("[RATE LIMIT DB WARN]", errRateLimit);
+  }
+
+  // 5. Validación Cloudflare Turnstile condicional (solo si viene de web o si envía token explícito)
+  const isDev = Deno.env.get("ENVIRONMENT") === "development" || Deno.env.get("BYPASS_TURNSTILE") === "true";
+  const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY") || Deno.env.get("CF_TURNSTILE_SECRET_KEY");
+
+  const originHeader = req.headers.get("origin") || req.headers.get("referer") || "";
+  const esOrigenWeb = Boolean(originHeader && !originHeader.startsWith("file:") && !originHeader.includes("localhost"));
+  const tieneToken = Boolean(payload.turnstileToken);
+  const requiereTurnstile = !isDev && turnstileSecret && (tieneToken || esOrigenWeb);
+
+  if (requiereTurnstile) {
+    if (!payload.turnstileToken) {
+      return responder({ ok: false, error: "Token de verificación anti-bot (Turnstile) requerido para envíos web." }, 403);
+    }
+
     try {
       const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
         signal: AbortSignal.timeout(5000),
@@ -83,23 +124,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
       const verifyData = (await verifyRes.json()) as { success?: boolean };
       if (!verifyData.success) {
-        return responder({ ok: false, error: "Validación anti-bot (Turnstile) fallida. Inténtalo nuevamente." }, 400);
+        return responder({ ok: false, error: "Validación anti-bot (Turnstile) fallida. Inténtalo nuevamente." }, 403);
       }
     } catch (turnstileErr: unknown) {
-      console.warn("[TURNSTILE WARN]", turnstileErr instanceof Error ? turnstileErr.message : String(turnstileErr));
+      console.error("[TURNSTILE ERROR]", turnstileErr instanceof Error ? turnstileErr.message : String(turnstileErr));
+      return responder({ ok: false, error: "Error de verificación anti-bot en el servidor." }, 502);
     }
   }
-
-  // 4. Inicializar cliente con service_role en el entorno de Edge Functions
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("[CONFIG ERROR] Faltan variables de Supabase en Edge Function.");
-    return responder({ ok: false, error: "Error de configuración interna en servidor." }, 500);
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
   const hechosCompletos = payload.codigoViaje
     ? `${payload.descripcionHechos} [Viaje ID: ${payload.codigoViaje}]`

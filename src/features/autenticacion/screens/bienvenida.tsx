@@ -107,6 +107,30 @@ export default function PantallaBienvenida() {
               textoEnlace="Inicia sesión"
               ruta="/login"
             />
+
+            <Pressable
+              onPress={() => router.push("/reclamaciones")}
+              hitSlop={8}
+              accessibilityRole="link"
+              accessibilityLabel="Libro de Reclamaciones"
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.6 : 0.85,
+                  marginTop: 12,
+                  alignSelf: "center",
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#FAF8F1",
+                  textDecorationLine: "underline",
+                }}
+              >
+                Libro de Reclamaciones
+              </Text>
+            </Pressable>
           </View>
         </View>
       </SafeAreaView>

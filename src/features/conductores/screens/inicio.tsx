@@ -2,6 +2,7 @@ import { CabeceraConductor } from "@/features/conductores/components/CabeceraCon
 import { AccesosRapidosConductor } from "@/features/conductores/components/AccesosRapidosConductor";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
+import { detenerRastreoSegundoPlano } from "@/features/conductores/services/rastreoGpsConductor";
 import { useTemaConductor } from "@/features/conductores/theme/temaConductor";
 import { crearEstilos } from "./inicio.styles";
 import { supabase } from "@/shared/api/supabase";
@@ -177,6 +178,9 @@ export default function InicioConductorScreen() {
     setActualizandoEstado(true);
     try {
       await actualizarPerfil({ enLinea: nuevoEstado });
+      if (!nuevoEstado) {
+        await detenerRastreoSegundoPlano();
+      }
     } catch (error) {
       console.error("Error actualizando disponibilidad:", error);
       Alert.alert(

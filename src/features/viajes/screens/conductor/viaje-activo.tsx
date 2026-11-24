@@ -10,6 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { supabase } from "@/shared/api/supabase";
+import { useViajeStore } from "@/features/viajes/store/viajeStore";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
@@ -139,6 +141,56 @@ export default function ViajeActivoConductor() {
     };
   }, [viajeId]);
   const nombrePasajero = pasajeroCargado?.viajeId === viajeId ? pasajeroCargado.nombre : null;
+
+  // 2.3 Suscripción Supabase Realtime a cambios en el viaje activo (cancelación por pasajero, etc.)
+  useEffect(() => {
+    if (!viajeId) return;
+
+    let canalActivo = true;
+    const canalViaje = supabase
+      .channel(`viaje_activo_conductor_${viajeId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "viajes",
+          filter: `id=eq.${viajeId}`,
+        },
+        async (payload) => {
+          if (!canalActivo) return;
+          const nuevo = payload.new as Record<string, unknown>;
+          const nuevoEstado = String(nuevo.estado);
+
+          if (nuevoEstado === "cancelado_pasajero") {
+            await detenerRastreoSegundoPlano();
+            useViajeStore.getState().limpiarViaje();
+            setViaje(null);
+            Alert.alert(
+              "Viaje Cancelado",
+              "El pasajero ha cancelado la solicitud de viaje.",
+              [
+                {
+                  text: "Entendido",
+                  onPress: () => router.replace("/conductor/solicitudes"),
+                },
+              ]
+            );
+          } else if (nuevoEstado === "finalizado") {
+            await detenerRastreoSegundoPlano();
+            setViaje((prev) => (prev ? ({ ...prev, estado: "finalizado" } as ViajeConductor) : null));
+          } else {
+            setViaje((prev) => (prev ? ({ ...prev, ...nuevo, estado: nuevoEstado } as ViajeConductor) : null));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      canalActivo = false;
+      void supabase.removeChannel(canalViaje);
+    };
+  }, [viajeId]);
 
   // 2.5 Telemetría GPS en tiempo real (primer y segundo plano con Foreground Service)
   useEffect(() => {

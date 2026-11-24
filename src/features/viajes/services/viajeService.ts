@@ -1,5 +1,6 @@
 import { supabase } from "@/shared/api/supabase";
 import type { ViajeHistorial } from "@/features/viajes/constants/pasajero";
+import { notificarEventoPush } from "./pushNotificacionHelper";
 
 export interface DestinoFrecuente {
   id: string; usuarioId: string; nombre: string; direccion: string;
@@ -55,6 +56,13 @@ export const viajeService = {
         .eq("id", viajeId)
         .single();
       if (errorLectura) throw new Error(errorLectura.message);
+
+      // Notificación push no bloqueante a conductores disponibles
+      notificarEventoPush({
+        evento: "solicitud_viaje",
+        viajeId: viaje.id,
+      });
+
       return viaje;
     } catch (err: unknown) {
       console.warn("Excepción al crear viaje en Supabase:", err);

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs, Redirect, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { Tabs, Redirect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "@/shared/api/supabase";
 import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
@@ -14,61 +14,72 @@ export default function ConductorLayout() {
   const [verificando, setVerificando] = useState(true);
   const [esConductor, setEsConductor] = useState(false);
   const [autorizado, setAutorizado] = useState(false);
+  const [errorRed, setErrorRed] = useState<string | null>(null);
 
   useAlertaConductor({
     habilitado: autorizado && !verificando,
     radioKm: 3,
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      let activo = true;
+  const verificarAcceso = useCallback(async () => {
+    setErrorRed(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-      const verificarAcceso = async () => {
-        if (activo) {
-          setVerificando(true);
+      if (!user) {
+        setEsConductor(false);
+        setAutorizado(false);
+        return;
+      }
+
+      // Comprobar rol en metadata o en la base de datos
+      const rol = user.user_metadata?.rol;
+      if (rol !== "conductor") {
+        const { data: perfil } = await supabase
+          .from("usuarios")
+          .select("rol")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (perfil?.rol !== "conductor") {
           setEsConductor(false);
           setAutorizado(false);
+          return;
         }
+      }
 
-        try {
-          const { data: { user } } =
-            await supabase.auth.getUser();
+      setEsConductor(true);
 
-          if (!user || user.user_metadata?.rol !== "conductor") {
-            if (activo) {
-              setEsConductor(false);
-              setAutorizado(false);
-            }
-            return;
-          }
+      const estado = await obtenerEstadoConductor(user.id);
+      setAutorizado(estado === "aprobado");
+    } catch (error) {
+      console.warn("Aviso verificando rol/estado de conductor:", error);
+      setErrorRed("No se pudo conectar con el servidor para verificar tu cuenta. Comprueba tu red.");
+    } finally {
+      setVerificando(false);
+    }
+  }, []);
 
-          if (activo) setEsConductor(true);
+  // Se verifica al iniciar o al cambiar la sesión (sin reiniciar verificando en cada tab switch)
+  useEffect(() => {
+    // onAuthStateChange dispara INITIAL_SESSION inmediatamente al suscribirse,
+    // cubriendo la verificación inicial sin llamar setState sincronamente en el effect body
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (
+        event === "INITIAL_SESSION" ||
+        event === "SIGNED_IN" ||
+        event === "USER_UPDATED" ||
+        event === "SIGNED_OUT"
+      ) {
+        void verificarAcceso();
+      }
+    });
 
-          const estado =
-            await obtenerEstadoConductor(user.id);
-
-          if (activo) {
-            setAutorizado(estado === "aprobado");
-          }
-        } catch (error) {
-          console.error("Error verificando conductor:", error);
-          if (activo) {
-            setEsConductor(false);
-            setAutorizado(false);
-          }
-        } finally {
-          if (activo) setVerificando(false);
-        }
-      };
-
-      void verificarAcceso();
-
-      return () => {
-        activo = false;
-      };
-    }, [])
-  );
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- verificarAcceso es estable (useCallback con deps=[])
+  }, []);
 
   if (verificando) {
     return (
@@ -82,6 +93,45 @@ export default function ConductorLayout() {
           size="large"
           color={c.primario}
         />
+      </View>
+    );
+  }
+
+  if (errorRed) {
+    return (
+      <View style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: c.fondo,
+        padding: 24,
+      }}>
+        <Ionicons name="cloud-offline-outline" size={54} color={c.primario} />
+        <Text style={{
+          fontSize: 16,
+          color: c.texto,
+          textAlign: "center",
+          marginTop: 16,
+          marginBottom: 20,
+          lineHeight: 22,
+        }}>
+          {errorRed}
+        </Text>
+        <Pressable
+          onPress={() => {
+            setVerificando(true);
+            void verificarAcceso();
+          }}
+          style={{
+            backgroundColor: c.primario,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+            borderRadius: 8,
+          }}
+          accessibilityRole="button"
+        >
+          <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Reintentar conexión</Text>
+        </Pressable>
       </View>
     );
   }

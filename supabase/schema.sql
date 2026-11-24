@@ -758,9 +758,17 @@ DECLARE
     v_es_revisor BOOLEAN := false;
     v_user_email TEXT;
 BEGIN
-    v_pasajero_id := auth.uid();
+    v_pasajero_id := (SELECT auth.uid());
     IF v_pasajero_id IS NULL THEN
         RAISE EXCEPTION 'Usuario no autenticado' USING ERRCODE = '42501';
+    END IF;
+
+    -- Validar que la cuenta de usuario esté activa (no suspendida ni eliminada)
+    IF NOT EXISTS (
+        SELECT 1 FROM public.usuarios
+        WHERE id = v_pasajero_id AND estado_cuenta = 'activo'
+    ) THEN
+        RAISE EXCEPTION 'Tu cuenta de usuario no está activa o se encuentra suspendida o eliminada' USING ERRCODE = '42501';
     END IF;
 
     IF p_origen_lat IS NULL OR p_origen_lng IS NULL OR p_destino_lat IS NULL OR p_destino_lng IS NULL THEN
@@ -774,6 +782,7 @@ BEGIN
 
     SELECT email INTO v_user_email FROM auth.users WHERE id = v_pasajero_id;
 
+    -- Comprobación estricta de bypass contra configuracion_app o app_metadata (cero user_metadata manipulable)
     SELECT COALESCE(
       EXISTS (
         SELECT 1
@@ -781,7 +790,7 @@ BEGIN
         WHERE cfg.id = 1
           AND (
             (v_user_email IS NOT NULL AND v_user_email = ANY(ARRAY(SELECT jsonb_array_elements_text(cfg.cuentas_revisoras))))
-            OR (auth.jwt() -> 'user_metadata' ->> 'es_revisor')::boolean = true
+            OR (COALESCE((SELECT auth.jwt() -> 'app_metadata' ->> 'es_revisor'), 'false'))::boolean = true
             OR (v_user_email ILIKE '%@apple.com')
             OR (v_user_email ILIKE '%@google.com')
             OR (v_user_email ILIKE 'revisor%@altokke.pe')
@@ -1071,3 +1080,605 @@ CREATE TABLE IF NOT EXISTS public.push_webhook_events (
 ALTER TABLE public.push_webhook_events ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.push_webhook_events FROM PUBLIC, anon, authenticated;
 GRANT ALL ON TABLE public.push_webhook_events TO service_role;
+
+-- 15. TABLA: contraofertas_viaje
+CREATE TABLE IF NOT EXISTS public.contraofertas_viaje (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    viaje_id UUID NOT NULL REFERENCES public.viajes(id) ON DELETE CASCADE,
+    conductor_id UUID NOT NULL REFERENCES public.conductores_perfil(usuario_id) ON DELETE CASCADE,
+    tarifa_ofertada NUMERIC(10,2) NOT NULL,
+    tiempo_llegada_min INT NOT NULL DEFAULT 3,
+    estado TEXT NOT NULL DEFAULT 'pendiente',
+    expira_en TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '60 seconds'),
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+    actualizado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_contraoferta_estado CHECK (
+      estado IN ('pendiente', 'aceptada', 'rechazada', 'expirada', 'cancelada')
+    ),
+    CONSTRAINT chk_contraoferta_tarifa_positiva CHECK (tarifa_ofertada >= 2.50)
+);
+
+CREATE INDEX IF NOT EXISTS idx_contraofertas_viaje_id ON public.contraofertas_viaje(viaje_id);
+CREATE INDEX IF NOT EXISTS idx_contraofertas_conductor_id ON public.contraofertas_viaje(conductor_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_contraoferta_activa_conductor
+    ON public.contraofertas_viaje (viaje_id, conductor_id)
+    WHERE estado = 'pendiente';
+
+ALTER TABLE public.contraofertas_viaje ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Pasajeros ven contraofertas de su viaje" ON public.contraofertas_viaje;
+CREATE POLICY "Pasajeros ven contraofertas de su viaje"
+    ON public.contraofertas_viaje FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.viajes v
+            WHERE v.id = contraofertas_viaje.viaje_id
+              AND v.pasajero_id = (SELECT auth.uid())
+        )
+    );
+
+DROP POLICY IF EXISTS "Conductores ven y gestionan sus propias ofertas" ON public.contraofertas_viaje;
+CREATE POLICY "Conductores ven y gestionan sus propias ofertas"
+    ON public.contraofertas_viaje FOR ALL
+    TO authenticated
+    USING (conductor_id = (SELECT auth.uid()))
+    WITH CHECK (conductor_id = (SELECT auth.uid()));
+
+-- 16. TABLA: reclamaciones_libro (Indecopi Ley 29571)
+CREATE TABLE IF NOT EXISTS public.reclamaciones_libro (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo_correlativo TEXT UNIQUE NOT NULL,
+  tipo_bien TEXT NOT NULL DEFAULT 'Servicio de Intermediación Tecnológica en Mototaxi',
+  tipo_reclamo TEXT NOT NULL CHECK (tipo_reclamo IN ('queja', 'reclamo')),
+  consumidor_nombre TEXT NOT NULL,
+  consumidor_tipo_doc TEXT NOT NULL CHECK (consumidor_tipo_doc IN ('DNI', 'CE', 'PASAPORTE', 'OTRO')),
+  consumidor_dni TEXT NOT NULL,
+  consumidor_email TEXT NOT NULL,
+  consumidor_telefono TEXT NOT NULL,
+  consumidor_direccion TEXT NOT NULL,
+  monto_reclamado NUMERIC(10, 2) DEFAULT 0.00,
+  descripcion_hechos TEXT NOT NULL,
+  pedido_concreto TEXT NOT NULL,
+  ip_hash TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_proceso', 'atendido', 'archivado')),
+  respuesta_administrador TEXT,
+  fecha_respuesta TIMESTAMPTZ,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  actualizado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.reclamaciones_libro ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.reclamaciones_libro FROM PUBLIC, anon;
+GRANT SELECT ON public.reclamaciones_libro TO authenticated;
+
+-- Sincronización automática de reclamaciones móviles a libro Indecopi
+CREATE OR REPLACE FUNCTION public.sincronizar_reclamacion_a_libro()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  INSERT INTO public.reclamaciones_libro (
+    codigo_correlativo,
+    tipo_bien,
+    tipo_reclamo,
+    consumidor_nombre,
+    consumidor_tipo_doc,
+    consumidor_dni,
+    consumidor_email,
+    consumidor_telefono,
+    consumidor_direccion,
+    monto_reclamado,
+    descripcion_hechos,
+    pedido_concreto,
+    estado
+  ) VALUES (
+    NEW.codigo_reclamacion,
+    COALESCE(NEW.descripcion_bien_contratado, 'Servicio de Intermediación Tecnológica en Mototaxi'),
+    CASE WHEN lower(NEW.tipo) = 'queja' THEN 'queja' ELSE 'reclamo' END,
+    NEW.nombre_completo,
+    CASE 
+      WHEN NEW.tipo_documento IN ('DNI', 'CE', 'PASAPORTE') THEN NEW.tipo_documento 
+      ELSE 'OTRO' 
+    END,
+    NEW.numero_documento,
+    NEW.email,
+    NEW.telefono,
+    COALESCE(NEW.direccion, 'No especificada'),
+    COALESCE(NEW.monto_reclamado, 0.00),
+    NEW.detalle_reclamacion,
+    NEW.pedido_consumidor,
+    'pendiente'
+  )
+  ON CONFLICT (codigo_correlativo) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_sincronizar_reclamacion_a_libro ON public.reclamaciones;
+CREATE TRIGGER trg_sincronizar_reclamacion_a_libro
+  AFTER INSERT ON public.reclamaciones
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sincronizar_reclamacion_a_libro();
+
+-- 17. RPCs Vueltos, Contraofertas y Perfil Conductor
+CREATE OR REPLACE FUNCTION public.crear_contraoferta(
+    p_viaje_id UUID,
+    p_tarifa NUMERIC,
+    p_tiempo_llegada_min INT DEFAULT 3
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_conductor_id UUID;
+    v_conductor_estado TEXT;
+    v_conductor_en_linea BOOLEAN;
+    v_viaje_estado TEXT;
+    v_tarifa_base NUMERIC(10,2);
+    v_nueva_oferta_id UUID;
+    v_piso_tarifa NUMERIC(10,2) := 2.50;
+    v_techo_tarifa NUMERIC(10,2);
+    v_conteo_pendientes INT;
+BEGIN
+    v_conductor_id := (SELECT auth.uid());
+    IF v_conductor_id IS NULL THEN
+        RAISE EXCEPTION 'No autenticado' USING ERRCODE = '42501';
+    END IF;
+
+    SELECT estado::text, en_linea INTO v_conductor_estado, v_conductor_en_linea
+    FROM public.conductores_perfil
+    WHERE usuario_id = v_conductor_id;
+
+    IF NOT FOUND OR v_conductor_estado != 'aprobado' THEN
+        RAISE EXCEPTION 'El conductor no está habilitado o no está aprobado';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM public.viajes
+        WHERE conductor_id = v_conductor_id
+        AND estado IN ('aceptado', 'en_camino_origen', 'esperando_pasajero', 'en_viaje')
+    ) THEN
+        RAISE EXCEPTION 'Ya tienes un viaje activo en curso';
+    END IF;
+
+    SELECT estado::text, tarifa_estimada INTO v_viaje_estado, v_tarifa_base
+    FROM public.viajes
+    WHERE id = p_viaje_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Viaje no encontrado';
+    END IF;
+
+    IF v_viaje_estado NOT IN ('buscando', 'solicitado') THEN
+        RAISE EXCEPTION 'El viaje ya no está disponible para ofertas (estado actual: %)', v_viaje_estado;
+    END IF;
+
+    SELECT count(*) INTO v_conteo_pendientes
+    FROM public.contraofertas_viaje
+    WHERE viaje_id = p_viaje_id AND estado = 'pendiente' AND expira_en > now();
+
+    IF v_conteo_pendientes >= 8 THEN
+        RAISE EXCEPTION 'El viaje ha alcanzado el límite máximo de ofertas concurrentes';
+    END IF;
+
+    v_piso_tarifa := GREATEST(2.50, ROUND((COALESCE(v_tarifa_base, 3.50) * 0.70)::numeric, 2));
+    v_techo_tarifa := ROUND((COALESCE(v_tarifa_base, 3.50) * 1.50)::numeric, 2);
+
+    IF p_tarifa < v_piso_tarifa THEN
+        RAISE EXCEPTION 'La tarifa mínima permitida para este viaje es S/ %', v_piso_tarifa;
+    END IF;
+
+    IF p_tarifa > v_techo_tarifa THEN
+        RAISE EXCEPTION 'La tarifa máxima permitida para este viaje es S/ %', v_techo_tarifa;
+    END IF;
+
+    INSERT INTO public.contraofertas_viaje (
+        viaje_id, conductor_id, tarifa_ofertada, tiempo_llegada_min, estado, expira_en
+    ) VALUES (
+        p_viaje_id, v_conductor_id, p_tarifa, COALESCE(p_tiempo_llegada_min, 3), 'pendiente', now() + INTERVAL '60 seconds'
+    )
+    ON CONFLICT (viaje_id, conductor_id) WHERE estado = 'pendiente'
+    DO UPDATE SET
+        tarifa_ofertada = EXCLUDED.tarifa_ofertada,
+        tiempo_llegada_min = EXCLUDED.tiempo_llegada_min,
+        expira_en = EXCLUDED.expira_en,
+        actualizado_en = now()
+    RETURNING id INTO v_nueva_oferta_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'oferta_id', v_nueva_oferta_id,
+        'viaje_id', p_viaje_id,
+        'tarifa', p_tarifa,
+        'expira_en', (now() + INTERVAL '60 seconds')
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.crear_contraoferta(UUID, NUMERIC, INT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.crear_contraoferta(UUID, NUMERIC, INT) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.obtener_conductor_viaje(p_viaje_id UUID)
+RETURNS TABLE (
+    nombre TEXT,
+    apellidos TEXT,
+    foto_url TEXT,
+    telefono TEXT,
+    calificacion NUMERIC,
+    viajes_completados INTEGER,
+    placa TEXT,
+    marca TEXT,
+    modelo TEXT,
+    color TEXT,
+    lat_actual DOUBLE PRECISION,
+    lng_actual DOUBLE PRECISION
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$ 
+  SELECT u.nombre, u.apellidos,
+         COALESCE(u.foto_url, u.avatar_url),
+         NULL::text AS telefono,
+         COALESCE(c.calificacion_promedio, 5.0),
+         COALESCE(c.viajes_completados, 0),
+         v.placa, v.marca, v.modelo, v.color,
+         c.lat_actual, c.lng_actual
+  FROM public.viajes vj
+  JOIN public.conductores_perfil c ON c.usuario_id = vj.conductor_id
+  JOIN public.usuarios u ON u.id = c.usuario_id
+  LEFT JOIN public.vehiculos v ON v.conductor_id = c.usuario_id AND v.activo = true
+  WHERE vj.id = p_viaje_id
+    AND vj.pasajero_id = (SELECT auth.uid())
+  LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.obtener_conductor_viaje(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.obtener_conductor_viaje(UUID) TO authenticated;
+
+-- ============================================================================
+-- 35. RATE LIMITING PERSISTENTE EN BASE DE DATOS (IP HASH)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.rate_limits_ip (
+    ip_hash TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    intentos INT NOT NULL DEFAULT 1,
+    primera_peticion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    bloqueado_hasta TIMESTAMPTZ,
+    PRIMARY KEY (ip_hash, endpoint)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limits_ip_hash ON public.rate_limits_ip(ip_hash, endpoint);
+
+ALTER TABLE public.rate_limits_ip ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.rate_limits_ip FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.rate_limits_ip TO service_role;
+
+CREATE OR REPLACE FUNCTION public.verificar_rate_limit(
+    p_ip_hash TEXT,
+    p_endpoint TEXT,
+    p_max_intentos INT DEFAULT 10,
+    p_ventana_segundos INT DEFAULT 60
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_ahora TIMESTAMPTZ := now();
+    v_registro RECORD;
+BEGIN
+    IF p_ip_hash IS NULL OR trim(p_ip_hash) = '' THEN
+        RETURN jsonb_build_object('permitido', false, 'error', 'IP hash requerido');
+    END IF;
+
+    SELECT * INTO v_registro
+    FROM public.rate_limits_ip
+    WHERE ip_hash = p_ip_hash AND endpoint = p_endpoint
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        INSERT INTO public.rate_limits_ip (ip_hash, endpoint, intentos, primera_peticion)
+        VALUES (p_ip_hash, p_endpoint, 1, v_ahora);
+        RETURN jsonb_build_object('permitido', true, 'restantes', p_max_intentos - 1);
+    END IF;
+
+    -- Si la ventana anterior ya expiró, reiniciar contador
+    IF v_ahora > (v_registro.primera_peticion + (p_ventana_segundos || ' seconds')::INTERVAL) THEN
+        UPDATE public.rate_limits_ip
+        SET intentos = 1,
+            primera_peticion = v_ahora,
+            bloqueado_hasta = NULL
+        WHERE ip_hash = p_ip_hash AND endpoint = p_endpoint;
+        RETURN jsonb_build_object('permitido', true, 'restantes', p_max_intentos - 1);
+    END IF;
+
+    -- Si excede el límite máximo dentro de la ventana:
+    IF v_registro.intentos >= p_max_intentos THEN
+        UPDATE public.rate_limits_ip
+        SET bloqueado_hasta = v_registro.primera_peticion + (p_ventana_segundos || ' seconds')::INTERVAL
+        WHERE ip_hash = p_ip_hash AND endpoint = p_endpoint;
+        RETURN jsonb_build_object('permitido', false, 'restantes', 0);
+    END IF;
+
+    UPDATE public.rate_limits_ip
+    SET intentos = v_registro.intentos + 1
+    WHERE ip_hash = p_ip_hash AND endpoint = p_endpoint;
+
+    RETURN jsonb_build_object('permitido', true, 'restantes', p_max_intentos - (v_registro.intentos + 1));
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.verificar_rate_limit(TEXT, TEXT, INT, INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.verificar_rate_limit(TEXT, TEXT, INT, INT) TO service_role;
+
+-- ============================================================================
+-- 36. BLINDAJE RLS DE CONTRAOFERTAS_VIAJE (SOLO SELECT PARA CLIENTES)
+-- ============================================================================
+REVOKE INSERT, UPDATE, DELETE ON public.contraofertas_viaje FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.contraofertas_viaje TO authenticated;
+GRANT ALL ON public.contraofertas_viaje TO service_role;
+
+DROP POLICY IF EXISTS "Conductores ven y gestionan sus propias ofertas" ON public.contraofertas_viaje;
+DROP POLICY IF EXISTS "Conductores ven sus propias ofertas" ON public.contraofertas_viaje;
+DROP POLICY IF EXISTS "Pasajeros ven contraofertas de su viaje" ON public.contraofertas_viaje;
+
+CREATE POLICY "Pasajeros ven contraofertas de su viaje"
+    ON public.contraofertas_viaje FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.viajes v
+            WHERE v.id = contraofertas_viaje.viaje_id
+              AND v.pasajero_id = (SELECT auth.uid())
+        )
+    );
+
+CREATE POLICY "Conductores ven sus propias ofertas"
+    ON public.contraofertas_viaje FOR SELECT
+    TO authenticated
+    USING (conductor_id = (SELECT auth.uid()));
+
+-- ============================================================================
+-- 37. SELECCIONAR OFERTA DE VIAJE (VALIDACIÓN CONDUCTOR APROBADO)
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.seleccionar_oferta_viaje(p_oferta_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_usuario_id UUID;
+    v_oferta RECORD;
+    v_viaje RECORD;
+    v_nuevo_vuelto NUMERIC(10,2) := NULL;
+    v_paga_con NUMERIC(10,2);
+    v_conductor_estado TEXT;
+BEGIN
+    v_usuario_id := (SELECT auth.uid());
+    IF v_usuario_id IS NULL THEN
+        RAISE EXCEPTION 'No autenticado' USING ERRCODE = '42501';
+    END IF;
+
+    -- 1. Candado pesimista sobre la contraoferta
+    SELECT * INTO v_oferta
+    FROM public.contraofertas_viaje
+    WHERE id = p_oferta_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Oferta no encontrada';
+    END IF;
+
+    IF v_oferta.estado != 'pendiente' THEN
+        RAISE EXCEPTION 'La oferta seleccionada ya no está disponible (estado: %)', v_oferta.estado;
+    END IF;
+
+    IF now() > v_oferta.expira_en THEN
+        UPDATE public.contraofertas_viaje SET estado = 'expirada', actualizado_en = now() WHERE id = p_oferta_id;
+        RAISE EXCEPTION 'La contraoferta ha expirado';
+    END IF;
+
+    -- Validar que el conductor esté registrado y aprobado
+    SELECT estado::text INTO v_conductor_estado
+    FROM public.conductores_perfil
+    WHERE usuario_id = v_oferta.conductor_id;
+
+    IF NOT FOUND OR v_conductor_estado != 'aprobado' THEN
+        RAISE EXCEPTION 'El conductor de la oferta no se encuentra habilitado o aprobado';
+    END IF;
+
+    -- 2. Candado pesimista sobre el viaje para evitar asignación múltiple concurrente
+    SELECT * INTO v_viaje
+    FROM public.viajes
+    WHERE id = v_oferta.viaje_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Viaje no encontrado';
+    END IF;
+
+    -- Verificar que el invocador sea el pasajero titular
+    IF v_viaje.pasajero_id != v_usuario_id THEN
+        RAISE EXCEPTION 'No tienes autorización para aceptar ofertas en este viaje' USING ERRCODE = '42501';
+    END IF;
+
+    -- Validar que el viaje aún no haya sido tomado
+    IF v_viaje.estado NOT IN ('buscando', 'solicitado') OR v_viaje.conductor_id IS NOT NULL THEN
+        RAISE EXCEPTION 'El viaje ya fue aceptado o asignado a otro conductor';
+    END IF;
+
+    -- 3. Recálculo atómico de Vuelto Inteligente con la nueva tarifa acordada
+    v_paga_con := v_viaje.paga_con;
+    IF v_paga_con IS NOT NULL THEN
+        IF v_paga_con >= v_oferta.tarifa_ofertada THEN
+            v_nuevo_vuelto := ROUND((v_paga_con - v_oferta.tarifa_ofertada)::numeric, 2);
+        ELSE
+            v_paga_con := v_oferta.tarifa_ofertada;
+            v_nuevo_vuelto := 0.00;
+        END IF;
+    END IF;
+
+    -- 4. Asignar el viaje al conductor ganador con el nuevo precio pactado y vuelto recalculado
+    UPDATE public.viajes
+    SET conductor_id = v_oferta.conductor_id,
+        tarifa_final = v_oferta.tarifa_ofertada,
+        tarifa_estimada = v_oferta.tarifa_ofertada,
+        paga_con = v_paga_con,
+        vuelto_estimado = v_nuevo_vuelto,
+        estado = 'aceptado',
+        aceptado_en = now(),
+        actualizado_en = now()
+    WHERE id = v_oferta.viaje_id;
+
+    -- 5. Marcar la oferta ganadora como aceptada
+    UPDATE public.contraofertas_viaje
+    SET estado = 'aceptada',
+        actualizado_en = now()
+    WHERE id = p_oferta_id;
+
+    -- 6. Descartar atómicamente el resto de ofertas concurrentes para este viaje
+    UPDATE public.contraofertas_viaje
+    SET estado = 'rechazada',
+        actualizado_en = now()
+    WHERE viaje_id = v_oferta.viaje_id
+      AND id != p_oferta_id
+      AND estado = 'pendiente';
+
+    -- 7. Expirar otras ofertas abiertas que este conductor tenía en otros viajes
+    UPDATE public.contraofertas_viaje
+    SET estado = 'expirada',
+        actualizado_en = now()
+    WHERE conductor_id = v_oferta.conductor_id
+      AND id != p_oferta_id
+      AND estado = 'pendiente';
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'viaje_id', v_oferta.viaje_id,
+        'conductor_id', v_oferta.conductor_id,
+        'tarifa_final', v_oferta.tarifa_ofertada,
+        'paga_con', v_paga_con,
+        'vuelto_estimado', v_nuevo_vuelto
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.seleccionar_oferta_viaje(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.seleccionar_oferta_viaje(UUID) TO authenticated;
+
+-- Alias de compatibilidad
+CREATE OR REPLACE FUNCTION public.proponer_contraoferta(
+    p_viaje_id UUID,
+    p_tarifa NUMERIC,
+    p_tiempo_llegada_min INT DEFAULT 3
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+    RETURN public.crear_contraoferta(p_viaje_id, p_tarifa, p_tiempo_llegada_min);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.proponer_contraoferta(UUID, NUMERIC, INT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.proponer_contraoferta(UUID, NUMERIC, INT) TO authenticated;
+
+-- ============================================================================
+-- 38. CANCELACIÓN POR CONDUCTOR (CIERRE EN AUSENCIA / NO-SHOW)
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.cancelar_viaje_conductor(
+    p_viaje_id UUID,
+    p_motivo TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_uid UUID := (SELECT auth.uid());
+    v_estado_actual TEXT;
+    v_es_ausencia BOOLEAN := false;
+    v_motivo_limpio TEXT;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'Sesión requerida' USING ERRCODE = '42501';
+    END IF;
+
+    IF p_motivo IS NULL OR trim(p_motivo) = '' THEN
+        RAISE EXCEPTION 'El motivo de cancelación es obligatorio';
+    END IF;
+
+    v_motivo_limpio := trim(p_motivo);
+
+    -- Bloqueo pesimista para evitar carreras con finalización o aceptación simultánea
+    SELECT estado::text INTO v_estado_actual
+    FROM public.viajes
+    WHERE id = p_viaje_id AND conductor_id = v_uid
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Viaje no encontrado o no asignado a este conductor';
+    END IF;
+
+    IF v_estado_actual NOT IN ('aceptado', 'en_camino_origen', 'esperando_pasajero') THEN
+        RAISE EXCEPTION 'No se puede cancelar el viaje en estado %', v_estado_actual;
+    END IF;
+
+    -- Detectar si el motivo indica ausencia/no-show del pasajero
+    IF lower(v_motivo_limpio) ~* '(no responde|no apareci|ausente|no se present|pasajero ausente|no llego|no est|no-show|desapareci)' THEN
+        v_es_ausencia := true;
+    END IF;
+
+    IF v_es_ausencia THEN
+        -- Si el pasajero no se presentó o no responde, cerrar definitivamente la carrera
+        UPDATE public.viajes
+        SET estado = 'cancelado_conductor',
+            motivo_cancelacion = v_motivo_limpio,
+            cancelado_por = v_uid,
+            actualizado_en = now()
+        WHERE id = p_viaje_id;
+
+        RETURN jsonb_build_object(
+            'ok', true,
+            'viaje_id', p_viaje_id,
+            'reabierto', false,
+            'estado', 'cancelado_conductor',
+            'motivo', v_motivo_limpio
+        );
+    ELSE
+        -- Si el conductor cancela por causas propias (avería, emergencia), reabrir a la bolsa de mototaxis
+        UPDATE public.viajes
+        SET conductor_id = NULL,
+            estado = 'buscando',
+            motivo_cancelacion = v_motivo_limpio,
+            cancelado_por = v_uid,
+            aceptado_en = NULL,
+            actualizado_en = now()
+        WHERE id = p_viaje_id;
+
+        RETURN jsonb_build_object(
+            'ok', true,
+            'viaje_id', p_viaje_id,
+            'reabierto', true,
+            'estado', 'buscando',
+            'motivo', v_motivo_limpio
+        );
+    END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.cancelar_viaje_conductor(UUID, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.cancelar_viaje_conductor(UUID, TEXT) TO authenticated;
+

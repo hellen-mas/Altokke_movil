@@ -3,9 +3,8 @@ import { useTemaConductor } from "@/features/conductores/theme/temaConductor";
 import { crearEstilos } from "./solicitudes.styles";
 import {
   useSolicitudesConductor,
-  type SolicitudViajeItem,
 } from "@/features/viajes/hooks/use-solicitudes-conductor";
-import { formatearSoles } from "@/features/viajes/utils/viaje";
+import { TarjetaSolicitudViaje } from "@/features/viajes/components/TarjetaSolicitudViaje";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
@@ -24,13 +23,14 @@ export default function SolicitudesConductor() {
     cargando,
     error,
     aceptarSolicitud,
+    rechazarSolicitud,
     aceptandoId,
     recargar,
   } = useSolicitudesConductor();
 
-  const handleAceptar = async (solicitud: SolicitudViajeItem) => {
+  const handleAceptar = async (viajeId: string) => {
     try {
-      const ok = await aceptarSolicitud(solicitud.id);
+      const ok = await aceptarSolicitud(viajeId);
       if (ok) {
         router.push("/conductor/viaje-activo");
       }
@@ -41,108 +41,16 @@ export default function SolicitudesConductor() {
     }
   };
 
-  // Renderizado fuera del árbol ScrollView para cumplir regla RN anti-map directo
-  const tarjetasSolicitud = solicitudes.map((solicitud) => {
-    const esAceptando = aceptandoId === solicitud.id;
-
-    return (
-      <View key={solicitud.id} style={styles.solicitudCard}>
-        <View style={styles.cardHeader}>
-          <View style={styles.badgeEnVivo}>
-            <View style={styles.puntoVerde} />
-            <Text style={styles.badgeEnVivoTexto}>SOLICITUD DISPONIBLE</Text>
-          </View>
-          <Text style={styles.tarifaMonto}>
-            {formatearSoles(solicitud.tarifaEstimada)}
-          </Text>
-        </View>
-
-        <View style={styles.rutasBloque}>
-          <View style={styles.ubicacionFila}>
-            <Ionicons name="radio-button-on" size={18} color={c.primario} />
-            <View style={styles.ubicacionInfo}>
-              <Text style={styles.ubicacionEtiqueta}>Punto de recojo</Text>
-              <Text style={styles.ubicacionNombre} numberOfLines={2}>
-                {solicitud.origenTexto}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.lineaConexion} />
-
-          <View style={styles.ubicacionFila}>
-            <Ionicons name="location" size={18} color={c.error} />
-            <View style={styles.ubicacionInfo}>
-              <Text style={styles.ubicacionEtiqueta}>Destino</Text>
-              <Text style={styles.ubicacionNombre} numberOfLines={2}>
-                {solicitud.destinoTexto}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.detallesFila}>
-          <View style={styles.chipDetalle}>
-            <Ionicons name="navigate-outline" size={15} color={c.textoSec} />
-            <Text style={styles.chipTexto}>
-              {solicitud.distanciaKm
-                ? `${solicitud.distanciaKm.toFixed(1)} km`
-                : "Urbano"}
-            </Text>
-          </View>
-
-          <View style={styles.chipDetalle}>
-            <Ionicons
-              name={
-                solicitud.metodoPago === "efectivo"
-                  ? "cash-outline"
-                  : "phone-portrait-outline"
-              }
-              size={15}
-              color={c.textoSec}
-            />
-            <Text style={styles.chipTexto}>
-              {solicitud.metodoPago === "efectivo"
-                ? "Efectivo"
-                : solicitud.metodoPago?.toUpperCase() || "Efectivo"}
-            </Text>
-          </View>
-
-          {solicitud.pagaCon != null && solicitud.pagaCon > 0 && (
-            <View style={[styles.chipDetalle, { backgroundColor: c.fondo }]}>
-              <Text
-                style={[
-                  styles.chipTexto,
-                  { color: c.primario, fontWeight: "700" },
-                ]}
-              >
-                Paga con S/ {solicitud.pagaCon.toFixed(2)}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <Pressable
-          style={[
-            styles.botonAceptar,
-            esAceptando && styles.botonDeshabilitado,
-          ]}
-          onPress={() => void handleAceptar(solicitud)}
-          disabled={esAceptando}
-          accessibilityRole="button"
-        >
-          {esAceptando ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <>
-              <Text style={styles.botonAceptarTexto}>Aceptar este viaje</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-            </>
-          )}
-        </Pressable>
-      </View>
-    );
-  });
+  // Conexión con componente oficial TarjetaSolicitudViaje (soporte para contraofertas y aceptación real)
+  const tarjetasSolicitud = solicitudes.map((solicitud) => (
+    <TarjetaSolicitudViaje
+      key={solicitud.id}
+      solicitud={solicitud}
+      onAceptar={handleAceptar}
+      onRechazar={rechazarSolicitud}
+      aceptando={aceptandoId === solicitud.id}
+    />
+  ));
 
   return (
     <View style={styles.safeArea}>

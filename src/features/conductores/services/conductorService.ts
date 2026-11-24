@@ -1,4 +1,5 @@
 import { supabase } from "@/shared/api/supabase";
+import { notificarEventoPush } from "@/features/viajes/services/pushNotificacionHelper";
 import {
   registroConductorService,
   DatosVehiculo,
@@ -286,6 +287,14 @@ export const conductorService = {
   async aceptarSolicitud(viajeId: string, _conductorId?: string): Promise<void> {
     const { error } = await supabase.rpc("aceptar_viaje", { p_viaje_id: viajeId });
     if (error) throw error;
+
+    // Notificación push no bloqueante al pasajero informando que su viaje fue aceptado
+    notificarEventoPush({
+      evento: "viaje_aceptado",
+      viajeId,
+      titulo: "¡Conductor asignado!",
+      mensaje: "Un conductor aceptó tu solicitud y va en camino a recogerte.",
+    });
   },
 
   async cambiarEstadoViaje(
@@ -294,6 +303,17 @@ export const conductorService = {
   ): Promise<{ ok: boolean; viaje_id: string; estado_anterior: string; estado_nuevo: string }> {
     const { data, error } = await supabase.rpc("cambiar_estado_viaje", { p_viaje_id: viajeId, p_nuevo_estado: nuevoEstado });
     if (error) throw error;
+
+    // Notificar al pasajero cuando el conductor llega al punto de encuentro
+    if (nuevoEstado === "esperando_pasajero") {
+      notificarEventoPush({
+        evento: "conductor_llegada",
+        viajeId,
+        titulo: "¡Tu mototaxi ha llegado!",
+        mensaje: "El conductor te está esperando en el punto de encuentro.",
+      });
+    }
+
     return data;
   },
 

@@ -16,6 +16,7 @@ import {
 } from "@/features/conductores/theme/temaConductor";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { supabase } from "@/shared/api/supabase";
+import { mapearErrorDatabase } from "@/shared/utils/erroresDatabase";
 
 const ALTURA_MAXIMA_BARRA = 90;
 
@@ -146,9 +147,9 @@ export default function GananciasConductor() {
         }))
       );
       setUltimosViajes(formateados);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn("Aviso al cargar ganancias del conductor:", err);
-      setError("No se pudieron cargar los datos de ganancias. Verifica tu conexión.");
+      setError(mapearErrorDatabase(err, "No se pudieron cargar los datos de ganancias. Verifica tu conexión."));
     } finally {
       setCargando(false);
     }

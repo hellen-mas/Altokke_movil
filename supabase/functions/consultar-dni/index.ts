@@ -54,14 +54,21 @@ function aTitulo(valor: string): string {
     .replace(/(^|\s)\S/g, (letra) => letra.toUpperCase());
 }
 
-// Control de rate limiting en memoria (10 consultas por minuto por IP)
+async function calcularSha256(texto: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(texto);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Control de rate limiting en memoria como respaldo (5 consultas cada 15 min por IP)
 interface RateLimitEntry {
   count: number;
   resetAt: number;
 }
 const rateLimits = new Map<string, RateLimitEntry>();
-const MAX_CONSULTAS_POR_MINUTO = 10;
-const VENTANA_MS = 60 * 1000;
+const MAX_CONSULTAS_POR_VENTANA = 5;
+const VENTANA_MS = 15 * 60 * 1000;
 
 function checkRateLimit(ip: string): boolean {
   const ahora = Date.now();
@@ -77,7 +84,7 @@ function checkRateLimit(ip: string): boolean {
     return true;
   }
 
-  if (entry.count >= MAX_CONSULTAS_POR_MINUTO) {
+  if (entry.count >= MAX_CONSULTAS_POR_VENTANA) {
     return false;
   }
 
@@ -97,21 +104,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  // 1. Obtener IP del cliente para rate limiting
-  const clientIp =
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "127.0.0.1";
-
-  if (!checkRateLimit(clientIp)) {
-    return errorDni(
-      "RATE_LIMIT_EXCEDIDO",
-      "Demasiadas solicitudes de consulta de DNI. Por favor espera un momento.",
-      429
-    );
-  }
-
+  // 1. Validar el formato de la petición y el DNI estrictamente antes de consumir recursos
   let cuerpo: unknown;
   try {
     cuerpo = await req.json();
@@ -119,19 +112,80 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return errorDni("DNI_INVALIDO", "Solicitud inválida.", 400);
   }
 
-  // 2. Verificación de Cloudflare Turnstile (si está configurado el secreto y no está en bypass)
+  const dni = esObjeto(cuerpo) ? texto(cuerpo.dni) : "";
+
+  if (!/^\d{8}$/.test(dni)) {
+    return errorDni(
+      "DNI_INVALIDO",
+      "El DNI debe contener exactamente 8 dígitos.",
+      400
+    );
+  }
+
+  // 2. Obtener IP del cliente y verificar rate limiting persistente en BD
+  const clientIp =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "127.0.0.1";
+
+  const ipHash = await calcularSha256(clientIp + "_altokke_dni_salt");
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (supabaseUrl && serviceRoleKey) {
+    try {
+      const adminRateLimit = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+
+      const { data: rlData, error: rlError } = await adminRateLimit.rpc("verificar_rate_limit", {
+        p_ip_hash: ipHash,
+        p_endpoint: "consultar-dni",
+        p_max_intentos: 5,
+        p_ventana_segundos: 900,
+      });
+
+      if (!rlError && rlData && rlData.permitido === false) {
+        return errorDni(
+          "RATE_LIMIT_EXCEDIDO",
+          "Has superado el límite de 5 consultas de DNI cada 15 minutos. Por favor espera antes de intentar nuevamente.",
+          429
+        );
+      }
+    } catch (errDbRateLimit) {
+      console.warn("Fallo verificando rate limit en BD, usando respaldo en memoria:", errDbRateLimit);
+    }
+  }
+
+  if (!checkRateLimit(clientIp)) {
+    return errorDni(
+      "RATE_LIMIT_EXCEDIDO",
+      "Has superado el límite de 5 consultas de DNI cada 15 minutos. Por favor espera antes de intentar nuevamente.",
+      429
+    );
+  }
+
+  // 3. Verificación de Cloudflare Turnstile condicional (solo si viene de web o si envía token explícito)
   const turnstileSecret = Deno.env.get("CF_TURNSTILE_SECRET_KEY") || Deno.env.get("TURNSTILE_SECRET_KEY");
-  const bypassTurnstile = Deno.env.get("ENVIRONMENT") === "development" || Deno.env.get("BYPASS_TURNSTILE") === "true";
+  const bypassTurnstile =
+    Deno.env.get("ENVIRONMENT") === "development" ||
+    Deno.env.get("BYPASS_TURNSTILE") === "true";
 
-  if (turnstileSecret && !bypassTurnstile) {
-    const turnstileToken = esObjeto(cuerpo)
-      ? texto(cuerpo.turnstileToken || cuerpo.token_turnstile)
-      : texto(req.headers.get("cf-turnstile-response"));
+  const originHeader = req.headers.get("origin") || req.headers.get("referer") || "";
+  const esOrigenWeb = Boolean(originHeader && !originHeader.startsWith("file:") && !originHeader.includes("localhost"));
+  const turnstileToken = esObjeto(cuerpo)
+    ? texto(cuerpo.turnstileToken || cuerpo.token_turnstile)
+    : texto(req.headers.get("cf-turnstile-response"));
 
+  const requiereTurnstile = Boolean(turnstileToken) || esOrigenWeb;
+
+  if (turnstileSecret && !bypassTurnstile && requiereTurnstile) {
     if (!turnstileToken) {
       return errorDni(
         "CAPTCHA_REQUERIDO",
-        "Token de verificación Turnstile requerido.",
+        "Token de verificación Turnstile requerido para solicitudes web.",
         403
       );
     }
@@ -164,16 +218,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
         502
       );
     }
-  }
-
-  const dni = esObjeto(cuerpo) ? texto(cuerpo.dni) : "";
-
-  if (!/^\d{8}$/.test(dni)) {
-    return errorDni(
-      "DNI_INVALIDO",
-      "El DNI debe contener exactamente 8 dígitos.",
-      400
-    );
   }
 
   const token = Deno.env.get("DNI_API_TOKEN")?.trim();

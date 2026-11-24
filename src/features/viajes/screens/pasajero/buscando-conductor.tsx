@@ -25,7 +25,7 @@ import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
 import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { formatearSoles, NOMBRE_METODO_PAGO } from "@/features/viajes/utils/viaje";
-import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
+import { escribirConductor } from "@/features/viajes/utils/contacto";
 import { ModalCancelarViaje } from "../../components/ModalCancelarViaje";
 import { supabase } from "@/shared/api/supabase";
 import {
@@ -283,7 +283,13 @@ export default function PantallaBuscandoConductor() {
 
                 <View style={styles.acciones}>
                   <Pressable
-                    onPress={() => llamarConductor(conductor?.telefono)}
+                    onPress={() => {
+                      Alert.alert(
+                        "Comunicación segura",
+                        "Por tu seguridad y privacidad (Ley 29733), comunícate con tu conductor a través del chat de la app.",
+                        [{ text: "Entendido" }]
+                      );
+                    }}
                     style={({ pressed }) => [
                       styles.accion,
                       { backgroundColor: colores.exitoFondo },

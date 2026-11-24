@@ -13,6 +13,7 @@ interface CulqiChargePayload {
   email: string;
   currency_code?: string;
   description?: string;
+  idempotency_key?: string;
 }
 
 interface CulqiErrorResponse {
@@ -34,6 +35,13 @@ function responder(datos: Record<string, unknown>, status = 200): Response {
     status,
     headers: corsHeaders,
   });
+}
+
+async function calcularSha256(texto: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(texto);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -71,6 +79,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const conductorId = user.id;
 
+  // Validar que el usuario sea un conductor registrado y aprobado
+  const { data: conductorPerfil, error: conductorError } = await supabaseAdmin
+    .from("conductores_perfil")
+    .select("estado")
+    .eq("usuario_id", conductorId)
+    .maybeSingle();
+
+  if (conductorError || !conductorPerfil || conductorPerfil.estado !== "aprobado") {
+    return responder(
+      { ok: false, error: "Solo conductores verificados y aprobados pueden recargar saldo en su billetera." },
+      403
+    );
+  }
+
   let payload: CulqiChargePayload;
   try {
     payload = await req.json();
@@ -104,8 +126,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const montoCentimos = Math.round(amount * 100);
 
-  // 3. Generar clave de idempotencia UUID para Culqi
-  const idempotencyKey = crypto.randomUUID();
+  // 3. Clave de idempotencia determinista por intento de cobro (evita doble cobro en reintentos)
+  const clientKey = payload.idempotency_key && typeof payload.idempotency_key === "string"
+    ? payload.idempotency_key.trim()
+    : "";
+  const idempotencyKey = clientKey || await calcularSha256(`altokke_culqi_${conductorId}_${token_id}_${montoCentimos}`);
 
   try {
     const culqiResponse = await fetch("https://api.culqi.com/v2/charges", {

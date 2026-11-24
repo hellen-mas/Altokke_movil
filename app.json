@@ -43,6 +43,9 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "location"
+        ],
         "NSLocationWhenInUseUsageDescription": "Altokke necesita acceso a tu ubicación mientras usas la app para mostrar conductores cercanos, calcular tarifas y guiar la ruta de tu viaje.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Altokke necesita acceso a tu ubicación en segundo plano para rastrear el progreso del viaje y garantizar tu seguridad durante el recorrido.",
         "NSCameraUsageDescription": "Altokke necesita acceso a la cámara para tomar fotos de tus documentos de identidad, brevete y SOAT para la verificación de conductor.",

@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
       return respuestaJson({ error: "No autorizado." }, 401);
     }
 
+    const token = authHeader.replace("Bearer ", "").trim();
     const url = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -61,6 +62,17 @@ Deno.serve(async (req) => {
     const admin = createClient(url, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+
+    const isServiceRole = token === serviceRoleKey;
+    let authenticatedUserId: string | null = null;
+
+    if (!isServiceRole) {
+      const { data: userData, error: userError } = await admin.auth.getUser(token);
+      if (userError || !userData?.user) {
+        return respuestaJson({ error: "Token de sesión inválido o expirado." }, 401);
+      }
+      authenticatedUserId = userData.user.id;
+    }
 
     const body = await req.json().catch(() => ({}));
     const { evento, viajeId, usuarioDestinoId, titulo, mensaje, datosExtra } = body;
@@ -80,12 +92,17 @@ Deno.serve(async (req) => {
       // Obtener datos del viaje
       const { data: viaje, error: errViaje } = await admin
         .from("viajes")
-        .select("id, origen_texto, destino_texto, tarifa_estimada, origen_lat, origen_lng")
+        .select("id, pasajero_id, origen_texto, destino_texto, tarifa_estimada, origen_lat, origen_lng")
         .eq("id", viajeId)
         .maybeSingle();
 
       if (errViaje || !viaje) {
         return respuestaJson({ error: "Viaje no encontrado." }, 404);
+      }
+
+      // Validar que el remitente sea el pasajero titular del viaje (o service_role)
+      if (!isServiceRole && viaje.pasajero_id !== authenticatedUserId) {
+        return respuestaJson({ error: "No autorizado para notificar sobre este viaje." }, 403);
       }
 
       // Consultar conductores aprobados y en línea
@@ -132,19 +149,50 @@ Deno.serve(async (req) => {
 
     // CASO 2: Conductor envía contraoferta o acepta el viaje -> Notificar al pasajero
     else if (evento === "contraoferta" || evento === "viaje_aceptado") {
-      let destinoId = usuarioDestinoId;
-
-      if (!destinoId && viajeId) {
-        const { data: viaje } = await admin
-          .from("viajes")
-          .select("pasajero_id")
-          .eq("id", viajeId)
-          .maybeSingle();
-        destinoId = viaje?.pasajero_id;
+      if (!viajeId) {
+        return respuestaJson({ error: `Falta viajeId para ${evento}.` }, 400);
       }
+
+      const { data: viaje, error: errViaje } = await admin
+        .from("viajes")
+        .select("id, pasajero_id, conductor_id, estado")
+        .eq("id", viajeId)
+        .maybeSingle();
+
+      if (errViaje || !viaje) {
+        return respuestaJson({ error: "Viaje no encontrado." }, 404);
+      }
+
+      // Validar legitimidad del conductor remitente
+      if (!isServiceRole) {
+        const { data: conductorPerfil } = await admin
+          .from("conductores_perfil")
+          .select("estado")
+          .eq("usuario_id", authenticatedUserId)
+          .maybeSingle();
+
+        if (!conductorPerfil || conductorPerfil.estado !== "aprobado") {
+          return respuestaJson({ error: "Solo conductores aprobados pueden emitir ofertas o asignaciones." }, 403);
+        }
+
+        if (evento === "viaje_aceptado" && viaje.conductor_id !== authenticatedUserId) {
+          return respuestaJson({ error: "No estás asignado como conductor de este viaje." }, 403);
+        }
+
+        if (evento === "contraoferta" && !["buscando", "solicitado"].includes(viaje.estado)) {
+          return respuestaJson({ error: "El viaje no está disponible para contraofertas." }, 400);
+        }
+      }
+
+      const destinoId = viaje.pasajero_id;
 
       if (!destinoId) {
         return respuestaJson({ error: "No se identificó el pasajero a notificar." }, 400);
+      }
+
+      // Si el cliente especificó un usuarioDestinoId diferente al pasajero legítimo, rechazar
+      if (usuarioDestinoId && usuarioDestinoId !== destinoId) {
+        return respuestaJson({ error: "El destinatario no coincide con el pasajero del viaje." }, 403);
       }
 
       const { data: tokens } = await admin
@@ -183,19 +231,48 @@ Deno.serve(async (req) => {
 
     // CASO 3: Mensaje de chat o conductor marca llegada al punto de encuentro
     else if (evento === "chat_mensaje" || evento === "conductor_llegada") {
-      let destinoId = usuarioDestinoId;
+      if (!viajeId) {
+        return respuestaJson({ error: `Falta viajeId para ${evento}.` }, 400);
+      }
 
-      if (!destinoId && viajeId && evento === "conductor_llegada") {
-        const { data: viaje } = await admin
-          .from("viajes")
-          .select("pasajero_id")
-          .eq("id", viajeId)
-          .maybeSingle();
-        destinoId = viaje?.pasajero_id;
+      const { data: viaje, error: errViaje } = await admin
+        .from("viajes")
+        .select("id, pasajero_id, conductor_id, estado")
+        .eq("id", viajeId)
+        .maybeSingle();
+
+      if (errViaje || !viaje) {
+        return respuestaJson({ error: "Viaje no encontrado." }, 404);
+      }
+
+      let destinoId: string | null = null;
+
+      if (evento === "conductor_llegada") {
+        if (!isServiceRole && viaje.conductor_id !== authenticatedUserId) {
+          return respuestaJson({ error: "No eres el conductor de este viaje." }, 403);
+        }
+        destinoId = viaje.pasajero_id;
+      } else if (evento === "chat_mensaje") {
+        if (!isServiceRole) {
+          const esPasajero = viaje.pasajero_id === authenticatedUserId;
+          const esConductor = viaje.conductor_id === authenticatedUserId;
+
+          if (!esPasajero && !esConductor) {
+            return respuestaJson({ error: "No tienes autorización para enviar mensajes en este viaje." }, 403);
+          }
+
+          destinoId = esPasajero ? viaje.conductor_id : viaje.pasajero_id;
+        } else {
+          destinoId = usuarioDestinoId || (viaje.conductor_id ? viaje.conductor_id : viaje.pasajero_id);
+        }
       }
 
       if (!destinoId) {
-        return respuestaJson({ error: "Destinatario no especificado." }, 400);
+        return respuestaJson({ error: "Destinatario no especificado o sin contraparte en el viaje." }, 400);
+      }
+
+      if (usuarioDestinoId && usuarioDestinoId !== destinoId) {
+        return respuestaJson({ error: "Destinatario no coincide con la contraparte del viaje." }, 403);
       }
 
       const { data: tokens } = await admin
@@ -230,6 +307,9 @@ Deno.serve(async (req) => {
           },
         });
       }
+    } else {
+      // Cualquier otro evento no autorizado explícitamente se rechaza
+      return respuestaJson({ error: `Evento '${evento}' no reconocido o no autorizado.` }, 403);
     }
 
     // Enviar mensajes acumulados a Expo Push
