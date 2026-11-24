@@ -162,18 +162,17 @@ export const viajeService = {
         throw new Error("No se encontró el conductor asignado al viaje para registrar la calificación.");
       }
 
-      const payload: Record<string, unknown> = {
+      const payload = {
         viaje_id: viajeId,
         autor_id: autorId,
         receptor_id: finalReceptorId,
         puntuacion,
         comentario: comentario || null,
-        etiquetas: etiquetas || [],
       };
 
       const { data, error } = await supabase
         .from("calificaciones")
-        .insert(payload as unknown as Record<string, unknown>)
+        .insert(payload)
         .select()
         .maybeSingle();
 
