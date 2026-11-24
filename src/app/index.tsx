@@ -1,45 +1,65 @@
-
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
-import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { Redirect } from "expo-router";
+
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
+import { obtenerDestinoInicialConductor } from "@/features/conductores/services/estadoSolicitudService";
+
+type DestinoConductor = 
+  | "/(auth)/estado-solicitud"
+  | "/conductor/inicio";
 
 export default function Index() {
   const {
     isAuthenticated,
     userRole,
-    userId,
     isLoading,
+    userId,
   } = useAuth();
 
-  const [estadoConductor, setEstadoConductor] = useState<string | null>(null);
-
+  const [destinoConductor, setDestinoConductor] = useState<DestinoConductor | null>(null);
+  
   useEffect(() => {
-    if (isAuthenticated && userRole === "conductor" && userId) {
-      let activo = true;
-      obtenerEstadoConductor(userId)
-        .then((estado) => {
-          if (activo) setEstadoConductor(estado);
-        })
-        .catch(() => {
-          if (activo) setEstadoConductor("pendiente");
-        });
-      return () => {
-        activo = false;
-      };
+    if (isLoading || !isAuthenticated || userRole !== "conductor") {
+      return;
     }
-  }, [isAuthenticated, userRole, userId]);
 
-  const esperandoEstadoConductor =
-    isAuthenticated && userRole === "conductor" && Boolean(userId) && estadoConductor === null;
+    let activo = true;
 
-  if (isLoading || esperandoEstadoConductor) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#1A8A56" />
-      </View>
-    );
+    const resolverDestino = async () => {
+      if (!userId) {
+        if (activo) setDestinoConductor("/(auth)/estado-solicitud");
+        return;
+      }
+
+      try {
+        const destino =
+          await obtenerDestinoInicialConductor(userId);
+
+        if (activo) {
+          setDestinoConductor(destino);
+        }
+      } catch (error) {
+        console.error(
+          "Error al consultar el estado del conductor:",
+          error
+        );
+
+        if (activo) {
+          setDestinoConductor("/(auth)/estado-solicitud");
+        }
+      }
+    };
+
+    void resolverDestino();
+
+    return () => {
+      activo = false;
+    };
+  }, [isLoading, isAuthenticated, userRole, userId]);
+
+  if (isLoading) {
+    return null;
   }
 
   if (!isAuthenticated) {
@@ -47,12 +67,21 @@ export default function Index() {
   }
 
   if (userRole === "conductor") {
-    if (estadoConductor === "aprobado") {
-      return <Redirect href="/conductor/inicio" />;
+    if (!destinoConductor) {
+      return (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color="#1A8A56" />
+        </View>
+      );
     }
-    return (
-      <Redirect href="/(auth)/estado-solicitud" />
-    );
+
+    return <Redirect href={destinoConductor} />;
   }
 
   if (userRole === "pasajero") {

@@ -1,39 +1,53 @@
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
+import { authService } from "@/features/autenticacion/services/authService";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { router } from "expo-router";
-import { Alert, Linking, ScrollView, StyleSheet, View } from "react-native";
-import { authService } from "@/features/autenticacion/services/authService";
-import { useState } from "react";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 export default function ConfiguracionConductor() {
   const { estilos: styles } = useTemaConductor(crearEstilos);
+  const { modoPreferido, setModoPreferido } = useAltokkeTheme();
   const { logout } = useAuth();
 
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+  const [notificaciones, setNotificaciones] = useState(true);
+  const [mapaSatelite, setMapaSatelite] = useState(false);
 
-  const verIdioma = () => {
-    Alert.alert("Idioma", "El idioma actual de la aplicación es Español (Perú).");
+  const cambiarIdioma = () => {
+    Alert.alert("Idioma de Altokke", "El idioma de la aplicación está configurado en Español (Perú).");
   };
 
-  const verNotificaciones = () => {
-    Alert.alert("Notificaciones", "Las notificaciones sonoras y alertas de viaje en tiempo real están activas.");
+  const toggleNotificaciones = () => {
+    const estado = !notificaciones;
+    setNotificaciones(estado);
+    Alert.alert("Notificaciones", estado ? "Alertas y sonidos activados." : "Alertas y sonidos pausados.");
   };
 
-  const verApariencia = () => {
-    Alert.alert("Apariencia", "El tema visual se ajusta automáticamente según la configuración del sistema de tu dispositivo.");
+  const cambiarApariencia = () => {
+    Alert.alert(
+      "Apariencia",
+      `Modo actual: ${modoPreferido}. Elige una opción:`,
+      [
+        { text: "Claro", onPress: () => setModoPreferido("claro") },
+        { text: "Oscuro", onPress: () => setModoPreferido("oscuro") },
+        { text: "Automático (Sistema)", onPress: () => setModoPreferido("automatico") },
+        { text: "Cancelar", style: "cancel" },
+      ]
+    );
   };
 
-  const verMapa = () => {
-    Alert.alert("Mapa", "El mapa está configurado con cartografía optimizada para la zona urbana de Bagua.");
+  const cambiarPreferenciasMapa = () => {
+    const nuevo = !mapaSatelite;
+    setMapaSatelite(nuevo);
+    Alert.alert("Preferencias de mapa", nuevo ? "Modo satelital activado." : "Modo estándar vectorial activado.");
   };
 
-  const verPrivacidad = () => {
-    const url = process.env.EXPO_PUBLIC_PRIVACY_URL || "https://altokke.pe/privacidad";
-    Linking.openURL(url).catch(() => {
-      Alert.alert("Privacidad", "Tus datos personales y de ubicación están protegidos y cifrados en tránsito.");
-    });
+  const abrirSeguridad = () => {
+    router.push("/conductor/cuenta/seguridad");
   };
 
   const confirmarEliminarCuenta = () => {
@@ -57,10 +71,11 @@ export default function ConfiguracionConductor() {
               await authService.eliminarMiCuenta();
 
               router.replace("/(auth)/bienvenida");
-            } catch (error: any) {
+            } catch (error: unknown) {
+              const mensaje = error instanceof Error ? error.message : "Inténtalo nuevamente.";
               Alert.alert(
                 "No se pudo eliminar la cuenta",
-                error?.message || "Inténtalo nuevamente."
+                mensaje
               );
             } finally {
               setEliminandoCuenta(false);
@@ -106,59 +121,51 @@ export default function ConfiguracionConductor() {
             icono="globe"
             titulo="Idioma"
             descripcion="Español (Perú)"
-            onPress={verIdioma}
+            onPress={cambiarIdioma}
           />
           <OpcionCuenta
             icono="notifications"
             titulo="Notificaciones"
-            descripcion="Push, sonidos y alertas de viaje"
-            onPress={verNotificaciones}
+            descripcion={notificaciones ? "Alertas activadas" : "Alertas pausadas"}
+            onPress={toggleNotificaciones}
           />
           <OpcionCuenta
             icono="moon"
             titulo="Apariencia"
-            descripcion="Adaptable al sistema"
-            onPress={verApariencia}
+            descripcion={`Modo: ${modoPreferido}`}
+            onPress={cambiarApariencia}
           />
           <OpcionCuenta
             icono="map"
             titulo="Preferencias de mapa"
-            descripcion="Cartografía urbana de Bagua"
-            onPress={verMapa}
+            descripcion={mapaSatelite ? "Satelital" : "Vectorial estándar"}
+            onPress={cambiarPreferenciasMapa}
           />
           <OpcionCuenta
             icono="lock-closed"
-            titulo="Privacidad"
-            descripcion="Protección de datos conforme a ley"
-            onPress={verPrivacidad}
+            titulo="Privacidad y Seguridad"
+            descripcion="Contraseñas y sesiones activas"
+            onPress={abrirSeguridad}
             ultimo
           />
         </View>
 
-        <View style={styles.opciones}>
+        <View style={styles.opcionesPeligro}>
           <OpcionCuenta
             icono="log-out"
             titulo="Cerrar sesión"
-            descripcion="Salir de tu cuenta"
+            descripcion="Salir de tu cuenta en este dispositivo"
             onPress={cerrarSesion}
-            ultimo
           />
-        </View>
-
-        <View style={styles.opciones}>
           <OpcionCuenta
-            icono="trash-outline"
+            icono="trash"
             titulo="Eliminar cuenta"
-            descripcion={
-              eliminandoCuenta
-                ? "Procesando solicitud..."
-                : "Solicitar la eliminación de tu cuenta"
-            }
-            onPress={confirmarEliminarCuenta}
+            descripcion="Borrar definitivamente tus datos"
+            peligro
             ultimo
+            onPress={confirmarEliminarCuenta}
           />
         </View>
-
       </ScrollView>
     </View>
   );
@@ -169,24 +176,18 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     flex: 1,
     backgroundColor: c.fondo,
   },
-
   scrollContent: {
-    paddingBottom: 30,
+    padding: 20,
+    gap: 16,
   },
-
-  aviso: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 0,
-  },
-
   opciones: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: c.borde,
-    borderRadius: 18,
     backgroundColor: c.superficie,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  opcionesPeligro: {
+    backgroundColor: c.superficie,
+    borderRadius: 16,
     overflow: "hidden",
   },
 });

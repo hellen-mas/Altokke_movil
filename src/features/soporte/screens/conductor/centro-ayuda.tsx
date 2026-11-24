@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,10 @@ import {
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { AvisoInformativo } from "@/shared/components/ui";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
+import {
+  MENSAJE_SOPORTE_CONDUCTOR,
+  NUMERO_WHATSAPP_SOPORTE,
+} from "@/features/soporte/constants/contactoSoporte";
 
 interface PreguntaProps {
   pregunta: string;
@@ -56,11 +61,18 @@ function PreguntaFrecuente({
 
 export default function CentroAyudaConductor() {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
-  const contactarSoporte = () => {
-    Alert.alert(
-      "Soporte Altokke",
-      "Más adelante esta opción permitirá comunicarte directamente con soporte."
-    );
+  const contactarSoporte = async () => {
+    const mensaje = encodeURIComponent(MENSAJE_SOPORTE_CONDUCTOR);
+    const url = `https://wa.me/${NUMERO_WHATSAPP_SOPORTE}?text=${mensaje}`;
+
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(
+        "No se pudo abrir WhatsApp",
+        "Intenta de nuevo en unos minutos."
+      );
+    }
   };
 
   return (

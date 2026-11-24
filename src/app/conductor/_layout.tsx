@@ -2,17 +2,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs, Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "@/shared/api/supabase";
 import { obtenerEstadoConductor } from "@/features/conductores/services/conductorService";
-
 import { useColoresConductor } from "@/features/conductores/theme/temaConductor";
 import { useAlertaConductor } from "@/features/notificaciones/hooks/useAlertaConductor";
 
 export default function ConductorLayout() {
   const { c } = useColoresConductor();
+  const insets = useSafeAreaInsets();
   const [verificando, setVerificando] = useState(true);
   const [esConductor, setEsConductor] = useState(false);
   const [autorizado, setAutorizado] = useState(false);
+
   useAlertaConductor({
     habilitado: autorizado && !verificando,
     radioKm: 3,
@@ -60,7 +62,7 @@ export default function ConductorLayout() {
         }
       };
 
-      verificarAcceso();
+      void verificarAcceso();
 
       return () => {
         activo = false;
@@ -97,24 +99,20 @@ export default function ConductorLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-
         tabBarActiveTintColor: c.primario,
         tabBarInactiveTintColor: c.textoSec,
-
         tabBarStyle: {
-            backgroundColor: c.barra,
-            borderTopColor: c.borde,
-            borderTopWidth: StyleSheet.hairlineWidth,
-            height: 70,
-            paddingTop: 7,
-            paddingBottom: 8,
+          backgroundColor: c.barra,
+          borderTopColor: c.borde,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 60 + Math.max(insets.bottom, 10),
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 10),
         },
-
         tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: "600",
+          fontSize: 11,
+          fontWeight: "600",
         },
-
         tabBarHideOnKeyboard: true,
       }}
     >
@@ -122,7 +120,6 @@ export default function ConductorLayout() {
         name="inicio"
         options={{
           title: "Inicio",
-
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "home" : "home-outline"}
@@ -143,7 +140,6 @@ export default function ConductorLayout() {
         name="solicitudes"
         options={{
           title: "Solicitudes",
-
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={
@@ -168,7 +164,6 @@ export default function ConductorLayout() {
         name="ganancias"
         options={{
           title: "Ganancias",
-
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "wallet" : "wallet-outline"}
@@ -189,7 +184,6 @@ export default function ConductorLayout() {
         name="cuenta"
         options={{
           title: "Cuenta",
-
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
@@ -212,7 +206,6 @@ export default function ConductorLayout() {
           // En Expo Router 58, `href: null` oculta la pestaña Y redirige a Inicio al navegar a ella.
           // Con tabBarButton nulo solo se oculta el botón y la pantalla sigue siendo accesible.
           tabBarButton: () => null,
-          // Quita también el hueco que deja el botón, para que los 4 íconos queden centrados como antes
           tabBarItemStyle: { display: "none" },
           headerShown: false,
           tabBarStyle: {

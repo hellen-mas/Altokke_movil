@@ -1,0 +1,137 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+  },
+  contenedorTeclado: {
+    width: "100%",
+    maxWidth: 440,
+    maxHeight: "90%",
+    flexShrink: 1,
+  },
+  contenedor: {
+    width: "100%",
+    maxHeight: "100%",
+    borderRadius: 22,
+    padding: 20,
+    flexShrink: 1,
+    overflow: "hidden",
+  },
+  contenidoDesplazable: {
+    flexShrink: 1,
+  },
+  contenidoInterior: {
+    paddingBottom: 8,
+  },
+  cabecera: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  iconoAlerta: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  botonCerrar: {
+    padding: 8,
+  },
+  titulo: {
+    fontSize: 21,
+    fontWeight: "800",
+    marginBottom: 7,
+  },
+  descripcion: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 17,
+  },
+  advertencia: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 9,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  textoAdvertencia: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+  listaMotivos: {
+    gap: 9,
+  },
+  separadorMotivos: {
+    height: 9,
+  },
+  opcion: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  textoOpcion: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  inputDetalle: {
+    minHeight: 85,
+    maxHeight: 120,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    fontSize: 13,
+  },
+  botones: {
+    flexDirection: "row",
+    gap: 10,
+    paddingTop: 14,
+    marginTop: 8,
+    borderTopWidth: 1,
+  },
+  botonSecundario: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  textoSecundario: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  botonConfirmar: {
+    flex: 1.5,
+    minWidth: 0,
+    minHeight: 48,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 8,
+  },
+  textoConfirmar: {
+    fontSize: 12,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+});

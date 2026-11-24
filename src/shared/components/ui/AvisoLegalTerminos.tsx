@@ -1,19 +1,21 @@
-import React from "react";
-import { Linking, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import {
+  POLITICA_PRIVACIDAD,
+  TERMINOS_SERVICIO,
+} from "@/shared/constants/textosLegales";
+import { ModalTextoLegal } from "./ModalTextoLegal";
 
 export function AvisoLegalTerminos() {
   const { colores } = useAltokkeTheme();
+  const [visible, setVisible] = useState(false);
+  // tipo se conserva al cerrar para que el texto no cambie durante el fade
+  const [tipo, setTipo] = useState<"terminos" | "privacidad">("terminos");
 
-  const urlTerminos =
-    process.env.EXPO_PUBLIC_TERMS_URL || "https://altokke.pe/terminos";
-  const urlPrivacidad =
-    process.env.EXPO_PUBLIC_PRIVACY_URL || "https://altokke.pe/privacidad";
-
-  const abrirEnlace = (url: string) => {
-    Linking.openURL(url).catch((err) => {
-      console.warn("No se pudo abrir enlace legal:", err);
-    });
+  const abrirModal = (nuevoTipo: "terminos" | "privacidad") => {
+    setTipo(nuevoTipo);
+    setVisible(true);
   };
 
   return (
@@ -21,22 +23,28 @@ export function AvisoLegalTerminos() {
       <Text style={[styles.textoLegal, { color: colores.secundario }]}>
         Al continuar, aceptas nuestros{" "}
         <Text
-          style={[styles.enlaceLegal, { color: colores.exitoTexto }]}
-          onPress={() => abrirEnlace(urlTerminos)}
+          onPress={() => abrirModal("terminos")}
           accessibilityRole="link"
+          style={[styles.enlaceLegal, { color: colores.exitoTexto }]}
         >
           Términos de servicio
         </Text>{" "}
         y{" "}
         <Text
-          style={[styles.enlaceLegal, { color: colores.exitoTexto }]}
-          onPress={() => abrirEnlace(urlPrivacidad)}
+          onPress={() => abrirModal("privacidad")}
           accessibilityRole="link"
+          style={[styles.enlaceLegal, { color: colores.exitoTexto }]}
         >
           Política de privacidad
         </Text>
         .
       </Text>
+
+      <ModalTextoLegal
+        visible={visible}
+        texto={tipo === "terminos" ? TERMINOS_SERVICIO : POLITICA_PRIVACIDAD}
+        onCerrar={() => setVisible(false)}
+      />
     </View>
   );
 }

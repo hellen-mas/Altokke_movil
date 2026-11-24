@@ -3,11 +3,12 @@ import {
   EstadoConductor,
   obtenerEstadoConductor,
 } from "@/features/conductores/services/conductorService";
+import { supabase } from "@/shared/api/supabase";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -26,7 +27,7 @@ const ESTADOS: Record<
   { 
     titulo: string; 
     descripcion: string; 
-    etiqueta: string;
+    etiqueta: string; 
     icono: Icono;
   }
 > = {
@@ -62,6 +63,7 @@ const ESTADOS: Record<
 
 export default function EstadoSolicitudScreen() {
   const { colores } = useAltokkeTheme();
+  const [marcandoAprobacion, setMarcandoAprobacion] = useState(false);
 
   const {
     data: estado,
@@ -91,6 +93,25 @@ export default function EstadoSolicitudScreen() {
       );
     }
   }, [error]);
+
+  const continuarComoConductor = async () => {
+    try {
+      setMarcandoAprobacion(true);
+      const user = await authService.obtenerUsuarioActual();
+      if (user) {
+        await supabase
+          .from("conductores_perfil")
+          .update({ pantalla_aprobacion_vista: true })
+          .eq("usuario_id", user.id);
+      }
+      router.replace("/conductor/inicio");
+    } catch (err) {
+      console.error("Error al actualizar la solicitud:", err);
+      router.replace("/conductor/inicio");
+    } finally {
+      setMarcandoAprobacion(false);
+    }
+  };
 
   const cerrarSesion = async () => {
     try {
@@ -194,8 +215,8 @@ export default function EstadoSolicitudScreen() {
 
                 <View style={styles.filaEstado}>
                   <Ionicons
-                    name="ellipse"
-                    size={11}
+                    name={configuracion.icono}
+                    size={20}
                     color={colorEstado}
                   />
 
@@ -248,17 +269,22 @@ export default function EstadoSolicitudScreen() {
 
         <View style={styles.acciones}>
           <Pressable
-            disabled={cargando}
+            disabled={cargando || marcandoAprobacion}
             onPress={
               esAprobado
-                ? () => router.replace("/conductor/inicio")
+                ? () => void continuarComoConductor()
                 : () => void refetch()
             }
             style={({ pressed }) => [
               styles.botonPrincipal,
               {
                 backgroundColor: colores.primario,
-                opacity: cargando ? 0.55 : pressed ? 0.8 : 1,
+                opacity: 
+                  cargando || marcandoAprobacion
+                    ? 0.55
+                    : pressed 
+                      ? 0.8
+                      : 1,
               },
             ]}
           >
@@ -268,9 +294,11 @@ export default function EstadoSolicitudScreen() {
                 { color: colores.textoBoton },
               ]}
             >
-              {esAprobado
-                ? "Empezar a conducir"
-                : "Actualizar estado"}
+              {marcandoAprobacion
+                ? "Activando tu cuenta..."
+                : esAprobado 
+                  ? "Empezar a conducir"
+                  : "Actualizar estado"}
             </Text>
 
             <Ionicons
@@ -312,11 +340,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 26,
     paddingTop: 22,
     paddingBottom: 30,
-  },
-  marca: {
-    fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: 2.5,
   },
   contenido: {
     flex: 1,
@@ -399,4 +422,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

@@ -11,8 +11,7 @@ import { useConsultaDniQuery as useConsultaDni } from "@/features/autenticacion/
 import { calcularEdad, sanitizarDNI } from "@/shared/utils/validaciones";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { supabase } from "@/shared/api/supabase";
+import React from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,7 +26,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DatosPersonalesConductor() {
   const { colores, esOscuro } = useAltokkeTheme();
-  const [sesionOAuth, setSesionOAuth] = useState(false);
   // 2. zustand_uso - guardamos datos personales (paso 1)
   const {
     nombre,
@@ -39,26 +37,6 @@ export default function DatosPersonalesConductor() {
     confirmarContrasena,
     actualizarFormulario,
   } = useRegistroConductor();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setSesionOAuth(true);
-        const email = user.email || "";
-        const meta = user.user_metadata || {};
-        const nombreMeta = (meta.nombre || meta.full_name || meta.name || "").toString();
-        const partes = nombreMeta.trim().split(" ");
-        const primerNombre = partes[0] || "";
-        const estadoActual = useRegistroConductor.getState();
-        const apellidosRestantes = partes.slice(1).join(" ") || "";
-        actualizarFormulario({
-          correo: email,
-          nombre: estadoActual.nombre || primerNombre,
-          apellidos: estadoActual.apellidos || apellidosRestantes,
-        });
-      }
-    });
-  }, [actualizarFormulario]);
 
   // 3. apiperu_uso - autocompleta nombres de reniec
   const {
@@ -91,33 +69,28 @@ export default function DatosPersonalesConductor() {
     if (!dniEsValido) {
       return Alert.alert("DNI requerido", "Ingresa un DNI válido y espera la verificación.");
     }
-    if (!nombre.trim() || !apellidos.trim() || !fechaNacimiento || !correo.trim()) {
-      return Alert.alert("Campos incompletos", "Completa todos los campos obligatorios para continuar.");
+    if (!nombre.trim() || !apellidos.trim() || !fechaNacimiento || !correo.trim() || !contrasena || !confirmarContrasena.trim()) {
+      return Alert.alert("Campos incompletos", "Completa todos los campos para continuar.");
     }
     if (calcularEdad(fechaNacimiento) < 18) {
       return Alert.alert("Edad no permitida", "Debes tener al menos 18 años.");
     }
 
-    if (!sesionOAuth) {
-      if (!contrasena || !confirmarContrasena.trim()) {
-        return Alert.alert("Campos incompletos", "Ingresa y confirma tu contraseña.");
-      }
-      const requisitosContrasena = [
-        contrasena.length >= 12,
-        /[A-Z]/.test(contrasena),
-        /[a-z]/.test(contrasena),
-        /[0-9]/.test(contrasena),
-        /[^A-Za-z0-9]/.test(contrasena),
-      ];
-      if (!requisitosContrasena.every(Boolean)) {
-        return Alert.alert(
-          "Contraseña poco segura",
-          "Utiliza al menos 12 caracteres, una mayúscula, una minúscula, un número y un símbolo."
-        );
-      }
-      if (contrasena !== confirmarContrasena) {
-        return Alert.alert("Contraseñas diferentes", "Las contraseñas no coinciden.");
-      }
+    const requisitosContrasena = [
+      contrasena.length >= 12,
+      /[A-Z]/.test(contrasena),
+      /[a-z]/.test(contrasena),
+      /[0-9]/.test(contrasena),
+      /[^A-Za-z0-9]/.test(contrasena),
+    ];
+    if (!requisitosContrasena.every(Boolean)) {
+      return Alert.alert(
+        "Contraseña poco segura",
+        "Utiliza al menos 12 caracteres, una mayúscula, una minúscula, un número y un símbolo."
+      );
+    }
+    if (contrasena !== confirmarContrasena) {
+      return Alert.alert("Contraseñas diferentes", "Las contraseñas no coinciden.");
     }
 
     router.push("/registro-conductor/verificacion-contacto");
@@ -131,7 +104,8 @@ export default function DatosPersonalesConductor() {
       <StatusBar style={esOscuro ? "light" : "dark"}/>
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colores.fondo }]}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        // en Android con borde a borde el teclado ya no redimensiona la ventana
+        behavior="padding"
       >
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { backgroundColor: colores.fondo }]}
@@ -203,37 +177,33 @@ export default function DatosPersonalesConductor() {
               variante={esOscuro ? "oscuro" : "claro"}
             />
 
-            {!sesionOAuth && (
-              <>
-                <CampoTexto
-                  placeholder="Contraseña"
-                  nombreIcono="lock-closed-outline"
-                  value={contrasena}
-                  onChangeText={(contrasena) => actualizarFormulario({ contrasena })}
-                  esPassword
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  variante={esOscuro ? "oscuro" : "claro"}
-                />
+            <CampoTexto
+              placeholder="Contraseña"
+              nombreIcono="lock-closed-outline"
+              value={contrasena}
+              onChangeText={(contrasena) => actualizarFormulario({ contrasena })}
+              esPassword
+              autoCapitalize="none"
+              autoCorrect={false}
+              variante={esOscuro ? "oscuro" : "claro"}
+            />
 
-                <MedidorPasswordSeguro
-                  contrasena={contrasena}
-                  longitudMinima={12}
-                  variante={esOscuro ? "oscuro" : "claro"}
-                />
+            <MedidorPasswordSeguro
+              contrasena={contrasena}
+              longitudMinima={12}
+              variante={esOscuro ? "oscuro" : "claro"}
+            />
 
-                <CampoTexto
-                  placeholder="Confirmar contraseña"
-                  nombreIcono="lock-closed-outline"
-                  value={confirmarContrasena}
-                  onChangeText={(confirmarContrasena) => actualizarFormulario({ confirmarContrasena })}
-                  esPassword
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  variante={esOscuro ? "oscuro" : "claro"}
-                />
-              </>
-            )}
+            <CampoTexto
+              placeholder="Confirmar contraseña"
+              nombreIcono="lock-closed-outline"
+              value={confirmarContrasena}
+              onChangeText={(confirmarContrasena) => actualizarFormulario({ confirmarContrasena })}
+              esPassword
+              autoCapitalize="none"
+              autoCorrect={false}
+              variante={esOscuro ? "oscuro" : "claro"}
+            />
           </View>
           
           <View style={styles.pieFormulario}>

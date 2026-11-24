@@ -990,3 +990,84 @@ $$;
 REVOKE ALL ON FUNCTION public.reportar_incidente(TEXT, TEXT, UUID) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reportar_incidente(TEXT, TEXT, UUID) TO authenticated, service_role;
 
+
+
+-- ==============================================================================
+-- 23. LIBRO DE RECLAMACIONES E INFRAESTRUCTURA DE NOTIFICACIONES PUSH
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.reclamaciones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo_reclamacion TEXT NOT NULL UNIQUE,
+  usuario_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  nombre_completo TEXT NOT NULL,
+  tipo_documento TEXT NOT NULL CHECK (tipo_documento IN ('DNI', 'CE', 'RUC')),
+  numero_documento TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  email TEXT NOT NULL,
+  direccion TEXT,
+  tipo TEXT NOT NULL CHECK (tipo IN ('reclamo', 'queja')),
+  monto_reclamado NUMERIC NOT NULL DEFAULT 0 CHECK (monto_reclamado >= 0),
+  descripcion_bien_contratado TEXT NOT NULL,
+  detalle_reclamacion TEXT NOT NULL,
+  pedido_consumidor TEXT NOT NULL,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.reclamaciones ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.reclamaciones FROM PUBLIC, anon, authenticated;
+GRANT INSERT(
+  codigo_reclamacion,
+  usuario_id,
+  nombre_completo,
+  tipo_documento,
+  numero_documento,
+  telefono,
+  email,
+  direccion,
+  tipo,
+  monto_reclamado,
+  descripcion_bien_contratado,
+  detalle_reclamacion,
+  pedido_consumidor
+) ON public.reclamaciones TO authenticated;
+
+DROP POLICY IF EXISTS altokke_reclamaciones_insert ON public.reclamaciones;
+CREATE POLICY altokke_reclamaciones_insert ON public.reclamaciones
+  FOR INSERT TO authenticated
+  WITH CHECK (usuario_id = (SELECT auth.uid()));
+
+CREATE TABLE IF NOT EXISTS public.push_receipts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id TEXT NOT NULL,
+  usuario_id UUID NOT NULL,
+  push_token_id UUID,
+  categoria TEXT NOT NULL CHECK (categoria IN ('aprobaciones', 'viajes', 'pagos', 'cuenta')),
+  tipo TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'ok', 'error')),
+  codigo_error TEXT,
+  mensaje_error TEXT,
+  consultado_en TIMESTAMPTZ,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT push_receipts_ticket_id_key UNIQUE (ticket_id)
+);
+
+ALTER TABLE public.push_receipts ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.push_receipts FROM PUBLIC, anon, authenticated;
+GRANT ALL ON TABLE public.push_receipts TO service_role;
+
+CREATE TABLE IF NOT EXISTS public.push_webhook_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_hash TEXT NOT NULL,
+  usuario_id UUID NOT NULL,
+  tipo TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'procesando' CHECK (estado IN ('procesando', 'completado', 'fallido')),
+  ultimo_error TEXT,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  actualizado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT push_webhook_events_event_hash_key UNIQUE (event_hash)
+);
+
+ALTER TABLE public.push_webhook_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.push_webhook_events FROM PUBLIC, anon, authenticated;
+GRANT ALL ON TABLE public.push_webhook_events TO service_role;

@@ -250,6 +250,60 @@ export type Database = {
           },
         ]
       }
+      reclamaciones: {
+        Row: {
+          codigo_reclamacion: string
+          creado_en: string
+          descripcion_bien_contratado: string
+          detalle_reclamacion: string
+          direccion: string | null
+          email: string
+          id: string
+          monto_reclamado: number
+          nombre_completo: string
+          numero_documento: string
+          pedido_consumidor: string
+          telefono: string
+          tipo: "reclamo" | "queja"
+          tipo_documento: "DNI" | "CE" | "RUC"
+          usuario_id: string | null
+        }
+        Insert: {
+          codigo_reclamacion: string
+          creado_en?: string
+          descripcion_bien_contratado: string
+          detalle_reclamacion: string
+          direccion?: string | null
+          email: string
+          id?: string
+          monto_reclamado?: number
+          nombre_completo: string
+          numero_documento: string
+          pedido_consumidor: string
+          telefono: string
+          tipo: "reclamo" | "queja"
+          tipo_documento: "DNI" | "CE" | "RUC"
+          usuario_id: string | null
+        }
+        Update: {
+          codigo_reclamacion?: string
+          creado_en?: string
+          descripcion_bien_contratado?: string
+          detalle_reclamacion?: string
+          direccion?: string | null
+          email?: string
+          id?: string
+          monto_reclamado?: number
+          nombre_completo?: string
+          numero_documento?: string
+          pedido_consumidor?: string
+          telefono?: string
+          tipo?: "reclamo" | "queja"
+          tipo_documento?: "DNI" | "CE" | "RUC"
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       contraofertas_viaje: {
         Row: {
           conductor_id: string
