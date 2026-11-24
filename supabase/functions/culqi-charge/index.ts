@@ -140,6 +140,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
         "X-Idempotency-Key": idempotencyKey,
       },
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         amount: montoCentimos,
         currency_code: payload.currency_code || "PEN",

@@ -30,6 +30,7 @@ async function enviarLoteExpoPush(mensajes: MensajeExpoPush[]): Promise<any> {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(10000),
     body: JSON.stringify(mensajes),
   });
 
@@ -321,8 +322,9 @@ Deno.serve(async (req) => {
       notificacionesEnviadas: mensajesAEnviar.length,
       resultadoExpo: resultado,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const mensaje = err instanceof Error ? err.message : "Error interno del servidor.";
     console.error("Error procesando notificación push:", err);
-    return respuestaJson({ error: err.message || "Error interno del servidor." }, 500);
+    return respuestaJson({ error: mensaje }, 500);
   }
 });

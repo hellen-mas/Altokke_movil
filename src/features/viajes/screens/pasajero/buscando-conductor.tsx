@@ -131,8 +131,9 @@ export default function PantallaBuscandoConductor() {
           "La contraoferta ha expirado o ya no está disponible."
         );
       }
-    } catch (err: any) {
-      Alert.alert("Error", err?.message || "No se pudo aceptar la contraoferta.");
+    } catch (err: unknown) {
+      const mensaje = err instanceof Error ? err.message : "No se pudo aceptar la contraoferta.";
+      Alert.alert("Error", mensaje);
     } finally {
       setAceptandoOfertaId(null);
     }

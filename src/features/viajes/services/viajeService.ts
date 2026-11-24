@@ -173,7 +173,7 @@ export const viajeService = {
 
       const { data, error } = await supabase
         .from("calificaciones")
-        .insert(payload as any)
+        .insert(payload as unknown as Record<string, unknown>)
         .select()
         .maybeSingle();
 
