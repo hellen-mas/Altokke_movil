@@ -1,9 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
-  Pressable,
   Share,
   StyleSheet,
   Text,
@@ -14,7 +13,9 @@ import { PanelDeslizableViaje } from "@/features/viajes/components/PanelDeslizab
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { ContenidoViajeActivo } from "@/features/viajes/components/ContenidoViajeActivo";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonSosEmergencia } from "@/features/viajes/components/BotonSosEmergencia";
+import { ModalChatInApp } from "@/features/viajes/components/ModalChatInApp";
+import { BotonPrincipal } from "@/shared/components/ui";
 import {
   CENTRO_BAGUA,
 } from "@/features/viajes/constants/pasajero";
@@ -24,12 +25,13 @@ import { useCancelarViaje } from "@/features/viajes/hooks/use-cancelar-viaje";
 import { useViajeEnVivo } from "@/features/viajes/hooks/use-viaje-en-vivo";
 import { useConductorViaje } from "@/features/viajes/hooks/use-conductor-viaje";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import {
   formatearHora,
   formatearSoles,
   interpolarRuta,
 } from "@/features/viajes/utils/viaje";
-import { escribirConductor, llamarConductor } from "@/features/viajes/utils/contacto";
+import { llamarConductor } from "@/features/viajes/utils/contacto";
 import { ModalCancelarViaje } from "../../components/ModalCancelarViaje";
 
 // Estados reales del viaje, en el orden en que avanza la barra de progreso
@@ -59,9 +61,12 @@ const REFRESCO_UBICACION_MS = 5000;
 
 export default function PantallaViajeActivo() {
   const { colores } = useAltokkeTheme();
+  const { userId } = useAuth();
   const viajeActivoId = useViajeStore((s) => s.viajeActivoId);
+  const verificandoViajeActivo = useViajeStore((s) => s.verificandoViajeActivo);
   const resumen = useResumenViaje();
   const [horaSalida] = useState(() => new Date());
+  const [chatVisible, setChatVisible] = useState(false);
 
   const { viaje, conectado } = useViajeEnVivo(viajeActivoId);
   const conductor = useConductorViaje(
@@ -101,9 +106,19 @@ export default function PantallaViajeActivo() {
     }
   }, [viaje?.estado, viaje?.cancelado_por, viaje?.motivo_cancelacion]);
 
-  // Si se entra sin haber armado un viaje, se vuelve a pedir el destino
+  // Si se está verificando o rehidratando el viaje activo, mostrar skeleton de carga
   if (!resumen) {
-    return <Redirect href="/destino" />;
+    if (verificandoViajeActivo || viajeActivoId) {
+      return (
+        <View style={[styles.pantalla, styles.centroCarga, { backgroundColor: colores.fondo }]}>
+          <ActivityIndicator size="large" color={colores.primario} />
+          <Text style={[styles.textoCargando, { color: colores.secundario }]}>
+            Verificando tu viaje activo...
+          </Text>
+        </View>
+      );
+    }
+    return <Redirect href="/mapa" />;
   }
 
   const { origen, origenLugar, destino, tarifa, minutos, ruta } = resumen;
@@ -201,6 +216,18 @@ export default function PantallaViajeActivo() {
           style={styles.mapaCompleto}
         />
 
+        {/* Botón de Pánico y Auxilio SOS */}
+        <View style={styles.contenedorSos}>
+          <BotonSosEmergencia
+            viajeId={viajeActivoId ?? undefined}
+            coordenadasActuales={
+              posicionMoto
+                ? { lat: posicionMoto.latitude, lng: posicionMoto.longitude }
+                : null
+            }
+          />
+        </View>
+
         <PanelDeslizableViaje
           posiciones={["30%", "65%", "90%"]}
           posicionInicial={1}
@@ -229,7 +256,7 @@ export default function PantallaViajeActivo() {
             cancelando={cancelando}
             colores={colores}
             onLlamarConductor={() => llamarConductor(conductor?.telefono)}
-            onEscribirConductor={() => escribirConductor(conductor?.telefono)}
+            onEscribirConductor={() => setChatVisible(true)}
             onCompartirViaje={compartirViaje}
             onSolicitarCancelacion={solicitarCancelacion}
             formatearHora={formatearHora}
@@ -237,6 +264,15 @@ export default function PantallaViajeActivo() {
           />
         </PanelDeslizableViaje>
       </View>
+
+      {/* MODAL DE CHAT IN-APP SEGURO */}
+      <ModalChatInApp
+        visible={chatVisible}
+        onCerrar={() => setChatVisible(false)}
+        viajeId={viajeActivoId}
+        usuarioActualId={userId}
+        rolUsuario="pasajero"
+      />
 
       {/* MODAL DE CANCELACIÓN */}
       <ModalCancelarViaje
@@ -264,6 +300,24 @@ const styles = StyleSheet.create({
   zonaMapa: {
     flex: 1,
     position: "relative",
+  },
+
+  contenedorSos: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    zIndex: 10,
+  },
+
+  centroCarga: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+
+  textoCargando: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 
   mapaCompleto: {

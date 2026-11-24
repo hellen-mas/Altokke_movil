@@ -3,7 +3,7 @@ import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaci
 import type { NotificacionItem } from "@/features/notificaciones/types/notificaciones";
 import { useAltokkeTheme, type ColoresTema } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -186,11 +186,11 @@ export default function PantallaNotificaciones() {
     );
   }, [notificaciones, filtro]);
 
-  const abrirNotificacion = (id: string) => {
+  const abrirNotificacion = useCallback((id: string) => {
     void marcarComoLeida(id);
-  };
+  }, [marcarComoLeida]);
 
-  const confirmarEliminar = (id: string) => {
+  const confirmarEliminar = useCallback((id: string) => {
     Alert.alert(
       "Eliminar notificación",
       "¿Quieres quitar esta notificación de tu bandeja?",
@@ -203,7 +203,33 @@ export default function PantallaNotificaciones() {
         },
       ]
     );
-  };
+  }, [eliminarNotificacion]);
+
+  const keyExtractor = useCallback((item: NotificacionItem) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: NotificacionItem }) => (
+      <NotificacionFila
+        notificacion={item}
+        colores={colores}
+        onAbrir={abrirNotificacion}
+        onEliminar={confirmarEliminar}
+      />
+    ),
+    [colores, abrirNotificacion, confirmarEliminar]
+  );
+
+  const separador = useCallback(
+    () => (
+      <View
+        style={[
+          styles.separador,
+          { backgroundColor: colores.linea },
+        ]}
+      />
+    ),
+    [colores.linea]
+  );
 
   const marcarTodas = async () => {
     if (cantidadNoLeidas === 0 || procesando) return;
@@ -372,24 +398,10 @@ export default function PantallaNotificaciones() {
         ) : (
           <FlashList
             data={listaFiltrada}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <NotificacionFila
-                notificacion={item}
-                colores={colores}
-                onAbrir={abrirNotificacion}
-                onEliminar={confirmarEliminar}
-              />
-            )}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
             ListEmptyComponent={listaVacia}
-            ItemSeparatorComponent={() => (
-              <View
-                style={[
-                  styles.separador,
-                  { backgroundColor: colores.linea },
-                ]}
-              />
-            )}
+            ItemSeparatorComponent={separador}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.contenidoLista}
           />

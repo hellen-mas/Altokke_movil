@@ -6,7 +6,7 @@ import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 function LogoMetodo({ id, colorBoton }: { id: IdMetodoPago; colorBoton: string }) {
   if (id === "efectivo") {

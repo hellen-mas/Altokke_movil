@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Alert,
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Switch,

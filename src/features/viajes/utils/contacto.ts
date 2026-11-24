@@ -19,11 +19,17 @@ export function llamarConductor(telefono: string | undefined) {
   abrirEnlace(`tel:${telefono}`, "Tu celular no permite hacer llamadas desde la app.");
 }
 
-/** Abre la app de mensajes con el número del conductor */
-export function escribirConductor(telefono: string | undefined) {
-  if (!telefono || !TELEFONO_VALIDO.test(telefono)) {
-    Alert.alert("Sin número", "Tu conductor no tiene un número de teléfono disponible.");
+/** Abre el chat in-app seguro protegiendo la privacidad según LPDP Ley 29733 */
+export function escribirConductor(
+  _telefono?: string | undefined,
+  onAbrirChat?: () => void
+) {
+  if (onAbrirChat) {
+    onAbrirChat();
     return;
   }
-  abrirEnlace(`sms:${telefono}`, "Tu celular no permite enviar mensajes desde la app.");
+  Alert.alert(
+    "Mensajería privada",
+    "La comunicación se realiza de forma segura mediante el chat dentro de la app para proteger tu número privado."
+  );
 }

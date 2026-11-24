@@ -13,6 +13,8 @@ import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-cond
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { useCallback, useEffect, useState } from "react";
 import { conductorService } from "@/features/conductores/services/conductorService";
+import { solicitarPermisosYRegistrarPushToken } from "@/features/notificaciones/services/notificacionesService";
+import * as Location from "expo-location";
 import { supabase } from "@/shared/api/supabase";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
@@ -26,7 +28,7 @@ export default function InicioConductorScreen() {
   });
   const [actualizandoEstado, setActualizandoEstado] = useState(false);
   const [tieneViajeActivo, setTieneViajeActivo] = useState(false);
-  const [verificandoViaje, setVerificandoViaje] = useState(true);
+  const [verificandoViaje, setVerificandoViaje] = useState(false);
   const [errorVerificandoViaje, setErrorVerificandoViaje] = useState(false);
 
   const verificarViajeActivo = useCallback(async () => {
@@ -82,11 +84,26 @@ export default function InicioConductorScreen() {
   }, [perfil.id]);
 
   useEffect(() => {
-    void verificarViajeActivo();
-
+    let activo = true;
     if (!perfil.id || perfil.id === "conductor-local") {
       return;
     }
+
+    conductorService
+      .obtenerViajeActivoConductor(perfil.id)
+      .then((viaje) => {
+        if (!activo) return;
+        setTieneViajeActivo(Boolean(viaje));
+        setErrorVerificandoViaje(false);
+      })
+      .catch((error) => {
+        if (!activo) return;
+        console.error("Error verificando viaje activo del conductor:", error);
+        setErrorVerificandoViaje(true);
+      })
+      .finally(() => {
+        if (activo) setVerificandoViaje(false);
+      });
 
     const canal = supabase
       .channel(`disponibilidad_conductor_${perfil.id}`)
@@ -104,9 +121,69 @@ export default function InicioConductorScreen() {
       .subscribe();
 
     return () => {
+      activo = false;
       void supabase.removeChannel(canal);
     };
   }, [perfil.id, verificarViajeActivo]);
+
+  // Telemetría GPS continua mientras el conductor está en línea (para que los pasajeros vean mototaxis reales en el mapa)
+  useEffect(() => {
+    if (!perfil.id || perfil.id === "conductor-local" || !perfil.enLinea || tieneViajeActivo) {
+      return;
+    }
+
+    let activo = true;
+    let subscripcion: Location.LocationSubscription | null = null;
+
+    const iniciarTransmisionGps = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (!activo || status !== Location.PermissionStatus.GRANTED) return;
+
+        // Enviar posición inicial rápida
+        const inicial = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (activo) {
+          void conductorService.actualizarUbicacion(perfil.id, inicial.coords.latitude, inicial.coords.longitude);
+        }
+
+        const sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: 8000,
+            distanceInterval: 15,
+          },
+          (pos) => {
+            if (!activo) return;
+            void conductorService.actualizarUbicacion(perfil.id, pos.coords.latitude, pos.coords.longitude);
+          }
+        );
+
+        if (!activo) {
+          sub.remove();
+          return;
+        }
+
+        subscripcion = sub;
+      } catch (err) {
+        console.warn("Aviso al transmitir ubicación en línea:", err);
+      }
+    };
+
+    void iniciarTransmisionGps();
+
+    return () => {
+      activo = false;
+      subscripcion?.remove();
+      subscripcion = null;
+    };
+  }, [perfil.id, perfil.enLinea, tieneViajeActivo]);
+
+  // Registro oportuno de push token para solicitudes entrantes
+  useEffect(() => {
+    if (perfil.id && perfil.id !== "conductor-local") {
+      void solicitarPermisosYRegistrarPushToken(perfil.id);
+    }
+  }, [perfil.id]);
 
   const cambiarDisponibilidad = async () => {
     if (actualizandoEstado) return;
@@ -382,28 +459,28 @@ export default function InicioConductorScreen() {
             icono="wallet-outline"
             texto="Ganancias"
             colorFondo={c.primarioSuave}
-            onPress={() => router.push("/ganancias")}
+            onPress={() => router.push("/conductor/ganancias")}
           />
 
           <AccesoRapido
             icono="receipt-outline"
             texto="Solicitudes"
             colorFondo={c.superficieSuave}
-            onPress={() => router.push("/solicitudes")}
+            onPress={() => router.push("/conductor/solicitudes")}
           />
 
           <AccesoRapido
             icono="car-sport-outline"
             texto="Vehículo"
             colorFondo={c.ambarSuave}
-            onPress={() => router.push("/cuenta/vehiculo")}
+            onPress={() => router.push("/conductor/cuenta/vehiculo")}
           />
 
           <AccesoRapido
             icono="person-outline"
             texto="Cuenta"
             colorFondo={c.primarioSuave}
-            onPress={() => router.push("/cuenta")}
+            onPress={() => router.push("/conductor/cuenta")}
           />
         </View>
 
@@ -428,7 +505,7 @@ export default function InicioConductorScreen() {
         {/* ACCESO A SOLICITUDES */}
         <Pressable
           style={styles.solicitudes}
-          onPress={() => router.push("/solicitudes")}
+          onPress={() => router.push("/conductor/solicitudes")}
           accessibilityRole="button"
         >
           <View style={styles.solicitudesIcono}>

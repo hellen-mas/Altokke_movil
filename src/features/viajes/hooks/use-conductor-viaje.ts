@@ -17,7 +17,6 @@ export function useConductorViaje(
 
   useEffect(() => {
     if (!viajeId || !conductorId) {
-      setConductor(null);
       return;
     }
     let activo = true;
@@ -62,5 +61,6 @@ export function useConductorViaje(
     };
   }, [viajeId, conductorId, refrescarCadaMs]);
 
-  return conductor;
+  const conductorActivo = (!viajeId || !conductorId) ? null : conductor;
+  return conductorActivo;
 }

@@ -2,12 +2,10 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import * as Location from "expo-location";
 import { AppState } from "react-native";
-import { useShallow } from "zustand/react/shallow";
 import {
   useViajeStore,
   type TipoServicio,
   type MetodoPago,
-  type ViajeStore,
 } from "../store/viajeStore";
 import type { Lugar, ViajeHistorial } from "@/features/viajes/constants/pasajero";
 import type { PuntoMapa } from "../types/tiposMapa";
@@ -86,7 +84,7 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        seguimiento = await Location.watchPositionAsync(
+        const sub = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.Balanced,
             timeInterval: 5000,
@@ -103,10 +101,11 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
         );
 
         if (!activo) {
-          seguimiento.remove();
+          sub.remove();
           return;
         }
 
+        seguimiento = sub;
         setSiguiendoUbicacion(true);
       } catch (error) {
         if (!activo) return;
@@ -120,6 +119,7 @@ export function ViajeProvider({ children }: { children: ReactNode }) {
     return () => {
       activo = false;
       seguimiento?.remove();
+      seguimiento = null;
       setSiguiendoUbicacion(false);
     };
   }, [viajeActivoId, userId, appActiva, setUbicacionActual, setSiguiendoUbicacion, setErrorUbicacion]);

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
@@ -10,11 +11,10 @@ import { useTemaConductor, type ColoresConductor } from "@/features/conductores/
 export default function VehiculoConductor() {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
   const { perfil } = usePerfilConductor();
-  const [modoEdicion, setModoEdicion] = useState(false);
   const vehiculo = perfil.vehiculo;
 
-  const editarDato = (campo: string) => {
-    Alert.alert("Editar vehículo", `Para actualizar ${campo}, contacta con soporte o sube tu nueva tarjeta de propiedad.`);
+  const solicitarActualizacionVehiculo = () => {
+    router.push("/conductor/cuenta/centro-ayuda");
   };
 
   const campos = [
@@ -53,8 +53,7 @@ export default function VehiculoConductor() {
               icono={c.icono}
               titulo={c.titulo}
               valor={c.valor}
-              editable={!c.soloLectura && modoEdicion}
-              onEditar={() => editarDato(c.titulo.toLowerCase())}
+              editable={false}
               ultimo={i === campos.length - 1}
             />
           ))}
@@ -62,10 +61,10 @@ export default function VehiculoConductor() {
 
         <Pressable
           style={({ pressed }) => [styles.botonEditar, pressed && { opacity: 0.85 }]}
-          onPress={() => setModoEdicion(!modoEdicion)}
+          onPress={solicitarActualizacionVehiculo}
         >
-          <Ionicons name={modoEdicion ? "checkmark-outline" : "pencil-outline"} size={18} color="#FFFFFF" />
-          <Text style={styles.botonTexto}>{modoEdicion ? "Finalizar edición" : "Actualizar datos"}</Text>
+          <Ionicons name="help-buoy-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.botonTexto}>Solicitar cambio de vehículo a soporte</Text>
         </Pressable>
 
         <AvisoInformativo

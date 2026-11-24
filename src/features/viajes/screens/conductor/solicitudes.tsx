@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "expo-router";
-import type { NavigationProp, ParamListBase } from "@react-navigation/native";
-import { useState } from "react";
+import { router } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -16,13 +15,15 @@ import {
   type ColoresConductor,
 } from "@/features/conductores/theme/temaConductor";
 import { TarjetaSolicitudViaje } from "@/features/viajes/components/TarjetaSolicitudViaje";
-import { useSolicitudesConductor } from "@/features/viajes/hooks/use-solicitudes-conductor";
+import {
+  useSolicitudesConductor,
+  type SolicitudViajeItem,
+} from "@/features/viajes/hooks/use-solicitudes-conductor";
+import { emitirNotificacionPush } from "@/features/notificaciones/services/notificacionesService";
 
 /** Lista en vivo de solicitudes cercanas para el conductor */
 export default function SolicitudesConductor() {
   const { c, estilos: styles } = useTemaConductor(crearEstilos);
-  // Navegador de las pestañas del conductor (evita el choque con /viaje-activo del pasajero)
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const {
     solicitudes,
     cargando,
@@ -42,13 +43,28 @@ export default function SolicitudesConductor() {
     setRefrescando(false);
   };
 
-  const alAceptar = async (viajeId: string) => {
+  const alAceptar = useCallback(async (viajeId: string) => {
     const ok = await aceptarSolicitud(viajeId);
     // Si otro conductor la ganó, el hook ya dejó el mensaje en "error"
     if (ok) {
-      navigation.navigate("viaje-activo", { viajeId });
+      void emitirNotificacionPush({ evento: "viaje_aceptado", viajeId });
+      router.push({ pathname: "/conductor/viaje-activo", params: { viajeId } });
     }
-  };
+  }, [aceptarSolicitud]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: SolicitudViajeItem }) => (
+      <TarjetaSolicitudViaje
+        solicitud={item}
+        onAceptar={alAceptar}
+        onRechazar={rechazarSolicitud}
+        aceptando={aceptandoId === item.id}
+      />
+    ),
+    [alAceptar, rechazarSolicitud, aceptandoId]
+  );
+
+  const keyExtractor = useCallback((item: SolicitudViajeItem) => item.id, []);
 
   return (
     <View style={styles.pantalla}>
@@ -77,15 +93,8 @@ export default function SolicitudesConductor() {
       ) : (
         <FlatList
           data={solicitudes}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TarjetaSolicitudViaje
-              solicitud={item}
-              onAceptar={alAceptar}
-              onRechazar={rechazarSolicitud}
-              aceptando={aceptandoId === item.id}
-            />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
           contentContainerStyle={[
             styles.lista,
             solicitudes.length === 0 && styles.listaVacia,

@@ -59,6 +59,8 @@ export function TarjetaConductor({ conductor }: Props) {
             source={{ uri: conductor.foto }}
             style={styles.foto}
             contentFit="cover"
+            cachePolicy="disk"
+            transition={200}
           />
         ) : (
           <Ionicons

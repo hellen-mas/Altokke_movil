@@ -28,7 +28,7 @@ export function BotonSosEmergencia({
 }: BotonSosEmergenciaProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [presionando, setPresionando] = useState(false);
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { colores } = useAltokkeTheme();
   const { impactoLigero, alarmaEmergenciaSos } = useHaptics();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

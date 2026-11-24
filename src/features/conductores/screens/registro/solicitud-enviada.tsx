@@ -1,5 +1,5 @@
 import { authService } from "@/features/autenticacion/services/authService";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonPrincipal } from "@/shared/components/ui";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 // ZUSTAND: Import para limpieza defensiva del store de registro

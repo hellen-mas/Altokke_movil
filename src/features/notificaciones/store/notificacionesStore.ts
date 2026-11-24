@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { almacenamientoSeguro } from "@/shared/api/almacenamientoSeguro";
 import {
   NotificacionItem,
   PREFERENCIAS_POR_DEFECTO,
@@ -277,7 +277,7 @@ export const useNotificacionesStore = create<NotificacionesStore>()(
     }),
     {
       name: "altokke-notificaciones-almacenadas",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => almacenamientoSeguro),
       partialize: (state) => ({
         notificaciones: state.notificaciones,
         preferencias: state.preferencias,

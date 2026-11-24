@@ -12,9 +12,10 @@ import { useNotificaciones } from "@/features/notificaciones/hooks/useNotificaci
 import { useNombrePasajero } from "@/features/pasajeros/hooks/use-nombre-pasajero";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { solicitarPermisosYRegistrarPushToken } from "@/features/notificaciones/services/notificacionesService";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { viajeService } from "@/features/viajes/services/viajeService";
@@ -75,6 +76,13 @@ export default function PantallaMapa() {
     : ubicacionActual
       ? "Ubicación GPS disponible"
       : "Selecciona tu punto de recojo";
+
+  // Solicitar permiso de notificaciones push de forma oportuna
+  useEffect(() => {
+    if (userId) {
+      void solicitarPermisosYRegistrarPushToken(userId);
+    }
+  }, [userId]);
 
   const continuarViaje = async () => {
     if (!userId || !viajeActivoId || abriendoViaje || verificandoViajeActivo) {
@@ -226,8 +234,8 @@ export default function PantallaMapa() {
 
     if (servicio === "reserva") {
       Alert.alert(
-        "Próximamente",
-        "La programación de viajes todavía no está disponible. Por ahora puedes solicitar un viaje Normal o Express."
+        "Servicio temporalmente no disponible",
+        "Por ahora puedes solicitar viajes inmediatos en modalidad Normal o Express."
       );
       return;
     }

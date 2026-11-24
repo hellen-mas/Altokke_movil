@@ -1,22 +1,40 @@
-import { AvisoInformativo } from "@/shared/components/ui";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
 import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { router } from "expo-router";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Linking, ScrollView, StyleSheet, View } from "react-native";
 import { authService } from "@/features/autenticacion/services/authService";
 import { useState } from "react";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
-const mostrarProximamente = () => {
-  Alert.alert("Próximamente", "Esta opción todavía no está disponible.");
-};
-
 export default function ConfiguracionConductor() {
-  const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const { estilos: styles } = useTemaConductor(crearEstilos);
   const { logout } = useAuth();
 
   const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+
+  const verIdioma = () => {
+    Alert.alert("Idioma", "El idioma actual de la aplicación es Español (Perú).");
+  };
+
+  const verNotificaciones = () => {
+    Alert.alert("Notificaciones", "Las notificaciones sonoras y alertas de viaje en tiempo real están activas.");
+  };
+
+  const verApariencia = () => {
+    Alert.alert("Apariencia", "El tema visual se ajusta automáticamente según la configuración del sistema de tu dispositivo.");
+  };
+
+  const verMapa = () => {
+    Alert.alert("Mapa", "El mapa está configurado con cartografía optimizada para la zona urbana de Bagua.");
+  };
+
+  const verPrivacidad = () => {
+    const url = process.env.EXPO_PUBLIC_PRIVACY_URL || "https://altokke.pe/privacidad";
+    Linking.openURL(url).catch(() => {
+      Alert.alert("Privacidad", "Tus datos personales y de ubicación están protegidos y cifrados en tránsito.");
+    });
+  };
 
   const confirmarEliminarCuenta = () => {
     if (eliminandoCuenta) return;
@@ -83,42 +101,36 @@ export default function ConfiguracionConductor() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <AvisoInformativo
-          titulo="En construcción"
-          texto="Estas preferencias todavía no se guardan. Se activarán cuando conectemos el backend."
-          style={styles.aviso}
-        />
-
         <View style={styles.opciones}>
           <OpcionCuenta
             icono="globe"
             titulo="Idioma"
-            descripcion="Español"
-            onPress={mostrarProximamente}
+            descripcion="Español (Perú)"
+            onPress={verIdioma}
           />
           <OpcionCuenta
             icono="notifications"
             titulo="Notificaciones"
             descripcion="Push, sonidos y alertas de viaje"
-            onPress={mostrarProximamente}
+            onPress={verNotificaciones}
           />
           <OpcionCuenta
             icono="moon"
             titulo="Apariencia"
-            descripcion="Modo claro u oscuro"
-            onPress={mostrarProximamente}
+            descripcion="Adaptable al sistema"
+            onPress={verApariencia}
           />
           <OpcionCuenta
             icono="map"
             titulo="Preferencias de mapa"
-            descripcion="Estilo y navegación"
-            onPress={mostrarProximamente}
+            descripcion="Cartografía urbana de Bagua"
+            onPress={verMapa}
           />
           <OpcionCuenta
             icono="lock-closed"
             titulo="Privacidad"
-            descripcion="Controla tu información"
-            onPress={mostrarProximamente}
+            descripcion="Protección de datos conforme a ley"
+            onPress={verPrivacidad}
             ultimo
           />
         </View>

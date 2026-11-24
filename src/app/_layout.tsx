@@ -36,7 +36,7 @@ onlineManager.setEventListener((setOnline) =>
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
-  const { esOscuro, colores } = useAltokkeTheme();
+  const { esOscuro } = useAltokkeTheme();
   const [fontsLoaded] = useFonts({
     Outfit_400Regular,
     Outfit_500Medium,

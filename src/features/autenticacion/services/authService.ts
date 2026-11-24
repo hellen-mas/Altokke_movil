@@ -1,6 +1,7 @@
 import { identidadService } from "@/features/autenticacion/services/identidadService";
 import { supabase } from "@/shared/api/supabase";
 import { subirFotoAvatar } from "@/shared/utils/avatar";
+import * as AppleAuthentication from "expo-apple-authentication";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
@@ -127,6 +128,31 @@ export const authService = {
     await comprobarEstadoCuenta(usuarioGoogle.id);
 
     return usuarioGoogle;
+  },
+
+  async loginConApple() {
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    if (!credential.identityToken) {
+      throw new Error("No se obtuvo el token de identidad de Apple.");
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: credential.identityToken,
+    });
+
+    if (error) throw error;
+    if (!data.user) throw new Error("No se pudo obtener el usuario de Apple.");
+
+    await comprobarEstadoCuenta(data.user.id);
+
+    return data.user;
   },
 
   async registrarPasajero(datos: RegistroPasajeroInput) {

@@ -11,7 +11,7 @@ import {
   formatearSoles,
   NOMBRE_METODO_PAGO,
 } from "@/features/viajes/utils/viaje";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { BotonPrincipal } from "@/shared/components/ui";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
@@ -140,7 +140,8 @@ export default function PantallaCalificacion() {
           userId,
           null,
           estrellas,
-          comentario
+          comentario,
+          etiquetas
         );
       } catch (err) {
         console.warn("Aviso al registrar calificación:", err);

@@ -1,8 +1,8 @@
+import type { MapaBaseProps } from "@/features/viajes/types/tiposMapa";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { IconoMototaxi } from "./IconoMototaxi";
-import type { MapaBaseProps } from "@/features/viajes/types/tiposMapa";
 
 // react-native-maps no funciona en el navegador, así que aquí se dibuja un
 // mapa ilustrado solo para poder ver las pantallas en la PC. En el teléfono
@@ -14,7 +14,7 @@ const POSICIONES_CONDUCTORES = [
   { top: "68%", left: "28%" },
 ] as const;
 
-export function MapaBase({ conductores = [], destino, style }: MapaBaseProps) {
+export function MapaBase({ conductores = [], destino, style, centro, onSeleccionarPunto }: MapaBaseProps) {
   const { colores, esOscuro } = useAltokkeTheme();
 
   return (

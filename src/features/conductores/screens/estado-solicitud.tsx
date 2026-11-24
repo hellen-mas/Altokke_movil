@@ -251,7 +251,7 @@ export default function EstadoSolicitudScreen() {
             disabled={cargando}
             onPress={
               esAprobado
-                ? () => router.replace("/inicio")
+                ? () => router.replace("/conductor/inicio")
                 : () => void refetch()
             }
             style={({ pressed }) => [

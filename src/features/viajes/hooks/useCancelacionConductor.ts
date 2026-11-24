@@ -30,7 +30,10 @@ export function useCancelacionConductor(
     : optionsOrCallback?.onCancelado;
 
   const callbackRef = useRef(callback);
-  callbackRef.current = callback;
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
 
   // Guardia anti-duplicados por ID de viaje y timestamp
   const ultimoEventoProcesadoRef = useRef<string | null>(null);
@@ -61,8 +64,6 @@ export function useCancelacionConductor(
 
   useEffect(() => {
     if (!viajeId) {
-      setCancelado(false);
-      setMotivo(null);
       return;
     }
 
@@ -132,8 +133,8 @@ export function useCancelacionConductor(
   }, [viajeId, dispararCancelacion]);
 
   return {
-    cancelado,
-    motivo,
+    cancelado: Boolean(viajeId && cancelado),
+    motivo: viajeId ? motivo : null,
     limpiarAviso,
   };
 }

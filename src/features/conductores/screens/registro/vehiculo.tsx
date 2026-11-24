@@ -1,12 +1,11 @@
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
+import { TerminosConductor } from "@/features/conductores/components/TerminosConductor";
+import { conductorService } from "@/features/conductores/services/conductorService";
+import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
+import { BotonPrincipal, BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
 import { CampoTexto } from "@/shared/components/ui/CampoTexto";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { paletaColores } from "@/shared/theme/paletaColores";
-import { conductorService } from "@/features/conductores/services/conductorService";
-import { TerminosConductor } from "@/features/conductores/components/TerminosConductor";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -114,7 +113,7 @@ export default function VehiculoConductor() {
       Alert.alert(
         "Solicitud enviada",
         "Recibimos tu información. Tu cuenta pasará por revisión.",
-        [{ text: "Endendido", onPress: () => router.replace("/registro-conductor/solicitud-enviada") }],
+        [{ text: "Entendido", onPress: () => router.replace("/registro-conductor/solicitud-enviada") }],
         { cancelable: false }
       );
     } catch (error) {
@@ -135,7 +134,7 @@ export default function VehiculoConductor() {
       style={[styles.areaSegura, { backgroundColor: colores.fondo }]}
       edges={["top", "bottom"]}
     >
-      <StatusBar style={esOscuro ? "light" : "dark"}/>
+      <StatusBar style={esOscuro ? "light" : "dark"} />
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colores.fondo }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -245,7 +244,7 @@ export default function VehiculoConductor() {
                 styles.checkbox,
                 { backgroundColor: colores.campo, borderColor: colores.linea },
                 confirmacionVeracidad &&
-                  styles.checkboxActivo,
+                styles.checkboxActivo,
                 confirmacionVeracidad && { backgroundColor: colores.primario, borderColor: colores.primario },
               ]}
             >

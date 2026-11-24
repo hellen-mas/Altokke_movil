@@ -4,9 +4,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cf-turnstile-response',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+};
 
 type CodigoError =
   | "DNI_INVALIDO"
@@ -14,7 +14,10 @@ type CodigoError =
   | "TIEMPO_AGOTADO"
   | "ERROR_PROVEEDOR"
   | "NO_AUTORIZADO"
-  | "DNI_YA_REGISTRADO";
+  | "DNI_YA_REGISTRADO"
+  | "RATE_LIMIT_EXCEDIDO"
+  | "CAPTCHA_REQUERIDO"
+  | "CAPTCHA_INVALIDO";
 
 function responder(datos: unknown, status = 200): Response {
   return Response.json(datos, {
@@ -51,6 +54,37 @@ function aTitulo(valor: string): string {
     .replace(/(^|\s)\S/g, (letra) => letra.toUpperCase());
 }
 
+// Control de rate limiting en memoria (10 consultas por minuto por IP)
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const rateLimits = new Map<string, RateLimitEntry>();
+const MAX_CONSULTAS_POR_MINUTO = 10;
+const VENTANA_MS = 60 * 1000;
+
+function checkRateLimit(ip: string): boolean {
+  const ahora = Date.now();
+  const entry = rateLimits.get(ip);
+
+  if (!entry || ahora > entry.resetAt) {
+    rateLimits.set(ip, { count: 1, resetAt: ahora + VENTANA_MS });
+    if (rateLimits.size > 2000) {
+      for (const [k, v] of rateLimits.entries()) {
+        if (ahora > v.resetAt) rateLimits.delete(k);
+      }
+    }
+    return true;
+  }
+
+  if (entry.count >= MAX_CONSULTAS_POR_MINUTO) {
+    return false;
+  }
+
+  entry.count += 1;
+  return true;
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -63,12 +97,73 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  let cuerpo: unknown;
+  // 1. Obtener IP del cliente para rate limiting
+  const clientIp =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "127.0.0.1";
 
+  if (!checkRateLimit(clientIp)) {
+    return errorDni(
+      "RATE_LIMIT_EXCEDIDO",
+      "Demasiadas solicitudes de consulta de DNI. Por favor espera un momento.",
+      429
+    );
+  }
+
+  let cuerpo: unknown;
   try {
     cuerpo = await req.json();
   } catch {
     return errorDni("DNI_INVALIDO", "Solicitud inválida.", 400);
+  }
+
+  // 2. Verificación de Cloudflare Turnstile (si está configurado el secreto y no está en bypass)
+  const turnstileSecret = Deno.env.get("CF_TURNSTILE_SECRET_KEY") || Deno.env.get("TURNSTILE_SECRET_KEY");
+  const bypassTurnstile = Deno.env.get("ENVIRONMENT") === "development" || Deno.env.get("BYPASS_TURNSTILE") === "true";
+
+  if (turnstileSecret && !bypassTurnstile) {
+    const turnstileToken = esObjeto(cuerpo)
+      ? texto(cuerpo.turnstileToken || cuerpo.token_turnstile)
+      : texto(req.headers.get("cf-turnstile-response"));
+
+    if (!turnstileToken) {
+      return errorDni(
+        "CAPTCHA_REQUERIDO",
+        "Token de verificación Turnstile requerido.",
+        403
+      );
+    }
+
+    try {
+      const form = new URLSearchParams();
+      form.append("secret", turnstileSecret);
+      form.append("response", turnstileToken);
+      form.append("remoteip", clientIp);
+
+      const cfResp = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        body: form,
+        signal: AbortSignal.timeout(5000),
+      });
+
+      const cfData = await cfResp.json();
+      if (!cfData?.success) {
+        return errorDni(
+          "CAPTCHA_INVALIDO",
+          "Verificación anti-robot fallida o expirada.",
+          403
+        );
+      }
+    } catch (cfErr) {
+      console.warn("Fallo verificando token Turnstile:", cfErr);
+      return errorDni(
+        "ERROR_PROVEEDOR",
+        "No se pudo validar el captcha de seguridad.",
+        502
+      );
+    }
   }
 
   const dni = esObjeto(cuerpo) ? texto(cuerpo.dni) : "";
@@ -238,7 +333,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.error("Fallo de comunicación con proveedor DNI");
+    console.error("Fallo de comunicación con proveedor DNI:", error);
 
     return errorDni(
       "ERROR_PROVEEDOR",

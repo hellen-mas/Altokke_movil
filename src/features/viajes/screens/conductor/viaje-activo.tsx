@@ -14,6 +14,12 @@ import { useAuth } from "@/features/autenticacion/hooks/useAuth";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
 import {
+  iniciarRastreoSegundoPlano,
+  detenerRastreoSegundoPlano,
+} from "@/features/conductores/services/rastreoGpsConductor";
+import { emitirNotificacionPush } from "@/features/notificaciones/services/notificacionesService";
+import * as Location from "expo-location";
+import {
   useTemaConductor,
   type ColoresConductor,
 } from "@/features/conductores/theme/temaConductor";
@@ -21,6 +27,8 @@ import { BarraProgresoViaje } from "@/features/viajes/components/BarraProgresoVi
 import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { MapaBase } from "@/features/viajes/components/MapaBase";
 import { ModalCancelarViaje } from "@/features/viajes/components/ModalCancelarViaje";
+import { BotonSosEmergencia } from "@/features/viajes/components/BotonSosEmergencia";
+import { ModalChatInApp } from "@/features/viajes/components/ModalChatInApp";
 import { CENTRO_BAGUA } from "@/features/viajes/constants/pasajero";
 import { formatearSoles } from "@/shared/utils/formato";
 
@@ -81,6 +89,7 @@ export default function ViajeActivoConductor() {
   const [avanzando, setAvanzando] = useState(false);
   const [modalCancelarVisible, setModalCancelarVisible] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  const [chatVisible, setChatVisible] = useState(false);
 
   // 1. Cargar el viaje activo CADA VEZ que se entra a la pantalla.
   //    Es una pestaña: queda montada, así que un useEffect normal solo cargaría la primera vez
@@ -131,6 +140,61 @@ export default function ViajeActivoConductor() {
   }, [viajeId]);
   const nombrePasajero = pasajeroCargado?.viajeId === viajeId ? pasajeroCargado.nombre : null;
 
+  // 2.5 Telemetría GPS en tiempo real (primer y segundo plano con Foreground Service)
+  useEffect(() => {
+    if (!userId || !viaje || viaje.estado === "finalizado") {
+      void detenerRastreoSegundoPlano();
+      return;
+    }
+
+    let activo = true;
+    let subscripcionGps: Location.LocationSubscription | null = null;
+
+    const iniciarTelemetria = async () => {
+      try {
+        // Iniciar servicio en segundo plano persistente (Android Foreground Service)
+        await iniciarRastreoSegundoPlano(userId);
+
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (!activo || status !== Location.PermissionStatus.GRANTED) return;
+
+        // Watcher de alta precisión en primer plano (5s o 15m)
+        const sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 5000,
+            distanceInterval: 15,
+          },
+          (posicion) => {
+            if (!activo) return;
+            void conductorService.actualizarUbicacion(
+              userId,
+              posicion.coords.latitude,
+              posicion.coords.longitude
+            );
+          }
+        );
+
+        if (!activo) {
+          sub.remove();
+          return;
+        }
+
+        subscripcionGps = sub;
+      } catch (err) {
+        console.warn("Aviso al iniciar telemetría de viaje activo:", err);
+      }
+    };
+
+    void iniciarTelemetria();
+
+    return () => {
+      activo = false;
+      subscripcionGps?.remove();
+      subscripcionGps = null;
+    };
+  }, [userId, viaje]);
+
   // 3. Avanzar a la siguiente etapa con los RPC
   const ejecutarAvance = async () => {
     if (!viaje) return;
@@ -142,9 +206,13 @@ export default function ViajeActivoConductor() {
       if (accion.siguiente === "finalizado") {
         // La tarifa final la fija el servidor; aquí no se envía ningún monto
         await conductorService.finalizarViaje(viaje.id);
+        void detenerRastreoSegundoPlano();
         setViaje({ ...viaje, estado: "finalizado" });
       } else {
         const resultado = await conductorService.cambiarEstadoViaje(viaje.id, accion.siguiente);
+        if (accion.siguiente === "esperando_pasajero") {
+          void emitirNotificacionPush({ evento: "conductor_llegada", viajeId: viaje.id });
+        }
         setViaje({ ...viaje, estado: resultado.estado_nuevo as ViajeConductor["estado"] });
       }
     } catch (error) {
@@ -180,6 +248,7 @@ export default function ViajeActivoConductor() {
     setCancelando(true);
     try {
       const resultado = await conductorService.cancelarViajeConductor(viaje.id, motivo.trim());
+      void detenerRastreoSegundoPlano();
       setModalCancelarVisible(false);
       setViaje(null);
       Alert.alert(
@@ -187,7 +256,7 @@ export default function ViajeActivoConductor() {
         resultado.reabierto
           ? "La solicitud volvió a estar disponible para otros conductores."
           : "El viaje fue cancelado correctamente.",
-        [{ text: "Aceptar", onPress: () => router.replace("/solicitudes") }]
+        [{ text: "Aceptar", onPress: () => router.replace("/conductor/solicitudes") }]
       );
     } catch (error) {
       console.error("Error al cancelar el viaje del conductor:", error);
@@ -222,7 +291,7 @@ export default function ViajeActivoConductor() {
           <IconoMototaxi size={52} color={c.textoSec} />
           <Text style={styles.centroTitulo}>No tienes un viaje activo</Text>
           <Text style={styles.centroTexto}>Acepta una solicitud para empezar un viaje.</Text>
-          <Pressable style={styles.botonEtapa} onPress={() => router.replace("/solicitudes")}>
+          <Pressable style={styles.botonEtapa} onPress={() => router.replace("/conductor/solicitudes")}>
             <Text style={styles.botonEtapaTexto}>Ver solicitudes</Text>
           </Pressable>
         </View>
@@ -257,8 +326,9 @@ export default function ViajeActivoConductor() {
         {
           text: "Sí, recibido",
           onPress: () => {
+            void detenerRastreoSegundoPlano();
             setViaje(null);
-            router.replace("/solicitudes");
+            router.replace("/conductor/solicitudes");
           },
         },
       ]
@@ -300,6 +370,12 @@ export default function ViajeActivoConductor() {
             interactivo={false}
             style={styles.mapa}
           />
+          <View style={styles.sosSuperpuesto}>
+            <BotonSosEmergencia
+              viajeId={viaje.id}
+              coordenadasActuales={{ lat: viaje.origen_lat, lng: viaje.origen_lng }}
+            />
+          </View>
         </View>
 
         {/* DETALLES */}
@@ -314,6 +390,16 @@ export default function ViajeActivoConductor() {
               <Text style={styles.pasajeroNombre}>{nombrePasajero ?? "Pasajero"}</Text>
               <Text style={styles.calificacionTexto}>{metodoPago}</Text>
             </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.botonChatConductor,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => setChatVisible(true)}
+            >
+              <Ionicons name="chatbubbles" size={18} color="#FFFFFF" />
+              <Text style={styles.botonChatConductorTexto}>Chat</Text>
+            </Pressable>
           </View>
 
           <View style={styles.divisor} />
@@ -440,6 +526,14 @@ export default function ViajeActivoConductor() {
         }}
         cargando={cancelando}
       />
+
+      <ModalChatInApp
+        visible={chatVisible}
+        onCerrar={() => setChatVisible(false)}
+        viajeId={viaje.id}
+        usuarioActualId={userId}
+        rolUsuario="conductor"
+      />
     </View>
   );
 }
@@ -522,6 +616,30 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
     borderWidth: 1,
     borderColor: c.borde,
     marginBottom: 20,
+    position: "relative",
+  },
+
+  sosSuperpuesto: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 10,
+  },
+
+  botonChatConductor: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: c.primario,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+
+  botonChatConductorTexto: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
 
   mapa: {

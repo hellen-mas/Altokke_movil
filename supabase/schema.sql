@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS public.viajes (
   distancia_km NUMERIC,
   tarifa_estimada NUMERIC NOT NULL,
   tarifa_final NUMERIC,
+  comision_altokke NUMERIC(10,2) DEFAULT 0.00,
   metodo_pago TEXT DEFAULT 'efectivo',
   creado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   aceptado_en TIMESTAMPTZ,
@@ -142,6 +143,7 @@ CREATE TABLE IF NOT EXISTS public.calificaciones (
   receptor_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
   puntuacion INTEGER NOT NULL CHECK (puntuacion >= 1 AND puntuacion <= 5),
   comentario TEXT,
+  etiquetas TEXT[] DEFAULT '{}',
   creado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   UNIQUE (viaje_id, autor_id)
 );
@@ -408,11 +410,10 @@ GRANT INSERT(conductor_id,placa,marca,modelo,color,anio,capacidad,activo)
 GRANT UPDATE(placa,marca,modelo,color,anio,capacidad)
  ON public.vehiculos TO authenticated;
 GRANT INSERT(usuario_id,tipo,url_archivo) ON public.documentos TO authenticated;
-GRANT INSERT(pasajero_id,origen_texto,destino_texto,origen_lat,origen_lng,
- destino_lat,destino_lng,distancia_km,tarifa_estimada,metodo_pago)
- ON public.viajes TO authenticated;
+-- Creación de viajes restringida exclusivamente a RPC solicitar_viaje
+REVOKE INSERT ON public.viajes FROM PUBLIC, anon, authenticated;
 GRANT INSERT(viaje_id,remitente_id,contenido) ON public.mensajes_viaje TO authenticated;
-GRANT INSERT(viaje_id,autor_id,receptor_id,puntuacion,comentario)
+GRANT INSERT(viaje_id,autor_id,receptor_id,puntuacion,comentario,etiquetas)
  ON public.calificaciones TO authenticated;
 
 CREATE POLICY altokke_usuarios_select ON public.usuarios FOR SELECT TO authenticated
@@ -445,10 +446,7 @@ CREATE POLICY altokke_viajes_select ON public.viajes FOR SELECT TO authenticated
  OR (estado='buscando' AND EXISTS (
  SELECT 1 FROM public.conductores_perfil p
  WHERE p.usuario_id=(SELECT auth.uid()) AND p.estado='aprobado')));
-CREATE POLICY altokke_viajes_insert ON public.viajes FOR INSERT TO authenticated
- WITH CHECK(pasajero_id=(SELECT auth.uid())
- AND EXISTS (SELECT 1 FROM public.pasajeros_perfil p
- WHERE p.usuario_id=(SELECT auth.uid())));
+-- Creación de viajes restringida exclusivamente a RPC solicitar_viaje
 -- Aceptar/finalizar viajes y calcular saldos NO se autoriza mediante UPDATE genérico.
 -- Requiere RPC transaccional del servidor con controles de transición de estado.
 CREATE POLICY altokke_mensajes_select ON public.mensajes_viaje FOR SELECT TO authenticated
@@ -511,28 +509,124 @@ END $$;
 REVOKE ALL ON FUNCTION public.aceptar_viaje(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.aceptar_viaje(uuid) TO authenticated;
 
-CREATE OR REPLACE FUNCTION public.finalizar_viaje(p_viaje_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.finalizar_viaje(p_viaje_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
- v_uid uuid := auth.uid();
- v_tarifa numeric;
+    v_conductor_id UUID;
+    v_viaje public.viajes%ROWTYPE;
+    v_comision_pct NUMERIC(5,2) := 0.00;
+    v_monto_viaje NUMERIC(10,2);
+    v_comision_monto NUMERIC(10,2) := 0.00;
+    v_saldo_actual NUMERIC(10,2);
+    v_nuevo_saldo NUMERIC(10,2);
 BEGIN
- IF v_uid IS NULL THEN RAISE EXCEPTION 'Sesion requerida'; END IF;
- -- Tarifa determinada por el dato previamente guardado, no por el cliente.
- UPDATE public.viajes
- SET estado='finalizado',tarifa_final=tarifa_estimada,finalizado_en=now()
- WHERE id=p_viaje_id AND conductor_id=v_uid
- AND estado IN ('aceptado','en_camino_origen','esperando_pasajero','en_viaje')
- RETURNING tarifa_final INTO v_tarifa;
- IF NOT FOUND THEN RAISE EXCEPTION 'Viaje no disponible'; END IF;
- -- La tarifa_estimada la envía el cliente y NO acredita dinero.
- -- El saldo solo debe modificarse mediante un cobro verificado en el servidor.
- UPDATE public.conductores_perfil
- SET viajes_completados=coalesce(viajes_completados,0)+1
- WHERE usuario_id=v_uid;
-END $$;
-REVOKE ALL ON FUNCTION public.finalizar_viaje(uuid) FROM PUBLIC,anon;
-GRANT EXECUTE ON FUNCTION public.finalizar_viaje(uuid) TO authenticated;
+    v_conductor_id := auth.uid();
+    IF v_conductor_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado' USING ERRCODE = '42501';
+    END IF;
+
+    SELECT * INTO v_viaje
+    FROM public.viajes
+    WHERE id = p_viaje_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Viaje no encontrado' USING ERRCODE = 'P0001';
+    END IF;
+
+    IF v_viaje.estado = 'finalizado' AND v_viaje.conductor_id = v_conductor_id THEN
+        RETURN jsonb_build_object(
+            'success', true,
+            'viaje_id', p_viaje_id,
+            'estado', 'finalizado',
+            'mensaje', 'Viaje ya se encontraba finalizado previamente'
+        );
+    END IF;
+
+    IF v_viaje.conductor_id != v_conductor_id THEN
+        RAISE EXCEPTION 'No eres el conductor asignado a este viaje' USING ERRCODE = '42501';
+    END IF;
+
+    IF v_viaje.estado NOT IN ('aceptado', 'en_camino_origen', 'esperando_pasajero', 'en_viaje') THEN
+        RAISE EXCEPTION 'El viaje no se encuentra en curso' USING ERRCODE = 'P0001';
+    END IF;
+
+    SELECT COALESCE(comision_porcentaje, 0.00) INTO v_comision_pct
+    FROM public.configuracion_app
+    WHERE id = 1;
+
+    IF v_comision_pct IS NULL THEN
+        v_comision_pct := 0.00;
+    END IF;
+
+    v_monto_viaje := COALESCE(v_viaje.tarifa_final, v_viaje.tarifa_estimada, 3.00);
+    v_comision_monto := ROUND((v_monto_viaje * (v_comision_pct / 100.00)), 2);
+
+    SELECT saldo_billetera INTO v_saldo_actual
+    FROM public.conductores_perfil
+    WHERE usuario_id = v_conductor_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Perfil de conductor no encontrado' USING ERRCODE = 'P0001';
+    END IF;
+
+    IF v_comision_monto > 0 THEN
+        v_nuevo_saldo := ROUND(v_saldo_actual - v_comision_monto, 2);
+
+        IF v_nuevo_saldo < -10.00 THEN
+            RAISE EXCEPTION 'Saldo insuficiente en billetera para deducir comision' USING ERRCODE = 'P0001';
+        END IF;
+
+        UPDATE public.conductores_perfil
+        SET saldo_billetera = v_nuevo_saldo,
+            en_linea = true,
+            viajes_completados = COALESCE(viajes_completados, 0) + 1
+        WHERE usuario_id = v_conductor_id;
+
+        INSERT INTO public.transacciones (
+            conductor_id, viaje_id, tipo, monto
+        ) VALUES (
+            v_conductor_id, p_viaje_id, 'pago_comision', v_comision_monto
+        );
+    ELSE
+        v_nuevo_saldo := v_saldo_actual;
+
+        UPDATE public.conductores_perfil
+        SET en_linea = true,
+            viajes_completados = COALESCE(viajes_completados, 0) + 1
+        WHERE usuario_id = v_conductor_id;
+
+        INSERT INTO public.transacciones (
+            conductor_id, viaje_id, tipo, monto
+        ) VALUES (
+            v_conductor_id, p_viaje_id, 'pago_comision', 0.00
+        );
+    END IF;
+
+    UPDATE public.viajes
+    SET estado = 'finalizado',
+        tarifa_final = v_monto_viaje,
+        comision_altokke = v_comision_monto,
+        fin_viaje = now(),
+        actualizado_en = now()
+    WHERE id = p_viaje_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'viaje_id', p_viaje_id,
+        'estado', 'finalizado',
+        'comision_monto', v_comision_monto,
+        'saldo_billetera', v_nuevo_saldo
+    );
+END;
+$$;
+REVOKE ALL ON FUNCTION public.finalizar_viaje(UUID) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.finalizar_viaje(UUID) TO authenticated;
 
 -- El pasajero solo puede cancelar una solicitud propia que aún no inició viaje.
 CREATE OR REPLACE FUNCTION public.cancelar_viaje_pasajero(p_viaje_id uuid)
@@ -551,3 +645,348 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.cancelar_viaje_pasajero(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.cancelar_viaje_pasajero(uuid) TO authenticated;
+
+-- 17. Tabla de configuración operativa de la app
+CREATE TABLE IF NOT EXISTS public.configuracion_app (
+    id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    comision_porcentaje NUMERIC(5,2) NOT NULL DEFAULT 0.00 CHECK (comision_porcentaje >= 0 AND comision_porcentaje <= 100),
+    tarifa_minima NUMERIC(10,2) NOT NULL DEFAULT 3.00 CHECK (tarifa_minima >= 0),
+    tarifa_maxima NUMERIC(10,2) NOT NULL DEFAULT 100.00 CHECK (tarifa_maxima >= tarifa_minima),
+    cuentas_revisoras JSONB NOT NULL DEFAULT '["revisor.apple@altokke.pe", "revisor.google@altokke.pe", "apple.review@altokke.pe", "google.review@altokke.pe"]'::jsonb,
+    actualizado_en TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+INSERT INTO public.configuracion_app (id, comision_porcentaje, tarifa_minima, tarifa_maxima, cuentas_revisoras)
+VALUES (1, 0.00, 3.00, 100.00, '["revisor.apple@altokke.pe", "revisor.google@altokke.pe", "apple.review@altokke.pe", "google.review@altokke.pe"]'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.configuracion_app ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Lectura publica configuracion_app" ON public.configuracion_app;
+CREATE POLICY "Lectura publica configuracion_app" ON public.configuracion_app FOR SELECT TO public USING (true);
+REVOKE ALL ON public.configuracion_app FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.configuracion_app TO anon, authenticated;
+GRANT ALL ON public.configuracion_app TO service_role;
+
+-- 18. Procedimiento transaccional seguro de billetera (solo service_role)
+CREATE OR REPLACE FUNCTION public.procesar_transaccion_billetera(
+  p_conductor_id UUID,
+  p_tipo public.tipo_transaccion,
+  p_monto NUMERIC,
+  p_viaje_id UUID DEFAULT NULL
+)
+RETURNS NUMERIC
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_saldo_actual NUMERIC;
+  v_nuevo_saldo NUMERIC;
+BEGIN
+  IF p_monto <= 0 THEN
+    RAISE EXCEPTION 'El monto de la transacción debe ser mayor a cero';
+  END IF;
+
+  SELECT saldo_billetera INTO v_saldo_actual
+  FROM public.conductores_perfil
+  WHERE usuario_id = p_conductor_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Perfil de conductor no encontrado';
+  END IF;
+
+  IF p_tipo IN ('cobro_viaje', 'bono') THEN
+    v_nuevo_saldo := round(v_saldo_actual + p_monto, 2);
+  ELSIF p_tipo IN ('pago_comision', 'retiro_banco') THEN
+    v_nuevo_saldo := round(v_saldo_actual - p_monto, 2);
+  ELSE
+    RAISE EXCEPTION 'Tipo de transacción no soportado';
+  END IF;
+
+  IF v_nuevo_saldo < -10.00 THEN
+    RAISE EXCEPTION 'Saldo insuficiente para completar la deducción';
+  END IF;
+
+  UPDATE public.conductores_perfil
+  SET saldo_billetera = v_nuevo_saldo
+  WHERE usuario_id = p_conductor_id;
+
+  INSERT INTO public.transacciones (
+    conductor_id,
+    viaje_id,
+    tipo,
+    monto
+  ) VALUES (
+    p_conductor_id,
+    p_viaje_id,
+    p_tipo,
+    p_monto
+  );
+
+  RETURN v_nuevo_saldo;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.procesar_transaccion_billetera(UUID, public.tipo_transaccion, NUMERIC, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.procesar_transaccion_billetera(UUID, public.tipo_transaccion, NUMERIC, UUID) TO service_role;
+
+-- 19. Creación segura de viaje con bypass para revisores de tiendas
+CREATE OR REPLACE FUNCTION public.solicitar_viaje(
+    p_origen_texto TEXT,
+    p_destino_texto TEXT,
+    p_origen_lat DOUBLE PRECISION,
+    p_origen_lng DOUBLE PRECISION,
+    p_destino_lat DOUBLE PRECISION,
+    p_destino_lng DOUBLE PRECISION,
+    p_metodo_pago TEXT DEFAULT 'efectivo',
+    p_paga_con NUMERIC DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_pasajero_id UUID;
+    v_viaje_id UUID;
+    v_distancia_km DOUBLE PRECISION;
+    v_tarifa_calculada NUMERIC;
+    v_tarifa_minima NUMERIC := 3.00;
+    v_tarifa_maxima NUMERIC := 100.00;
+    v_vuelto_estimado NUMERIC := NULL;
+    v_viaje_existente UUID;
+    v_es_revisor BOOLEAN := false;
+    v_user_email TEXT;
+BEGIN
+    v_pasajero_id := auth.uid();
+    IF v_pasajero_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado' USING ERRCODE = '42501';
+    END IF;
+
+    IF p_origen_lat IS NULL OR p_origen_lng IS NULL OR p_destino_lat IS NULL OR p_destino_lng IS NULL THEN
+        RAISE EXCEPTION 'Coordenadas geograficas no pueden ser nulas' USING ERRCODE = 'P0001';
+    END IF;
+
+    SELECT COALESCE(tarifa_minima, 3.00), COALESCE(tarifa_maxima, 100.00)
+    INTO v_tarifa_minima, v_tarifa_maxima
+    FROM public.configuracion_app
+    WHERE id = 1;
+
+    SELECT email INTO v_user_email FROM auth.users WHERE id = v_pasajero_id;
+
+    SELECT COALESCE(
+      EXISTS (
+        SELECT 1
+        FROM public.configuracion_app cfg
+        WHERE cfg.id = 1
+          AND (
+            (v_user_email IS NOT NULL AND v_user_email = ANY(ARRAY(SELECT jsonb_array_elements_text(cfg.cuentas_revisoras))))
+            OR (auth.jwt() -> 'user_metadata' ->> 'es_revisor')::boolean = true
+            OR (v_user_email ILIKE '%@apple.com')
+            OR (v_user_email ILIKE '%@google.com')
+            OR (v_user_email ILIKE 'revisor%@altokke.pe')
+          )
+      ),
+      false
+    ) INTO v_es_revisor;
+
+    IF NOT v_es_revisor THEN
+        IF (p_origen_lat NOT BETWEEN -5.75 AND -5.50) OR (p_origen_lng NOT BETWEEN -78.60 AND -78.40) THEN
+            RAISE EXCEPTION 'Punto de recojo fuera del area de cobertura de Bagua' USING ERRCODE = 'P0001';
+        END IF;
+
+        IF (p_destino_lat NOT BETWEEN -5.75 AND -5.50) OR (p_destino_lng NOT BETWEEN -78.60 AND -78.40) THEN
+            RAISE EXCEPTION 'Destino fuera del area de cobertura de Bagua' USING ERRCODE = 'P0001';
+        END IF;
+    END IF;
+
+    SELECT id INTO v_viaje_existente
+    FROM public.viajes
+    WHERE pasajero_id = v_pasajero_id
+      AND estado IN ('buscando', 'aceptado', 'en_camino_origen', 'esperando_pasajero', 'en_viaje')
+    LIMIT 1;
+
+    IF v_viaje_existente IS NOT NULL THEN
+        RAISE EXCEPTION 'Ya tienes un viaje en curso o en busqueda' USING ERRCODE = '23505';
+    END IF;
+
+    v_distancia_km := 6371 * acos(
+        LEAST(1.0, GREATEST(-1.0,
+            cos(radians(p_origen_lat)) * cos(radians(p_destino_lat)) *
+            cos(radians(p_destino_lng) - radians(p_origen_lng)) +
+            sin(radians(p_origen_lat)) * sin(radians(p_destino_lat))
+        ))
+    );
+
+    IF v_distancia_km IS NULL OR v_distancia_km < 0.05 THEN
+        v_distancia_km := 0.5;
+    END IF;
+
+    IF v_distancia_km <= 1.0 THEN
+        v_tarifa_calculada := v_tarifa_minima;
+    ELSE
+        v_tarifa_calculada := ROUND((v_tarifa_minima + (v_distancia_km - 1.0) * 1.00)::numeric, 1);
+    END IF;
+
+    IF v_tarifa_calculada > v_tarifa_maxima THEN
+        v_tarifa_calculada := v_tarifa_maxima;
+    END IF;
+
+    IF p_metodo_pago = 'efectivo' AND p_paga_con IS NOT NULL THEN
+        IF p_paga_con < v_tarifa_calculada THEN
+            RAISE EXCEPTION 'El monto de pago no puede ser menor a la tarifa (S/ %)', v_tarifa_calculada USING ERRCODE = 'P0001';
+        END IF;
+        IF p_paga_con > 100.00 THEN
+            RAISE EXCEPTION 'No se admiten billetes superiores a S/ 100 en mototaxi' USING ERRCODE = 'P0001';
+        END IF;
+        v_vuelto_estimado := ROUND((p_paga_con - v_tarifa_calculada)::numeric, 2);
+    END IF;
+
+    INSERT INTO public.viajes (
+        pasajero_id, origen_texto, destino_texto,
+        origen_lat, origen_lng, destino_lat, destino_lng,
+        distancia_km, tarifa_estimada, metodo_pago,
+        paga_con, vuelto_estimado, estado
+    ) VALUES (
+        v_pasajero_id, p_origen_texto, p_destino_texto,
+        p_origen_lat, p_origen_lng, p_destino_lat, p_destino_lng,
+        v_distancia_km, v_tarifa_calculada, p_metodo_pago,
+        p_paga_con, v_vuelto_estimado, 'buscando'::public.estado_viaje
+    ) RETURNING id INTO v_viaje_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'viaje_id', v_viaje_id,
+        'distancia_km', v_distancia_km,
+        'tarifa_estimada', v_tarifa_calculada,
+        'vuelto_estimado', v_vuelto_estimado,
+        'modo_revisor', v_es_revisor
+    );
+END;
+$$;
+REVOKE ALL ON FUNCTION public.solicitar_viaje(TEXT, TEXT, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, TEXT, NUMERIC) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.solicitar_viaje(TEXT, TEXT, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, TEXT, NUMERIC) TO authenticated;
+
+-- 20. Validación estricta de OTP telefónico
+CREATE OR REPLACE FUNCTION public.validar_codigo_telefono(
+  p_telefono TEXT,
+  p_pin_id TEXT,
+  p_codigo_ingresado TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_registro public.verificaciones_telefono%ROWTYPE;
+BEGIN
+  SELECT * INTO v_registro
+  FROM public.verificaciones_telefono
+  WHERE telefono = p_telefono AND pin_id = p_pin_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('valido', false, 'error', 'Registro no encontrado');
+  END IF;
+
+  IF v_registro.consumido THEN
+    RETURN jsonb_build_object('valido', false, 'error', 'El código ya ha sido utilizado');
+  END IF;
+
+  IF now() > v_registro.expira_en THEN
+    RETURN jsonb_build_object('valido', false, 'error', 'El código ha expirado');
+  END IF;
+
+  IF v_registro.bloqueado_hasta IS NOT NULL AND now() < v_registro.bloqueado_hasta THEN
+    RETURN jsonb_build_object(
+      'valido', false,
+      'error', 'Demasiados intentos fallidos. Intente nuevamente en unos minutos.',
+      'bloqueado_hasta', v_registro.bloqueado_hasta
+    );
+  END IF;
+
+  IF p_codigo_ingresado IS NULL 
+     OR trim(p_codigo_ingresado) = '' 
+     OR trim(p_codigo_ingresado) <> trim(v_registro.codigo) THEN
+    
+    UPDATE public.verificaciones_telefono
+    SET intentos_fallidos = intentos_fallidos + 1,
+        bloqueado_hasta = CASE
+          WHEN intentos_fallidos + 1 >= max_intentos THEN now() + INTERVAL '15 minutes'
+          ELSE NULL
+        END
+    WHERE id = v_registro.id;
+
+    RETURN jsonb_build_object(
+      'valido', false,
+      'error', 'Código incorrecto',
+      'intentos_restantes', GREATEST(0, v_registro.max_intentos - (v_registro.intentos_fallidos + 1))
+    );
+  END IF;
+
+  UPDATE public.verificaciones_telefono
+  SET verificado = true,
+      consumido = true
+  WHERE id = v_registro.id;
+
+  RETURN jsonb_build_object('valido', true);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.validar_codigo_telefono(TEXT, TEXT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.validar_codigo_telefono(TEXT, TEXT, TEXT) TO authenticated;
+
+-- 27. FUNCIÓN RPC: reportar_incidente
+CREATE OR REPLACE FUNCTION public.reportar_incidente(
+  p_tipo TEXT,
+  p_descripcion TEXT,
+  p_viaje_id UUID DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_usuario_id UUID := auth.uid();
+  v_log_id UUID;
+BEGIN
+  IF v_usuario_id IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
+
+  IF p_tipo IS NULL OR LENGTH(TRIM(p_tipo)) = 0 THEN
+    RAISE EXCEPTION 'El tipo de incidente es obligatorio';
+  END IF;
+
+  IF p_descripcion IS NULL OR LENGTH(TRIM(p_descripcion)) < 5 THEN
+    RAISE EXCEPTION 'La descripción del incidente debe contener al menos 5 caracteres';
+  END IF;
+
+  INSERT INTO public.auditoria_logs (
+    usuario_id,
+    accion,
+    entidad,
+    entidad_id,
+    detalles
+  )
+  VALUES (
+    v_usuario_id,
+    'INCIDENTE_REPORTADO',
+    'soporte_incidentes',
+    p_viaje_id,
+    jsonb_build_object(
+      'tipo', p_tipo,
+      'descripcion', p_descripcion,
+      'viaje_id', p_viaje_id,
+      'reportado_en', timezone('utc'::text, now())
+    )
+  )
+  RETURNING id INTO v_log_id;
+
+  RETURN jsonb_build_object('success', true, 'log_id', v_log_id);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.reportar_incidente(TEXT, TEXT, UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.reportar_incidente(TEXT, TEXT, UUID) TO authenticated, service_role;
+

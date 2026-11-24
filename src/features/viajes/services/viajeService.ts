@@ -39,41 +39,23 @@ export const viajeService = {
         p_paga_con: input.pagaCon ?? null,
       });
 
-      if (!rpcError) {
-        // El RPC devuelve { viaje_id, ... } (no la fila completa): se lee el viaje recién creado
-        const respuesta = rpcData as { id?: string; viaje_id?: string } | null;
-        const viajeId = respuesta?.viaje_id ?? respuesta?.id;
-        if (!viajeId) return null;
-
-        const { data: viaje, error: errorLectura } = await supabase
-          .from("viajes")
-          .select("*")
-          .eq("id", viajeId)
-          .single();
-        if (errorLectura) throw new Error(errorLectura.message);
-        return viaje;
-      }
-
-      // PGRST202 = la función con esta firma aún no existe en la base (migración sin aplicar).
-      // Mientras tanto se registra el viaje con el insert directo de antes.
-      if (rpcError.code !== "PGRST202") {
+      if (rpcError) {
         console.warn("Aviso al solicitar viaje vía RPC:", rpcError.message);
         throw new Error(rpcError.message);
       }
-      console.warn("RPC solicitar_viaje no disponible; se usa el registro directo.");
 
-      const { data: viajeDirecto, error: errorInsert } = await supabase
+      // El RPC devuelve { viaje_id, ... } (no la fila completa): se lee el viaje recién creado
+      const respuesta = rpcData as { id?: string; viaje_id?: string } | null;
+      const viajeId = respuesta?.viaje_id ?? respuesta?.id;
+      if (!viajeId) return null;
+
+      const { data: viaje, error: errorLectura } = await supabase
         .from("viajes")
-        .insert({
-          pasajero_id: input.pasajeroId, origen_texto: input.origenTexto, destino_texto: input.destinoTexto,
-          origen_lat: input.origenLat, origen_lng: input.origenLng, destino_lat: input.destinoLat,
-          destino_lng: input.destinoLng, distancia_km: input.distanciaKm, tarifa_estimada: input.tarifaEstimada,
-          metodo_pago: input.metodoPago,
-        })
-        .select()
+        .select("*")
+        .eq("id", viajeId)
         .single();
-      if (errorInsert) throw new Error(errorInsert.message);
-      return viajeDirecto;
+      if (errorLectura) throw new Error(errorLectura.message);
+      return viaje;
     } catch (err: unknown) {
       console.warn("Excepción al crear viaje en Supabase:", err);
       throw err;
@@ -103,15 +85,16 @@ export const viajeService = {
   },
 
   async finalizarViaje(viajeId: string, _tarifaFinal?: number) {
-    if (!viajeId) return null;
+    if (!viajeId) throw new Error("Se requiere el identificador del viaje.");
     try {
       const { error } = await supabase.rpc("finalizar_viaje", { p_viaje_id: viajeId });
-      if (error) throw error;
-      const { data } = await supabase.from("viajes").select().eq("id", viajeId).maybeSingle();
+      if (error) throw new Error(error.message);
+      const { data, error: errorLectura } = await supabase.from("viajes").select().eq("id", viajeId).single();
+      if (errorLectura) throw new Error(errorLectura.message);
       return data;
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn("No se pudo finalizar el viaje:", err);
-      return null;
+      throw err;
     }
   },
 
@@ -146,44 +129,54 @@ export const viajeService = {
     autorId: string,
     receptorId: string | null,
     puntuacion: number,
-    comentario?: string
+    comentario?: string,
+    etiquetas?: string[]
   ) {
-    if (!viajeId || !autorId) return null;
+    if (!viajeId || !autorId) {
+      throw new Error("Se requiere el identificador del viaje y del usuario autor.");
+    }
 
     try {
       // Si receptorId no se conoce aún (ej. conductor mock), usar autorId o consultar viaje
       let finalReceptorId = receptorId;
       if (!finalReceptorId) {
-        const { data: viaje } = await supabase
+        const { data: viaje, error: errorViaje } = await supabase
           .from("viajes")
           .select("conductor_id")
           .eq("id", viajeId)
           .maybeSingle();
 
+        if (errorViaje) throw errorViaje;
         finalReceptorId = viaje?.conductor_id || null;
       }
 
       if (!finalReceptorId) {
-        return null; // Omitir calificación en DB si no hay conductor real vinculado
+        throw new Error("No se encontró el conductor asignado al viaje para registrar la calificación.");
       }
+
+      const payload: Record<string, unknown> = {
+        viaje_id: viajeId,
+        autor_id: autorId,
+        receptor_id: finalReceptorId,
+        puntuacion,
+        comentario: comentario || null,
+        etiquetas: etiquetas || [],
+      };
 
       const { data, error } = await supabase
         .from("calificaciones")
-        .insert({
-          viaje_id: viajeId, autor_id: autorId, receptor_id: finalReceptorId,
-          puntuacion, comentario: comentario || null,
-        })
+        .insert(payload as any)
         .select()
         .maybeSingle();
 
       if (error) {
         console.warn("Aviso al guardar calificación en Supabase:", error.message);
-        return null;
+        throw new Error(`Error al guardar calificación: ${error.message}`);
       }
       return data;
     } catch (err: unknown) {
       console.warn("Excepción al guardar calificación:", err);
-      return null;
+      throw err;
     }
   },
 

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import {
-  Image,
   StyleSheet,
   Text,
   View,
@@ -42,6 +42,9 @@ export function TarjetaPerfilConductor({
                     <Image
                         source={{ uri: foto }}
                         style={styles.foto}
+                        contentFit="cover"
+                        cachePolicy="disk"
+                        transition={200}
                     />
                 ) : (
                     <Ionicons

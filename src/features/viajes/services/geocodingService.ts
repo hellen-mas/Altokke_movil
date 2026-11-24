@@ -103,3 +103,114 @@ export async function obtenerDireccionInversa(
     coordenadas: { lat, lon },
   };
 }
+
+export interface LugarBuscado {
+  id: string;
+  nombre: string;
+  detalle: string;
+  coordenadas: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+/**
+ * Búsqueda directa de lugares y direcciones para Bagua y alrededores.
+ * Usa Photon Komoot (OSM) con sesgo a coordenadas de Bagua y fallback Nominatim.
+ */
+export async function buscarLugares(termino: string): Promise<LugarBuscado[]> {
+  const query = termino.trim();
+  if (!query || query.length < 2) return [];
+
+  // 1. Intento primario: Photon con sesgo de lat/lon hacia Bagua (-5.6397, -78.5311)
+  const controllerPhoton = new AbortController();
+  const timeoutPhoton = setTimeout(() => controllerPhoton.abort(), 4000);
+
+  try {
+    const res = await fetch(
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=-5.6397&lon=-78.5311&limit=8`,
+      {
+        headers: { Accept: "application/json" },
+        signal: controllerPhoton.signal,
+      }
+    );
+    clearTimeout(timeoutPhoton);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.features && Array.isArray(data.features) && data.features.length > 0) {
+        return data.features.map((f: any, idx: number) => {
+          const coords = f.geometry?.coordinates || [-78.5311, -5.6397];
+          const props = f.properties || {};
+          const nombre = props.name || props.street || query;
+          const detalle = [props.street, props.district || props.suburb, props.city || "Bagua"]
+            .filter(Boolean)
+            .join(", ") || "Bagua, Amazonas";
+
+          return {
+            id: `photon-${props.osm_id || idx}-${coords[0]}`,
+            nombre,
+            detalle,
+            coordenadas: {
+              latitude: Number(coords[1]),
+              longitude: Number(coords[0]),
+            },
+          };
+        });
+      }
+    }
+  } catch (err) {
+    clearTimeout(timeoutPhoton);
+    console.warn("Aviso al consultar Photon forward:", err);
+  }
+
+  // 2. Fallback Nominatim
+  const controllerNominatim = new AbortController();
+  const timeoutNominatim = setTimeout(() => controllerNominatim.abort(), 4000);
+
+  try {
+    const queryNominatim = query.toLowerCase().includes("bagua")
+      ? query
+      : `${query}, Bagua, Amazonas, Peru`;
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(
+        queryNominatim
+      )}&limit=8&countrycodes=pe`,
+      {
+        headers: {
+          "User-Agent": USER_AGENT,
+          Accept: "application/json",
+        },
+        signal: controllerNominatim.signal,
+      }
+    );
+    clearTimeout(timeoutNominatim);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item: any, idx: number) => {
+          const partes = (item.display_name || "").split(",");
+          const nombre = item.name || partes[0]?.trim() || query;
+          const detalle = partes.slice(1, 4).join(",").trim() || "Bagua, Amazonas";
+
+          return {
+            id: `nominatim-${item.place_id || idx}`,
+            nombre,
+            detalle,
+            coordenadas: {
+              latitude: Number(item.lat),
+              longitude: Number(item.lon),
+            },
+          };
+        });
+      }
+    }
+  } catch (err) {
+    clearTimeout(timeoutNominatim);
+    console.warn("Aviso al consultar Nominatim search:", err);
+  }
+
+  return [];
+}

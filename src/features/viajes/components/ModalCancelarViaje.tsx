@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { 
     KeyboardAvoidingView,
     Modal, 
@@ -47,18 +47,20 @@ export function ModalCancelarViaje({
     const { colores } = useAltokkeTheme();
     const [motivoSeleccionado, setMotivoSeleccionado] = useState<string | null>(null);
     const [detalleOtro, setDetalleOtro] = useState("");
+    const [prevVisible, setPrevVisible] = useState(visible);
+
+    if (visible !== prevVisible) {
+      setPrevVisible(visible);
+      if (visible) {
+        setMotivoSeleccionado(null);
+        setDetalleOtro("");
+      }
+    }
 
     const motivos =
         rol === "pasajero"
         ? MOTIVOS_PASAJERO
         : MOTIVOS_CONDUCTOR;
-
-    useEffect(() => {
-        if (visible) {
-        setMotivoSeleccionado(null);
-        setDetalleOtro("");
-        }
-    }, [visible]);
 
     const requiereDetalle = motivoSeleccionado === "Otro motivo";
     const motivoFinal = requiereDetalle

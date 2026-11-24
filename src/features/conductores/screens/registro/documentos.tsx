@@ -1,9 +1,8 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useRegistroConductor } from "@/features/conductores/store/registroConductorStore";
 import { DocumentoArchivo } from "@/features/conductores/components/DocumentoArchivo";
-import { BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
+import { BotonPrincipal, BotonVolverPaso, IndicadorPasos } from "@/shared/components/ui";
 import { EncabezadoPagina } from "@/shared/components/ui/EncabezadoPagina";
-import BotonPrincipal from "@/shared/components/ui/BotonPrincipal";
 import { Ionicons } from "@expo/vector-icons";
 import { paletaColores } from "@/shared/theme/paletaColores";
 import { ArchivoDocumento } from "@/features/conductores/types/conductor";
@@ -15,7 +14,6 @@ import React, { useRef, useState } from "react";
 
 import {
     Alert,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -92,7 +90,7 @@ export default function DocumentosConductor() {
                     actualizarFormulario({antecedentesPenales: documento});
                     break;
             }
-        } catch (error) {
+        } catch {
             Alert.alert(
                 "No se pudo adjuntar",
                 "Ocurrió un problema al seleccionar el archivo. Inténtalo nuevamente."

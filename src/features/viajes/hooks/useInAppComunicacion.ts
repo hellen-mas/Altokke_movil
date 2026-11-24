@@ -25,7 +25,10 @@ export function useInAppComunicacion({
   const { impactoLigero, alertaNuevaSolicitud } = useHaptics();
 
   const usuarioRef = useRef(usuarioActualId);
-  usuarioRef.current = usuarioActualId;
+
+  useEffect(() => {
+    usuarioRef.current = usuarioActualId;
+  }, [usuarioActualId]);
 
   const quickRepliesDisponibles: QuickReplyPreset[] =
     rolUsuario === "conductor"
@@ -38,7 +41,6 @@ export function useInAppComunicacion({
       return;
     }
 
-    setCargando(true);
     try {
       const historial = await comunicacionViajeService.obtenerMensajesViaje(viajeId);
       setMensajes(historial);
@@ -55,7 +57,29 @@ export function useInAppComunicacion({
   }, [viajeId]);
 
   useEffect(() => {
-    cargarHistorial();
+    let activo = true;
+
+    if (viajeId) {
+      comunicacionViajeService
+        .obtenerMensajesViaje(viajeId)
+        .then((historial) => {
+          if (!activo) return;
+          setMensajes(historial);
+
+          if (usuarioRef.current) {
+            const pendientes = historial.filter(
+              (m) => !m.leido && m.remitente_id !== usuarioRef.current
+            ).length;
+            setNoLeidos(pendientes);
+          }
+        })
+        .catch((err) => {
+          console.warn("Aviso al cargar historial in-app:", err);
+        })
+        .finally(() => {
+          if (activo) setCargando(false);
+        });
+    }
 
     if (!viajeId) {
       return;

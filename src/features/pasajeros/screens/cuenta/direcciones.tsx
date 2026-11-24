@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { MapaBase } from "@/features/viajes/components/MapaBase";
 import {
   BarraSuperiorNavegacion,
   TarjetaDireccion,
@@ -40,7 +40,6 @@ export default function DireccionesGuardadas() {
     coordenadasSeleccionadas,
     buscandoDireccion,
     buscandoUbicacion,
-    mapaRef,
     abrirModalAgregar,
     cerrarModalAgregar,
     seleccionarUbicacionEnMapa,
@@ -236,27 +235,12 @@ export default function DireccionesGuardadas() {
               Marca tu ubicación exacta:
             </Text>
 
-            <MapView
-              ref={mapaRef}
+            <MapaBase
+              centro={coordenadasSeleccionadas || CENTRO_BAGUA}
+              destino={coordenadasSeleccionadas || undefined}
+              onSeleccionarPunto={seleccionarUbicacionEnMapa}
               style={styles.mapaDireccion}
-              initialRegion={{
-                latitude: CENTRO_BAGUA.latitude,
-                longitude: CENTRO_BAGUA.longitude,
-                latitudeDelta: 0.015,
-                longitudeDelta: 0.015,
-              }}
-              onPress={(evento) => {
-                seleccionarUbicacionEnMapa(evento.nativeEvent.coordinate);
-              }}
-            >
-              {coordenadasSeleccionadas && (
-                <Marker
-                  coordinate={coordenadasSeleccionadas}
-                  title={nombre.trim() || "Mi dirección"}
-                  pinColor="green"
-                />
-              )}
-            </MapView>
+            />
 
             <Text
               style={{

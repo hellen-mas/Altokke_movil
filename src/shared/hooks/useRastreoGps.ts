@@ -40,7 +40,10 @@ export function useRastreoGps({
 
   const subscripcionRef = useRef<Location.LocationSubscription | null>(null);
   const activoRef = useRef(activo);
-  activoRef.current = activo;
+
+  useEffect(() => {
+    activoRef.current = activo;
+  }, [activo]);
 
   const iniciarRastreo = useCallback(async () => {
     if (!activoRef.current) return;
@@ -85,7 +88,7 @@ export function useRastreoGps({
       }
 
       // Iniciar suscripción continua
-      subscripcionRef.current = await Location.watchPositionAsync(
+      const sub = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           timeInterval: intervaloMs,
@@ -102,6 +105,13 @@ export function useRastreoGps({
           onNuevaPosicion?.(nuevaPos);
         }
       );
+
+      if (!activoRef.current) {
+        sub.remove();
+        return;
+      }
+
+      subscripcionRef.current = sub;
     } catch (err: unknown) {
       console.warn("Aviso en el subsistema de rastreo GPS:", err);
       setServicioGpsDesactivado(true);
@@ -111,8 +121,13 @@ export function useRastreoGps({
   }, [intervaloMs, distanciaMinimaMetros, onNuevaPosicion]);
 
   useEffect(() => {
+    let cancelado = false;
+
     if (activo) {
-      void iniciarRastreo();
+      void (async () => {
+        if (cancelado) return;
+        await iniciarRastreo();
+      })();
     } else {
       if (subscripcionRef.current) {
         subscripcionRef.current.remove();
@@ -121,6 +136,7 @@ export function useRastreoGps({
     }
 
     return () => {
+      cancelado = true;
       if (subscripcionRef.current) {
         subscripcionRef.current.remove();
         subscripcionRef.current = null;

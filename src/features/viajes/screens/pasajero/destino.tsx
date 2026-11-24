@@ -10,10 +10,12 @@ import {
 import { useViaje } from "@/features/viajes/context/ViajeContext";
 import { usePerfilPasajero } from "@/features/pasajeros/hooks/use-perfil-pasajero";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { buscarLugares } from "@/features/viajes/services/geocodingService";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Keyboard,
   Pressable,
@@ -54,6 +56,8 @@ export default function PantallaDestino() {
   const [busqueda, setBusqueda] = useState(destino?.nombre ?? "");
   const [editandoOrigen, setEditandoOrigen] = useState(false);
   const [busquedaOrigen, setBusquedaOrigen] = useState("");
+  const [lugaresRemotos, setLugaresRemotos] = useState<Lugar[]>([]);
+  const [buscandoRemoto, setBuscandoRemoto] = useState(false);
   const panelRef = useRef<BottomSheet>(null);
   const expandirPanel = () => {
     panelRef.current?.snapToIndex(2);
@@ -168,12 +172,61 @@ export default function PantallaDestino() {
     return [...guardadas, ...unicos];
   }, [perfil]);
 
-  // Si ya hay un destino elegido, se muestra la lista completa para poder cambiarlo
-  const resultados = editandoOrigen
-    ? filtrarLugares(busquedaOrigen, listaLugares)
-    : destino && destino.nombre === busqueda
-      ? listaLugares
-      : filtrarLugares(busqueda, listaLugares);
+  const textoABuscar = editandoOrigen ? busquedaOrigen : busqueda;
+  const esTextoDestinoElegido = !editandoOrigen && destino !== null && destino.nombre === busqueda;
+  const busquedaValida = textoABuscar.trim().length >= 2 && !esTextoDestinoElegido;
+  const buscandoRemotoVisible = busquedaValida && buscandoRemoto;
+
+  // Búsqueda remota con debounce (Photon / OSM Nominatim)
+  useEffect(() => {
+    const termino = textoABuscar.trim();
+    if (termino.length < 2 || esTextoDestinoElegido) {
+      return;
+    }
+
+    let activo = true;
+
+    const temporizador = setTimeout(async () => {
+      setBuscandoRemoto(true);
+      try {
+        const encontrados = await buscarLugares(termino);
+        if (activo) {
+          setLugaresRemotos(encontrados);
+        }
+      } catch {
+        if (activo) {
+          setLugaresRemotos([]);
+        }
+      } finally {
+        if (activo) {
+          setBuscandoRemoto(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      activo = false;
+      clearTimeout(temporizador);
+    };
+  }, [textoABuscar, esTextoDestinoElegido]);
+
+  // Si ya hay un destino elegido, se muestra la lista completa para poder cambiarlo.
+  // Si hay término de búsqueda, combina coincidencias locales con resultados geocodificados.
+  const resultados = useMemo(() => {
+    const termino = textoABuscar.trim();
+    if (!termino || esTextoDestinoElegido) {
+      return listaLugares;
+    }
+
+    const locales = filtrarLugares(termino, listaLugares);
+    const nombresLocales = new Set(locales.map((l) => normalizar(l.nombre)));
+    const remotos = busquedaValida ? lugaresRemotos : [];
+    const remotosUnicos = remotos.filter(
+      (r) => !nombresLocales.has(normalizar(r.nombre))
+    );
+
+    return [...locales, ...remotosUnicos];
+  }, [textoABuscar, esTextoDestinoElegido, listaLugares, busquedaValida, lugaresRemotos]);
 
   const cambiarBusqueda = (texto: string) => {
     setBusqueda(texto);
@@ -524,25 +577,30 @@ export default function PantallaDestino() {
                   </Pressable>
                 )}
               </View>
-              <Text
-                style={[
-                  styles.etiqueta,
-                  {
-                    color: colores.secundario,
-                    marginTop: 18,
-                    marginBottom: 4,
-                    fontWeight: "800",
-                  },
-                ]}
-              >
-                {editandoOrigen
-                  ? "Lugares para recogerme"
-                  : "Lugares sugeridos"}
-              </Text>
+              <View style={styles.encabezadoSugerencias}>
+                <Text
+                  style={[
+                    styles.etiqueta,
+                    {
+                      color: colores.secundario,
+                      fontWeight: "800",
+                    },
+                  ]}
+                >
+                  {editandoOrigen
+                    ? "Lugares para recogerme"
+                    : textoABuscar.trim().length >= 2
+                      ? "Resultados de búsqueda"
+                      : "Lugares sugeridos"}
+                </Text>
+                {buscandoRemotoVisible && (
+                  <ActivityIndicator size="small" color={colores.primario} />
+                )}
+              </View>
 
               {/* Sugerencias */}
               <View style={styles.lista}>
-                {resultados.length === 0 && (
+                {resultados.length === 0 && !buscandoRemoto && (
                   <Text style={[styles.sinResultados, { color: colores.secundario }]}>
                     No encontramos lugares con “{editandoOrigen ? busquedaOrigen : busqueda}”.
                   </Text>
@@ -689,6 +747,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     borderTopWidth: 1,
+  },
+
+  encabezadoSugerencias: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 18,
+    marginBottom: 4,
   },
 
   lista: {

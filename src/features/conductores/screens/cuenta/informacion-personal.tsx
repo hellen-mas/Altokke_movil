@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { DatoPersonal } from "@/features/conductores/components/DatoPersonal";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
@@ -9,28 +10,26 @@ import { AvisoInformativo } from "@/shared/components/ui";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function InformacionPersonalConductor() {
-  const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const { estilos: styles } = useTemaConductor(crearEstilos);
   const { perfil } = usePerfilConductor();
-  const [modoEdicion, setModoEdicion] = useState(false);
 
-  const editarDato = (campo: string) => {
-    Alert.alert("Editar información", `Para actualizar ${campo}, contacta a soporte o actualiza tus documentos.`);
+  const solicitarActualizacion = () => {
+    router.push("/conductor/cuenta/centro-ayuda");
   };
 
   const campos = [
     { icono: "person" as const, titulo: "Nombre completo", valor: perfil.nombre, editable: false },
     { icono: "card" as const, titulo: "DNI", valor: perfil.dni || "Registrado", editable: false },
-    { icono: "call" as const, titulo: "Teléfono", valor: perfil.telefono || "No especificado", editable: modoEdicion, campo: "tu teléfono" },
-    { icono: "mail" as const, titulo: "Correo electrónico", valor: perfil.correo || "No especificado", editable: modoEdicion, campo: "tu correo electrónico" },
+    { icono: "call" as const, titulo: "Teléfono", valor: perfil.telefono || "No especificado", editable: false },
+    { icono: "mail" as const, titulo: "Correo electrónico", valor: perfil.correo || "No especificado", editable: false },
     { icono: "calendar" as const, titulo: "Fecha de nacimiento", valor: perfil.fechaNacimiento, editable: false },
-    { icono: "location" as const, titulo: "Ciudad", valor: perfil.ciudad, editable: modoEdicion, campo: "tu ciudad" },
+    { icono: "location" as const, titulo: "Ciudad", valor: perfil.ciudad, editable: false },
     {
       icono: "people" as const,
       titulo: "Contacto de emergencia",
       valor: `${perfil.contactoEmergencia.nombre} (${perfil.contactoEmergencia.parentesco})`,
       valorSecundario: perfil.contactoEmergencia.telefono,
-      editable: modoEdicion,
-      campo: "tu contacto de emergencia",
+      editable: false,
     },
   ];
 
@@ -56,8 +55,7 @@ export default function InformacionPersonalConductor() {
               titulo={c.titulo}
               valor={c.valor}
               valorSecundario={c.valorSecundario}
-              editable={c.editable}
-              onEditar={() => c.campo && editarDato(c.campo)}
+              editable={false}
               ultimo={i === campos.length - 1}
             />
           ))}
@@ -65,15 +63,15 @@ export default function InformacionPersonalConductor() {
 
         <Pressable
           style={({ pressed }) => [styles.botonEditar, pressed && { opacity: 0.85 }]}
-          onPress={() => setModoEdicion(!modoEdicion)}
+          onPress={solicitarActualizacion}
         >
-          <Ionicons name={modoEdicion ? "checkmark-outline" : "pencil-outline"} size={18} color="#FFFFFF" />
-          <Text style={styles.botonTexto}>{modoEdicion ? "Finalizar edición" : "Actualizar datos"}</Text>
+          <Ionicons name="help-buoy-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.botonTexto}>Solicitar actualización a soporte</Text>
         </Pressable>
 
         <AvisoInformativo
           icono="shield-checkmark-outline"
-          texto="Tus datos personales están protegidos con cifrado de punto a punto y no se comparten con terceros."
+          texto="Por seguridad y validación de antecedentes, la actualización de datos personales es verificada por el equipo de soporte de Altokke."
           variante="claro"
         />
       </ScrollView>

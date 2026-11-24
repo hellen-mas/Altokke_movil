@@ -1,8 +1,8 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet, Linking, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { useHaptics } from "@/shared/hooks/useHaptics";
+import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 const TELEFONO_CENTRAL_BAGUA = "+51941234567";
 const WHATSAPP_CENTRAL_BAGUA = "51941234567";
@@ -12,7 +12,7 @@ const WHATSAPP_CENTRAL_BAGUA = "51941234567";
  * solicitar su mototaxi por llamada telefónica verbal o WhatsApp tradicional en Bagua.
  */
 export function BotonCentralAsistencia() {
-  const { colores, esOscuro } = useAltokkeTheme();
+  const { colores } = useAltokkeTheme();
   const { impactoLigero } = useHaptics();
 
   const handleLlamarCentral = () => {

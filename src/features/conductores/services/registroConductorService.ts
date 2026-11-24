@@ -62,13 +62,28 @@ export const registroConductorService = {
     if (errorSesion) throw errorSesion;
     const usuarioActual = sesionData.session?.user;
 
-    if (usuarioActual?.email?.toLowerCase() === emailNorm) {
-      return validarUsuarioConductor(usuarioActual);
-    }
-
+    // Si ya existe sesión activa (por ejemplo usuario registrado vía Google OAuth o Apple):
     if (usuarioActual) {
-      const { error: errorSalida } = await supabase.auth.signOut({ scope: "local" });
-      if (errorSalida) throw errorSalida;
+      // Actualizar metadata del usuario autenticado
+      await supabase.auth.updateUser({
+        data: {
+          ...datosPersonales,
+          rol: "conductor",
+        },
+      });
+
+      // Asegurar perfil en public.usuarios y conductores_perfil
+      await supabase.from("usuarios").upsert({
+        id: usuarioActual.id,
+        nombre: datosPersonales.nombre,
+        apellidos: datosPersonales.apellidos,
+        telefono: datosPersonales.telefono,
+        dni: datosPersonales.dni,
+        rol: "conductor",
+        estado_cuenta: "activo",
+      });
+
+      return usuarioActual.id;
     }
 
     const { data, error } = await supabase.auth.signUp({

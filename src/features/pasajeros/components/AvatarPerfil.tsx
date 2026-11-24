@@ -1,5 +1,6 @@
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { StyleSheet, Text, View } from "react-native";
 
 interface Props {
   nombre: string;
@@ -38,7 +39,13 @@ export function AvatarPerfil({
   return (
     <View style={{ width: tamano, height: tamano }}>
       {uri ? (
-        <Image source={{ uri }} style={circulo} />
+        <Image
+          source={{ uri }}
+          style={circulo}
+          contentFit="cover"
+          cachePolicy="disk"
+          transition={200}
+        />
       ) : (
         <View style={[styles.iniciales, circulo, { backgroundColor: colores.primario }]}>
           <Text style={[styles.texto, { fontSize: tamano * 0.36, color: colores.textoBoton }]}>

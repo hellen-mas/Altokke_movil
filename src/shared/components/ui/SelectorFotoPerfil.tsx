@@ -84,7 +84,13 @@ export function SelectorFotoPerfil({
         {validando ? (
           <ActivityIndicator size="small" color={colores.primario} />
         ) : fotoUri ? (
-          <Image source={{ uri: fotoUri }} style={styles.foto} contentFit="cover" />
+          <Image
+            source={{ uri: fotoUri }}
+            style={styles.foto}
+            contentFit="cover"
+            cachePolicy="disk"
+            transition={200}
+          />
         ) : (
           <Ionicons name="person-outline" size={27} 
             color={ colores.exitoTexto }

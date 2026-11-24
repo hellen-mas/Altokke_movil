@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import type { MapaBaseProps, PuntoMapa } from "@/features/viajes/types/tiposMapa";
@@ -205,11 +205,31 @@ export function MapaMapLibre({
   interactivo = true,
   margenInferior = 0,
   style,
+  onError,
 }: MapaBaseProps) {
   const { colores } = useAltokkeTheme();
-  const webviewRef = useRef<WebView>(null);
+  const webviewRef = useRef<any>(null);
   const [listo, setListo] = useState(false);
+  const [errorCarga, setErrorCarga] = useState(false);
   const posicionPasajero = ubicacionActual ?? origen ?? centro;
+
+  // Timeout para detectar falta de respuesta o error de red
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!listo) {
+        setErrorCarga(true);
+        onError?.();
+      }
+    }, 12000);
+
+    return () => clearTimeout(timer);
+  }, [listo, onError]);
+
+  const reintentarCarga = () => {
+    setErrorCarga(false);
+    setListo(false);
+    webviewRef.current?.reload();
+  };
 
   // El HTML se crea una sola vez: si cambiara, el WebView recargaría todo el mapa.
   // Los cambios posteriores se envían con injectJavaScript.
@@ -239,30 +259,60 @@ export function MapaMapLibre({
   };
 
   const recibirMensaje = (evento: WebViewMessageEvent) => {
-    const mensaje = JSON.parse(evento.nativeEvent.data);
+    try {
+      const mensaje = JSON.parse(evento.nativeEvent.data);
 
-    if (mensaje.tipo === "listo") {
-      setListo(true);
-    } else if (mensaje.tipo === "puntoSeleccionado" && interactivo) {
-      onSeleccionarPunto?.({
-        latitude: mensaje.latitude,
-        longitude: mensaje.longitude,
-      });
+      if (mensaje.tipo === "listo") {
+        setListo(true);
+        setErrorCarga(false);
+      } else if (mensaje.tipo === "puntoSeleccionado" && interactivo) {
+        onSeleccionarPunto?.({
+          latitude: mensaje.latitude,
+          longitude: mensaje.longitude,
+        });
+      }
+    } catch {
+      // Ignorar mensajes mal formateados
     }
   };
 
   return (
     <View style={[styles.contenedor, style]}>
-      <WebView<{}>
+      <WebView
         ref={webviewRef}
         source={{ html, baseUrl: URL_BASE }}
         originWhitelist={["*"]}
         onMessage={recibirMensaje}
+        onError={() => {
+          setErrorCarga(true);
+          onError?.();
+        }}
+        onHttpError={() => {
+          setErrorCarga(true);
+        }}
         overScrollMode="never"
         // Dentro de un ScrollView, deja que el dedo mueva el mapa y no la página
         nestedScrollEnabled
         style={styles.webview}
       />
+
+      {errorCarga && (
+        <View style={[styles.capaError, { backgroundColor: colores.superficie }]}>
+          <Ionicons name="cloud-offline-outline" size={36} color={colores.secundario} />
+          <Text style={[styles.textoError, { color: colores.texto }]}>
+            No se pudo cargar el mapa
+          </Text>
+          <Text style={[styles.subtextoError, { color: colores.secundario }]}>
+            Verifica tu conexión a internet o activa tus datos móviles.
+          </Text>
+          <Pressable
+            style={[styles.botonReintentar, { backgroundColor: colores.primario }]}
+            onPress={reintentarCarga}
+          >
+            <Text style={styles.textoBotonReintentar}>Reintentar conexión</Text>
+          </Pressable>
+        </View>
+      )}
 
       <Pressable
         style={[
@@ -289,6 +339,43 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: "#EAF0EC",
+  },
+
+  capaError: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    gap: 8,
+  },
+
+  textoError: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 8,
+    textAlign: "center",
+  },
+
+  subtextoError: {
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+
+  botonReintentar: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+
+  textoBotonReintentar: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
 
   botonCentrar: {

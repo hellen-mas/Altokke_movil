@@ -26,8 +26,12 @@ export function useLoginSession() {
     login(rol);
 
     if (rol === "conductor") {
-      await obtenerEstadoConductor(user.id);
-      router.replace("/(auth)/estado-solicitud");
+      const estado = await obtenerEstadoConductor(user.id);
+      if (estado === "aprobado") {
+        router.replace("/conductor/inicio");
+      } else {
+        router.replace("/(auth)/estado-solicitud");
+      }
       return;
     }
 
@@ -68,10 +72,15 @@ export function useLoginSession() {
     return ejecutarAutenticacion(() => authService.loginConGoogle());
   }, [ejecutarAutenticacion]);
 
+  const iniciarSesionApple = useCallback(() => {
+    return ejecutarAutenticacion(() => authService.loginConApple());
+  }, [ejecutarAutenticacion]);
+
   return {
     loading,
     iniciarSesionCorreo,
     iniciarSesionGoogle,
+    iniciarSesionApple,
   };
 }
 

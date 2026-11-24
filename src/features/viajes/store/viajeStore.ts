@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/shared/api/supabase";
 import {
   HISTORIAL_EJEMPLO,
@@ -8,6 +9,8 @@ import {
 } from "@/features/viajes/constants/pasajero";
 import { viajeService } from "@/features/viajes/services/viajeService";
 import type { PuntoMapa } from "../types/tiposMapa";
+
+const CLAVE_STORAGE_VIAJE_ACTIVO = "altokke_viaje_activo_id";
 
 export type TipoServicio = "normal" | "express" | "reserva";
 export type MetodoPago = "efectivo" | "yape" | "plin";
@@ -89,8 +92,15 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
 
   setErrorUbicacion: (errorUbicacion) => set({ errorUbicacion }),
 
-  setViajeActivoId: (valor) =>
-    set((state) => ({ viajeActivoId: resolverValor(valor, state.viajeActivoId) })),
+  setViajeActivoId: (valor) => {
+    const nuevoId = resolverValor(valor, get().viajeActivoId);
+    if (nuevoId) {
+      AsyncStorage.setItem(CLAVE_STORAGE_VIAJE_ACTIVO, nuevoId).catch(() => {});
+    } else {
+      AsyncStorage.removeItem(CLAVE_STORAGE_VIAJE_ACTIVO).catch(() => {});
+    }
+    set({ viajeActivoId: nuevoId });
+  },
 
   setVerificandoViajeActivo: (verificandoViajeActivo) =>
     set({ verificandoViajeActivo }),
@@ -98,12 +108,14 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
   setHistorial: (valor) =>
     set((state) => ({ historial: resolverValor(valor, state.historial) })),
 
-  limpiarViaje: () =>
+  limpiarViaje: () => {
+    AsyncStorage.removeItem(CLAVE_STORAGE_VIAJE_ACTIVO).catch(() => {});
     set({
       destino: null,
       viajeActivoId: null,
       errorUbicacion: null,
-    }),
+    });
+  },
 
   registrarViaje: async (viaje) => {
     const fecha = new Date();
@@ -217,6 +229,7 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
       const viaje = await viajeService.obtenerViajeActivoPasajero(userId);
 
       if (!viaje) {
+        AsyncStorage.removeItem(CLAVE_STORAGE_VIAJE_ACTIVO).catch(() => {});
         set({
           viajeActivoId: null,
           destino: null,
@@ -224,6 +237,8 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
         });
         return;
       }
+
+      AsyncStorage.setItem(CLAVE_STORAGE_VIAJE_ACTIVO, viaje.id).catch(() => {});
 
       const { origen_lat, origen_lng, destino_lat, destino_lng } = viaje;
 
@@ -283,3 +298,25 @@ export const useViajeStore = create<ViajeStore>((set, get) => ({
     }
   },
 }));
+
+// Hidratación y verificación automática del viaje activo al iniciar
+AsyncStorage.getItem(CLAVE_STORAGE_VIAJE_ACTIVO)
+  .then((guardadoId) => {
+    if (guardadoId) {
+      useViajeStore.setState({ viajeActivoId: guardadoId, verificandoViajeActivo: true });
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          useViajeStore.getState().recuperarViajeActivo(user.id);
+        } else {
+          useViajeStore.setState({ verificandoViajeActivo: false });
+        }
+      }).catch(() => {
+        useViajeStore.setState({ verificandoViajeActivo: false });
+      });
+    } else {
+      useViajeStore.setState({ verificandoViajeActivo: false });
+    }
+  })
+  .catch(() => {
+    useViajeStore.setState({ verificandoViajeActivo: false });
+  });

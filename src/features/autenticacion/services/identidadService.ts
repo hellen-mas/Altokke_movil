@@ -8,8 +8,6 @@ import {
   type CodigoErrorDni,
 } from "./identidad.dto";
 
-const cacheDni = new Map<string, DatosIdentidadDni>();
-
 const MENSAJE_SIN_CONEXION = "No tienes conexión a internet. Revisa tu conexión e inténtalo nuevamente.";
 
 function esCodigoDni(valor: unknown): valor is CodigoErrorDni {
