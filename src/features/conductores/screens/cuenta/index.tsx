@@ -6,12 +6,13 @@ import {
 } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { TarjetaPerfilConductor } from "@/features/conductores/components/TarjetaPerfilConductor";
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 
 export default function CuentaConductor() {
-  const { c, estilos: styles } = useTemaConductor(crearEstilos);
+  const { estilos: styles } = useTemaConductor(crearEstilos);
     const { perfil } = usePerfilConductor();
 
     return (
@@ -44,7 +45,7 @@ export default function CuentaConductor() {
                             onPress={() => router.push("/cuenta/informacion-personal")}
                         />
                         <OpcionCuenta
-                            icono="car"
+                            icono={IconoMototaxi}
                             titulo="Vehículo"
                             descripcion="Información de tu mototaxi"
                             onPress={() => router.push("/cuenta/vehiculo")}

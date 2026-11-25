@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import React, { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
@@ -34,7 +35,7 @@ export default function VehiculoConductor() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.vehiculoCard}>
           <View style={styles.iconoBox}>
-            <Ionicons name="car-outline" size={32} color={c.primario} />
+            <IconoMototaxi size={32} color={c.primario} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.nombreVehiculo}>{vehiculo.marca} {vehiculo.modelo}</Text>

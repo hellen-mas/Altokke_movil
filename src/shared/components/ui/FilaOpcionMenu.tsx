@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 export type NombreIconoMenu = keyof typeof Ionicons.glyphMap;
 
 export interface PropsFilaOpcionMenu {
-  icono: NombreIconoMenu;
+  icono: NombreIconoMenu | React.ComponentType<{ size: number; color: string }>;
   titulo: string;
   subtitulo?: string;
   descripcion?: string;
@@ -19,7 +19,7 @@ export interface PropsFilaOpcionMenu {
 }
 
 export function FilaOpcionMenu({
-  icono,
+  icono: Icono,
   titulo,
   subtitulo,
   descripcion,
@@ -71,7 +71,11 @@ export function FilaOpcionMenu({
           },
         ]}
       >
-        <Ionicons name={icono} size={20} color={colorIcono} />
+        {typeof Icono === "string" ? (
+          <Ionicons name={Icono} size={20} color={colorIcono} />
+        ) : (
+          <Icono size={20} color={colorIcono} />
+        )}
       </View>
 
       <View style={styles.textos}>

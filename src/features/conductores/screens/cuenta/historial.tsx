@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
@@ -206,11 +207,7 @@ export default function HistorialConductor() {
   const renderEmpty = useMemo(
     () => (
       <View style={styles.vacio}>
-        <Ionicons
-          name="car-outline"
-          size={48}
-          color={colores.secundario}
-        />
+        <IconoMototaxi size={48} color={colores.secundario} />
         <Text style={[styles.vacioTexto, { color: colores.secundario }]}>
           No hay viajes registrados en esta sección.
         </Text>
