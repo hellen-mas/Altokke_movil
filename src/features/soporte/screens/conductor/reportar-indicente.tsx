@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import {
   Alert,
   Pressable,
@@ -56,7 +57,7 @@ export default function ReportarIncidenteConductor() {
   const opciones: {
     tipo: TipoIncidente;
     titulo: string;
-    icono: keyof typeof Ionicons.glyphMap;
+    icono: keyof typeof Ionicons.glyphMap | typeof IconoMototaxi;
   }[] = [
     {
       tipo: "SEGURIDAD",
@@ -76,7 +77,7 @@ export default function ReportarIncidenteConductor() {
     {
       tipo: "VEHICULO",
       titulo: "Vehículo",
-      icono: "car-outline",
+      icono: IconoMototaxi,
     },
     {
       tipo: "OTRO",
@@ -107,6 +108,7 @@ export default function ReportarIncidenteConductor() {
             {opciones.map((opcion) => {
               const seleccionado =
                 tipo === opcion.tipo;
+              const colorIcono = seleccionado ? c.primario : c.textoSec;
 
               return (
                 <Pressable
@@ -120,15 +122,11 @@ export default function ReportarIncidenteConductor() {
                     setTipo(opcion.tipo)
                   }
                 >
-                  <Ionicons
-                    name={opcion.icono}
-                    size={20}
-                    color={
-                      seleccionado
-                        ? c.primario
-                        : c.textoSec
-                    }
-                  />
+                  {typeof opcion.icono === "string" ? (
+                    <Ionicons name={opcion.icono} size={20} color={colorIcono} />
+                  ) : (
+                    <opcion.icono size={20} color={colorIcono} />
+                  )}
 
                   <Text
                     style={[

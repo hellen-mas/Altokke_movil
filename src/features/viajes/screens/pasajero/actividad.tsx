@@ -4,6 +4,7 @@ import {
   type ViajeHistorial,
 } from "@/features/viajes/constants/pasajero";
 import { useViaje } from "@/features/viajes/context/ViajeContext";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
@@ -239,11 +240,7 @@ export default function PantallaActividad() {
             { backgroundColor: colores.exitoFondo },
           ]}
         >
-          <Ionicons
-            name="car-sport-outline"
-            size={32}
-            color={colores.exitoTexto}
-          />
+          <IconoMototaxi size={32} color={colores.exitoTexto} />
         </View>
 
         <Text style={[styles.vacioTitulo, { color: colores.texto }]}>

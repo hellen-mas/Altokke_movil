@@ -3,6 +3,7 @@ import { AccesosRapidosConductor } from "@/features/conductores/components/Acces
 import { usePerfilConductor } from "@/features/conductores/hooks/use-perfil-conductor";
 import { conductorService } from "@/features/conductores/services/conductorService";
 import { useTemaConductor } from "@/features/conductores/theme/temaConductor";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { crearEstilos } from "./inicio.styles";
 import { supabase } from "@/shared/api/supabase";
 import { Ionicons } from "@expo/vector-icons";
@@ -184,26 +185,23 @@ export default function InicioConductorScreen() {
                   : styles.disponibilidadIconoPausa,
               ]}
             >
-              <Ionicons
-                name={
-                  estadoDisponibilidad === "disponible"
-                    ? "navigate"
-                    : estadoDisponibilidad === "en_viaje"
-                      ? "car-sport-outline"
+              {estadoDisponibilidad === "en_viaje" ? (
+                <IconoMototaxi size={25} color={c.sobreHeader} />
+              ) : (
+                <Ionicons
+                  name={
+                    estadoDisponibilidad === "disponible"
+                      ? "navigate"
                       : estadoDisponibilidad === "error"
                         ? "alert-circle-outline"
                         : estadoDisponibilidad === "verificando"
                           ? "sync-outline"
                           : "power-outline"
-                }
-                size={25}
-                color={
-                  estadoDisponibilidad === "disponible" ||
-                  estadoDisponibilidad === "en_viaje"
-                    ? "#FFFFFF"
-                    : c.textoSec
-                }
-              />
+                  }
+                  size={25}
+                  color={estadoDisponibilidad === "disponible" ? c.sobreHeader : c.textoSec}
+                />
+              )}
             </View>
           </View>
 
@@ -310,7 +308,7 @@ export default function InicioConductorScreen() {
         <View style={styles.metricas}>
           <View style={[styles.metrica, styles.metricaViajes]}>
             <View style={styles.metricaIcono}>
-              <Ionicons name="car-outline" size={19} color={c.primario} />
+              <IconoMototaxi size={19} color={c.primario} />
             </View>
             <Text style={styles.metricaValor}>
               {resumen.viajesCompletadosHoy}

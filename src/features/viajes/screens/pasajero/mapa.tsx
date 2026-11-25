@@ -448,11 +448,7 @@ export default function PantallaMapa() {
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Ionicons
-              name="car-sport-outline"
-              size={28}
-              color={colores.exitoTexto}
-            />
+            <IconoMototaxi size={28} color={colores.exitoTexto} />
 
             <View style={styles.viajeActivoTextos}>
               <Text
@@ -558,7 +554,7 @@ export default function PantallaMapa() {
                       <IconoMototaxi
                         size={27}
                         color={
-                          seleccionado ? colores.exitoTexto : colores.texto
+                          seleccionado ? colores.exitoTexto : colores.secundario
                         }
                       />
                     ) : (

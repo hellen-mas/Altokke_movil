@@ -211,11 +211,11 @@ export default function Ayuda() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name={tema.icono}
-                      size={21}
-                      color={colores.exitoTexto}
-                    />
+                    {typeof tema.icono === "string" ? (
+                      <Ionicons name={tema.icono} size={21} color={colores.exitoTexto} />
+                    ) : (
+                      <tema.icono size={21} color={colores.exitoTexto} />
+                    )}
                   </View>
 
                   <View style={styles.textosTema}>

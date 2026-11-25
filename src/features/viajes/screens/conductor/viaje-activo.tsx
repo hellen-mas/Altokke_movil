@@ -1,3 +1,4 @@
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -192,7 +193,7 @@ export default function ViajeActivoConductorScreen() {
   if (!viaje) {
     return (
       <View style={[styles.pantalla, styles.centro]}>
-        <Ionicons name="car-outline" size={64} color={c.textoSec} />
+        <IconoMototaxi size={64} color={c.textoSec} />
         <Text style={styles.sinViajeTitulo}>Sin viaje activo</Text>
         <Text style={styles.sinViajeDesc}>No tienes ninguna carrera en curso en este momento.</Text>
         <Pressable style={styles.botonIrSolicitudes} onPress={() => router.replace("/(conductor)/solicitudes")}>
