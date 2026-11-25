@@ -1,3 +1,4 @@
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Image,
@@ -76,11 +77,7 @@ export function TarjetaPerfilConductor({
                 </View>
 
                 <View style={styles.estado}>
-                    <Ionicons
-                        name="car-outline"
-                        size={12}
-                        color={c.primario}
-                    />
+                    <IconoMototaxi size={14} color={c.primario} />
 
                     <Text style={styles.estadoTexto}>{estado}</Text>
                 </View>

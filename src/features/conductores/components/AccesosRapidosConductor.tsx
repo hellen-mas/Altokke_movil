@@ -1,4 +1,5 @@
 import { useTemaConductor } from "@/features/conductores/theme/temaConductor";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
@@ -52,9 +53,9 @@ export function AccesosRapidosConductor() {
           accessibilityRole="button"
         >
           <View
-            style={[styles.accesoIcono, { backgroundColor: c.ambarSuave }]}
+            style={[styles.accesoIcono, { backgroundColor: c.primarioSuave }]}
           >
-            <Ionicons name="car-sport-outline" size={23} color={c.primario} />
+            <IconoMototaxi size={23} color={c.primario} />
           </View>
           <Text style={styles.accesoTexto}>Vehículo</Text>
         </Pressable>
