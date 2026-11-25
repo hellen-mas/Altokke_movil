@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import {
   Alert,
   Linking,
@@ -137,11 +138,7 @@ export default function CentroAyudaConductor() {
 
             <View style={styles.tema}>
               <View style={styles.temaIcono}>
-                <Ionicons
-                  name="car-outline"
-                  size={19}
-                  color={c.primario}
-                />
+                <IconoMototaxi size={19} color={c.primario} />
               </View>
 
               <View style={styles.temaInfo}>

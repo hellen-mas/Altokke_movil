@@ -1,6 +1,7 @@
 
 import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 
 type Icono = ComponentProps<typeof Ionicons>["name"];
 
@@ -17,7 +18,7 @@ export interface CategoriaAyuda {
   id: string;
   titulo: string;
   descripcion: string;
-  icono: Icono;
+  icono: Icono | typeof IconoMototaxi;
   secciones: {
     titulo: string;
     articulos: string[];
@@ -29,7 +30,7 @@ export const CATEGORIAS_AYUDA: CategoriaAyuda[] = [
     id: "viajes",
     titulo: "Viajes y cancelaciones",
     descripcion: "Solicitudes, retrasos y objetos olvidados",
-    icono: "car-outline",
+    icono: IconoMototaxi,
     secciones: [
       {
         titulo: "Problemas con un viaje",

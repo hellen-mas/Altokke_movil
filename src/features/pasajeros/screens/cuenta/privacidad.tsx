@@ -1,5 +1,6 @@
 
 import { Ionicons } from "@expo/vector-icons";
+import { IconoMototaxi } from "@/features/viajes/components/IconoMototaxi";
 import { router } from "expo-router";
 import {
   Pressable,
@@ -17,7 +18,7 @@ type NombreIcono = keyof typeof Ionicons.glyphMap;
 interface ElementoInformacion {
   titulo: string;
   descripcion: string;
-  icono: NombreIcono;
+  icono: NombreIcono | typeof IconoMototaxi;
 }
 
 const DATOS: ElementoInformacion[] = [
@@ -37,7 +38,7 @@ const DATOS: ElementoInformacion[] = [
     titulo: "Historial de viajes",
     descripcion:
       "Información sobre las solicitudes y viajes asociados a tu cuenta.",
-    icono: "car-outline",
+    icono: IconoMototaxi,
   },
 ];
 
@@ -112,11 +113,11 @@ export default function Privacidad() {
           {DATOS.map((item, index) => (
             <View key={item.titulo}>
               <View style={styles.fila}>
-                <Ionicons
-                  name={item.icono}
-                  size={21}
-                  color={colores.exitoTexto}
-                />
+                {typeof item.icono === "string" ? (
+                  <Ionicons name={item.icono} size={21} color={colores.exitoTexto} />
+                ) : (
+                  <item.icono size={21} color={colores.exitoTexto} />
+                )}
 
                 <View style={styles.textos}>
                   <Text
