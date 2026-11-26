@@ -65,13 +65,13 @@ export default function CuentaConductor() {
                             icono="shield-checkmark"
                             titulo="Seguridad"
                             descripcion="Tu cuenta segura en todo momento"
-                            onPress={() => router.push("/cuenta/seguridad")}
+                            onPress={() => router.push("/(conductor)/cuenta/seguridad")}
                         />
                         <OpcionCuenta
                             icono="settings"
                             titulo="Configuración"
                             descripcion="Preferencias de la app"
-                            onPress={() => router.push("/cuenta/configuracion")}
+                            onPress={() => router.push("/(conductor)/cuenta/configuracion")}
                             ultimo
                         />
                     </View>

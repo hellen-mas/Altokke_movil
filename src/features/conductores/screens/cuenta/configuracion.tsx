@@ -1,108 +1,14 @@
-import { useAuth } from "@/features/autenticacion/hooks/useAuth";
-import { authService } from "@/features/autenticacion/services/authService";
 import { CabeceraConductor } from "@/features/conductores/components/CabeceraConductor";
 import { OpcionCuenta } from "@/features/conductores/components/OpcionCuenta";
 import { useTemaConductor, type ColoresConductor } from "@/features/conductores/theme/temaConductor";
 import { useAltokkeTheme } from "@/shared/theme/useAltokkeTheme";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function ConfiguracionConductor() {
-  const { c, estilos: styles } = useTemaConductor(crearEstilos);
-  const { modoPreferido, setModoPreferido } = useAltokkeTheme();
-  const { logout } = useAuth();
-
-  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
-  const [notificaciones, setNotificaciones] = useState(true);
-  const [mapaSatelite, setMapaSatelite] = useState(false);
-
-  const cambiarIdioma = () => {
-    Alert.alert("Idioma de Altokke", "El idioma de la aplicación está configurado en Español (Perú).");
-  };
-
-  const toggleNotificaciones = () => {
-    const estado = !notificaciones;
-    setNotificaciones(estado);
-    Alert.alert("Notificaciones", estado ? "Alertas y sonidos activados." : "Alertas y sonidos pausados.");
-  };
-
-  const cambiarApariencia = () => {
-    Alert.alert(
-      "Apariencia",
-      `Modo actual: ${modoPreferido}. Elige una opción:`,
-      [
-        { text: "Claro", onPress: () => setModoPreferido("claro") },
-        { text: "Oscuro", onPress: () => setModoPreferido("oscuro") },
-        { text: "Automático (Sistema)", onPress: () => setModoPreferido("automatico") },
-        { text: "Cancelar", style: "cancel" },
-      ]
-    );
-  };
-
-  const cambiarPreferenciasMapa = () => {
-    const nuevo = !mapaSatelite;
-    setMapaSatelite(nuevo);
-    Alert.alert("Preferencias de mapa", nuevo ? "Modo satelital activado." : "Modo estándar vectorial activado.");
-  };
-
-  const abrirSeguridad = () => {
-    router.push("/(conductor)/cuenta/seguridad");
-  };
-
-  const confirmarEliminarCuenta = () => {
-    if (eliminandoCuenta) return;
-
-    Alert.alert(
-      "Eliminar cuenta",
-      "¿Deseas eliminar tu cuenta de Altokke? Perderás el acceso y no podrás seguir utilizando esta cuenta. Algunos registros históricos podrán conservarse por obligaciones legales y operativas.",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Eliminar cuenta",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setEliminandoCuenta(true);
-
-              await authService.eliminarMiCuenta();
-
-              router.replace("/(auth)/bienvenida");
-            } catch (error: unknown) {
-              const mensaje = error instanceof Error ? error.message : "Inténtalo nuevamente.";
-              Alert.alert(
-                "No se pudo eliminar la cuenta",
-                mensaje
-              );
-            } finally {
-              setEliminandoCuenta(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const cerrarSesion = () => {
-    Alert.alert("Cerrar sesión", "¿Seguro que quieres salir de tu cuenta?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Cerrar sesión",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await logout();
-          } catch (error) {
-            console.error("Error al cerrar sesión:", error);
-          }
-          router.replace("/(auth)/login");
-        },
-      },
-    ]);
-  };
+  const { estilos: styles } = useTemaConductor(crearEstilos);
+  const { modoPreferido } = useAltokkeTheme();
+  const temas = { claro: "Claro", oscuro: "Oscuro", automatico: "Automático" };
 
   return (
     <View style={styles.container}>
@@ -121,31 +27,31 @@ export default function ConfiguracionConductor() {
             icono="globe"
             titulo="Idioma"
             descripcion="Español (Perú)"
-            onPress={cambiarIdioma}
+            onPress={() => router.push("/(conductor)/cuenta/ajustes/idioma")}
           />
           <OpcionCuenta
             icono="notifications"
             titulo="Notificaciones"
-            descripcion={notificaciones ? "Alertas activadas" : "Alertas pausadas"}
-            onPress={toggleNotificaciones}
+            descripcion="Permiso de notificaciones del dispositivo"
+            onPress={() => router.push("/(conductor)/cuenta/ajustes/notificaciones")}
           />
           <OpcionCuenta
             icono="moon"
             titulo="Apariencia"
-            descripcion={`Modo: ${modoPreferido}`}
-            onPress={cambiarApariencia}
+            descripcion={temas[modoPreferido]}
+            onPress={() => router.push("/(conductor)/cuenta/ajustes/apariencia")}
           />
           <OpcionCuenta
             icono="map"
             titulo="Preferencias de mapa"
-            descripcion={mapaSatelite ? "Satelital" : "Vectorial estándar"}
-            onPress={cambiarPreferenciasMapa}
+            descripcion="Estilo estándar"
+            onPress={() => router.push("/(conductor)/cuenta/ajustes/mapa")}
           />
           <OpcionCuenta
             icono="lock-closed"
             titulo="Privacidad y Seguridad"
-            descripcion="Contraseñas y sesiones activas"
-            onPress={abrirSeguridad}
+            descripcion="Seguridad de la cuenta, contraseña y ayuda"
+            onPress={() => router.push("/(conductor)/cuenta/seguridad")}
             ultimo
           />
         </View>
@@ -155,7 +61,7 @@ export default function ConfiguracionConductor() {
             icono="log-out"
             titulo="Cerrar sesión"
             descripcion="Salir de tu cuenta"
-            onPress={cerrarSesion}
+            onPress={() => router.push("/(conductor)/cuenta/ajustes/cerrar-sesion")}
             ultimo
           />
         </View>
@@ -164,16 +70,11 @@ export default function ConfiguracionConductor() {
           <OpcionCuenta
             icono="trash-outline"
             titulo="Eliminar cuenta"
-            descripcion={
-              eliminandoCuenta
-                ? "Procesando solicitud..."
-                : "Solicitar la eliminación de tu cuenta"
-            }
-            onPress={confirmarEliminarCuenta}
+            descripcion="Solicitar la eliminación de tu cuenta"
+            onPress={() => router.push("/(conductor)/cuenta/ajustes/eliminar-cuenta")}
             ultimo
           />
         </View>
-
       </ScrollView>
     </View>
   );
@@ -187,12 +88,6 @@ const crearEstilos = (c: ColoresConductor) => StyleSheet.create({
 
   scrollContent: {
     paddingBottom: 30,
-  },
-
-  aviso: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 0,
   },
 
   opciones: {
