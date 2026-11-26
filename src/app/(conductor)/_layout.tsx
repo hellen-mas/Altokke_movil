@@ -195,6 +195,22 @@ export default function ConductorLayout() {
       />
 
       <Tabs.Screen
+        name="billetera"
+        options={{
+          title: "Billetera",
+          headerShown: false,
+
+          // Ocultar el botón de la barra inferior,
+          // pero mantener la pantalla accesible
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: "none" },
+          tabBarStyle: {
+            display: "none",
+          },
+        }}
+      />
+
+      <Tabs.Screen
         name="viaje-activo"
         options={{
           // En Expo Router 58, `href: null` oculta la pestaña Y redirige a Inicio al navegar a ella.
