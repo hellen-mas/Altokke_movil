@@ -49,11 +49,21 @@ export function obtenerRutaNotificacion(
     }
   }
 
+  // Notificaciones de recargas OpenPay
+  if (
+    contenido.tipo === "recarga_aprobada" ||
+    contenido.tipo === "recarga_fallida" 
+  ) {
+    return rol === "conductor"
+      ? "/(conductor)/billetera"
+      : null;
+  }
+
   // Pagos y movimientos económicos
   if (categoria === "pagos") {
     return rol === "conductor"
       ? "/(conductor)/ganancias"
-      : "/(pasajero)/notificaciones"
+      : "/(pasajero)/notificaciones";
   }
 
   // Seguridad y cambios de cuenta

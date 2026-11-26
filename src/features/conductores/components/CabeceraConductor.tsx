@@ -17,6 +17,7 @@ interface CabeceraConductorProps {
   mostrarMarca?: boolean;
   compacta?: boolean;
   children?: ReactNode;
+  onAtras?: () => void;
 }
 
 export function CabeceraConductor({
@@ -26,6 +27,7 @@ export function CabeceraConductor({
   mostrarMarca = false,
   compacta = false,
   children,
+  onAtras,
 }: CabeceraConductorProps) {
   const { c, estilos } = useTemaConductor(crearEstilos);
 
@@ -71,7 +73,13 @@ export function CabeceraConductor({
             {mostrarAtras && (
               <Pressable
                 style={estilos.botonAtras}
-                onPress={() => router.back()}
+                onPress={() => {
+                  if (onAtras) {
+                    onAtras();
+                  } else {
+                    router.back();
+                  }
+                }}
                 accessibilityRole="button"
                 accessibilityLabel="Volver"
               >

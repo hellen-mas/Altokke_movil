@@ -16,7 +16,7 @@ export function AccesosRapidosConductor() {
       <View style={styles.accesos}>
         <Pressable
           style={styles.accesoItem}
-          onPress={() => router.push("/(conductor)/ganancias")}
+          onPress={() => router.push("/(conductor)/billetera")}
           accessibilityRole="button"
         >
           <View
@@ -27,7 +27,7 @@ export function AccesosRapidosConductor() {
           >
             <Ionicons name="wallet-outline" size={23} color={c.primario} />
           </View>
-          <Text style={styles.accesoTexto}>Ganancias</Text>
+          <Text style={styles.accesoTexto}>Billetera</Text>
         </Pressable>
 
         <Pressable

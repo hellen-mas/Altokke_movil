@@ -1,0 +1,29 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.openpaynative'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.openpaynative"
+
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+
+  lintOptions {
+    abortOnError false
+  }
+}
+
+dependencies {
+  implementation files("libs/openpay-android-release.aar")
+  implementation 'com.google.http-client:google-http-client:1.28.0'
+  implementation 'com.google.http-client:google-http-client-android:1.28.0'
+  implementation 'com.google.http-client:google-http-client-jackson2:1.28.0'
+  implementation 'com.fasterxml.jackson.core:jackson-core:2.9.8'
+  implementation 'org.slf4j:slf4j-log4j12:1.7.25'
+}
