@@ -265,7 +265,7 @@ export default function PantallaBuscandoConductor() {
                   },
                 ]}
               >
-                <PulsoBusqueda />
+                {viaje?.estado === "buscando" && <PulsoBusqueda />}
                 <Text style={[styles.buscandoTitulo, { color: colores.texto }]}>
                   Buscando el mototaxi más cercano
                 </Text>
