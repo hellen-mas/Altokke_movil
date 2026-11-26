@@ -63,3 +63,7 @@ supabase/.temp/
 # Local documentation
 docs/*
 !docs/*.md
+
+# Archivos generados por módulos Android
+modules/**/android/build/
+modules/**/android/.gradle/
