@@ -53,6 +53,30 @@ function Onda({ retraso, color }: { retraso: number; color: string }) {
 /** Círculo con mototaxi y ondas que se expanden mientras se busca conductor */
 export function PulsoBusqueda() {
   const { colores } = useAltokkeTheme();
+  const [opacidad] = useState(() => new Animated.Value(1));
+
+  useEffect(() => {
+    const tramo = {
+      duration: 700,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: true,
+    };
+    const animacion = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacidad, { ...tramo, toValue: 0.55 }),
+        Animated.timing(opacidad, { ...tramo, toValue: 1 }),
+      ]),
+    );
+
+    animacion.start();
+
+    return () => animacion.stop();
+  }, [opacidad]);
+
+  const escala = opacidad.interpolate({
+    inputRange: [0.55, 1],
+    outputRange: [0.96, 1],
+  });
 
   return (
     <View style={styles.contenedor}>
@@ -68,7 +92,9 @@ export function PulsoBusqueda() {
           },
         ]}
       >
-        <IconoMototaxi size={34} color={colores.textoBoton} />
+        <Animated.View style={{ opacity: opacidad, transform: [{ scale: escala }] }}>
+          <IconoMototaxi size={34} color={colores.textoBoton} />
+        </Animated.View>
       </View>
     </View>
   );
